@@ -3,8 +3,8 @@
 #   make xr-demo    Build the host XR tools: xeneva-xr-view (HMD viewer)
 #                   and xeneva-xr-client (interactive monitor client).
 #
-# The guest side (DeodhaiXR with the OpenXR QEMU runtime) is built and
-# launched with:
+# The guest side (DeodhaiXR with the OpenXR QEMU runtime) is configured and
+# launched from the modular Bash TUI with:
 #   Scripts/Linux/build_and_run_qemu.sh --llvm --xr-demo
 #
 # Full flow: build.sh --xr-demo  ->  viewer --egl  ->  Quest 2 (WiVRn).

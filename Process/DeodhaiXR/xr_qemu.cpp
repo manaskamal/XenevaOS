@@ -31,8 +31,9 @@ void xrQemuSetScanout(uint32_t* pixels, int width, int height, int stride_pixels
 	g_scan_stride = stride_pixels;
 }
 
-/* EndFrame squeezes the live canvas directly into both scanout halves, avoiding
- * intermediate eye copies while preserving the box-filtered text. --axiss */
+/* EndFrame transports the live flat desktop at full scanout resolution. The
+ * host OpenXR viewer presents that panel independently to both eyes; squeezing
+ * it into SBS halves destroyed every other horizontal text sample. --axiss */
 static const uint32_t* g_canvas;
 static int g_canvas_stride;
 static int g_shift_l;
@@ -338,26 +339,27 @@ XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* info) {
 		return XR_SUCCESS;
 	/* This runtime presents the compositor canvas, not the compatibility
 	 * swapchain buffers returned to OpenXR callers. --axiss */
-	if (g_canvas && g_scan_w >= 2) {
-		int mid = g_scan_w / 2;
+	if (g_canvas && g_scan_w > 0) {
 		for (uint32_t i = 0; i < g_damage_count; i++) {
+			int x0 = g_damage[i].offset.x;
+			int x1 = x0 + g_damage[i].extent.width;
 			int y0 = g_damage[i].offset.y;
 			int y1 = y0 + g_damage[i].extent.height;
+			if (x0 < 0)
+				x0 = 0;
+			if (x1 > g_scan_w)
+				x1 = g_scan_w;
 			if (y0 < 0)
 				y0 = 0;
 			if (y1 > g_scan_h)
 				y1 = g_scan_h;
-			int lx0, lx1, rx0, rx1;
-			source_damage_span(g_damage[i].offset.x, g_damage[i].extent.width,
-							 g_shift_l, &lx0, &lx1);
-			source_damage_span(g_damage[i].offset.x, g_damage[i].extent.width,
-							 g_shift_r, &rx0, &rx1);
+			if (x1 <= x0 || y1 <= y0)
+				continue;
 			for (int y = y0; y < y1; y++) {
 				const uint32_t* srow = g_canvas + (size_t)y * g_canvas_stride;
-				squeeze_half_row(g_scan + (size_t)y * g_scan_stride, srow, g_scan_w,
-								 g_shift_l, lx0, lx1);
-				squeeze_half_row(g_scan + (size_t)y * g_scan_stride + mid, srow, g_scan_w,
-								 g_shift_r, rx0, rx1);
+				uint32_t* drow = g_scan + (size_t)y * g_scan_stride;
+				for (int x = x0; x < x1; x++)
+					drow[x] = srow[x];
 			}
 		}
 	}

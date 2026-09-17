@@ -5,16 +5,19 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <GL/glx.h>
 #include <gbm.h>
 
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cerrno>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -74,6 +77,7 @@ static std::mutex g_mu;
 static std::vector<uint8_t> g_rgba;
 static int g_w, g_h;
 static bool g_have;
+static uint64_t g_last_capture_ns;
 /* Reverse dbus connection to QEMU (we are the client) plus the console we
  * registered on (scanout path). Injection goes over the session bus instead:
  * QEMU only hosts our Listener object on the reverse connection, while the
@@ -83,19 +87,25 @@ static GDBusConnection* g_p2p;
 static std::string g_console_path;
 static GDBusConnection* g_sbus;
 static std::string g_qemu_name;
-/* Last injected pointer position (dedup: don't spam QEMU). */
+/* Coalesced pointer state. QEMU's display path can corrupt frames under a
+ * pointer flood, so retain the newest target and send at most 30 updates/s. */
 static std::mutex g_mu_abs;
 static uint32_t g_last_mx = 0xFFFFFFFFu, g_last_my = 0xFFFFFFFFu;
+static uint32_t g_pending_mx, g_pending_my;
+static bool g_mouse_pending;
+static gint64 g_last_mouse_us;
+static guint g_mouse_timer;
 /* Last DMABUF scanout, kept (dup'd fd) so UpdateDMABUF damage notifies can
  * re-read the same buffer. QEMU only sends a fresh ScanoutDMABUF when the
  * buffer itself changes. */
 static int g_dmabuf_fd = -1;
 static uint32_t g_dmabuf_w, g_dmabuf_h, g_dmabuf_stride, g_dmabuf_fourcc;
 static uint64_t g_dmabuf_mod;
+static bool g_dmabuf_y0_top;
 static bool g_dmabuf_valid;
 
 static EGLDisplay g_egl = EGL_NO_DISPLAY;
-static EGLContext g_ctx = EGL_NO_CONTEXT;
+static EGLContext g_egl_ctx = EGL_NO_CONTEXT;
 static struct gbm_device* g_gbm;
 static int g_drm_fd = -1;
 static PFNEGLCREATEIMAGEKHRPROC p_eglCreateImageKHR;
@@ -124,44 +134,20 @@ static bool egl_init() {
 		return false;
 	}
 	eglBindAPI(EGL_OPENGL_ES_API);
-	EGLint cfg_attr[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL_SURFACE_TYPE,
-						 EGL_PBUFFER_BIT, EGL_NONE};
+	EGLint cfg_attrs[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL_NONE};
 	EGLConfig cfg;
-	EGLint n = 0;
-	if (!eglChooseConfig(g_egl, cfg_attr, &cfg, 1, &n) || n < 1) {
-		std::fprintf(stderr, "qemu-egl: eglChooseConfig failed (err=0x%x)\n", eglGetError());
+	EGLint count = 0;
+	if (!eglChooseConfig(g_egl, cfg_attrs, &cfg, 1, &count) || count < 1)
 		return false;
-	}
-	EGLint ctx_attr[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
-	g_ctx = eglCreateContext(g_egl, cfg, EGL_NO_CONTEXT, ctx_attr);
-	if (g_ctx == EGL_NO_CONTEXT) {
-		std::fprintf(stderr, "qemu-egl: eglCreateContext failed (err=0x%x)\n", eglGetError());
+	EGLint ctx_attrs[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+	g_egl_ctx = eglCreateContext(g_egl, cfg, EGL_NO_CONTEXT, ctx_attrs);
+	if (g_egl_ctx == EGL_NO_CONTEXT)
 		return false;
-	}
-	if (!eglMakeCurrent(g_egl, EGL_NO_SURFACE, EGL_NO_SURFACE, g_ctx)) {
-		/* Surfaceless contexts need EGL_KHR_surfaceless_context; fall back
-		 * to a 1x1 pbuffer which works everywhere. err 0x3002 here means
-		 * EGL_BAD_ACCESS from the surfaceless bind. */
-		std::fprintf(stderr, "qemu-egl: surfaceless bind failed (err=0x%x), trying pbuffer\n",
-					 eglGetError());
-		EGLint pb_attr[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-		EGLSurface pb = eglCreatePbufferSurface(g_egl, cfg, pb_attr);
-		if (pb == EGL_NO_SURFACE) {
-			std::fprintf(stderr, "qemu-egl: eglCreatePbufferSurface failed (err=0x%x)\n",
-						 eglGetError());
-			return false;
-		}
-		if (!eglMakeCurrent(g_egl, pb, pb, g_ctx)) {
-			std::fprintf(stderr, "qemu-egl: eglMakeCurrent(pbuffer) failed (err=0x%x)\n",
-						 eglGetError());
-			return false;
-		}
-	}
 	p_eglCreateImageKHR =
 		(PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
 	p_glEGLImageTargetTexture2DOES =
 		(PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
-	std::fprintf(stderr, "qemu-egl: GBM/EGL ready (dmabuf import %s)\n",
+	std::fprintf(stderr, "qemu-egl: GBM/EGL image import ready (%s)\n",
 				 (p_eglCreateImageKHR && p_glEGLImageTargetTexture2DOES) ? "yes" : "no");
 	return true;
 }
@@ -182,14 +168,50 @@ static void store_bgra(const uint8_t* src, int w, int h, int stride) {
 		}
 	}
 	g_have = true;
+	struct timespec ts{};
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	g_last_capture_ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+}
+
+uint64_t qemu_egl_last_capture_ns() {
+	std::lock_guard<std::mutex> lock(g_mu);
+	return g_last_capture_ns;
+}
+
+static bool map_linear_dmabuf(int fd, uint32_t w, uint32_t h, uint32_t stride,
+							  uint64_t modifier) {
+	/* QEMU's INVALID/zero modifier scanouts are linear on the host. This CPU
+	 * path keeps EGL capture working on GBM drivers which can export a DMA-BUF
+	 * but cannot create a GLES context (common with mixed GPU setups). */
+	constexpr uint64_t k_drm_format_mod_invalid = 0x00ffffffffffffffULL;
+	if ((modifier != 0 && modifier != UINT64_MAX && modifier != k_drm_format_mod_invalid) ||
+		!w || !h || stride < w * 4)
+		return false;
+	size_t length = (size_t)stride * h;
+	void* map = mmap(nullptr, length, PROT_READ, MAP_SHARED, fd, 0);
+	if (map == MAP_FAILED) {
+		std::fprintf(stderr, "qemu-egl: linear dmabuf mmap failed: %s\n", std::strerror(errno));
+		return false;
+	}
+	store_bgra(static_cast<const uint8_t*>(map), (int)w, (int)h, (int)stride);
+	munmap(map, length);
+	std::fprintf(stderr, "qemu-egl: using mapped linear dmabuf fallback\n");
+	return true;
 }
 
 static bool import_dmabuf(int fd, uint32_t w, uint32_t h, uint32_t stride, uint32_t fourcc,
-						  uint64_t modifier) {
+						  uint64_t modifier, bool y0_top) {
 	if (!egl_init() || !p_eglCreateImageKHR || !p_glEGLImageTargetTexture2DOES)
+		return map_linear_dmabuf(fd, w, h, stride, modifier);
+	Display* old_display = glXGetCurrentDisplay();
+	GLXDrawable old_drawable = glXGetCurrentDrawable();
+	GLXContext old_context = glXGetCurrentContext();
+	if (old_context && !glXMakeCurrent(old_display, None, nullptr))
 		return false;
-	if (!eglMakeCurrent(g_egl, EGL_NO_SURFACE, EGL_NO_SURFACE, g_ctx))
-		return false;
+	if (!eglMakeCurrent(g_egl, EGL_NO_SURFACE, EGL_NO_SURFACE, g_egl_ctx)) {
+		if (old_context) glXMakeCurrent(old_display, old_drawable, old_context);
+		return map_linear_dmabuf(fd, w, h, stride, modifier);
+	}
 	EGLint attrs[20];
 	int i = 0;
 	attrs[i++] = EGL_WIDTH;
@@ -204,7 +226,10 @@ static bool import_dmabuf(int fd, uint32_t w, uint32_t h, uint32_t stride, uint3
 	attrs[i++] = 0;
 	attrs[i++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
 	attrs[i++] = (EGLint)stride;
-	if (modifier) {
+	/* QEMU uses DRM_FORMAT_MOD_INVALID (all bits set) to mean that no explicit
+	 * modifier was supplied. Passing that sentinel as an actual modifier makes
+	 * Mesa reject an otherwise importable linear scanout. */
+	if (modifier && modifier != UINT64_MAX && modifier != 0x00ffffffffffffffULL) {
 		attrs[i++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
 		attrs[i++] = (EGLint)(modifier & 0xffffffffu);
 		attrs[i++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT;
@@ -215,6 +240,8 @@ static bool import_dmabuf(int fd, uint32_t w, uint32_t h, uint32_t stride, uint3
 		p_eglCreateImageKHR(g_egl, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attrs);
 	if (img == EGL_NO_IMAGE_KHR) {
 		std::fprintf(stderr, "qemu-egl: eglCreateImageKHR failed (fourcc=0x%x)\n", fourcc);
+		eglMakeCurrent(g_egl, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+		if (old_context) glXMakeCurrent(old_display, old_drawable, old_context);
 		return false;
 	}
 	GLuint tex = 0, fbo = 0;
@@ -227,23 +254,35 @@ static bool import_dmabuf(int fd, uint32_t w, uint32_t h, uint32_t stride, uint3
 	std::vector<uint8_t> tmp((size_t)w * h * 4);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, (GLsizei)w, (GLsizei)h, GL_RGBA, GL_UNSIGNED_BYTE, tmp.data());
-	/* glReadPixels returns bottom-row-first; the capture buffer convention
-	 * here is top-row-first (same as the X11 and Scanout paths), so flip. */
+	/* QEMU tells us which edge row zero represents. With a top-origin DMA-BUF,
+	 * the imported GL image already compensates for GL's lower-left readback
+	 * convention, so reversing here would create a second vertical flip when
+	 * upload_rgba converts the top-first capture into an OpenXR texture. */
 	{
 		std::lock_guard<std::mutex> lock(g_mu);
 		g_w = (int)w;
 		g_h = (int)h;
 		g_rgba.resize((size_t)w * h * 4);
 		for (uint32_t y = 0; y < h; y++) {
+			/* y0_top describes the DMA-BUF's memory origin. The EGL import keeps
+			 * GL's lower-left framebuffer convention, so a top-origin source must
+			 * be reversed at readback; a bottom-origin source is already ordered
+			 * for upload_rgba's single texture conversion. */
+			uint32_t src_y = y0_top ? (h - 1 - y) : y;
 			std::memcpy(g_rgba.data() + (size_t)y * w * 4,
-						tmp.data() + (size_t)(h - 1 - y) * w * 4, (size_t)w * 4);
+						tmp.data() + (size_t)src_y * w * 4, (size_t)w * 4);
 		}
 		g_have = true;
+		struct timespec ts{};
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		g_last_capture_ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteTextures(1, &tex);
 	eglDestroyImage(g_egl, img);
+	eglMakeCurrent(g_egl, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	if (old_context) glXMakeCurrent(old_display, old_drawable, old_context);
 	return true;
 }
 
@@ -291,7 +330,7 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 				std::fflush(stderr);
 			}
 		}
-		if (data && w > 0 && h > 0) {
+		if (data && x >= 0 && y >= 0 && w > 0 && h > 0) {
 			std::lock_guard<std::mutex> lock(g_mu);
 			if ((int)(x + w) <= g_w && (int)(y + h) <= g_h && !g_rgba.empty()) {
 				for (int row = 0; row < h; row++) {
@@ -304,6 +343,9 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 						d[col * 4 + 3] = 255;
 					}
 				}
+				struct timespec ts{};
+				clock_gettime(CLOCK_MONOTONIC, &ts);
+				g_last_capture_ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
 			}
 		}
 		g_variant_unref(data_v);
@@ -333,7 +375,7 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 			}
 		}
 		if (fd >= 0) {
-			import_dmabuf(fd, w, ht, stride, fourcc, mod);
+			import_dmabuf(fd, w, ht, stride, fourcc, mod, y0 == TRUE);
 			/* Keep our own reference so later UpdateDMABUF notifies
 			 * (same buffer, new damage) can re-read it. */
 			int kept = dup(fd);
@@ -347,6 +389,7 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 				g_dmabuf_stride = stride;
 				g_dmabuf_fourcc = fourcc;
 				g_dmabuf_mod = mod;
+				g_dmabuf_y0_top = y0 == TRUE;
 				g_dmabuf_valid = true;
 			}
 			close(fd);
@@ -364,6 +407,7 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 		int fd = -1;
 		uint32_t cw = 0, ch = 0, cs = 0, cf = 0;
 		uint64_t cm = 0;
+		bool cy0_top = true;
 		{
 			std::lock_guard<std::mutex> lock(g_mu);
 			if (g_dmabuf_valid && g_dmabuf_fd >= 0) {
@@ -373,10 +417,11 @@ static void method_call(GDBusConnection*, const gchar*, const gchar*, const gcha
 				cs = g_dmabuf_stride;
 				cf = g_dmabuf_fourcc;
 				cm = g_dmabuf_mod;
+				cy0_top = g_dmabuf_y0_top;
 			}
 		}
 		if (fd >= 0) {
-			import_dmabuf(fd, cw, ch, cs, cf, cm);
+			import_dmabuf(fd, cw, ch, cs, cf, cm, cy0_top);
 			close(fd);
 		}
 		g_dbus_method_invocation_return_value(inv, nullptr);
@@ -448,12 +493,13 @@ bool qemu_egl_connect(const char* dbus_addr) {
 	 * first: QEMU only completes the reverse p2p handshake on the console
 	 * that actually receives scanouts, and blocks the caller forever
 	 * otherwise. */
-	const char* consoles[] = {"/org/qemu/Display1/Console_1", "/org/qemu/Display1/Console_0",
-							  "/org/qemu/Display1/Console"};
+	const char* consoles[] = {"/org/qemu/Display1/Console_1",
+							 "/org/qemu/Display1/Console"};
 	GUnixFDList* fds = g_unix_fd_list_new_from_array(&sv[1], 1);
 	GVariant* ret = nullptr;
 	const char* reg_console = nullptr;
-	for (const char* path : consoles) {
+	for (int console_index = 0; console_index < 2; ++console_index) {
+		const char* path = consoles[console_index];
 		err = nullptr;
 		ret = g_dbus_connection_call_with_unix_fd_list_sync(
 			bus, qemu_name, path, "org.qemu.Display1.Console", "RegisterListener",
@@ -545,22 +591,34 @@ static void mouse_call(const char* method, GVariant* params) {
 }
 
 void qemu_mouse_abs(uint32_t x, uint32_t y) {
+	constexpr gint64 interval_us = 33333;
 	std::lock_guard<std::mutex> lock(g_mu_abs);
-	if (x == g_last_mx && y == g_last_my)
+	if (!g_mouse_pending && x == g_last_mx && y == g_last_my)
 		return;
-	/* Throttle: the guest/QEMU display path glitches under sustained
-	 * high-rate pointer floods (blue-masked frames). ~15Hz is plenty for
-	 * a motion-integrated cursor; buttons are unaffected. */
-	static uint64_t last_ns = 0;
-	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	uint64_t now = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
-	if (now - last_ns < 66000000ull)
+	g_pending_mx = x;
+	g_pending_my = y;
+	g_mouse_pending = true;
+	if (g_mouse_timer)
 		return;
-	last_ns = now;
-	g_last_mx = x;
-	g_last_my = y;
-	mouse_call("SetAbsPosition", g_variant_new("(uu)", x, y));
+	gint64 elapsed = g_get_monotonic_time() - g_last_mouse_us;
+	guint delay_ms = elapsed >= interval_us ? 1u : (guint)((interval_us - elapsed + 999) / 1000);
+	g_mouse_timer = g_timeout_add(delay_ms, [](gpointer) -> gboolean {
+		uint32_t send_x = 0, send_y = 0;
+		{
+			std::lock_guard<std::mutex> pending_lock(g_mu_abs);
+			g_mouse_timer = 0;
+			if (!g_mouse_pending)
+				return G_SOURCE_REMOVE;
+			send_x = g_pending_mx;
+			send_y = g_pending_my;
+			g_mouse_pending = false;
+			g_last_mx = send_x;
+			g_last_my = send_y;
+			g_last_mouse_us = g_get_monotonic_time();
+		}
+		mouse_call("SetAbsPosition", g_variant_new("(uu)", send_x, send_y));
+		return G_SOURCE_REMOVE;
+	}, nullptr);
 }
 
 void qemu_mouse_button(uint32_t button, bool down) {

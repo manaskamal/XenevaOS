@@ -5,6 +5,7 @@
  */
 #define XR_USE_PLATFORM_XLIB
 #define XR_USE_GRAPHICS_API_OPENGL
+#define GL_GLEXT_PROTOTYPES
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -14,9 +15,11 @@
 #include <GL/glx.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
+#include "pointer_filter.h"
 #include "qemu_egl_capture.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
@@ -24,11 +27,19 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <time.h>
+#include <utility>
 #include <vector>
 
 static void die(const char* msg) {
 	std::fprintf(stderr, "xeneva-xr-view: %s\n", msg);
 	std::exit(1);
+}
+
+static uint64_t host_monotonic_ns() {
+	struct timespec ts{};
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
 }
 
 static void xr_check(XrResult r, const char* what) {
@@ -37,6 +48,20 @@ static void xr_check(XrResult r, const char* what) {
 		std::snprintf(buf, sizeof(buf), "%s failed (%d)", what, (int)r);
 		die(buf);
 	}
+}
+
+static bool xr_has_extension(const char* wanted) {
+	uint32_t count = 0;
+	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &count, nullptr)))
+		return false;
+	std::vector<XrExtensionProperties> props(count, {XR_TYPE_EXTENSION_PROPERTIES});
+	if (XR_FAILED(xrEnumerateInstanceExtensionProperties(nullptr, count, &count, props.data())))
+		return false;
+	for (const auto& prop : props) {
+		if (!std::strcmp(prop.extensionName, wanted))
+			return true;
+	}
+	return false;
 }
 
 struct Capture {
@@ -55,11 +80,17 @@ struct Capture {
 	/* --hands: drive the guest cursor from right-hand tracking (ray +
 	 * pinch), injected over dbus like VNC input. */
 	bool hands = false;
+	/* Standard XR_EXT_hand_tracking joint mesh. --hands enables it by
+	 * default; --hand-mesh can also display hands without pointer input. */
+	bool hand_mesh = false;
 	/* --controllers: same via the right controller (aim + trigger);
 	 * wins over hands while valid. */
 	bool controllers = false;
 	/* Relative pointer gain, guest pixels per meter of hand travel. */
 	float hands_gain = 20000.f;
+	/* Native-eye upscale policy: nearest keeps UI glyphs crisp; linear is
+	 * available for image-heavy guests. */
+	bool linear_filter = false;
 	int w = 1024;
 	int h = 768;
 	std::vector<uint8_t> rgba;
@@ -362,6 +393,7 @@ static GlxHeadless make_glx() {
 struct Swapchain {
 	XrSwapchain handle = XR_NULL_HANDLE;
 	int32_t w = 0, h = 0;
+	int64_t format = GL_RGBA8;
 	/* Placed guest rect inside the swapchain image. The swapchain stays
 	 * at HMD res; the guest is pasted native-size centered (letterbox)
 	 * so no per-pixel rescale ever runs --axiss */
@@ -381,13 +413,16 @@ static Swapchain make_swapchain(XrSession session, int32_t w, int32_t h) {
 	xr_check(xrEnumerateSwapchainFormats(session, 0, &nfmt, nullptr), "enumerate formats");
 	std::vector<int64_t> fmts(nfmt);
 	xr_check(xrEnumerateSwapchainFormats(session, nfmt, &nfmt, fmts.data()), "enumerate formats");
-	int64_t format = GL_RGBA8;
+	bool have_srgb = false, have_rgba = false;
 	for (int64_t f : fmts) {
-		if (f == GL_SRGB8_ALPHA8 || f == GL_RGBA8) {
-			format = f;
-			break;
-		}
+		have_srgb = have_srgb || f == GL_SRGB8_ALPHA8;
+		have_rgba = have_rgba || f == GL_RGBA8;
 	}
+	/* The guest compositor has already produced display-encoded bytes. Keep
+	 * them byte-for-byte in a linear RGBA swapchain; an sRGB render target
+	 * applies another transfer function and crushes the glass gradients. */
+	int64_t format = have_rgba ? GL_RGBA8 : have_srgb ? GL_SRGB8_ALPHA8 : fmts[0];
+	sc.format = format;
 	XrSwapchainCreateInfo ci{XR_TYPE_SWAPCHAIN_CREATE_INFO};
 	ci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT;
 	ci.format = format;
@@ -418,7 +453,6 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 	wait.timeout = XR_INFINITE_DURATION;
 	xr_check(xrWaitSwapchainImage(sc.handle, &wait), "wait");
 	GLuint tex = sc.images[idx].image;
-	glBindTexture(GL_TEXTURE_2D, tex);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	if (!cap.rgba.empty()) {
 		/* Capture buffers are top-row-first; GL/OpenXR swapchain textures
@@ -428,23 +462,79 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 		 * the placed region is uploaded. Reuse one scratch buffer. */
 		static std::vector<uint8_t> scratch;
 		if (cap.w <= sc.w && cap.h <= sc.h) {
-			sc.up_w = cap.w;
-			sc.up_h = cap.h;
-			sc.up_x = (sc.w - cap.w) / 2;
-			sc.up_y = (sc.h - cap.h) / 2;
+			/* Render through a staging texture so a side-by-side capture fills a
+			 * 2x-recommended-width swapchain on the GPU. Each OpenXR sub-image is
+			 * then exactly the runtime's native per-eye recommendation. */
+			static GLuint source_tex = 0, scale_fbo = 0;
+			static int source_w = 0, source_h = 0;
 			size_t need = (size_t)cap.w * (size_t)cap.h * 4;
 			if (scratch.size() != need)
 				scratch.resize(need);
-			for (int y = 0; y < cap.h; y++) {
+			for (int y = 0; y < cap.h; y++)
 				std::memcpy(&scratch[(size_t)y * cap.w * 4],
 							&cap.rgba[(size_t)(cap.h - 1 - y) * cap.w * 4],
 							(size_t)cap.w * 4);
+			if (!source_tex) {
+				glGenTextures(1, &source_tex);
+				glGenFramebuffers(1, &scale_fbo);
 			}
-			glTexSubImage2D(GL_TEXTURE_2D, 0, sc.up_x, sc.up_y, cap.w, cap.h, GL_RGBA,
-							GL_UNSIGNED_BYTE, scratch.data());
+			glBindTexture(GL_TEXTURE_2D, source_tex);
+			GLint filter = cap.linear_filter ? GL_LINEAR : GL_NEAREST;
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			if (source_w != cap.w || source_h != cap.h) {
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cap.w, cap.h, 0, GL_RGBA,
+							 GL_UNSIGNED_BYTE, scratch.data());
+				source_w = cap.w;
+				source_h = cap.h;
+			} else {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cap.w, cap.h, GL_RGBA,
+								GL_UNSIGNED_BYTE, scratch.data());
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, scale_fbo);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+			glViewport(0, 0, sc.w, sc.h);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_BLEND);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_FOG);
+			glColor4f(1.f, 1.f, 1.f, 1.f);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+#ifdef GL_FRAMEBUFFER_SRGB
+			glDisable(GL_FRAMEBUFFER_SRGB);
+#endif
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			glLoadIdentity();
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			glLoadIdentity();
+			glEnable(GL_TEXTURE_2D);
+			glBegin(GL_QUADS);
+			glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, -1.f);
+			glTexCoord2f(1.f, 0.f); glVertex2f( 1.f, -1.f);
+			glTexCoord2f(1.f, 1.f); glVertex2f( 1.f,  1.f);
+			glTexCoord2f(0.f, 1.f); glVertex2f(-1.f,  1.f);
+			glEnd();
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glDisable(GL_TEXTURE_2D);
+#ifdef GL_FRAMEBUFFER_SRGB
+			glDisable(GL_FRAMEBUFFER_SRGB);
+#endif
+			glPopMatrix();
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+			glMatrixMode(GL_MODELVIEW);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			sc.up_x = sc.up_y = 0;
+			sc.up_w = sc.w;
+			sc.up_h = sc.h;
 		} else {
 			/* Guest bigger than the swapchain (shouldn't happen): scale
 			 * down with plain assignments, no per-pixel memcpy calls. */
+			glBindTexture(GL_TEXTURE_2D, tex);
 			sc.up_x = 0;
 			sc.up_y = 0;
 			sc.up_w = sc.w;
@@ -470,6 +560,381 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 	xr_check(xrReleaseSwapchainImage(sc.handle, &rel), "release");
 }
 
+#ifdef XR_EXT_HAND_TRACKING_EXTENSION_NAME
+struct FilteredJoint {
+	PointerFilter xy;
+	PointerFilter z;
+};
+
+struct HandVisual {
+	PFN_xrCreateHandTrackerEXT create = nullptr;
+	PFN_xrDestroyHandTrackerEXT destroy = nullptr;
+	PFN_xrLocateHandJointsEXT locate = nullptr;
+	XrHandTrackerEXT tracker[2] = {XR_NULL_HANDLE, XR_NULL_HANDLE};
+	std::array<XrHandJointLocationEXT, XR_HAND_JOINT_COUNT_EXT> joints[2];
+	std::array<FilteredJoint, XR_HAND_JOINT_COUNT_EXT> filters[2];
+	bool active[2] = {false, false};
+	Swapchain eye[2];
+	GLuint fbo[2] = {};
+	GLuint depth[2] = {};
+	bool ready = false;
+};
+
+struct Vec3 {
+	float x, y, z;
+};
+
+static Vec3 operator+(Vec3 a, Vec3 b) { return {a.x + b.x, a.y + b.y, a.z + b.z}; }
+static Vec3 operator-(Vec3 a, Vec3 b) { return {a.x - b.x, a.y - b.y, a.z - b.z}; }
+static Vec3 operator*(Vec3 a, float s) { return {a.x * s, a.y * s, a.z * s}; }
+static float dot(Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+static Vec3 cross(Vec3 a, Vec3 b) {
+	return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
+			a.x * b.y - a.y * b.x};
+}
+static Vec3 normalized(Vec3 v) {
+	float len = std::sqrt(dot(v, v));
+	return len > 1e-6f ? v * (1.f / len) : Vec3{0.f, 1.f, 0.f};
+}
+static Vec3 joint_pos(const XrHandJointLocationEXT& joint) {
+	return {joint.pose.position.x, joint.pose.position.y, joint.pose.position.z};
+}
+
+static void draw_sphere(Vec3 center, float radius) {
+	constexpr int rings = 5;
+	constexpr int sides = 8;
+	constexpr float pi = 3.14159265358979323846f;
+	for (int ring = 0; ring < rings; ++ring) {
+		float a0 = -pi * 0.5f + pi * (float)ring / rings;
+		float a1 = -pi * 0.5f + pi * (float)(ring + 1) / rings;
+		glBegin(GL_TRIANGLE_STRIP);
+		for (int side = 0; side <= sides; ++side) {
+			float lon = 2.f * pi * (float)side / sides;
+			for (float lat : {a0, a1}) {
+				float c = std::cos(lat);
+				glVertex3f(center.x + radius * c * std::cos(lon),
+						   center.y + radius * std::sin(lat),
+						   center.z + radius * c * std::sin(lon));
+			}
+		}
+		glEnd();
+	}
+}
+
+static void draw_bone(Vec3 a, Vec3 b, float ra, float rb) {
+	Vec3 axis = b - a;
+	if (dot(axis, axis) < 1e-8f)
+		return;
+	axis = normalized(axis);
+	Vec3 helper = std::fabs(axis.z) < 0.8f ? Vec3{0.f, 0.f, 1.f} : Vec3{0.f, 1.f, 0.f};
+	Vec3 u = normalized(cross(axis, helper));
+	Vec3 v = cross(axis, u);
+	constexpr int sides = 8;
+	constexpr float pi = 3.14159265358979323846f;
+	glBegin(GL_TRIANGLE_STRIP);
+	for (int i = 0; i <= sides; ++i) {
+		float angle = 2.f * pi * (float)i / sides;
+		Vec3 radial = u * std::cos(angle) + v * std::sin(angle);
+		Vec3 pa = a + radial * ra;
+		Vec3 pb = b + radial * rb;
+		glVertex3f(pa.x, pa.y, pa.z);
+		glVertex3f(pb.x, pb.y, pb.z);
+	}
+	glEnd();
+}
+
+static void projection_matrix(const XrFovf& fov, float* m) {
+	float near_z = 0.03f, far_z = 10.f;
+	float l = std::tan(fov.angleLeft) * near_z;
+	float r = std::tan(fov.angleRight) * near_z;
+	float b = std::tan(fov.angleDown) * near_z;
+	float t = std::tan(fov.angleUp) * near_z;
+	std::fill(m, m + 16, 0.f);
+	m[0] = 2.f * near_z / (r - l);
+	m[5] = 2.f * near_z / (t - b);
+	m[8] = (r + l) / (r - l);
+	m[9] = (t + b) / (t - b);
+	m[10] = -(far_z + near_z) / (far_z - near_z);
+	m[11] = -1.f;
+	m[14] = -(2.f * far_z * near_z) / (far_z - near_z);
+}
+
+static void view_matrix(const XrPosef& pose, float* m) {
+	/* Invert the eye pose: conjugate quaternion rotation followed by the
+	 * corresponding translated origin. */
+	float x = -pose.orientation.x, y = -pose.orientation.y;
+	float z = -pose.orientation.z, w = pose.orientation.w;
+	float r00 = 1.f - 2.f * (y * y + z * z);
+	float r01 = 2.f * (x * y - z * w);
+	float r02 = 2.f * (x * z + y * w);
+	float r10 = 2.f * (x * y + z * w);
+	float r11 = 1.f - 2.f * (x * x + z * z);
+	float r12 = 2.f * (y * z - x * w);
+	float r20 = 2.f * (x * z - y * w);
+	float r21 = 2.f * (y * z + x * w);
+	float r22 = 1.f - 2.f * (x * x + y * y);
+	float px = pose.position.x, py = pose.position.y, pz = pose.position.z;
+	float tx = -(r00 * px + r01 * py + r02 * pz);
+	float ty = -(r10 * px + r11 * py + r12 * pz);
+	float tz = -(r20 * px + r21 * py + r22 * pz);
+	float out[16] = {r00, r10, r20, 0.f, r01, r11, r21, 0.f,
+					 r02, r12, r22, 0.f, tx, ty, tz, 1.f};
+	std::copy(out, out + 16, m);
+}
+
+static void draw_hand(const std::array<XrHandJointLocationEXT, XR_HAND_JOINT_COUNT_EXT>& j,
+					  int hand) {
+	static constexpr std::pair<int, int> bones[] = {
+		{XR_HAND_JOINT_WRIST_EXT, XR_HAND_JOINT_PALM_EXT},
+		{XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_THUMB_METACARPAL_EXT},
+		{XR_HAND_JOINT_THUMB_METACARPAL_EXT, XR_HAND_JOINT_THUMB_PROXIMAL_EXT},
+		{XR_HAND_JOINT_THUMB_PROXIMAL_EXT, XR_HAND_JOINT_THUMB_DISTAL_EXT},
+		{XR_HAND_JOINT_THUMB_DISTAL_EXT, XR_HAND_JOINT_THUMB_TIP_EXT},
+		{XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_INDEX_METACARPAL_EXT},
+		{XR_HAND_JOINT_INDEX_METACARPAL_EXT, XR_HAND_JOINT_INDEX_PROXIMAL_EXT},
+		{XR_HAND_JOINT_INDEX_PROXIMAL_EXT, XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT},
+		{XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT, XR_HAND_JOINT_INDEX_DISTAL_EXT},
+		{XR_HAND_JOINT_INDEX_DISTAL_EXT, XR_HAND_JOINT_INDEX_TIP_EXT},
+		{XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_MIDDLE_METACARPAL_EXT},
+		{XR_HAND_JOINT_MIDDLE_METACARPAL_EXT, XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT},
+		{XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT, XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT},
+		{XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT, XR_HAND_JOINT_MIDDLE_DISTAL_EXT},
+		{XR_HAND_JOINT_MIDDLE_DISTAL_EXT, XR_HAND_JOINT_MIDDLE_TIP_EXT},
+		{XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_RING_METACARPAL_EXT},
+		{XR_HAND_JOINT_RING_METACARPAL_EXT, XR_HAND_JOINT_RING_PROXIMAL_EXT},
+		{XR_HAND_JOINT_RING_PROXIMAL_EXT, XR_HAND_JOINT_RING_INTERMEDIATE_EXT},
+		{XR_HAND_JOINT_RING_INTERMEDIATE_EXT, XR_HAND_JOINT_RING_DISTAL_EXT},
+		{XR_HAND_JOINT_RING_DISTAL_EXT, XR_HAND_JOINT_RING_TIP_EXT},
+		{XR_HAND_JOINT_PALM_EXT, XR_HAND_JOINT_LITTLE_METACARPAL_EXT},
+		{XR_HAND_JOINT_LITTLE_METACARPAL_EXT, XR_HAND_JOINT_LITTLE_PROXIMAL_EXT},
+		{XR_HAND_JOINT_LITTLE_PROXIMAL_EXT, XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT},
+		{XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT, XR_HAND_JOINT_LITTLE_DISTAL_EXT},
+		{XR_HAND_JOINT_LITTLE_DISTAL_EXT, XR_HAND_JOINT_LITTLE_TIP_EXT},
+	};
+	if (hand == 0)
+		glColor4f(0.10f, 0.78f, 0.92f, 1.f);
+	else
+		glColor4f(0.96f, 0.58f, 0.16f, 1.f);
+	for (const auto& bone : bones) {
+		const auto& a = j[(size_t)bone.first];
+		const auto& b = j[(size_t)bone.second];
+		if (!(a.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) ||
+			!(b.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT))
+			continue;
+		float ra = std::clamp(a.radius * 0.72f, 0.0035f, 0.012f);
+		float rb = std::clamp(b.radius * 0.72f, 0.003f, 0.011f);
+		draw_bone(joint_pos(a), joint_pos(b), ra, rb);
+	}
+	for (const auto& joint : j) {
+		if (!(joint.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT))
+			continue;
+		float radius = std::clamp(joint.radius * 0.78f, 0.0035f, 0.013f);
+		draw_sphere(joint_pos(joint), radius);
+	}
+	const auto& palm = j[XR_HAND_JOINT_PALM_EXT];
+	if (palm.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		draw_sphere(joint_pos(palm), std::max(0.026f, palm.radius * 1.3f));
+}
+
+static bool hand_visual_setup(HandVisual* h, XrInstance instance, XrSystemId system,
+						  XrSession session, int32_t w, int32_t height) {
+	if (!h)
+		return false;
+	XrSystemHandTrackingPropertiesEXT hand_props{XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT};
+	XrSystemProperties props{XR_TYPE_SYSTEM_PROPERTIES};
+	props.next = &hand_props;
+	if (XR_FAILED(xrGetSystemProperties(instance, system, &props)) ||
+		hand_props.supportsHandTracking != XR_TRUE) {
+		std::fprintf(stderr, "xeneva-xr-view: system does not support hand joints\n");
+		return false;
+	}
+	if (XR_FAILED(xrGetInstanceProcAddr(instance, "xrCreateHandTrackerEXT",
+									   reinterpret_cast<PFN_xrVoidFunction*>(&h->create))) ||
+		XR_FAILED(xrGetInstanceProcAddr(instance, "xrDestroyHandTrackerEXT",
+									   reinterpret_cast<PFN_xrVoidFunction*>(&h->destroy))) ||
+		XR_FAILED(xrGetInstanceProcAddr(instance, "xrLocateHandJointsEXT",
+									   reinterpret_cast<PFN_xrVoidFunction*>(&h->locate))))
+		return false;
+	for (int hand = 0; hand < 2; ++hand) {
+		XrHandTrackerCreateInfoEXT create{XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT};
+		create.hand = hand == 0 ? XR_HAND_LEFT_EXT : XR_HAND_RIGHT_EXT;
+		create.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
+		if (XR_FAILED(h->create(session, &create, &h->tracker[hand])))
+			h->tracker[hand] = XR_NULL_HANDLE;
+	}
+	if (h->tracker[0] == XR_NULL_HANDLE && h->tracker[1] == XR_NULL_HANDLE)
+		return false;
+	for (int eye = 0; eye < 2; ++eye) {
+		h->eye[eye] = make_swapchain(session, w, height);
+		glGenFramebuffers(1, &h->fbo[eye]);
+		glGenRenderbuffers(1, &h->depth[eye]);
+		glBindRenderbuffer(GL_RENDERBUFFER, h->depth[eye]);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, height);
+	}
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	h->ready = true;
+	std::fprintf(stderr, "xeneva-xr-view: standard joint hand mesh on (left + right)\n");
+	return true;
+}
+
+static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, XrTime time,
+						   XrCompositionLayerProjection* layer,
+						   std::array<XrCompositionLayerProjectionView, 2>* projection_views) {
+	if (!h || !h->ready || !layer || !projection_views)
+		return false;
+	bool any = false;
+	for (int hand = 0; hand < 2; ++hand) {
+		h->active[hand] = false;
+		if (h->tracker[hand] == XR_NULL_HANDLE)
+			continue;
+		XrHandJointsLocateInfoEXT locate_info{XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT};
+		locate_info.baseSpace = space;
+		locate_info.time = time;
+		XrHandJointLocationsEXT locations{XR_TYPE_HAND_JOINT_LOCATIONS_EXT};
+		locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+		locations.jointLocations = h->joints[hand].data();
+		if (XR_FAILED(h->locate(h->tracker[hand], &locate_info, &locations)) ||
+			locations.isActive != XR_TRUE) {
+			for (auto& filter : h->filters[hand]) {
+				filter.xy.reset();
+				filter.z.reset();
+			}
+			continue;
+		}
+		h->active[hand] = true;
+		any = true;
+		for (size_t i = 0; i < h->joints[hand].size(); ++i) {
+			auto& joint = h->joints[hand][i];
+			if (!(joint.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)) {
+				h->filters[hand][i].xy.reset();
+				h->filters[hand][i].z.reset();
+				continue;
+			}
+			auto xy = h->filters[hand][i].xy.update(joint.pose.position.x,
+												 joint.pose.position.y, (int64_t)time);
+			auto z = h->filters[hand][i].z.update(joint.pose.position.z, 0.f, (int64_t)time);
+			/* Reject implausible behind-head and beyond-panel samples instead of
+			 * letting a transient tracking spike paint over the guest. */
+			if (z.x > -0.05f || z.x < -2.1f) {
+				joint.locationFlags &= ~XR_SPACE_LOCATION_POSITION_VALID_BIT;
+				continue;
+			}
+			joint.pose.position.x = xy.x;
+			joint.pose.position.y = xy.y;
+			joint.pose.position.z = z.x;
+		}
+	}
+	if (!any)
+		return false;
+
+	std::array<XrView, 2> views = {XrView{XR_TYPE_VIEW}, XrView{XR_TYPE_VIEW}};
+	XrViewLocateInfo view_info{XR_TYPE_VIEW_LOCATE_INFO};
+	view_info.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+	view_info.displayTime = time;
+	view_info.space = space;
+	XrViewState view_state{XR_TYPE_VIEW_STATE};
+	uint32_t view_count = 0;
+	if (XR_FAILED(xrLocateViews(session, &view_info, &view_state, 2, &view_count, views.data())) ||
+		view_count != 2 ||
+		(view_state.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT |
+									  XR_VIEW_STATE_ORIENTATION_VALID_BIT)) !=
+			(XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
+		return false;
+
+	for (int eye = 0; eye < 2; ++eye) {
+		XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
+		uint32_t image = 0;
+		xr_check(xrAcquireSwapchainImage(h->eye[eye].handle, &acquire, &image),
+				 "acquire hand image");
+		XrSwapchainImageWaitInfo wait{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
+		wait.timeout = XR_INFINITE_DURATION;
+		xr_check(xrWaitSwapchainImage(h->eye[eye].handle, &wait), "wait hand image");
+		glBindFramebuffer(GL_FRAMEBUFFER, h->fbo[eye]);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+						   h->eye[eye].images[image].image, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
+							h->depth[eye]);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			static bool warned = false;
+			if (!warned) {
+				std::fprintf(stderr, "xeneva-xr-view: hand framebuffer incomplete\n");
+				warned = true;
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+			xrReleaseSwapchainImage(h->eye[eye].handle, &release);
+			return false;
+		}
+		glViewport(0, 0, h->eye[eye].w, h->eye[eye].h);
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_TEXTURE_2D);
+		float projection[16], view[16];
+		projection_matrix(views[eye].fov, projection);
+		view_matrix(views[eye].pose, view);
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(projection);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(view);
+		for (int hand = 0; hand < 2; ++hand) {
+			if (h->active[hand])
+				draw_hand(h->joints[hand], hand);
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
+		xr_check(xrReleaseSwapchainImage(h->eye[eye].handle, &release), "release hand image");
+
+		auto& pv = (*projection_views)[eye];
+		pv = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
+		pv.pose = views[eye].pose;
+		pv.fov = views[eye].fov;
+		pv.subImage.swapchain = h->eye[eye].handle;
+		pv.subImage.imageRect.extent = {h->eye[eye].w, h->eye[eye].h};
+	}
+	*layer = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
+	layer->layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT |
+						XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+	layer->space = space;
+	layer->viewCount = 2;
+	layer->views = projection_views->data();
+	return true;
+}
+
+static void hand_visual_shutdown(HandVisual* h) {
+	if (!h)
+		return;
+	for (int hand = 0; hand < 2; ++hand) {
+		if (h->tracker[hand] != XR_NULL_HANDLE && h->destroy)
+			h->destroy(h->tracker[hand]);
+		h->tracker[hand] = XR_NULL_HANDLE;
+	}
+	for (int eye = 0; eye < 2; ++eye) {
+		if (h->fbo[eye])
+			glDeleteFramebuffers(1, &h->fbo[eye]);
+		if (h->depth[eye])
+			glDeleteRenderbuffers(1, &h->depth[eye]);
+		if (h->eye[eye].handle != XR_NULL_HANDLE)
+			xrDestroySwapchain(h->eye[eye].handle);
+	}
+	h->ready = false;
+}
+#else
+struct HandVisual {};
+static bool hand_visual_setup(HandVisual*, XrInstance, XrSystemId, XrSession, int32_t, int32_t) {
+	return false;
+}
+static bool hand_visual_render(HandVisual*, XrSession, XrSpace, XrTime,
+						   XrCompositionLayerProjection*,
+						   std::array<XrCompositionLayerProjectionView, 2>*) {
+	return false;
+}
+static void hand_visual_shutdown(HandVisual*) {}
+#endif
+
 /* Right-hand pointer + pinch click (--hands) and controller pointer +
  * trigger (--controllers). Hands ride EXT_hand_interaction action input
  * (aim pose + pinch float); controllers ride the standard touch/simple
@@ -492,14 +957,18 @@ struct Hands {
 	float cur_x = 0.f, cur_y = 0.f;
 	bool homed = false;
 	float hand_lx = 0.f, hand_ly = 0.f;
+	float hand_rx = 0.f, hand_ry = 0.f;
 	bool hand_have = false;
 	float ctl_lx = 0.f, ctl_ly = 0.f;
+	float ctl_rx = 0.f, ctl_ry = 0.f;
 	bool ctl_have = false;
-	float sdx = 0.f, sdy = 0.f;
+	PointerFilter hand_filter;
+	PointerFilter ctl_filter;
 	int pinch_hold = 0;
 	int ctl_hold = 0; /* frames to keep preferring controllers after loss */
 	enum Src { SRC_NONE, SRC_HAND, SRC_CTL };
 	Src pressed_by = SRC_NONE;
+	Src active_src = SRC_NONE;
 	bool pressed = false;
 };
 
@@ -670,7 +1139,8 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	get.subactionPath = h->handPath;
 	get.action = h->pinch;
 	XrActionStateFloat pinch{XR_TYPE_ACTION_STATE_FLOAT};
-	if (XR_SUCCEEDED(xrGetActionStateFloat(session, &get, &pinch)) && pinch.isActive) {
+	if (h->handOn && XR_SUCCEEDED(xrGetActionStateFloat(session, &get, &pinch)) &&
+		pinch.isActive) {
 		/* Pinch with hysteresis plus sustain: deliberate pinches hold for
 		 * many frames, motion artifacts spike for one or two. */
 		if (pinch.currentState > 0.06f) {
@@ -685,14 +1155,15 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 		h->pinch_hold = 0;
 	}
 	/* Aim pose gives the ray directly in VIEW space. */
-	XrSpaceLocation aim{XR_TYPE_SPACE_LOCATION};
-	XrResult locrc = xrLocateSpace(h->aimSpace, view, time, &aim);
-	if (XR_FAILED(locrc))
-		;
-	else if ((aim.locationFlags & XrSpaceLocationFlags(XR_SPACE_LOCATION_POSITION_VALID_BIT))) {
-		hand_ok = true;
-		hand_px = aim.pose.position.x;
-		hand_py = aim.pose.position.y;
+	if (h->handOn) {
+		XrSpaceLocation aim{XR_TYPE_SPACE_LOCATION};
+		XrResult locrc = xrLocateSpace(h->aimSpace, view, time, &aim);
+		if (XR_SUCCEEDED(locrc) &&
+			(aim.locationFlags & XrSpaceLocationFlags(XR_SPACE_LOCATION_POSITION_VALID_BIT))) {
+			hand_ok = true;
+			hand_px = aim.pose.position.x;
+			hand_py = aim.pose.position.y;
+		}
 	}
 	/* Position map, not ray: this runtime's aim -Z sits ~40-60 deg above
 	 * where the user points, so rays always overshoot the panel. The aim
@@ -728,8 +1199,16 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	 * flickering pose doesn't flap the cursor between sources. */
 	if (ctl_ok)
 		h->ctl_hold = 10;
-	else if (h->ctl_hold > 0)
-		h->ctl_hold--;
+	else {
+		h->ctl_filter.reset();
+		h->ctl_have = false;
+		if (h->ctl_hold > 0)
+			h->ctl_hold--;
+	}
+	if (!hand_ok) {
+		h->hand_filter.reset();
+		h->hand_have = false;
+	}
 	bool use_ctl = h->ctlOn && (ctl_ok || h->ctl_hold > 0);
 	bool use_hand = !use_ctl && h->handOn && hand_ok;
 	if (!use_ctl && !use_hand) {
@@ -738,12 +1217,29 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 			h->pressed = false;
 			h->pressed_by = Hands::SRC_NONE;
 		}
+		h->active_src = Hands::SRC_NONE;
 		return;
 	}
 	/* Click edges follow the active source; a source switch releases first. */
 	bool want_click = use_ctl ? ctl_click : hand_click;
 	Hands::Src want_src = use_ctl ? Hands::SRC_CTL : Hands::SRC_HAND;
-	if (want_click && (!h->pressed || h->pressed_by != want_src)) {
+	if (want_src != h->active_src) {
+		/* Never carry a filtered velocity or stale origin across devices. */
+		if (want_src == Hands::SRC_CTL) {
+			h->ctl_filter.reset();
+			h->ctl_have = false;
+		} else {
+			h->hand_filter.reset();
+			h->hand_have = false;
+		}
+		h->active_src = want_src;
+	}
+	if (want_click && h->pressed && h->pressed_by != want_src) {
+		qemu_mouse_button(1, false);
+		h->pressed = false;
+		h->pressed_by = Hands::SRC_NONE;
+	}
+	if (want_click && !h->pressed) {
 		qemu_mouse_button(1, true);
 		h->pressed = true;
 		h->pressed_by = want_src;
@@ -752,6 +1248,10 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 		h->pressed = false;
 		h->pressed_by = Hands::SRC_NONE;
 	}
+	/* Keep controller ownership briefly through a pose dropout, but do not
+	 * integrate the default (0,0) pose or hand control will jump. */
+	if ((use_ctl && !ctl_ok) || (use_hand && !hand_ok))
+		return;
 	/* Relative (trackpad-style) pointer: absolute boxes cannot fit unknown
 	 * hand travel, so integrate scaled deltas instead. Fast flicks act as
 	 * a clutch (reposition without moving the cursor); sub-pixel noise is
@@ -769,28 +1269,41 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	float py = use_ctl ? ctl_py : hand_py;
 	float& last_x = use_ctl ? h->ctl_lx : h->hand_lx;
 	float& last_y = use_ctl ? h->ctl_ly : h->hand_ly;
+	float& raw_x = use_ctl ? h->ctl_rx : h->hand_rx;
+	float& raw_y = use_ctl ? h->ctl_ry : h->hand_ry;
 	bool& have = use_ctl ? h->ctl_have : h->hand_have;
+	PointerFilter& filter = use_ctl ? h->ctl_filter : h->hand_filter;
+	PointerFilter::Point filtered = filter.update(px, py, (int64_t)time);
 	if (!have) {
-		last_x = px;
-		last_y = py;
+		last_x = filtered.x;
+		last_y = filtered.y;
+		raw_x = px;
+		raw_y = py;
 		have = true;
 		return;
 	}
-	float dx = (px - last_x) * cap.hands_gain;
-	float dy = -(py - last_y) * cap.hands_gain; /* hand y up, pixels y down */
-	last_x = px;
-	last_y = py;
+	/* Hand aim is noisier than a physical controller. Keep the configured
+	 * controller gain while making bare-hand movement half as sensitive. */
+	float input_gain = use_ctl ? cap.hands_gain : cap.hands_gain * 0.5f;
+	float raw_dx = (px - raw_x) * input_gain;
+	float raw_dy = -(py - raw_y) * input_gain;
+	raw_x = px;
+	raw_y = py;
+	float raw_step = std::sqrt(raw_dx * raw_dx + raw_dy * raw_dy);
+	float dx = (filtered.x - last_x) * input_gain;
+	float dy = -(filtered.y - last_y) * input_gain; /* XR y up, pixels y down */
 	float step = std::sqrt(dx * dx + dy * dy);
 	if (step < 2.5f)
 		return; /* sub-pixel noise + hand tremor */
-	if (step > 300.f)
+	if (raw_step > 300.f) {
+		filter.reset();
+		have = false;
 		return; /* flick = clutch, reposition silently */
-	/* Heavy smoothing: hands jitter at 60Hz; trust mostly history so the
-	 * cursor glides instead of buzzing. DC gain stays 1 (no slowdown). */
-	h->sdx = h->sdx * 0.85f + dx * 0.15f;
-	h->sdy = h->sdy * 0.85f + dy * 0.15f;
-	h->cur_x += h->sdx;
-	h->cur_y += h->sdy;
+	}
+	last_x = filtered.x;
+	last_y = filtered.y;
+	h->cur_x += dx;
+	h->cur_y += dy;
 	if (h->cur_x < 0.f)
 		h->cur_x = 0.f;
 	if (h->cur_y < 0.f)
@@ -810,8 +1323,11 @@ static void usage() {	std::fprintf(stderr,
 				 "  --stereo (default)  guest scanout is side-by-side L|R; each eye\n"
 				 "                      gets its own half (ocular)\n"
 				 "  --mono              guest scanout is 2D; show full frame to both eyes\n"
+				 "  --filter MODE       native-eye upscale: nearest (default) or linear\n"
 				 "  --hands             right-hand aim pointer + pinch click into the\n"
-				 "                      guest (needs WiVRn/Quest hand tracking on)\n"
+				 "                      guest; also shows both tracked hands\n"
+				 "  --hand-mesh         show both tracked hands without hand pointer input\n"
+				 "  --no-hand-mesh      disable the hand visual enabled by --hands\n"
 				 "  --controllers       same via the right controller (aim + trigger),\n"
 				 "                      takes over while valid\n"
 				 "  desktop keys: [ ] IPD, s SBS/anaglyph, q quit\n"
@@ -995,8 +1511,21 @@ int main(int argc, char** argv) {
 			cap.stereo = true;
 		} else if (!std::strcmp(argv[i], "--mono")) {
 			cap.stereo = false;
+		} else if (!std::strcmp(argv[i], "--filter") && i + 1 < argc) {
+			const char* mode = argv[++i];
+			if (!std::strcmp(mode, "nearest"))
+				cap.linear_filter = false;
+			else if (!std::strcmp(mode, "linear"))
+				cap.linear_filter = true;
+			else
+				die("--filter nearest|linear");
 		} else if (!std::strcmp(argv[i], "--hands")) {
 			cap.hands = true;
+			cap.hand_mesh = true;
+		} else if (!std::strcmp(argv[i], "--hand-mesh")) {
+			cap.hand_mesh = true;
+		} else if (!std::strcmp(argv[i], "--no-hand-mesh")) {
+			cap.hand_mesh = false;
 		} else if (!std::strcmp(argv[i], "--controllers")) {
 			cap.controllers = true;
 		} else if (!std::strcmp(argv[i], "--gain") && i + 1 < argc) {
@@ -1017,38 +1546,46 @@ int main(int argc, char** argv) {
 	if (desktop)
 		return run_desktop(&cap, anaglyph, ipd_px);
 
-	const char* exts[] = {XR_KHR_OPENGL_ENABLE_EXTENSION_NAME,
-#ifdef XR_EXT_HAND_TRACKING_EXTENSION_NAME
-						  XR_EXT_HAND_TRACKING_EXTENSION_NAME,
-#endif
-#ifdef XR_EXT_HAND_INTERACTION_EXTENSION_NAME
-						  XR_EXT_HAND_INTERACTION_EXTENSION_NAME,
-#endif
-						  nullptr};
+	std::vector<const char*> exts{XR_KHR_OPENGL_ENABLE_EXTENSION_NAME};
 	XrInstanceCreateInfo ici{XR_TYPE_INSTANCE_CREATE_INFO};
-	/* Only ask for hand extensions with --hands: runtimes without them
-	 * fail instance creation otherwise. */
+	/* Hand interaction and skeletal tracking are independent optional
+	 * features. Negotiate each instead of making either one fatal. */
 #ifndef XR_EXT_HAND_INTERACTION_EXTENSION_NAME
 	if (cap.hands) {
 		std::fprintf(stderr, "xeneva-xr-view: --hands needs hand-interaction headers; ignoring\n");
 		cap.hands = false;
 	}
+#else
+	if (cap.hands && xr_has_extension(XR_EXT_HAND_INTERACTION_EXTENSION_NAME))
+		exts.push_back(XR_EXT_HAND_INTERACTION_EXTENSION_NAME);
+	else if (cap.hands) {
+		std::fprintf(stderr, "xeneva-xr-view: runtime has no XR_EXT_hand_interaction; "
+						 "hand pointer disabled\n");
+		cap.hands = false;
+	}
 #endif
-	ici.enabledExtensionCount = 1;
-#ifdef XR_EXT_HAND_TRACKING_EXTENSION_NAME
-	if (cap.hands)
-		ici.enabledExtensionCount++;
+#ifndef XR_EXT_HAND_TRACKING_EXTENSION_NAME
+	if (cap.hand_mesh) {
+		std::fprintf(stderr, "xeneva-xr-view: OpenXR headers have no hand tracking; "
+						 "hand mesh disabled\n");
+		cap.hand_mesh = false;
+	}
+#else
+	if (cap.hand_mesh && xr_has_extension(XR_EXT_HAND_TRACKING_EXTENSION_NAME))
+		exts.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+	else if (cap.hand_mesh) {
+		std::fprintf(stderr, "xeneva-xr-view: runtime has no XR_EXT_hand_tracking; "
+						 "hand mesh disabled\n");
+		cap.hand_mesh = false;
+	}
 #endif
-#ifdef XR_EXT_HAND_INTERACTION_EXTENSION_NAME
-	if (cap.hands)
-		ici.enabledExtensionCount++;
-#endif
+	ici.enabledExtensionCount = (uint32_t)exts.size();
 	std::strcpy(ici.applicationInfo.applicationName, "xeneva-xr-view");
 	ici.applicationInfo.applicationVersion = 1;
 	std::strcpy(ici.applicationInfo.engineName, "XenevaOS");
 	ici.applicationInfo.engineVersion = 1;
 	ici.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
-	ici.enabledExtensionNames = exts;
+	ici.enabledExtensionNames = exts.data();
 	XrInstance instance = XR_NULL_HANDLE;
 	const char* rt = std::getenv("XR_RUNTIME_JSON");
 	std::fprintf(stderr, "xeneva-xr-view: XR_RUNTIME_JSON=%s\n", rt ? rt : "(default active_runtime)");
@@ -1141,7 +1678,12 @@ int main(int argc, char** argv) {
 	spc.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
 	spc.poseInReferenceSpace.orientation.w = 1.f;
 	XrSpace space = XR_NULL_HANDLE;
-	xr_check(xrCreateReferenceSpace(session, &spc, &space), "local space");
+	xr_check(xrCreateReferenceSpace(session, &spc, &space), "view space");
+	XrReferenceSpaceCreateInfo hand_spc{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
+	hand_spc.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+	hand_spc.poseInReferenceSpace.orientation.w = 1.f;
+	XrSpace hand_space = XR_NULL_HANDLE;
+	xr_check(xrCreateReferenceSpace(session, &hand_spc, &hand_space), "hand local space");
 
 	Hands hands;
 	if ((cap.hands || cap.controllers) &&
@@ -1151,14 +1693,25 @@ int main(int argc, char** argv) {
 	capture_frame(&cap);
 	/* Swapchain stays at the HMD recommended size; the guest is scaled on
 	 * upload so every guest mode arrives undistorted at full eye res. */
-	int32_t scW = recW > 0 ? recW : std::max(cap.w, 256);
+	int32_t eyeW = recW > 0 ? recW : std::max(cap.stereo ? cap.w / 2 : cap.w, 256);
+	int32_t scW = cap.stereo ? eyeW * 2 : eyeW;
 	int32_t scH = recH > 0 ? recH : std::max(cap.h, 256);
 	Swapchain sc = make_swapchain(session, scW, scH);
-	std::fprintf(stderr, "xeneva-xr-view: swapchain %dx%d  capture %s\n", sc.w, sc.h,
-				 cap.mode == Capture::X11 ? "x11" : cap.mode == Capture::Ppm ? "ppm" : "pattern");
+	std::fprintf(stderr, "xeneva-xr-view: swapchain %dx%d format=0x%llx filter=%s capture=%s\n",
+				 sc.w, sc.h, (unsigned long long)sc.format,
+				 cap.linear_filter ? "linear" : "nearest",
+				 cap.mode == Capture::X11 ? "x11" : cap.mode == Capture::Ppm ? "ppm" :
+				 cap.mode == Capture::Egl ? "egl" : "pattern");
+	HandVisual hand_visual;
+	if (cap.hand_mesh &&
+		!hand_visual_setup(&hand_visual, instance, sys, session, eyeW, scH)) {
+		std::fprintf(stderr, "xeneva-xr-view: hand mesh unavailable; continuing without it\n");
+		cap.hand_mesh = false;
+	}
 
 	bool running = true;
 	bool session_running = false;
+	uint64_t timing_frames = 0;
 	while (running) {
 		XrEventDataBuffer ev{XR_TYPE_EVENT_DATA_BUFFER};
 		while (xrPollEvent(instance, &ev) == XR_SUCCESS) {
@@ -1195,6 +1748,7 @@ int main(int argc, char** argv) {
 		 * scaled on upload so every mode arrives undistorted. */
 		if (fs.shouldRender)
 			upload_rgba(sc, cap);
+		uint64_t upload_done_ns = host_monotonic_ns();
 
 		XrCompositionLayerQuad quads[2] = {
 			{XR_TYPE_COMPOSITION_LAYER_QUAD}, {XR_TYPE_COMPOSITION_LAYER_QUAD}};
@@ -1206,7 +1760,7 @@ int main(int argc, char** argv) {
 		int place_w = sc.up_w > 0 ? sc.up_w : sc.w;
 		int place_h = sc.up_h > 0 ? sc.up_h : sc.h;
 		int eye_w = (cap.stereo && place_w >= 2) ? place_w / 2 : place_w;
-		if (cap.hands)
+		if (cap.hands || cap.controllers)
 			hands_update(&hands, cap, session, space, fs.predictedDisplayTime, eye_w,
 						 sc.h);
 	/* Panel keeps the GUEST frame aspect (e.g. 16:9 full SBS frame);
@@ -1216,7 +1770,10 @@ int main(int argc, char** argv) {
 		float aspect = (cap.w > 0 && cap.h > 0) ? (float)cap.w / (float)cap.h : 16.f / 9.f;
 		for (int eye = 0; eye < 2; ++eye) {
 			auto& quad = quads[eye];
-			quad.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+			/* The guest scanout is an opaque desktop (XRGB DMA-BUF). Its alpha
+			 * byte is undefined and must not blend the whole panel against the
+			 * black XR environment. Deodhai's glass is already baked into RGB. */
+			quad.layerFlags = 0;
 			quad.space = space;
 			quad.eyeVisibility = eye == 0 ? XR_EYE_VISIBILITY_LEFT : XR_EYE_VISIBILITY_RIGHT;
 			quad.subImage.swapchain = sc.handle;
@@ -1231,21 +1788,42 @@ int main(int argc, char** argv) {
 			quad.size = {1.8f * aspect, 1.8f};
 		}
 
+		XrCompositionLayerProjection hand_layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
+		std::array<XrCompositionLayerProjectionView, 2> hand_views;
+		bool show_hands = fs.shouldRender && cap.hand_mesh &&
+			hand_visual_render(&hand_visual, session, hand_space, fs.predictedDisplayTime,
+							   &hand_layer, &hand_views);
 		const XrCompositionLayerBaseHeader* layers[] = {
 			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[0]),
-			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[1])};
+			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[1]),
+			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&hand_layer)};
 		XrFrameEndInfo ei{XR_TYPE_FRAME_END_INFO};
 		ei.displayTime = fs.predictedDisplayTime;
 		ei.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 		if (fs.shouldRender) {
-			ei.layerCount = 2;
+			ei.layerCount = show_hands ? 3 : 2;
 			ei.layers = layers;
 		}
 		xr_check(xrEndFrame(session, &ei), "end frame");
+		if ((++timing_frames % 60) == 0) {
+			uint64_t cap_ns = qemu_egl_last_capture_ns();
+			uint64_t submit_ns = host_monotonic_ns();
+			long long cap_upload_us = cap_ns && upload_done_ns >= cap_ns
+				? (long long)((upload_done_ns - cap_ns) / 1000) : -1;
+			long long cap_submit_us = cap_ns && submit_ns >= cap_ns
+				? (long long)((submit_ns - cap_ns) / 1000) : -1;
+			std::fprintf(stderr,
+				"xeneva-xr-view: host_timing frame=%llu qemu_capture_to_upload_us=%lld "
+				"qemu_capture_to_submit_us=%lld guest_to_qemu=unmeasured "
+				"wivrn_to_display=unmeasured\n",
+				(unsigned long long)timing_frames, cap_upload_us, cap_submit_us);
+		}
 	}
 
+	hand_visual_shutdown(&hand_visual);
 	hands_shutdown(&hands);
 	xrDestroySwapchain(sc.handle);
+	xrDestroySpace(hand_space);
 	xrDestroySpace(space);
 	xrDestroySession(session);
 	xrDestroyInstance(instance);

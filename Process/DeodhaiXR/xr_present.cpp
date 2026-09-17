@@ -168,19 +168,16 @@ void XrPresentFrame(ChCanvas* canv) {
 		damage_count = 1;
 		first_frame = false;
 	} else {
-		uint32_t count = GetDirtyRectCount();
-		if (count > 100)
-			count = 100;
-		for (uint32_t i = 0; i < count; i++) {
-			Rect rect;
-			if (!GetDirtyRect(i, &rect) || rect.w <= 0 || rect.h <= 0)
-				continue;
-			damage[damage_count].offset.x = rect.x;
-			damage[damage_count].offset.y = rect.y;
-			damage[damage_count].extent.width = rect.w;
-			damage[damage_count].extent.height = rect.h;
-			damage_count++;
-		}
+		/* The guest compositor can restore obscured windows from backing surfaces
+		 * outside the immediate dirty rectangle. Publishing only clipped damage
+		 * here lets QEMU retain stale/cleared pixels when windows intersect. XR
+		 * therefore uses conservative full-frame damage; internal dirty tracking
+		 * still avoids unnecessary composition work. --axiss */
+		damage[0].offset.x = 0;
+		damage[0].offset.y = 0;
+		damage[0].extent.width = g_w;
+		damage[0].extent.height = g_h;
+		damage_count = 1;
 	}
 
 	for (int e = 0; e < 2; e++) {
@@ -230,16 +227,12 @@ void XrPresentFrame(ChCanvas* canv) {
 	xrQemuSetCanvasDamage(damage, damage_count);
 	xrEndFrame(g_session, &ei);
 
-	/* The scanout is side-by-side, so source damage is not valid for the GPU
-	 * transfer. Replace it with the two transformed eye regions. --axiss */
+	/* Flat-panel transport preserves source coordinates and full horizontal
+	 * detail, so the GPU damage list is the original canvas damage. --axiss */
 	InitialiseDirtyClipList();
-	int mid = g_w / 2;
 	for (uint32_t i = 0; i < damage_count; i++) {
-		int x0, x1;
-		output_damage_span(damage[i].offset.x, damage[i].extent.width, shifts[0], &x0, &x1);
-		AddDirtyClip(x0, damage[i].offset.y, x1 - x0, damage[i].extent.height);
-		output_damage_span(damage[i].offset.x, damage[i].extent.width, shifts[1], &x0, &x1);
-		AddDirtyClip(mid + x0, damage[i].offset.y, x1 - x0, damage[i].extent.height);
+		AddDirtyClip(damage[i].offset.x, damage[i].offset.y,
+					 damage[i].extent.width, damage[i].extent.height);
 	}
 }
 

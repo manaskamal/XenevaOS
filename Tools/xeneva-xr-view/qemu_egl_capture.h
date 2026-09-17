@@ -8,6 +8,7 @@
  */
 bool qemu_egl_connect(const char* dbus_addr);
 bool qemu_egl_poll(uint32_t** rgba, int* w, int* h);
+uint64_t qemu_egl_last_capture_ns();
 /* Absolute pointer + buttons on the registered console (same path VNC
  * uses). No-ops until qemu_egl_connect succeeds. Coordinates are guest
  * framebuffer pixels. */
