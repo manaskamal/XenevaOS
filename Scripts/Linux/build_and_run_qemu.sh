@@ -12,9 +12,8 @@ set -e
 #                           exist on disk.
 #   --force-user-apps       Also rebuild userspace libs/apps and redeploy them
 #                           into Resources/resources/ before packing.
-#   --bleed                 Benchmark-oriented AArch64 LLVM build: rebuild all
-#                           userspace, remove deliberate startup waits and boot
-#                           self-tests, and omit non-AArch64/media initrd payloads.
+#   --bleed                 Streamlined AArch64 LLVM profile: glass is kept,
+#                           network and audio stay alive, memory stays small.
 #   --soak                  Build the kernel with the scheduler soak test
 #                           (KernelAA64/Hal/sched_soak.c) started at boot.
 #   --direct-scanout        Rebuild userspace with the compositor drawing into
@@ -24,20 +23,32 @@ set -e
 #                           merge the kernel. Requires a userspace rebuild.
 #   --openxr                DeodhaiXR emits OpenXR (QEMU SBS runtime). Pair with
 #                           Tools/xeneva-xr-view and WiVRn for Quest 2.
-#   -xr-demo, --xr-demo     Full XR demo: implies --openxr, runs QEMU headless
-#                           with -display dbus + VNC + monitor sockets and
-#                           supervises the viewer with hand tracking enabled.
-#                           Pick the resolution yourself in gvncviewer. Needs
-#                           WiVRn + Quest 2 for the HMD. Ctrl-C stops both.
+#   -xr-demo, --xr-demo     Open the modular XR demo TUI. Defaults enable EGL,
+#                           hand pointer, controllers, both-hand mesh, and
+#                           automatic 1024x768 boot. Needs WiVRn + Quest 2.
+#   --xr-demo-defaults      Run that recommended XR profile without a TUI.
+#   --xr-[no-]hands         Enable/disable right-hand pointer + pinch.
+#   --xr-[no-]controllers   Enable/disable right-controller pointer + trigger.
+#   --xr-[no-]hand-mesh     Enable/disable both-hand joint mesh.
+#   --xr-resolution=MODE    1024x768 (default), 800x600, 640x480, or manual.
+#   --xr-gain=N             Pointer gain in guest pixels per meter (20000).
+#   --xr-scale=MODE         sharp (nearest, default) or smooth (linear).
+#   --xr-[no-]vnc           Enable/disable optional localhost VNC service.
+#   --xr-[no-]telnet        Enable/disable optional localhost HMP monitor.
 #   --egl-headless          QEMU -display egl-headless + dbus (DMA-BUF scanout).
 #                           Use Tools/xeneva-xr-view --desktop --egl to steal frames.
+#   --tui                   Open an interactive text menu to pick toolchain,
+#                           profile, run mode and guest options, then continue
+#                           into the normal build/run flow. Needs a terminal;
+#                           flags passed alongside preselect menu entries.
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
 #   --install-deps          Install required host packages for this distro.
 #   --initrd-size-mb=N      Override the auto-computed initrd2.img size.
 #   --headless              Run QEMU with -display none, bounded by a timeout,
 #                           instead of opening a GTK window. Ordinary builds
 #                           stop at the interactive resolution menu; bleed
-#                           selects 640x480 automatically and boots through it.
+#                           boots the default resolution automatically. Bleed
+#                           also trims compositor buffers.
 #   --term [cmd args...]    Open the QEMU window with a framebuffer TTY (no
 #                           compositor). Without extra args, init starts
 #                           xesh.exe on /dev/console. With extra args, init
@@ -70,17 +81,210 @@ DIRECT_SCANOUT=0
 UNIKERNEL=0
 OPENXR=0
 XR_DEMO=0
+XR_DEMO_MENU=0
 EGL_HEADLESS=0
+XR_HANDS=1
+XR_CONTROLLERS=1
+XR_HAND_MESH=1
+XR_RESOLUTION="1024x768"
+XR_GAIN=20000
+XR_SCALE="sharp"
+XR_VNC=1
+XR_TELNET=0
 TERM=0
 TERM_CMD=""
 INITRD_SIZE_MB=""
 ISO=0
 ISO_OUTPUT=""
+TUI=0
 
 print_help(){
     printf "${STY_CYAN}"
-    sed -n '3,49p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,/^# Known gap:/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     printf "${STY_RST}\n"
+}
+
+run_build_tui() {
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        echo "build_and_run_qemu: --tui needs a terminal." >&2
+        echo "Pass flags directly for the noninteractive flow." >&2
+        exit 2
+    fi
+
+    local toolchain_choice="$TOOLCHAIN"
+    local profile_choice="normal"
+    [ "$BLEED" -eq 1 ] && profile_choice="bleed"
+    local runmode_choice="gtk"
+    if [ "$HEADLESS" -eq 1 ]; then
+        runmode_choice="headless"
+    elif [ "$EGL_HEADLESS" -eq 1 ]; then
+        runmode_choice="egl-headless"
+    elif [ "$TERM" -eq 1 ]; then
+        runmode_choice="term"
+    elif [ "$ISO" -eq 1 ]; then
+        runmode_choice="iso"
+    fi
+    local userapps_choice="$BUILD_USER_APPS"
+    local scanout_choice="$DIRECT_SCANOUT"
+    local unikernel_choice="$UNIKERNEL"
+    local soak_choice="$SOAK"
+    local memory_choice="default"
+
+    local items=(toolchain profile runmode userapps scanout unikernel soak memory launch quit)
+    local selected=0
+    local tui_done=0
+
+    tui_on_off() {
+        if [ "$1" -eq 1 ]; then
+            printf '\033[1;32mON \033[0m'
+        else
+            printf '\033[2;31moff\033[0m'
+        fi
+    }
+
+    tui_cycle_runmode() {
+        case "$runmode_choice" in
+            gtk) runmode_choice="headless" ;;
+            headless) runmode_choice="egl-headless" ;;
+            egl-headless) runmode_choice="term" ;;
+            term) runmode_choice="iso" ;;
+            iso) runmode_choice="xr-demo" ;;
+            xr-demo) runmode_choice="gtk" ;;
+        esac
+    }
+
+    tui_cycle_memory() {
+        case "$memory_choice" in
+            default) memory_choice="384M" ;;
+            384M) memory_choice="1024M" ;;
+            1024M) memory_choice="2048M" ;;
+            2048M) memory_choice="default" ;;
+        esac
+    }
+
+    tui_reset_defaults() {
+        toolchain_choice="llvm"
+        profile_choice="normal"
+        runmode_choice="gtk"
+        userapps_choice=0
+        scanout_choice=0
+        unikernel_choice=0
+        soak_choice=0
+        memory_choice="default"
+    }
+
+    tui_restore() {
+        printf '\033[?25h\033[0m'
+    }
+
+    tui_apply_and_launch() {
+        TOOLCHAIN="$toolchain_choice"
+        BLEED=0
+        [ "$profile_choice" = bleed ] && BLEED=1
+        HEADLESS=0
+        EGL_HEADLESS=0
+        TERM=0
+        ISO=0
+        case "$runmode_choice" in
+            headless) HEADLESS=1 ;;
+            egl-headless) EGL_HEADLESS=1 ;;
+            term) TERM=1 ;;
+            iso) ISO=1 ;;
+            xr-demo) OPENXR=1; XR_DEMO=1; XR_DEMO_MENU=1 ;;
+        esac
+        BUILD_USER_APPS="$userapps_choice"
+        DIRECT_SCANOUT="$scanout_choice"
+        UNIKERNEL="$unikernel_choice"
+        SOAK="$soak_choice"
+        case "$memory_choice" in
+            default) unset XENEVA_QEMU_MEMORY ;;
+            *) export XENEVA_QEMU_MEMORY="$memory_choice" ;;
+        esac
+        trap - EXIT INT TERM
+        tui_restore
+        tui_done=1
+    }
+
+    tui_activate() {
+        case "${items[$selected]}" in
+            toolchain)
+                [ "$toolchain_choice" = llvm ] && toolchain_choice="gcc" || toolchain_choice="llvm"
+                ;;
+            profile)
+                [ "$profile_choice" = normal ] && profile_choice="bleed" || profile_choice="normal"
+                ;;
+            runmode) tui_cycle_runmode ;;
+            userapps) userapps_choice=$((1 - userapps_choice)) ;;
+            scanout) scanout_choice=$((1 - scanout_choice)) ;;
+            unikernel) unikernel_choice=$((1 - unikernel_choice)) ;;
+            soak) soak_choice=$((1 - soak_choice)) ;;
+            memory) tui_cycle_memory ;;
+            launch) tui_apply_and_launch ;;
+            quit)
+                tui_restore
+                exit 0
+                ;;
+        esac
+    }
+
+    tui_row() {
+        local index="$1" label="$2" value="$3"
+        if [ "$selected" -eq "$index" ]; then
+            printf '\033[48;5;24m\033[38;5;231m│ \033[0m'
+            printf '  %-24s ' "$label"
+            printf '%s\n' "$value"
+        else
+            printf '  \033[2m│\033[0m '
+            printf '  %-24s ' "$label"
+            printf '%s\n' "$value"
+        fi
+    }
+
+    tui_render() {
+        local w=62
+        local summary="${toolchain_choice}-${profile_choice} | ${runmode_choice} | mem ${memory_choice}"
+        printf '\033[?25l'
+        printf '\033[H\033[2J'
+        printf '\033[1;36m┌%s┐\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
+        printf '\033[1;36m│\033[0m \033[1m%-*s\033[0m\033[1;36m│\033[0m\n' "$((w - 1))" \
+            "XENEVA BUILD + RUN  -  qemu launcher"
+        printf '\033[2m│\033[0m %-*s\033[2m│\033[0m\n' "$((w - 1))" "$summary"
+        printf '\033[1;36m├%s┤\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
+        tui_row 0 "Toolchain" "$toolchain_choice"
+        tui_row 1 "Build profile" "$profile_choice"
+        tui_row 2 "Run mode" "$runmode_choice"
+        tui_row 3 "Rebuild user apps" "$(tui_on_off "$userapps_choice")"
+        tui_row 4 "Direct scanout" "$(tui_on_off "$scanout_choice")"
+        tui_row 5 "Unikernel shell" "$(tui_on_off "$unikernel_choice")"
+        tui_row 6 "Scheduler soak" "$(tui_on_off "$soak_choice")"
+        tui_row 7 "Guest memory" "$memory_choice"
+        tui_row 8 "Launch" "build + run"
+        tui_row 9 "Quit" ""
+        printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
+        printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
+        printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
+    }
+
+    trap tui_restore EXIT INT TERM
+
+    while [ "$tui_done" -eq 0 ]; do
+        tui_render
+        # EOF (closed stdin) must quit, not spin: an empty key would
+        # otherwise match the activate branch on every failed read. --axiss
+        IFS= read -rsn1 key || { tui_restore; exit 2; }
+        if [ "$key" = $'\e' ]; then
+            IFS= read -rsn2 -t 0.1 rest || true
+            key+="$rest"
+        fi
+        case "$key" in
+            $'\e[A'|k) selected=$(( (selected + ${#items[@]} - 1) % ${#items[@]} )) ;;
+            $'\e[B'|j) selected=$(( (selected + 1) % ${#items[@]} )) ;;
+            ' '|$'\n'|'') tui_activate ;;
+            d|D) tui_reset_defaults ;;
+            q|Q) tui_restore; exit 0 ;;
+        esac
+    done
+    trap - EXIT INT TERM
 }
 
 while [ $# -gt 0 ]; do
@@ -94,7 +298,21 @@ while [ $# -gt 0 ]; do
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
 		--unikernel) UNIKERNEL=1 ;;
 		--openxr) OPENXR=1 ;;
-		-xr-demo|--xr-demo) OPENXR=1; XR_DEMO=1 ;;
+		-xr-demo|--xr-demo) OPENXR=1; XR_DEMO=1; XR_DEMO_MENU=1 ;;
+		--xr-demo-defaults) OPENXR=1; XR_DEMO=1 ;;
+		--xr-hands) XR_HANDS=1 ;;
+		--xr-no-hands) XR_HANDS=0 ;;
+		--xr-controllers) XR_CONTROLLERS=1 ;;
+		--xr-no-controllers) XR_CONTROLLERS=0 ;;
+		--xr-hand-mesh) XR_HAND_MESH=1 ;;
+		--xr-no-hand-mesh) XR_HAND_MESH=0 ;;
+		--xr-resolution=*) XR_RESOLUTION="${1#--xr-resolution=}" ;;
+		--xr-gain=*) XR_GAIN="${1#--xr-gain=}" ;;
+		--xr-scale=*) XR_SCALE="${1#--xr-scale=}" ;;
+		--xr-vnc) XR_VNC=1 ;;
+		--xr-no-vnc) XR_VNC=0 ;;
+		--xr-telnet) XR_TELNET=1 ;;
+		--xr-no-telnet) XR_TELNET=0 ;;
 		--egl-headless) EGL_HEADLESS=1 ;;
         --force-legacy-build) FORCE_LEGACY_BUILD=1 ;;
         --install-deps) INSTALL_DEPS=1 ;;
@@ -117,6 +335,7 @@ while [ $# -gt 0 ]; do
         --initrd-size-mb=*) INITRD_SIZE_MB="${1#--initrd-size-mb=}" ;;
         --iso) ISO=1 ;;
         --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
+        --tui) TUI=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -126,6 +345,59 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# Interactive picker. Runs after flag parsing so CLI flags preselect menu
+# entries, and falls through into the normal flow (including the XR demo
+# exec below when run mode xr-demo is picked). --axiss
+if [ "$TUI" -eq 1 ] && [ "$XR_DEMO_MENU" -eq 0 ]; then
+    run_build_tui
+fi
+
+if [ "$XR_DEMO_MENU" -eq 1 ]; then
+    if [ "$BLEED" -eq 1 ]; then
+        XENEVA_XR_TUI_BUILD=bleed
+    else
+        XENEVA_XR_TUI_BUILD="$TOOLCHAIN"
+    fi
+    export XENEVA_XR_TUI_BUILD
+    export XENEVA_XR_TUI_HANDS="$XR_HANDS"
+    export XENEVA_XR_TUI_CONTROLLERS="$XR_CONTROLLERS"
+    export XENEVA_XR_TUI_HAND_MESH="$XR_HAND_MESH"
+    export XENEVA_XR_TUI_RESOLUTION="$XR_RESOLUTION"
+    export XENEVA_XR_TUI_GAIN="$XR_GAIN"
+    export XENEVA_XR_TUI_SCALE="$XR_SCALE"
+    export XENEVA_XR_TUI_VNC="$XR_VNC"
+    export XENEVA_XR_TUI_TELNET="$XR_TELNET"
+    export XENEVA_XR_TUI_UNIKERNEL="$UNIKERNEL"
+    export XENEVA_XR_TUI_DIRECT_SCANOUT="$DIRECT_SCANOUT"
+    export XENEVA_XR_TUI_SOAK="$SOAK"
+    exec "$SCRIPT_DIR/xr-demo.sh"
+fi
+
+case "$XR_RESOLUTION" in
+    1024x768|800x600|640x480|manual) ;;
+    *)
+        printf "${STY_RED}[$0]: --xr-resolution must be 1024x768, 800x600, 640x480, or manual.${STY_RST}\n"
+        exit 1
+    ;;
+esac
+case "$XR_GAIN" in
+    ''|*[!0-9]*)
+        printf "${STY_RED}[$0]: --xr-gain must be a positive integer.${STY_RST}\n"
+        exit 1
+    ;;
+    0)
+        printf "${STY_RED}[$0]: --xr-gain must be greater than zero.${STY_RST}\n"
+        exit 1
+    ;;
+esac
+case "$XR_SCALE" in
+    sharp|smooth) ;;
+    *)
+        printf "${STY_RED}[$0]: --xr-scale must be sharp or smooth.${STY_RST}\n"
+        exit 1
+    ;;
+esac
 
 if [ "$BLEED" -eq 1 ]; then
     if [ "$TOOLCHAIN" != llvm ]; then
@@ -226,8 +498,8 @@ if [ -n "$INITRD_SIZE_MB" ]; then
             exit 1
         ;;
     esac
-    if [ "$BLEED" -eq 1 ] && [ "$INITRD_SIZE_MB" -lt 36 ]; then
-        printf "${STY_RED}[$0]: bleed initrds must be at least 36 MiB for the FAT32 driver.${STY_RST}\n"
+    if [ "$BLEED" -eq 1 ] && [ "$INITRD_SIZE_MB" -lt 48 ]; then
+        printf "${STY_RED}[$0]: bleed initrds must be at least 48 MiB for the AArch64 initrd plus userspace.${STY_RST}\n"
         exit 1
     fi
 fi
@@ -387,7 +659,7 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     if [ -n "$INITRD_SIZE_MB" ]; then
         initrd_size_mb="$INITRD_SIZE_MB"
     elif [ "$BLEED" -eq 1 ]; then
-        initrd_size_mb=36
+        initrd_size_mb=48
     else
         resources_mb=$(du -sm Resources/resources | cut -f1)
         computed_mb=$(( (resources_mb * 3 + 1) / 2 ))  # ceil(resources_mb * 1.5)
@@ -397,7 +669,7 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     dd if=/dev/zero of=initrd2.img bs=1M count="$initrd_size_mb"
     mkfs.vfat -F 32 initrd2.img
     if [ "$BLEED" -eq 1 ]; then
-        echo "[bleed] Omitting unused architectures, media, and nonessential fonts from the initrd."
+        echo "[bleed] Trimming fonts and nonessential payloads; keeping network, audio, and glass."
         for resource in Resources/resources/*; do
             case "$(basename "$resource")" in
                 MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf) continue ;;
@@ -473,7 +745,7 @@ fi
 # --- Launch QEMU ---
 
 if [ "$BLEED" -eq 1 ]; then
-    qemu_memory="${XENEVA_QEMU_MEMORY:-256M}"
+    qemu_memory="${XENEVA_QEMU_MEMORY:-384M}"
 else
     qemu_memory="${XENEVA_QEMU_MEMORY:-1024M}"
 fi
@@ -508,8 +780,9 @@ QEMU_ARGS=(
 )
 
 if [ "$XR_DEMO" -eq 1 ]; then
-    # XR demo: headless dbus display (true guest framebuffer for the viewer)
-    # + monitor socket (driven by xeneva-xr-client). OPENXR=1 is implied. --axiss
+	# Core XR transport: D-Bus exports Console_1 to the viewer, using either
+	# CPU scanout with VNC or EGL DMA-BUF scanout. The Unix monitor handles
+	# boot/menu control. Optional services are independent. --axiss
     echo "[+] Building host XR tools..."
     make -C "$REPO_ROOT/Tools/xeneva-xr-view"
     make -C "$REPO_ROOT/Tools/xeneva-xr-client"
@@ -517,14 +790,23 @@ if [ "$XR_DEMO" -eq 1 ]; then
     XR_LOG="${XENEVA_XR_QEMU_LOG:-/tmp/xeneva-xr-demo-qemu.log}"
     XR_VIEW_LOG="${XENEVA_XR_VIEW_LOG:-/tmp/xeneva-xr-demo-view.log}"
     rm -f "$XR_MON_SOCK"
-    # Two monitors: unix socket for tooling (xeneva-xr-client --exec) and a
-    # telnet HMP monitor for humans. QEMU supports multiple -monitor flags.
-    # VNC is the interactive display: keyboard/mouse into the guest while
-    # the headset streams the same framebuffer over dbus. --axiss
-    QEMU_ARGS+=(-display dbus -monitor "unix:$XR_MON_SOCK,server,nowait")
-    QEMU_ARGS+=(-monitor telnet:127.0.0.1:4444,server,nowait)
-    QEMU_ARGS+=(-vnc :0)
-    echo "[+] XR demo: QEMU -display dbus + monitor $XR_MON_SOCK (log $XR_LOG)"
+    if [ "$XR_VNC" -eq 1 ]; then
+        # QEMU rejects VNC whenever a GL display context exists. Use its
+        # CPU-backed D-Bus scanout so VNC and the XR capture listener can
+        # consume the same console concurrently. --axiss
+        QEMU_ARGS+=(-display dbus,gl=off -vnc :0)
+        XR_DISPLAY_DESC="D-Bus CPU scanout + VNC localhost:0"
+        XR_QEMU_CONSOLE=1
+    else
+        QEMU_ARGS+=(-display egl-headless -display dbus,gl=on)
+        XR_DISPLAY_DESC="egl-headless + D-Bus DMA-BUF"
+        XR_QEMU_CONSOLE=1
+    fi
+    QEMU_ARGS+=(-monitor "unix:$XR_MON_SOCK,server,nowait")
+    if [ "$XR_TELNET" -eq 1 ]; then
+        QEMU_ARGS+=(-monitor telnet:127.0.0.1:4444,server,nowait)
+    fi
+    echo "[+] XR core: $XR_DISPLAY_DESC + monitor $XR_MON_SOCK (log $XR_LOG)"
     qemu-system-aarch64 "${QEMU_ARGS[@]}" >"$XR_LOG" 2>&1 &
     XR_QEMU_PID=$!
     XR_VIEW_PID=""
@@ -549,9 +831,11 @@ if [ "$XR_DEMO" -eq 1 ]; then
     trap 'xr_demo_signal 130' INT
     trap 'xr_demo_signal 143' TERM
     echo "[+] QEMU pid $XR_QEMU_PID."
-    echo "[+] Pick a resolution in gvncviewer (localhost:0) with Up/Down + Enter;"
-    echo "    the guest then boots and the viewer picks up frames on its own."
-    echo "[+] (Headless alternative: Tools/xeneva-xr-client/xeneva-xr-client --exec \"sendkey ret\".)"
+    if [ "$XR_RESOLUTION" = manual ]; then
+        echo "[+] Resolution is manual; use the monitor client or optional VNC service."
+    else
+        echo "[+] Boot resolution: $XR_RESOLUTION (automatic)."
+    fi
     echo "[+] XR demo guest is booting. Starting the HMD viewer..."
     # The viewer must register after QEMU owns its bus name; too early and
     # RegisterListener fails while QEMU is still starting. --axiss
@@ -572,19 +856,62 @@ if [ "$XR_DEMO" -eq 1 ]; then
         printf "${STY_RED}[$0]: timed out waiting for QEMU's XR D-Bus display; see $XR_LOG.${STY_RST}\n"
         exit 1
     fi
-    XR_RUNTIME_JSON="$XR_RT_JSON" \
-        "$REPO_ROOT/Tools/xeneva-xr-view/xeneva-xr-view" --egl --hands \
+
+    if [ "$XR_RESOLUTION" != manual ]; then
+        # edk2 exposes 640x480, 800x600, 1024x768 in that order. Give the
+        # firmware menu time to install its keyboard wait, then select it
+        # through the always-on Unix monitor rather than requiring VNC. --axiss
+        sleep "${XENEVA_XR_BOOT_DELAY:-5}"
+        case "$XR_RESOLUTION" in
+            1024x768) XR_BOOT_DOWNS=2 ;;
+            800x600) XR_BOOT_DOWNS=1 ;;
+            640x480) XR_BOOT_DOWNS=0 ;;
+        esac
+        for _ in $(seq 1 "$XR_BOOT_DOWNS"); do
+            "$REPO_ROOT/Tools/xeneva-xr-client/xeneva-xr-client" \
+                --monitor "$XR_MON_SOCK" --exec "sendkey down" >/dev/null
+        done
+        "$REPO_ROOT/Tools/xeneva-xr-client/xeneva-xr-client" \
+            --monitor "$XR_MON_SOCK" --exec "sendkey ret" >/dev/null
+        echo "[+] Selected $XR_RESOLUTION in the guest boot menu."
+    fi
+
+    XR_VIEW_ARGS=(--egl --mono "--gain" "$XR_GAIN" --filter)
+    if [ "$XR_SCALE" = smooth ]; then
+        XR_VIEW_ARGS+=(linear)
+    else
+        XR_VIEW_ARGS+=(nearest)
+    fi
+    if [ "$XR_HANDS" -eq 1 ]; then
+        XR_VIEW_ARGS+=(--hands)
+    fi
+    if [ "$XR_CONTROLLERS" -eq 1 ]; then
+        XR_VIEW_ARGS+=(--controllers)
+    fi
+    if [ "$XR_HAND_MESH" -eq 1 ]; then
+        if [ "$XR_HANDS" -eq 0 ]; then
+            XR_VIEW_ARGS+=(--hand-mesh)
+        fi
+    elif [ "$XR_HANDS" -eq 1 ]; then
+        XR_VIEW_ARGS+=(--no-hand-mesh)
+    fi
+    XR_RUNTIME_JSON="$XR_RT_JSON" XENEVA_QEMU_CONSOLE="$XR_QEMU_CONSOLE" \
+        "$REPO_ROOT/Tools/xeneva-xr-view/xeneva-xr-view" "${XR_VIEW_ARGS[@]}" \
         >"$XR_VIEW_LOG" 2>&1 &
     XR_VIEW_PID=$!
-    echo "[+] Viewer pid $XR_VIEW_PID with hand tracking (log $XR_VIEW_LOG)."
+    echo "[+] Viewer pid $XR_VIEW_PID: ${XR_VIEW_ARGS[*]} (log $XR_VIEW_LOG)."
     # A child process cannot export into your shell, so take this with you. --axiss
     printf 'export XR_RUNTIME_JSON="%s"\n' "$XR_RT_JSON" > /tmp/xeneva-xr-demo.env
+    printf 'export XENEVA_XR_VIEW_ARGS="%s"\n' "${XR_VIEW_ARGS[*]}" >> /tmp/xeneva-xr-demo.env
     echo "[+] Next:"
-    echo "    source /tmp/xeneva-xr-demo.env                              # per shell, for manual runs"
-    echo "    Tools/xeneva-xr-view/xeneva-xr-view --egl --hands           # HMD again, if needed"
-    echo "    gvncviewer localhost:0                                      # interact with Xeneva"
-    echo "    telnet 127.0.0.1 4444                                      # the real QEMU monitor"
-    echo "    Tools/xeneva-xr-client/xeneva-xr-client                     # monitor REPL (scriptable)"
+    echo "    source /tmp/xeneva-xr-demo.env"
+    echo "    Tools/xeneva-xr-client/xeneva-xr-client                     # monitor REPL"
+    if [ "$XR_VNC" -eq 1 ]; then
+        echo "    gvncviewer localhost:0                                      # optional VNC service"
+    fi
+    if [ "$XR_TELNET" -eq 1 ]; then
+        echo "    telnet 127.0.0.1 4444                                      # optional HMP service"
+    fi
     echo "[+] XR demo is live. Press Ctrl-C to stop viewer and QEMU."
     while kill -0 "$XR_QEMU_PID" 2>/dev/null && kill -0 "$XR_VIEW_PID" 2>/dev/null; do
         sleep 1
