@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <aurora.h>
 
+struct __VFS_NODE__;
+typedef struct __VFS_NODE__ AuVFSNode;
+
 #define LEFT_CLICK        0x01
 #define RIGHT_CLICK       0x02
 #define MIDDLE_CLICK      0x04
@@ -44,10 +47,12 @@
 #define AU_INPUT_TOUCH 3
 
 #define MOUSE_IOCODE_SETPOS  10
+#define INPUT_RING_IOCODE_GET_STATS 11
 
 
 #define NUM_MOUSE_PACKETS    20
 #define NUM_KEYBOARD_PACKETS 512
+#define NUM_INPUT_RING_PACKETS 256
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
@@ -62,6 +67,24 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 }AuInputMessage;
+
+/* Lock-free SPSC stream used by latency-sensitive consumers such as DeodhaiXR.
+ * Producers publish complete AuInputMessage records; readers drain without
+ * blocking. Indices are owned by one side each and are synchronized with the
+ * AArch64 data barrier in the kernel implementation. --axiss */
+typedef struct _au_input_ring_ {
+	volatile uint32_t read;
+	volatile uint32_t write;
+	volatile uint32_t dropped;
+	AuInputMessage packets[NUM_INPUT_RING_PACKETS];
+} AuInputRing;
+
+typedef struct _au_input_ring_stats_ {
+	uint32_t mouse_dropped;
+	uint32_t keyboard_dropped;
+	uint32_t mouse_pending;
+	uint32_t keyboard_pending;
+} AuInputRingStats;
 
 #ifdef ARCH_X64
 #pragma pack(pop)
@@ -104,5 +127,8 @@ AU_EXTERN AU_EXPORT void AuDevReadConsoleKybrd(AuInputMessage* inputmsg);
 * @param outmsg -- packet to write
 */
 AU_EXTERN AU_EXPORT void AuDevWriteKybrd(AuInputMessage* outmsg);
+
+AU_EXTERN AU_EXPORT size_t AuDevInputRingRead(AuVFSNode* fs, AuVFSNode* file,
+		uint64_t* buffer, uint32_t length);
 
 #endif

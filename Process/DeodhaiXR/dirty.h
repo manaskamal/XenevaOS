@@ -56,5 +56,6 @@ extern void DirtyScreenUpdate(ChCanvas* canvas);
 * GetDirtyRectCount -- returns the number of dirty rect
 */
 extern uint32_t GetDirtyRectCount();
+extern bool GetDirtyRect(uint32_t index, Rect* rect);
 
 #endif

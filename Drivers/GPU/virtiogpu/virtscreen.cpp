@@ -80,13 +80,12 @@ int virt_gpu_screen_init(VirtioCommonCfg* cfg, uint32_t width, uint32_t height) 
 void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	size_t len = virt_display_height * virt_display_width * sizeof(uint32_t);
 	size_t fb_sz = (len + PAGE_SIZE - 1) / PAGE_SIZE;
-	uint64_t fb_phys = 0;
-	for (int i = 0; i < fb_sz; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-		AuMapPage(phys, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
-		if (fb_phys == 0)
-			fb_phys = phys;
-	}
+	/* ATTACH_BACKING below reports one entry spanning the whole buffer, so
+	 * the backing pages must actually be contiguous, not just individually
+	 * allocated. --axiss */
+	uint64_t fb_phys = (uint64_t)AuPmmngrAllocPages((uint32_t)fb_sz, 1, 0, AURORA_PAGE_NORMAL);
+	for (int i = 0; i < fb_sz; i++)
+		AuMapPage(fb_phys + i * PAGE_SIZE, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
 
 	virtio_gpu_resource_attach_backing attach;
 	attach.hdr.type = VIRTIO_GPU_CMD_RESOURCE_ATTACH_BACKING;
@@ -158,7 +157,7 @@ void virt_gpu_transfer_to_host2d(VirtioCommonCfg* cfg, int resource_id, int x, i
 void virt_gpu_flush(VirtioCommonCfg* cfg, int resource_id) {
 	virtio_gpu_resource_flush flush;
 	flush.hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
-	flush.resource_id = 1;
+	flush.resource_id = resource_id;
 	flush.rect.x = 0;
 	flush.rect.y = 0;
 	flush.rect.width = virt_display_width;
@@ -175,18 +174,60 @@ void virt_gpu_flush(VirtioCommonCfg* cfg, int resource_id) {
 void virt_gpu_flush_rect(VirtioCommonCfg* cfg, int resource_id, int x, int y, int w, int h) {
 	virtio_gpu_resource_flush flush;
 	flush.hdr.type = VIRTIO_GPU_CMD_RESOURCE_FLUSH;
-	flush.resource_id = 1;
+	flush.resource_id = resource_id;
 	flush.rect.x = x;
 	flush.rect.y = y;
 	flush.rect.width = w;
 	flush.rect.height = h;
-	
+
 	gpu_execute_command(cfg, &flush, sizeof(virtio_gpu_resource_flush));
 }
 
 static void virt_gpu_put_pxl(uint32_t x, uint32_t y, uint32_t color) {
 	uint32_t* lfb = (uint32_t*)GPU_FB_BUFFER;
 	lfb[static_cast<uint64_t>(y) * virt_display_width + x] = color;
+}
+
+/**
+ * @brief VirtGpuConsolePresent -- mirror console damage onto the scanout
+ * Copies rows from the console framebuffer (arbitrary pitch) into our
+ * tightly-packed backing, then transfers and flushes exactly that rect.
+ * Runs inline in the writer's context; the submit path only spin-polls,
+ * never sleeps. Clipped to the resource. --axiss
+ */
+void VirtGpuConsolePresent(uint32_t* src, uint32_t src_pitch, int x, int y, int w, int h) {
+	if (!src || src_pitch < 4)
+		return;
+	if (x < 0) {
+		w += x;
+		x = 0;
+	}
+	if (y < 0) {
+		h += y;
+		y = 0;
+	}
+	if (x >= (int)virt_display_width || y >= (int)virt_display_height)
+		return;
+	if (w > (int)virt_display_width - x)
+		w = (int)virt_display_width - x;
+	if (h > (int)virt_display_height - y)
+		h = (int)virt_display_height - y;
+	if (w <= 0 || h <= 0)
+		return;
+	uint32_t* dst = (uint32_t*)GPU_FB_BUFFER;
+	for (int j = 0; j < h; j++) {
+		uint32_t* s =
+			(uint32_t*)((uint8_t*)src + (uint64_t)(y + j) * src_pitch) + x;
+		uint32_t* d = dst + (uint64_t)(y + j) * virt_display_width + x;
+		for (int i = 0; i < w; i++)
+			d[i] = s[i];
+	}
+	VirtioCommonCfg* cfg = gpu_get_config_pointer();
+	int id = virt_gpu_default_resource_id();
+	if (!cfg || !id)
+		return;
+	virt_gpu_transfer_to_host2d(cfg, id, x, y, w, h);
+	virt_gpu_flush_rect(cfg, id, x, y, w, h);
 }
 
 /**

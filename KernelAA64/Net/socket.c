@@ -116,6 +116,14 @@ int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 		return 0;
 	AuVFSNode* device = (AuVFSNode*)sock->binedDev;
 	UARTDebugOut("****/////******socket device name : %s \r\n", device->filename);
+	/* virtio-net's adapter VFS node never populates a write callback (TX
+	 * goes through a different path than the generic VFS write op), so
+	 * this was a null function-pointer call -- crashed the whole boot
+	 * (FAR_EL1/ELR_EL1 both 0) the moment netmngr tried a raw socket send
+	 * against it. Guard until raw-socket TX is actually wired up for
+	 * virtio-net. --axiss */
+	if (!device->write)
+		return -1;
 	device->write(device, device, (uint64_t*)msg->msg_iov[0].iov_base, msg->msg_iov[0].iov_len);
 	return 0;
 }

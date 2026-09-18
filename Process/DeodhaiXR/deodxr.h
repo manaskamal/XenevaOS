@@ -83,6 +83,13 @@ typedef struct _au_input_msg_ {
 	uint32_t code3;
 	uint32_t code4;
 } AuInputMessage;
+
+typedef struct _au_input_ring_stats_ {
+	uint32_t mouse_dropped;
+	uint32_t keyboard_dropped;
+	uint32_t mouse_pending;
+	uint32_t keyboard_pending;
+} AuInputRingStats;
 //#pragma pack(pop)
 
 #pragma pack(push, 1)

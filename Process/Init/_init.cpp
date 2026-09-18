@@ -183,6 +183,13 @@ void init_basic_gid_to_dev() {
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_INPUT);
 	}
+	/* The input-ring carries the same mouse/keyboard events as mice/kybrd,
+	 * so it needs the same group or the compositor (uid 1000) is denied and
+	 * falls back to the legacy per-frame devices. --axiss */
+	fd = _KeOpenFile("/dev/input-ring", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, GROUP_INPUT);
+	}
 	fd = _KeOpenFile("/dev/sound", FILE_OPEN_READ_ONLY);
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_AUDIO);
@@ -316,14 +323,14 @@ extern "C" void main(int argc, char* argv[]) {
 #endif
 	}
 
-#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
+#if !defined(__XENEVA_TERM__)
 	SplashScreenShow();
 #endif
 	_sound = -1;
 	init_basic_gid_to_dev();
 
 	/** play the startup sound, for better experience */
-#if !defined(__XENEVA_BLEED__) && !defined(__XENEVA_TERM__)
+#if !defined(__XENEVA_TERM__)
 	_play_startup_sound();
 #endif
 
@@ -342,9 +349,7 @@ extern "C" void main(int argc, char* argv[]) {
 	memset(init_msg_buff, 0, sizeof(InitRequestMsg) + 1);
 
 	/** TODO: add IPC system to track real system progress and animate the logo accordingly **/
-#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(100);
-#endif
 
 	int proc = 0;
 
@@ -361,11 +366,17 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeProcessSleep(500);
 	}
 	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
-	if (con == -1)
+	if (con == -1) {
 		_KePrint("[init]: failed to open /dev/console \r\n");
+	} else {
+		/* TERM owns the display: move the kernel console back onto the
+		 * boot framebuffer (ramfb tab). The virtio-gpu driver repoints it
+		 * at its own backing for the compositor, which never runs here,
+		 * so without this the shell would be alive but invisible. --axiss */
+		_KeFileIoControl(con, SCREEN_RESTORE_BOOT_FB, NULL);
+	}
 	init_run_term_command(ggid_misc_world, con);
 #else
-#ifndef __XENEVA_BLEED__
 	proc = _KeCreateProcess(0, "netmngr");
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
 	if (ret_nm != -1) {
@@ -375,7 +386,6 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
-#endif
 
 	/** actually, design should be like that, each process after
 	 * finish its initialization, it should send a signal to 
@@ -393,20 +403,27 @@ extern "C" void main(int argc, char* argv[]) {
 	_KeCredSetCap(proc, 0);
 	_KeProcessLoadExec(proc, "/deodxr.exe", 0, NULL);
 
-
-#ifndef __XENEVA_BLEED__
 	_KeProcessSleep(800);
 
-	proc = _KeCreateProcess(0, "deoaud");
-	_KePrint("deoaud proc id : %d \r\n", proc);
-	_KeSetUID(proc, UAC_DEAMONS);
-	_KeSetGID(proc, UAC_DEAMONS);
-	_KeCredAddSGroup(proc, ggid_misc_world);
-	_KeCredAddSGroup(proc, GROUP_AUDIO);
-	_KeCredAddSGroup(proc, ggid_misc_postbox);
-	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
-#endif
-#endif
+	/* Microkernel rule: a removed daemon is an absent binary, and init
+	 * must skip it without leaking a process slot. --no-audio drops
+	 * deoaud.exe from the image; without this guard init would create
+	 * the process and fail the exec anyway. --axiss */
+	int daud = _KeOpenFile("/deoaud.exe", FILE_OPEN_READ_ONLY);
+	if (daud != -1) {
+		_KeCloseFile(daud);
+		proc = _KeCreateProcess(0, "deoaud");
+		_KePrint("deoaud proc id : %d \r\n", proc);
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_AUDIO);
+		_KeCredAddSGroup(proc, ggid_misc_postbox);
+		_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+	} else {
+		_KePrint("[init]: deoaud.exe absent, skipping audio\r\n");
+	}
+#endif /* non-TERM: TERM builds run console-only, no window manager --axiss */
 
 #elif ARCH_X64
 	proc = _KeCreateProcess(0, "deodhai");

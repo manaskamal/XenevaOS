@@ -93,12 +93,12 @@ int AuConsoleIoControl(AuVFSNode* node, int code, void* args) {
 	
 	switch (code) {
 	case SCREEN_GETWIDTH:{
-							 uint32_t width = aucon->width;
+							 uint32_t width = aucon->desktop_width;
 							 ioctl->uint_1 = width;
 							 break;
 	}
 	case SCREEN_GETHEIGHT:{
-							  uint32_t height = aucon->height;
+							  uint32_t height = aucon->desktop_height;
 							  ioctl->uint_1 = height;
 							  break;
 	}
@@ -152,6 +152,14 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
+	/* Desktop size for the compositor (manual loader override if present). --axiss */
+	aucon->desktop_width = info->X_Resolution;
+	aucon->desktop_height = info->Y_Resolution;
+	if (info->DesktopOverrideWidth >= 640 && info->DesktopOverrideWidth <= 4096 &&
+		info->DesktopOverrideHeight >= 480 && info->DesktopOverrideHeight <= 4096) {
+		aucon->desktop_width = info->DesktopOverrideWidth;
+		aucon->desktop_height = info->DesktopOverrideHeight;
+	}
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;

@@ -53,6 +53,8 @@
 #include "nanojpg.h"
 #include <arm_neon.h>
 #include "compose.h"
+#include "unikernel.h"
+#include "xr_present.h"
 #include <sys/_ketime.h>
 
 static uint32_t screen_w;
@@ -60,6 +62,7 @@ static uint32_t screen_h;
 static int postbox_fd;
 static int mouse_fd;
 static int kybrd_fd;
+static int input_ring_fd;
 static Cursor* arrow;
 static Cursor* currentCursor;
 static uint32_t winHandles;
@@ -217,14 +220,13 @@ void CursorStoreBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 }
 
 void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
-	/*for (int w = 0; w < 24; w++) {
-		for (int h = 0; h < 24; h++) {
-			ChDrawPixel(canv, x + w, y + h, cur->cursorBack[h * 24 + w]);
-		}
-	}*/
 	for (int row = 0; row < 24; row++) {
 		int cy = y + row;
-		if (cy < 0 || cy >= canv->canvasWidth)
+		/* was checking against canvasWidth -- on a screen wider than it is
+		 * tall (e.g. 1024x768) that let rows run past canvasHeight, writing
+		 * out of the canvas buffer when the cursor sits near the bottom
+		 * edge. Must clip against the axis it's actually walking. --axiss */
+		if (cy < 0 || cy >= canv->canvasHeight)
 			continue;
 
 		uint32_t* canvas_row = (uint32_t*)canv->buffer + cy * canv->canvasWidth + x;
@@ -234,9 +236,16 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
 		if ((int)x + copy_w > (int)canv->canvasWidth)
 			copy_w = canv->canvasWidth - x;
 
+		/* this must be a plain restore, not a blend -- blending the saved
+		 * backdrop back in only fully overwrites the cursor when the saved
+		 * pixels happen to be opaque (alpha 255). Over a translucent menu
+		 * the saved alpha is <255, so the blend leaves a ghost of the
+		 * cursor showing through. CursorStoreBack saves with a plain copy,
+		 * so restoring must match it. Also respect copy_w here -- the old
+		 * blend call always touched 24 px even when clipped near the
+		 * screen edge. --axiss */
 		if (copy_w > 0)
-			__pixel_blend_neon(canvas_row, back_row, 24);
-		//_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
+			_fastcpy(canvas_row, back_row, copy_w * sizeof(uint32_t));
 	}
 }
 
@@ -246,6 +255,12 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  */
 void DrawWallpaper(ChCanvas* canv, char* filename) {
 	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+	if (image < 0) {
+		/* Missing wallpaper (e.g. res-specific jpg not in initrd): keep the
+		 * back surface as-is instead of hanging in the decoder --axiss */
+		_KePrint("DrawWallpaper: missing %s, skipping\r\n", filename);
+		return;
+	}
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	_KeFileStat(image, &stat);
@@ -258,9 +273,11 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 	Jpeg::Decoder* decor =
 		new Jpeg::Decoder((uint8_t*)data1, ALIGN_UP(stat.size, 4096), malloc, free);
 	if (decor->GetResult() != Jpeg::Decoder::OK) {
-		_KePrint("Decoder error \n");
-		for (;;)
-			;
+		/* A bad optional wallpaper must not stop the compositor forever. --axiss */
+		_KePrint("DrawWallpaper: decoder error for %s\r\n", filename);
+		delete decor;
+		_KeMemUnmap(data_, stat.size);
+		_KeCloseFile(image);
 		return;
 	}
 	int w = decor->GetWidth();
@@ -269,22 +286,36 @@ void DrawWallpaper(ChCanvas* canv, char* filename) {
 	canv->buffer = DeoGetBackSurface();
 	uint8_t* data = decor->GetImage();
 
-	unsigned x = 0;
-	unsigned y = 0;
-	for (int i = 0; i < h; i++) {
-		for (int k = 0; k < w; k++) {
-			int j = k + i * w;
+	int dst_w = (int)canv->canvasWidth;
+	int dst_h = (int)canv->canvasHeight;
+	if (dst_w <= 0 || dst_h <= 0 || w <= 0 || h <= 0) {
+		canv->buffer = swapable_buff;
+		delete decor;
+		_KeMemUnmap(data_, stat.size);
+		_KeCloseFile(image);
+		return;
+	}
+	for (int y = 0; y < dst_h; y++) {
+		int sy = (int)(((int64_t)y * h) / dst_h);
+		if (sy >= h)
+			sy = h - 1;
+		for (int x = 0; x < dst_w; x++) {
+			int sx = (int)(((int64_t)x * w) / dst_w);
+			if (sx >= w)
+				sx = w - 1;
+			int j = sy * w + sx;
 			uint8_t r = data[j * 3];
 			uint8_t g = data[j * 3 + 1];
 			uint8_t b = data[j * 3 + 2];
-			uint32_t rgba = ((r << 16) | (g << 8) | (b)) & 0x00ffffff;
-			rgba = rgba | 0xff000000;
-			ChDrawPixel(canv, x + k, y + i, rgba);
-			j++;
+			uint32_t rgba = 0xff000000u | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+			ChDrawPixel(canv, x, y, rgba);
 		}
 	}
 
 	canv->buffer = swapable_buff;
+	delete decor;
+	_KeMemUnmap(data_, stat.size);
+	_KeCloseFile(image);
 }
 
 /**
@@ -297,8 +328,14 @@ ChFont* f2;
 ChRect rectb;
 int x_;
 int y_;
+/* Keep low-cost stage totals so the FPS overlay exposes where each frame goes. --axiss */
+static uint64_t profAccumCompose = 0;
+static uint64_t profAccumPresent = 0;
+static uint64_t profAccumTransfer = 0;
 
 void XRComposeFrame(ChCanvas* canvas) {
+	/* Split the frame into compose, present, and transfer stages for the overlay. --axiss */
+	uint64_t t0 = _KeGetCurrentMS();
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
 
@@ -350,8 +387,16 @@ void XRComposeFrame(ChCanvas* canvas) {
 	CursorDraw(canvas, currentCursor, currentCursor->xpos, currentCursor->ypos);
 
 	AddDirtyClip(currentCursor->xpos, currentCursor->ypos, 24, 24);
+	profAccumCompose += (_KeGetCurrentMS() - t0);
+#ifdef __XENEVA_OPENXR__
+	uint64_t t1 = _KeGetCurrentMS();
+	XrPresentFrame(canvas);
+	profAccumPresent += (_KeGetCurrentMS() - t1);
+#endif
 	/* finally present all updates to framebuffer */
+	uint64_t t2 = _KeGetCurrentMS();
 	DirtyScreenUpdate(canvas);
+	profAccumTransfer += (_KeGetCurrentMS() - t2);
 
 	if (_window_update_all_)
 		_window_update_all_ = false;
@@ -500,6 +545,7 @@ _skip:
 
 	info->x = x;
 	info->y = y;
+	glass_invalidate(win);
 	_window_update_all_ = true;
 	_always_on_top_update = true;
 	_shadow_update = true;
@@ -724,6 +770,24 @@ broadcast:
 	}
 }
 
+static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input) {
+	if (!canv || !input || input->type != AU_INPUT_MOUSE)
+		return;
+
+	currentCursor->xpos = input->xpos;
+	currentCursor->ypos = input->ypos;
+	int button = input->button_state;
+	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+
+	if (currentCursor->xpos <= 0) currentCursor->xpos = 0;
+	if (currentCursor->ypos <= 0) currentCursor->ypos = 0;
+	if (currentCursor->xpos + 24 >= canv->screenWidth) currentCursor->xpos = canv->screenWidth - 24;
+	if (currentCursor->ypos + 24 >= canv->screenHeight) currentCursor->ypos = canv->screenHeight - 24;
+	if (currentCursor->xpos >= canv->screenWidth) currentCursor->xpos = 0;
+	if (currentCursor->ypos >= canv->screenHeight) currentCursor->ypos = 0;
+}
+
 /**
  * @brief DeodhaiWindowHide -- hides a window
  * @param win -- Pointer to window to hide
@@ -737,6 +801,13 @@ void DeodhaiWindowHide(Window* win) {
 		WinSharedFlagStore(&info->updateEntireWindow, true);
 		WinSharedFlagStore(&info->dirty, true);
 		focusedWin = win;
+		PostEvent shown;
+		memset(&shown, 0, sizeof(PostEvent));
+		shown.type = DEODHAI_REPLY_FOCUS_CHANGED;
+		shown.dword = win->handle;
+		shown.to_id = win->ownerId;
+		shown.from_id = POSTBOX_ROOT_ID;
+		_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &shown);
 	} else {
 		/* HIDE the window, if its not hidden */
 		info->hide = true;
@@ -912,24 +983,31 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	if (screen_w == 1024 && screen_h == 768) {
-		_KePrint("Drawing wallpaper \r\n");
-		DrawWallpaper(canv, "/XE1_2.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 1920 && screen_h == 1080) {
-		DrawWallpaper(canv, "/mtnr2.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 480 && screen_h == 320) {
-		DrawWallpaper(canv, "/mntr1.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 800 && screen_h == 480) {
-		DrawWallpaper(canv, "/flora1.jpg");
-		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-	} else if (screen_w == 640 && screen_h == 480) {
-		DrawWallpaper(canv, "/snow.jpg");
+	{
+		char* wall = "/XE1_2.jpg";
+		if (screen_w == 1920 && screen_h == 1080)
+			wall = "/XEArch.jpg";
+		else if (screen_w == 480 && screen_h == 320)
+			wall = "/mntr1.jpg";
+		else if (screen_w == 800 && screen_h == 480)
+			wall = "/flora1.jpg";
+		else if (screen_w == 640 && screen_h == 480)
+			wall = "/snow.jpg";
+		/* Res-specific jpgs may not ship in initrd; fall back to the one
+		 * guaranteed wallpaper instead of drawing gray --axiss */
+		{
+			int probe = _KeOpenFile(wall, FILE_OPEN_READ_ONLY);
+			if (probe < 0)
+				wall = "/XE1_2.jpg";
+			else
+				_KeCloseFile(probe);
+		}
+		_KePrint("Drawing wallpaper %s for %d x %d\r\n", wall, screen_w, screen_h);
+		DrawWallpaper(canv, wall);
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	}
 
+	DeoBakeScreenBlur((int)canv->canvasWidth, (int)canv->canvasHeight);
 	_KePrint("Wallpaper ready \r\n");
 
 	//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
@@ -946,6 +1024,16 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (_gpu_enabled) {
+		/* GPU backing is tightly packed at the mode width. GOP pitch can
+		 * differ; force the compositor row layout to the GPU resource. --axiss */
+		canv->pitch = (uint32_t)screen_w * 4;
+		canv->scanline = (uint16_t)screen_w;
+#ifdef __XENEVA_OPENXR__
+		/* Compose stays in RAM; OpenXR EndFrame SBS-blits into framebuff. --axiss */
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
+#else
+		canv->buffer = canv->framebuff;
+		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 		XEFileIOControl ctl;
 		ctl.uint_1 = gpu_display_id;
 		ctl.ushort_1 = 0;
@@ -953,8 +1041,11 @@ int main(int argc, char* argv[]) {
 		ctl.ulong_1 = canv->canvasWidth;
 		ctl.ulong_2 = canv->canvasHeight;
 		_KeFileIoControl(gpu_fd, 0x202, &ctl);
-		canv->buffer = canv->framebuff;
+#endif
 	}
+#ifdef __XENEVA_OPENXR__
+	XrPresentInit(canv);
+#endif
 
 	//ChRect limit;
 	//limit.x = 0;
@@ -988,12 +1079,16 @@ int main(int argc, char* argv[]) {
 	CursorStoreBack(canv, currentCursor, 0, 0);
 	CursorDraw(canv, arrow, 0, 0);
 
-#ifndef __XENEVA_BLEED__
-	_KeProcessSleep(100);
-#endif
-
 	mouse_fd = _KeOpenFile("/dev/mice", FILE_OPEN_READ_ONLY);
 	kybrd_fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+	input_ring_fd = _KeOpenFile("/dev/input-ring", FILE_OPEN_READ_ONLY);
+	/* Kernel permission denials print to the framebuffer only, so a failed
+	 * ring open is invisible on serial. Say it here instead. --axiss */
+	if (input_ring_fd >= 0)
+		_KePrint("[deodhaiXR]: input-ring live, fd=%d (mice=%d kybrd=%d)\r\n",
+				 input_ring_fd, mouse_fd, kybrd_fd);
+	else
+		_KePrint("[deodhaiXR]: input-ring open failed, falling back to mice/kybrd\r\n");
 	PostEvent event;
 	AuInputMessage mice_input;
 	AuInputMessage kybrd_input;
@@ -1005,23 +1100,15 @@ int main(int argc, char* argv[]) {
 	 */
 	_KeProcessTokenAddSelf(PROCESS_TOKEN_DISPLAY);
 
+#ifdef __XENEVA_UNIKERNEL__
+	_KeCreateThread(XELnchThread, "xelnch");
+	_KeCreateThread(NamdaphaThread, "nmdapha");
+#else
 	int proc = _KeCreateProcess(0, "xelnch");
 	_KeProcessLoadExec(proc, "/xelnch.exe", NULL, NULL);
 
-#ifndef __XENEVA_BLEED__
-	_KeProcessSleep(500);
-#endif
-
 	proc = _KeCreateProcess(0, "nmdapha");
 	_KeProcessLoadExec(proc, "/nmdapha.exe", NULL, NULL);
-
-#ifndef __XENEVA_BLEED__
-	/* Retained for ordinary-build behavior; bleed removes this historical
-	 * compositor reservation from the benchmark path. */
-	void* p1 = malloc(6 * 1024 * 1024);
-	memset(p1, 0, 6 * 1024 * 1024);
-	void* p2 = malloc(50560);
-	memset(p2, 0, 50560);
 #endif
 
 	uint64_t frameTime = 0;
@@ -1037,40 +1124,26 @@ int main(int argc, char* argv[]) {
 		 * which used to only get updated *after* the frame was already
 		 * composed, so every frame drew the pointer a full frame behind
 		 * the actual mouse position --axiss */
-		_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
-		_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+		if (input_ring_fd >= 0) {
+			/* Bound work per frame so an input flood cannot starve composition.
+			 * Dispatch every queued edge in order. --axiss */
+			const int input_events_per_frame = 128;
+			AuInputMessage queued;
+			for (int i = 0; i < input_events_per_frame &&
+				 _KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0; i++) {
+				if (queued.type == AU_INPUT_MOUSE)
+					DeodhaiHandleMouseInput(canv, &queued);
+				else if (queued.type == AU_INPUT_KEYBOARD)
+					DeodhaiBroadcastKey(queued.code);
+			}
+		} else {
+			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
+			_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
+		}
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
 
 		if (mice_input.type == AU_INPUT_MOUSE) {
-			int32_t cursor_x = mice_input.xpos;
-			int32_t cursor_y = mice_input.ypos;
-
-			currentCursor->xpos = cursor_x;
-			currentCursor->ypos = cursor_y;
-			int button = mice_input.button_state;
-
-			DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
-
-			//if (_window_broadcast_mouse_)
-			DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
-
-			if ((currentCursor->xpos) <= 0)
-				currentCursor->xpos = 0;
-
-			if ((currentCursor->ypos) <= 0)
-				currentCursor->ypos = 0;
-
-			if ((currentCursor->xpos + 24) >= canv->screenWidth)
-				currentCursor->xpos = canv->screenWidth - 24;
-
-			if ((currentCursor->ypos + 24) >= canv->screenHeight)
-				currentCursor->ypos = canv->screenHeight - 24;
-
-			if (currentCursor->xpos >= canv->screenWidth)
-				currentCursor->xpos = 0;
-
-			if (currentCursor->ypos >= canv->screenHeight)
-				currentCursor->ypos = 0;
+			DeodhaiHandleMouseInput(canv, &mice_input);
 			memset(&mice_input, 0, sizeof(AuInputMessage));
 		}
 
@@ -1163,7 +1236,6 @@ int main(int argc, char* argv[]) {
 
 			if (hideable_win)
 				DeodhaiWindowHide(hideable_win);
-			_KeProcessSleep(10);
 			memset(&event, 0, sizeof(PostEvent));
 		}
 
@@ -1278,17 +1350,33 @@ int main(int argc, char* argv[]) {
 			uint64_t nowMs = _KeGetCurrentMS();
 			uint64_t windowMs = nowMs - fpsWindowStart;
 			if (windowMs >= 1000) {
-				uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
-				uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
-				_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
-						 (int)fps,
-						 (int)avgComposeMs,
-						 (int)fpsFrameCount,
-						 (int)windowMs,
-						 (int)frameTime);
-				fpsFrameCount = 0;
-				fpsComposeMsAccum = 0;
-				fpsWindowStart = nowMs;
+			uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
+			uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
+			uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
+			uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
+			uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+			_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
+					 (int)fps,
+					 (int)avgComposeMs,
+					 (int)fpsFrameCount,
+					 (int)windowMs,
+					 (int)frameTime);
+			if (input_ring_fd >= 0) {
+				AuInputRingStats stats;
+				memset(&stats, 0, sizeof(stats));
+				if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
+					_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d pending_keyboard=%d\r\n",
+							 (int)stats.mouse_dropped, (int)stats.keyboard_dropped,
+							 (int)stats.mouse_pending, (int)stats.keyboard_pending);
+			}
+			_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n", (int)avgC,
+					 (int)avgP, (int)avgT);
+			fpsFrameCount = 0;
+			fpsComposeMsAccum = 0;
+			profAccumCompose = 0;
+			profAccumPresent = 0;
+			profAccumTransfer = 0;
+			fpsWindowStart = nowMs;
 			}
 		}
 

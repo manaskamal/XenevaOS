@@ -180,6 +180,14 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t hid;
 	uint32_t uid;
 	uint32_t cid;
+
+	/* DesktopOverrideWidth/Height -- requested desktop (virtio-gpu scanout)
+	 * size chosen in the loader menu, independent of the firmware GOP mode.
+	 * 0 means none: drivers fall back to X_Resolution/Y_Resolution. The
+	 * firmware framebuffer geometry above always describes the real GOP
+	 * surface, so the early console never runs off it. --axiss */
+	uint16_t DesktopOverrideWidth;
+	uint16_t DesktopOverrideHeight;
 }KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
 
 /*

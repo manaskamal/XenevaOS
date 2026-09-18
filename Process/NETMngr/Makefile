@@ -28,7 +28,9 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_xemain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    # Entry must match the linked crt (Init/crt0arm64.s provides _aumain;
+    # _xemain lives only in XECrt for dynamic builds). --axiss
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
 endif
 
 .PHONY: all clean llvm dynamic

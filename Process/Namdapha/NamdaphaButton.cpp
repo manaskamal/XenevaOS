@@ -30,6 +30,7 @@
 #include "nmdapha.h"
 #include <sys/_kefile.h>
 #include <sys/mman.h>
+#include <sys/_ketime.h>
 
 #pragma pack(push, 1)
 typedef struct _bmp_ {
@@ -83,16 +84,40 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 	/* rising edge only -- the old "clicked && same x,y" test re-fired the
 	 * Go-button hide toggle on every tablet sample at the same pixel, which
 	 * stalled Deodhai with UART + sleep(10) and made the desktop lag --axiss */
+	/* also cooldown-gate the action itself: DeodhaiWindowHide toggles (hide
+	 * if shown, show if hidden), so any double-fire of a press/release pair
+	 * -- from a bouncing input device, or a real double-click landing on
+	 * the same pixel -- opens and immediately re-closes the launcher, which
+	 * reads as "the menu keeps flickering/looping" even though each edge is
+	 * legitimate. 250ms is well above human click cadence but still feels
+	 * instant for one deliberate press. --axiss */
+	/* the paint + ChWindowUpdate must stay OUTSIDE the cooldown gate -- a
+	 * suppressed click still sets wid->clicked=true above, and skipping the
+	 * repaint left the button (and any icon sharing this handler) stuck
+	 * showing its pre-press frame, since nothing else marks that region
+	 * dirty again until another press. Cooldown gates the action only. --axiss */
+	uint64_t now_ms = _KeGetCurrentMS();
 	if (pressed && !wid->clicked) {
 		wid->clicked = true;
 		if (wid->drawNamdaphaButton)
 			wid->drawNamdaphaButton(wid, win);
 		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
-		if (wid->actionHandler)
-			wid->actionHandler(wid, win);
+		if (now_ms - wid->last_action_ms >= 250) {
+			wid->last_action_ms = now_ms;
+			if (wid->actionHandler)
+				wid->actionHandler(wid, win);
+		}
 	}
-	if (!pressed)
+	if (!pressed && wid->clicked) {
+		/* release while still hovering never hit the "!hover && !pressed"
+		 * reset branch above (hover stayed true), so the button kept
+		 * showing its pressed artwork until hover state next changed --
+		 * repaint back to the resting/hover look on release too. --axiss */
 		wid->clicked = false;
+		if (wid->drawNamdaphaButton)
+			wid->drawNamdaphaButton(wid, win);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, 0, 1);
+	}
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;
@@ -219,24 +244,27 @@ void NmButtonInfoRead(ButtonInfo* btninfo) {
 void NmButtonInfoDrawIcon(ButtonInfo* info, ChCanvas* canv, int x, int y) {
 	if (!info || !info->imageData)
 		return;
-	uint32_t width = info->iconWidth;
-	uint32_t height = info->iconHeight;
-	uint32_t j = 0;
+	int width = info->iconWidth;
+	int height = info->iconHeight;
+	int bpp = info->iconBpp ? info->iconBpp : 32;
+	int bytes_per_pixel = bpp / 8;
+	if (bytes_per_pixel <= 0)
+		bytes_per_pixel = 4;
+	int row_pitch = ((width * bpp + 31) / 32) * 4;
 
 	uint8_t* image = info->imageData;
 	for (int i = 0; i < height; i++) {
-		char* image_row = (char*)image + (static_cast<uint64_t>(height) - i - 1) *
-											 (static_cast<uint64_t>(width) * 4);
-		uint32_t h = height - 1 - i;
-		j = 0;
+		int bmp_row = height - 1 - i;
+		uint8_t* image_row = image + bmp_row * row_pitch;
 		for (int k = 0; k < width; k++) {
-			uint32_t b = image_row[j++] & 0xff;
-			uint32_t g = image_row[j++] & 0xff;
-			uint32_t r = image_row[j++] & 0xff;
-			uint32_t a = image_row[j++] & 0xff;
-			uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | (b));
-			if (rgb & 0xFF000000)
-				ChDrawPixel(canv, x + k, y + i, rgb);
+			uint8_t* pixel = image_row + k * bytes_per_pixel;
+			uint32_t b = pixel[0];
+			uint32_t g = pixel[1];
+			uint32_t r = pixel[2];
+			uint32_t a = (bytes_per_pixel >= 4) ? pixel[3] : 255;
+			if (a == 0)
+				continue;
+			ChDrawPixel(canv, x + k, y + i, (a << 24) | (r << 16) | (g << 8) | b);
 		}
 	}
 }
