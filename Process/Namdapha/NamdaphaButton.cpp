@@ -168,11 +168,11 @@ NamdaphaButton* NmCreateButton(int x, int y, int w, int h, char* text) {
 	button->y = y;
 	button->w = w;
 	button->h = h;
-	button->title = (char*)malloc(strlen(text));
+	button->title = (char*)malloc(strlen(text) + 1);
 	button->mouseEvent = NmButtonMouseEvent;
 	button->drawNamdaphaButton = NmButtonDefaultPaint;
 	button->actionHandler = NamdaphaDefaultAction;
-	memset(button->title, 0, strlen(text));
+	memset(button->title, 0, strlen(text) + 1);
 	strcpy(button->title, text);
 	return button;
 }
@@ -194,8 +194,8 @@ ButtonInfo* NmCreateButtonInfo(char* filename) {
 	XEFileStatus stat;
 	_KeFileStat(fd, &stat);
 
-	btninfo->filename = (char*)malloc(strlen(filename));
-	memset(btninfo->filename, 0, strlen(filename));
+	btninfo->filename = (char*)malloc(strlen(filename) + 1);
+	memset(btninfo->filename, 0, strlen(filename) + 1);
 	strcpy(btninfo->filename, filename);
 	btninfo->fileBuffer = (uint8_t*)_KeMemMap(NULL, stat.size, 0, 0, MEMMAP_NO_FILEDESC, 0);
 	btninfo->iconFd = fd;

@@ -39,7 +39,7 @@ ifeq ($(TOOLCHAIN), llvm)
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
-               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
                -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
@@ -54,7 +54,7 @@ else
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fPIE -fno-exceptions -fno-rtti \
-               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
                $(INCLUDES)
 endif
 

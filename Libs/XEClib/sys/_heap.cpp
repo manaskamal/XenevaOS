@@ -44,7 +44,27 @@ void xe_free_page(void* ptr, int pages);
 #define MORECORE_CANNOT_TRIM 0
 #define USE_DL_PREFIX
 #define LACKS_TIME_H
-#define USE_LOCKS 0
+/* Unikernel builds run XELnch and Namdapha as threads in one process, so
+ * they share this allocator. dlmalloc's built-in atomic spin lock makes
+ * its global state safe across timer preemption. */
+#define LACKS_SCHED_H
+/* The PE/COFF Clang target does not advertise the GNU version macros used by
+ * dlmalloc's built-in lock selector, so provide the lock explicitly. */
+typedef int MLOCK_T;
+static MLOCK_T malloc_global_mutex = 0;
+static inline int xe_malloc_lock(MLOCK_T* lock) {
+	while (__atomic_exchange_n(lock, 1, __ATOMIC_ACQUIRE)) {
+		while (__atomic_load_n(lock, __ATOMIC_RELAXED))
+			__asm__ __volatile__("yield");
+	}
+	return 0;
+}
+#define USE_LOCKS 2
+#define INITIAL_LOCK(lock) (*(lock) = 0)
+#define DESTROY_LOCK(lock) (0)
+#define ACQUIRE_LOCK(lock) xe_malloc_lock(lock)
+#define RELEASE_LOCK(lock) (__atomic_store_n((lock), 0, __ATOMIC_RELEASE), 0)
+#define TRY_LOCK(lock) (!__atomic_exchange_n((lock), 1, __ATOMIC_ACQUIRE))
 #define MALLOC_FAILURE_ACTION 
 
 #define CALL_MMAP(size) xe_request_page(size)

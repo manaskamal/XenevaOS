@@ -873,7 +873,7 @@ QEMU_ARGS=(
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
     -device virtio-net-pci,netdev=net0
-    -device ramfb
+    -device ramfb,id=ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
     # ramfb stays the boot/GOP display (listed first); virtio-gpu-pci is
@@ -881,7 +881,7 @@ QEMU_ARGS=(
     # its SET_SCANOUT, same disable-legacy=on reasoning as virtio-blk above
     # so it lands at the class/subclass our driver (and audrv.cnf) expect
     # --axiss
-    -device virtio-gpu-pci,disable-legacy=on
+    -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
     -serial stdio
