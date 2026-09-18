@@ -117,6 +117,30 @@ void DeoBakeScreenBlur(int canvas_w, int canvas_h) {
 		return;
 	glass_precompute_blur(
 		screenBlur, screenBlurTmp, backSurface, canvas_w, canvas_h, 0, 0, canvas_w, canvas_h, 4);
+	/* Boot-time diagnostic for the glass-darkening reports: mean channel
+	 * average of the blur source vs the baked blur, sampled on a stride so
+	 * it costs nothing measurable. The glass blend is anchored on
+	 * screenBlur, so `back` bright + `blur` dark here means the bake read
+	 * the wrong surface; both bright means the runtime input was fine and
+	 * the fault is downstream. One line per boot on serial. --axiss */
+	{
+		unsigned long accBack = 0, accBlur = 0;
+		int n = 0;
+		for (int sy = 0; sy < canvas_h; sy += 16) {
+			for (int sx = 0; sx < canvas_w; sx += 16) {
+				uint32_t p = backSurface[(size_t)sy * canvas_w + sx];
+				uint32_t q = screenBlur[(size_t)sy * canvas_w + sx];
+				accBack += (((p >> 16) & 0xFF) + ((p >> 8) & 0xFF) + (p & 0xFF)) / 3;
+				accBlur += (((q >> 16) & 0xFF) + ((q >> 8) & 0xFF) + (q & 0xFF)) / 3;
+				n++;
+			}
+		}
+		if (n > 0)
+			_KePrint("[deodhaiXR]: blurcheck back=%d blur=%d n=%d\r\n",
+					 (int)(accBack / (unsigned long)n),
+					 (int)(accBlur / (unsigned long)n),
+					 n);
+	}
 }
 
 uint32_t* DeoGetScreenBlur() {

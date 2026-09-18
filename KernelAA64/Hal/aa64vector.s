@@ -38,6 +38,59 @@
 .extern dbg_last_elr
 .extern dbg_fault_count
 
+/* The GPR frame is pushed first. These macros then reserve 528 bytes below
+ * it, making the C-visible AA64Registers pointer fp_frame + 528. Saving here,
+ * before the first BL, prevents interrupt handlers from corrupting user or
+ * kernel NEON state. x9 is safe scratch because its interrupted value is
+ * already in the GPR frame. */
+.macro save_fp_exception_frame
+   sub sp, sp, #528
+   stp q0, q1, [sp, #(0*32)]
+   stp q2, q3, [sp, #(1*32)]
+   stp q4, q5, [sp, #(2*32)]
+   stp q6, q7, [sp, #(3*32)]
+   stp q8, q9, [sp, #(4*32)]
+   stp q10, q11, [sp, #(5*32)]
+   stp q12, q13, [sp, #(6*32)]
+   stp q14, q15, [sp, #(7*32)]
+   stp q16, q17, [sp, #(8*32)]
+   stp q18, q19, [sp, #(9*32)]
+   stp q20, q21, [sp, #(10*32)]
+   stp q22, q23, [sp, #(11*32)]
+   stp q24, q25, [sp, #(12*32)]
+   stp q26, q27, [sp, #(13*32)]
+   stp q28, q29, [sp, #(14*32)]
+   stp q30, q31, [sp, #(15*32)]
+   mrs x9, fpcr
+   str x9, [sp, #512]
+   mrs x9, fpsr
+   str x9, [sp, #520]
+.endm
+
+.macro restore_fp_exception_frame
+   ldr x9, [sp, #512]
+   msr fpcr, x9
+   ldr x9, [sp, #520]
+   msr fpsr, x9
+   ldp q0, q1, [sp, #(0*32)]
+   ldp q2, q3, [sp, #(1*32)]
+   ldp q4, q5, [sp, #(2*32)]
+   ldp q6, q7, [sp, #(3*32)]
+   ldp q8, q9, [sp, #(4*32)]
+   ldp q10, q11, [sp, #(5*32)]
+   ldp q12, q13, [sp, #(6*32)]
+   ldp q14, q15, [sp, #(7*32)]
+   ldp q16, q17, [sp, #(8*32)]
+   ldp q18, q19, [sp, #(9*32)]
+   ldp q20, q21, [sp, #(10*32)]
+   ldp q22, q23, [sp, #(11*32)]
+   ldp q24, q25, [sp, #(12*32)]
+   ldp q26, q27, [sp, #(13*32)]
+   ldp q28, q29, [sp, #(14*32)]
+   ldp q30, q31, [sp, #(15*32)]
+   add sp, sp, #528
+.endm
+
 sync_el1_wrapper:
    //mov x9, sp
   // bic x9, x9, #15
@@ -74,9 +127,11 @@ sync_el1_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0
    stp x30, x0, [sp, #-16]!
-   mov x0, sp
+   save_fp_exception_frame
+   add x0, sp, #528
 
    bl sync_el1_handler
+   restore_fp_exception_frame
    ldp x30, x0,  [sp],  #16
    msr SP_EL0, x0
    ldp x28, x29, [sp] ,#16
@@ -118,8 +173,10 @@ irq_el1_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0    //Using SP_EL0 because SPSR_EL1 is set to use this 
    stp x30, x0, [sp, #-16]!
-   mov x0, sp
+   save_fp_exception_frame
+   add x0, sp, #528
    bl irq_el1_handler
+   restore_fp_exception_frame
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    ldp x28, x29, [sp], #16
@@ -161,7 +218,8 @@ sync_el0_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0
    stp x30, x0, [sp, #-16]!
-   mov x0, sp
+   save_fp_exception_frame
+   add x0, sp, #528
    bl sync_el1_handler
 
    mrs x0, SPSR_EL1
@@ -172,6 +230,7 @@ sync_el0_wrapper:
    msr MDSCR_EL1, x0
    _sync_cont: 
 
+   restore_fp_exception_frame
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    //mov x0, 0x2c0
@@ -215,7 +274,8 @@ irq_el0_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0    //Using SP_EL0 because SPSR_EL1 is set to use this 
    stp x30, x0, [sp, #-16]!
-   mov x0, sp
+   save_fp_exception_frame
+   add x0, sp, #528
    bl irq_el1_handler
     mrs x0, SPSR_EL1
    and w0, w0, #0x200000
@@ -225,6 +285,7 @@ irq_el0_wrapper:
    msr MDSCR_EL1, x0
    _irq_cont: 
 
+   restore_fp_exception_frame
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    //mov x0, 0x2c0

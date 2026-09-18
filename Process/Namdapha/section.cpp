@@ -54,8 +54,8 @@ NamdaphaSections* CreateSection(char* title) {
 	sect->y = section_start_y;
 	sect->width = NAMDAPHA_WIDTH;
 	sect->height = section_default_h;
-	sect->title = (char*)malloc(strlen(title));
-	memset(sect->title, 0, strlen(title));
+	sect->title = (char*)malloc(strlen(title) + 1);
+	memset(sect->title, 0, strlen(title) + 1);
 	strcpy(sect->title, title);
 	sect->buttonList = initialize_list();
 	sect->paint = SectionPaint;
