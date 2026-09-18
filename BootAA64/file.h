@@ -55,4 +55,15 @@ extern XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename);
  */
 extern VOID XECloseFile(XEFile* file);
 
+/*
+ * XEFileExists -- probe for a file without reading it
+ * @param ImageHandle -- Image handle passed by EFI firmware
+ * @param Filename -- name and path of the file
+ * @return true when the file can be opened for reading
+ *
+ * Silent on miss: absence is the normal case (used for the NOMENU
+ * boot-menu skip marker). Prints only when the ESP itself is broken.
+ */
+extern bool XEFileExists(EFI_HANDLE ImageHandle, CHAR16* Filename);
+
 #endif

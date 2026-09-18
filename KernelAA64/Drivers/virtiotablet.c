@@ -223,17 +223,16 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	common->DeviceStatus = 0;
 	isb_flush();
 
-	int queueSz = common->QueueSize;
-	tabletQueueSz = queueSz;
+	tabletQueueSz = common->QueueSize;
 	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000);
 	memset((void*)queuePhys, 0, 0x1000);
 	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
-		queuePhys, 1 /*((sizeof(struct VirtioQueue) * queueSz)) / 0x1000*/);
+		queuePhys, 1 /*((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000*/);
 	UARTDebugOut("Queue Phys : %x \r\n", queuePhys);
-	UARTDebugOut("Queue Size : %d \r\n", queueSz);
+	UARTDebugOut("Queue Size : %d \r\n", tabletQueueSz);
 
-	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
+	size_t desc_size = tabletQueueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
 	common->QueueDesc = queuePhys;
 	common->QueueAvail = (queuePhys) + OFFSETOF(struct VirtioQueue, available);
@@ -246,7 +245,7 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	uint64_t bufferBase = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 	TabletInput = (struct VirtioInputEvent*)AuMapMMIO(bufferBase, 1);
 
-	for (int i = 0; i < queueSz; ++i) {
+	for (int i = 0; i < tabletQueueSz; ++i) {
 		TabletQueue->buffers[i].Addr = bufferBase + i * sizeof(struct VirtioInputEvent);
 		TabletQueue->buffers[i].Length = sizeof(struct VirtioInputEvent);
 		TabletQueue->buffers[i].Flags = 2;
@@ -265,9 +264,7 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	dsb_ish();
 
 	tabletIndex = 0;
-	TabletQueue->available.index = queueSz;
-	isb_flush();
-	dsb_ish();
+	TabletQueue->available.index = tabletQueueSz;
 	isb_flush();
 	dsb_ish();
 

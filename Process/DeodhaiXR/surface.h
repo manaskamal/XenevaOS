@@ -43,4 +43,6 @@ extern void DeoInitializeBackSurface(ChCanvas* canv);
 extern void DeodhaiBackSurfaceUpdate(ChCanvas* canv, int x, int y, int w, int h);
 
 extern uint32_t* DeoGetBackSurface();
+extern void DeoBakeScreenBlur(int canvas_w, int canvas_h);
+extern uint32_t* DeoGetScreenBlur();
 #endif

@@ -65,20 +65,31 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 	limit.y = grid->y;
 	limit.w = grid->w;
 	limit.h = grid->h;
-	ButtonIconDraw(lb->buttonIcon,
-				   win->canv,
-				   lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
-				   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
-				   &limit);
+	if (lb->buttonIcon && lb->buttonIcon->imageData)
+		ButtonIconDraw(lb->buttonIcon,
+					   win->canv,
+					   lb->x + lb->w / 2 - lb->buttonIcon->iconWidth / 2,
+					   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
+					   &limit);
 	ChFontSetSize(win->app->baseFont, 11);
-	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
-	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
+	int font_length = (int)ChFontGetWidth(win->app->baseFont, lb->title);
+	int text_x = lb->x + lb->w / 2 - font_length / 2;
+	int text_y = lb->y + lb->h - 5;
+	/* White face over a hard opaque shadow. No scrim: the glass fill stays
+	 * untouched so bright wallpaper shows through around the glyphs. */
 	ChFontDrawTextClipped(win->canv,
 						  win->app->baseFont,
 						  lb->title,
-						  lb->x + lb->w / 2 - font_length / 2,
-						  lb->y + lb->h - 5,
-						  LIGHTSILVER,
+						  text_x + 1,
+						  text_y + 1,
+						  0xFF000000u,
+						  &limit);
+	ChFontDrawTextClipped(win->canv,
+						  win->app->baseFont,
+						  lb->title,
+						  text_x,
+						  text_y,
+						  0xFFFFFFFFu,
 						  &limit);
 }
 
@@ -115,8 +126,16 @@ void LaunchButtonMouseEvent(LaunchButton* wid, ChWindow* win, int x, int y, int 
 		if (wid->actionHandler)
 			wid->actionHandler(wid, win);
 	}
-	if (!pressed)
+	if (!pressed && wid->clicked) {
+		/* release while still hovering never hit the "!hover && !pressed"
+		 * reset branch above (hover stayed true), so the button kept
+		 * showing its pressed artwork until hover state next changed --
+		 * repaint back to the resting/hover look on release too. --axiss */
 		wid->clicked = false;
+		if (wid->drawLaunchButton)
+			wid->drawLaunchButton(wid, win);
+		ChWindowUpdate(win, wid->x, wid->y, wid->w, wid->h, false, true);
+	}
 
 	wid->last_mouse_x = x;
 	wid->last_mouse_y = y;
@@ -192,8 +211,9 @@ ButtonIcon* CreateLaunchButtonIcon(char* iconfile, LaunchButton* button) {
 	memset(icon, 0, sizeof(ButtonIcon));
 	int fd = _KeOpenFile(iconfile, FILE_OPEN_READ_ONLY);
 	if (fd == -1) {
-		for (;;)
-			;
+		free(icon);
+		button->buttonIcon = 0;
+		return NULL;
 	}
 
 	_KePrint("Icon fd : %d \r\n", fd);
@@ -314,15 +334,23 @@ void ButtonIconDraw(ButtonIcon* info, ChCanvas* canv, int x, int y, ChRect* limi
 			uint32_t r = pixel[2];
 
 			if (bytes_per_pixel == 3) {
-				if (r == 255 && g == 255 && b == 255)
+				if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0))
 					continue;
-				ChDrawPixel(canv, x + k, y + i, (r << 16) | (g << 8) | b);
+				/* 24-bit BMPs have no alpha. Glass compose treats sa==0 as
+				 * "show only the wallpaper blur", so an RGB-only write made
+				 * launcher icons vanish into the glass. --axiss */
+				ChDrawPixel(canv, x + k, y + i, 0xFF000000u | (r << 16) | (g << 8) | b);
 			} else {
 				uint32_t a = pixel[3];
-				if (a > 0) {
-					uint32_t rgb = ((a << 24) | (r << 16) | (g << 8) | b);
-					ChDrawPixel(canv, x + k, y + i, rgb);
-				}
+				/* The 32-bit assets store a drop shadow as near-black with
+				 * partial alpha. On a photo wallpaper it disappears; on the
+				 * flat 640x480 glass it reads as a black square behind every
+				 * icon. Skip those texels so the glass fill shows through. --axiss */
+				if (a == 0)
+					continue;
+				if (a < 255 && r < 32 && g < 32 && b < 32)
+					continue;
+				ChDrawPixel(canv, x + k, y + i, (a << 24) | (r << 16) | (g << 8) | b);
 			}
 		}
 	}

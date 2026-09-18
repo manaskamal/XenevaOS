@@ -115,12 +115,30 @@ typedef struct {
 	CHAR16 Label[24];
 	UINT32 Width;
 	UINT32 Height;
+	/* Manual -- resolution not offered by the firmware GOP (e.g. 1920x1080
+	 * on QEMU edk2-aarch64). Selecting it keeps the current GOP mode for
+	 * boot text and records the size as a desktop override for the GPU
+	 * driver instead. --axiss */
+	BOOLEAN Manual;
 } MENU_ITEM;
 
 #define RES_MENU_MAX 12
 
+/* Desktop modes QEMU's firmware GOP never lists; offered as manual
+ * override entries after the discovered firmware modes. --axiss */
+static const UINT32 kManualRes[][2] = {
+	{1280, 720},
+	{1366, 768},
+	{1600, 900},
+	{1920, 1080},
+};
+
 static MENU_ITEM MenuItem[RES_MENU_MAX];
 static UINTN MenuItemCount = 0;
+
+/* Desktop size override from a manual menu entry (0 = none, use GOP). --axiss */
+static UINT16 gDesktopOverrideW = 0;
+static UINT16 gDesktopOverrideH = 0;
 
 static void XEUintToChar16(UINT32 value, CHAR16* buf) {
 	CHAR16 tmp[12];
@@ -185,6 +203,7 @@ static void XEDiscoverGraphicsModes() {
 			if (!alreadyListed) {
 				MenuItem[MenuItemCount].Width = info->HorizontalResolution;
 				MenuItem[MenuItemCount].Height = info->VerticalResolution;
+				MenuItem[MenuItemCount].Manual = FALSE;
 				XEFormatResolutionLabel(
 					MenuItem[MenuItemCount].Label, info->HorizontalResolution, info->VerticalResolution);
 				MenuItemCount++;
@@ -192,6 +211,35 @@ static void XEDiscoverGraphicsModes() {
 		}
 		if (info)
 			gBS->FreePool(info);
+	}
+	/* Manual desktop-size entries the firmware GOP does not offer. --axiss */
+	for (UINTN m = 0; m < sizeof(kManualRes) / sizeof(kManualRes[0]); m++) {
+		if (MenuItemCount >= RES_MENU_MAX)
+			break;
+		bool alreadyListed = false;
+		for (UINTN i = 0; i < MenuItemCount; i++) {
+			if (MenuItem[i].Width == kManualRes[m][0] &&
+				MenuItem[i].Height == kManualRes[m][1]) {
+				alreadyListed = true;
+				break;
+			}
+		}
+		if (alreadyListed)
+			continue;
+		MenuItem[MenuItemCount].Width = kManualRes[m][0];
+		MenuItem[MenuItemCount].Height = kManualRes[m][1];
+		MenuItem[MenuItemCount].Manual = TRUE;
+		XEFormatResolutionLabel(MenuItem[MenuItemCount].Label, kManualRes[m][0],
+								kManualRes[m][1]);
+		/* Mark manual entries so the firmware-mode ones stay recognizable:
+		 * "1920x1080" becomes "1920x1080 *". --axiss */
+		UINTN len = 0;
+		while (MenuItem[MenuItemCount].Label[len] && len < 21)
+			len++;
+		MenuItem[MenuItemCount].Label[len++] = L' ';
+		MenuItem[MenuItemCount].Label[len++] = L'*';
+		MenuItem[MenuItemCount].Label[len] = L'\0';
+		MenuItemCount++;
 	}
 }
 
@@ -279,9 +327,18 @@ UINTN XESetGraphicsMode(EFI_SYSTEM_TABLE* SystemTable, int index) {
 	 * switch that could disagree with what the menu actually offered --axiss */
 	UINT32 dwidth = 640;
 	UINT32 dheight = 480;
+	gDesktopOverrideW = 0;
+	gDesktopOverrideH = 0;
 	if (index >= 0 && (UINTN)index < MenuItemCount) {
 		dwidth = MenuItem[index].Width;
 		dheight = MenuItem[index].Height;
+		if (MenuItem[index].Manual) {
+			/* No GOP mode to set: keep the firmware framebuffer as-is
+			 * and hand the size to the GPU driver as a desktop
+			 * override instead. --axiss */
+			gDesktopOverrideW = (UINT16)dwidth;
+			gDesktopOverrideH = (UINT16)dheight;
+		}
 	}
 	XEPrintf(
 		const_cast<wchar_t*>(L"index %d selected : %dx%d\r\n"), index, (int)dwidth, (int)dheight);
@@ -428,14 +485,12 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
 	XEBootInfo bootinfo;
-	/* The low-memory benchmark profile uses the smallest supported mode and
-	 * avoids blocking automated boots on the interactive resolution menu. */
-#ifdef __XENEVA_BLEED__
+	/* The resolution menu shows by default. Packaging --no-boot-menu drops
+	 * a NOMENU marker on the ESP, and headless/egl/xr runs always skip --
+	 * nothing interactive can answer there. --axiss */
 	int index = 0;
-#else
-	/* Get user graphics resolution choice*/
-	int index = XEGetScreenResolutionMode(SystemTable);
-#endif
+	if (!XEFileExists(ImageHandle, (CHAR16*)L"\\NOMENU"))
+		index = XEGetScreenResolutionMode(SystemTable);
 	/* Set the graphics resolution based on user selection */
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");
@@ -710,6 +765,10 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	bootinfo.graphics_framebuffer = XEGetFramebuffer();
 	bootinfo.X_Resolution = XEGetScreenWidth();
 	bootinfo.Y_Resolution = XEGetScreenHeight();
+	/* Real GOP geometry above; manual menu choice (if any) travels
+	 * separately so the early console never runs off the framebuffer. --axiss */
+	bootinfo.DesktopOverrideWidth = gDesktopOverrideW;
+	bootinfo.DesktopOverrideHeight = gDesktopOverrideH;
 	bootinfo.fb_size = XEGetFramebufferSz();
 	bootinfo.pixels_per_line = XEGetPixelsPerLine();
 	bootinfo.redmask = XEGetRedMask();

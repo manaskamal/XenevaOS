@@ -160,7 +160,12 @@ extern uint64_t read_spsel();
 extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr);
 extern void aa64_svc_test();
 extern void aa64_utest();
-extern void dc_ivac(uint64_t address);
+/* was a plain extern with no AU_EXPORT, so driver DLLs importing it got an
+ * unresolved symbol under -force:unresolved. This is a trivial single
+ * cache-line invalidate (dc_ivac / ret, no sleep) -- safe to call from IRQ
+ * context, unlike aa64_dc_ivac_range() below which delays via a WFI loop
+ * and deadlocks if called from inside an interrupt handler. --axiss */
+AU_EXTERN AU_EXPORT void dc_ivac(uint64_t address);
 extern void aa64_store_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void aa64_restore_fp(uint8_t* address, uint64_t* fpcr, uint64_t* fpsr);
 extern void data_cache_flush(uint64_t* address);

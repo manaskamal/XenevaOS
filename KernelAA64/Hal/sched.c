@@ -55,6 +55,11 @@ extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init, uint64_t v
 extern void ret_from_syscall(AA64Thread* thr);
 extern void aa64_resume_exception_frame(AA64Registers* regs,
 	uint64_t elr_el1, uint64_t spsr_el1) __attribute__((noreturn));
+bool AuSchedValidateLists(void);
+
+/* Bounds every scheduler list walk so a corrupted/cyclic list can never
+ * wedge a tick path in an unbounded traversal. --axiss */
+#define SCHED_VALIDATE_STEPS 8192
 
 extern void first_time_sex(AA64Thread* thr);
 extern void first_time_sex2(AA64Thread* thr);
@@ -190,12 +195,23 @@ void AA64NextThread() {
 		current_thread = edf;
 		return;
 	}
-	AA64Thread* thread = current_thread;
-
-	thread = thread->next;
-	if (!thread)
-		thread = _idle_thr;
-	current_thread = thread;
+	/* Best-effort round-robin from current. Only READY and LEFT_IN_KERNEL
+	 * threads may run (the latter resumes via its dedicated path in
+	 * AuScheduleThread): resuming SLEEP/BLOCKED/KILLABLE threads here
+	 * breaks whatever parked them. The walk is bounded so a cyclic list
+	 * can never wedge the tick; with nothing runnable we park on idle. --axiss */
+	AA64Thread* cursor = current_thread ? current_thread->next : NULL;
+	for (int i = 0; i < SCHED_VALIDATE_STEPS; i++) {
+		if (!cursor)
+			cursor = _idle_thr;
+		if (cursor == _idle_thr || cursor->state == THREAD_STATE_READY ||
+			cursor->state == THREAD_STATE_LEFT_IN_KERNEL) {
+			current_thread = cursor;
+			return;
+		}
+		cursor = cursor->next;
+	}
+	current_thread = _idle_thr;
 }
 
 /**
@@ -309,6 +325,11 @@ static void AuSchedHeartbeat(void) {
 	for (AA64Thread* t = sleep_thr_head; t != NULL; t = t->next)
 		sleeplist++;
 	AuSchedUnlock(d);
+	/* Self-check: silent list corruption strands threads exactly the way a
+	 * stuck home menu presented (runnable thread, never picked). Print only
+	 * on failure; healthy boots stay quiet. --axiss */
+	if (!AuSchedValidateLists())
+		UARTDebugOut("[sched-dbg]: LISTS CORRUPT tick=%d\n", (int)scheduler_tick);
 	UARTDebugOut("[sched-dbg]: tick=%d ms=%d ready=%d sleep=%d blocked=%d leftk=%d other=%d sleeplist=%d \n",
 		(int)scheduler_tick, (int)AuGetCurrentMS(),
 		ready, sleep, blocked, leftk, other, sleeplist);
@@ -370,8 +391,13 @@ void enscheddebug() {
 void AuHandleSleepThreads() {
 	uint64_t d = AuSchedLock();
 	AA64Thread* sleep_thr;
-	for (sleep_thr = sleep_thr_head; sleep_thr != NULL; sleep_thr = sleep_thr->next) {
-		sleep_thr->sleepQuanta--;
+	for (sleep_thr = sleep_thr_head; sleep_thr != NULL;) {
+		/* schedLink below clears ->next: stash it first or the walk ends
+		 * here and every later sleeper misses this tick. A zero quantum
+		 * must wake, not wrap to ~forever. --axiss */
+		AA64Thread* next = sleep_thr->next;
+		if (sleep_thr->sleepQuanta > 0)
+			sleep_thr->sleepQuanta--;
 		if (sleep_thr->sleepQuanta == 0) {
 			//settimerdebug();
 			if (sleep_thr->state != THREAD_STATE_LEFT_IN_KERNEL)
@@ -379,6 +405,7 @@ void AuHandleSleepThreads() {
 			schedUnlink(&sleep_thr_head, &sleep_thr_last, sleep_thr);
 			schedLink(&thread_list_head, &thread_list_last, sleep_thr);
 		}
+		sleep_thr = next;
 	}
 	AuSchedUnlock(d);
 }
@@ -430,7 +457,13 @@ void AuScheduleThread(AA64Registers* regs) {
 	runThr->x29 = regs->x29; runThr->x30 = regs->x30;
 	runThr->justStored = true;
 
-	aa64_store_fp(runThr->fp_regs, (uint64_t*)&runThr->fpcr, (uint64_t*)&runThr->fpsr);
+	/* The wrapper captured this state before entering C. Saving live q
+	 * registers here is too late: IRQ dispatch and timer bookkeeping are
+	 * compiled with NEON enabled and may already have clobbered them. */
+	AA64FpFrame* interrupted_fp = AA64ExceptionFpFrame(regs);
+	memcpy(runThr->fp_regs, interrupted_fp->q, sizeof(runThr->fp_regs));
+	runThr->fpcr = interrupted_fp->fpcr;
+	runThr->fpsr = interrupted_fp->fpsr;
 
 	uint64_t now = AuGetCurrentUS();
 	uint64_t delta = now - runThr->start_time_us;
@@ -756,8 +789,6 @@ void AuThreadMoveToTrash(AA64Thread* t) {
 void AuThreadCleanTrash(AA64Thread* t) {
 	AuThreadDeleteTrash(t);
 }
-
-#define SCHED_VALIDATE_STEPS 8192
 
 static bool schedValidateOne(AA64Thread* head, AA64Thread* last, uint8_t s0, uint8_t s1,
 	uint8_t s2, int* count) {

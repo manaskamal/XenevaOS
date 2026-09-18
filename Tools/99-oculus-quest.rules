@@ -1,0 +1,5 @@
+# Meta / Oculus Quest (VID 2833). Install:
+#   sudo cp Tools/99-oculus-quest.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTR{idVendor}=="2833", MODE="0666", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0666", GROUP="plugdev"

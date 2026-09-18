@@ -8,6 +8,14 @@ ifeq ($(BLEED),1)
     BLEED_FLAGS = -D__XENEVA_BLEED__
 endif
 
+# NOTE: never define __XENEVA_UNIKERNEL__ for the standalone build. It only
+# enables the NamdaphaThread wrapper, whose NamdaphaMain callee exists solely
+# inside deodxr.exe (DeodhaiXR compiles these same sources with -include
+# unikernel_syms.h, which renames main). Defining it here breaks the link
+# with undefined NamdaphaMain -- and adding the -include instead would break
+# it the other way (crt needs a real main). Unused here by design. --axiss
+UNIKERNEL ?= 0
+
 TARGET = nmdapha.elf
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
@@ -31,7 +39,7 @@ ifeq ($(TOOLCHAIN), llvm)
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
-               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
                -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
@@ -46,7 +54,7 @@ else
 
     CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fPIE -fno-exceptions -fno-rtti \
-               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA -DNAMDAPHA_HORIZONTAL $(BLEED_FLAGS) \
                $(INCLUDES)
 endif
 

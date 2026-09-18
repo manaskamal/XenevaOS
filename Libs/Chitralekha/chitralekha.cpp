@@ -209,9 +209,13 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 #ifdef COLOR_BGRA
 	uint32_t bgra = ChColorRGBAtoBGRA(color);
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = bgra;
-#elif COLOR_RGBA
+#elif defined(COLOR_RGBA)
 	/* By default Chitralekha uses RGBA */
 	lfb[static_cast<uint64_t>(y) * canvas->canvasWidth + x] = color;
+#else
+	/* No pixel format selected: fail loudly instead of silently dropping
+	 * every pixel this function is asked to draw. --axiss */
+	#error "Chitralekha pixel format not selected: define COLOR_RGBA or COLOR_BGRA"
 #endif
 }
 

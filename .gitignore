@@ -62,3 +62,7 @@ compile_commands.json
 
 # Personal notes / drafts, not meant for the repo
 notes/
+session-*.md
+
+# Downloaded Android SDK tools; use Tools/quest-adb.sh to install locally
+Tools/platform-tools/

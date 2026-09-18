@@ -101,6 +101,8 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
 	} else {
 		proc->next->prev = proc->prev;
 	}
+	if (proc->mmap_lock)
+		AuDeleteSpinlock(proc->mmap_lock);
 	kfree(proc);
 }
 
@@ -254,6 +256,8 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->shm_break = USER_SHARED_MEM_START;
 	proc->proc_mem_heap = PROCESS_BREAK_ADDRESS;
 	proc->proc_heapmem_len = 0;
+	proc->mmap_next = PROCESS_MMAP_ADDRESS;
+	proc->mmap_lock = AuCreateSpinlock(false);
 	proc->_kstack_index_ = 1;
 	proc->_main_stack_ = main_thr_stack;
 	proc->prev_sample_time_us = AuGetCurrentUS();

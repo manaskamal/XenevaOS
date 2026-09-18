@@ -227,8 +227,7 @@ void ClipSubtractRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int r_count) {
 }
 
 void ClipGetBehindRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* r_count) {
-	Rect out;
-	int count = 0;
+	int count = *r_count;
 	int x1 = (sub_rect->x > cut_rect->x) ? sub_rect->x : cut_rect->x;
 	int y1 = (sub_rect->y > cut_rect->y) ? sub_rect->y : cut_rect->y;
 	int x2 = (sub_rect->x + sub_rect->w < cut_rect->x + cut_rect->w) ? (sub_rect->x + sub_rect->w)
@@ -236,15 +235,12 @@ void ClipGetBehindRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* r_count)
 	int y2 = (sub_rect->y + sub_rect->h < cut_rect->y + cut_rect->h) ? (sub_rect->y + sub_rect->h)
 																	 : (cut_rect->y + cut_rect->h);
 
-	out.x = x1;
-	out.y = y1;
-	out.w = x2 - x1;
-	out.h = y2 - y1;
+	if (x2 <= x1 || y2 <= y1 || count >= 100)
+		return;
 
-	list[count].x = out.x;
-	list[count].y = out.y;
-	list[count].w = out.w;
-	list[count].h = out.h;
-	count++;
-	*r_count = count;
+	list[count].x = x1;
+	list[count].y = y1;
+	list[count].w = x2 - x1;
+	list[count].h = y2 - y1;
+	*r_count = count + 1;
 }
