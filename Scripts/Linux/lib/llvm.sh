@@ -21,12 +21,27 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
     ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
 
-    # All AArch64 user-space applications
+    # All AArch64 user-space applications. Microkernel rule: --no-network
+    # and --no-audio drop their whole userspace (daemons and tools) so a
+    # removed component is never built, deployed, or packed. --axiss
     APPS=(
-        Init DeodhaiXR Terminal Namdapha XELnch DeodhaiAudio
-        Calender Calculator AudioPlayer Files Control
-        ping udpecho XEShell route iptables NETMngr
+        Init DeodhaiXR Terminal Namdapha XELnch
+        Calender Calculator Files Control XEShell
     )
+    if [ "${NO_AUDIO:-0}" -eq 0 ]; then
+        APPS+=(DeodhaiAudio AudioPlayer)
+    else
+        echo "[llvm] Audio userspace excluded (--no-audio)."
+        rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
+    fi
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        APPS+=(ping udpecho route iptables NETMngr)
+    else
+        echo "[llvm] Network userspace excluded (--no-network)."
+        rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
+            ../../Resources/resources/route.exe ../../Resources/resources/iptab.exe \
+            ../../Resources/resources/netmngr.exe
+    fi
     for app in "${APPS[@]}"; do
         ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" DIRECT_SCANOUT="${DIRECT_SCANOUT:-0}" OPENXR="${OPENXR:-0}" llvm )
     done
@@ -38,18 +53,22 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/Terminal/term.exe         ../../Resources/resources/
     cp -f ../../Process/Namdapha/nmdapha.exe      ../../Resources/resources/
     cp -f ../../Process/XELnch/xelnch.exe         ../../Resources/resources/
-    cp -f ../../Process/DeodhaiAudio/deoaud.exe   ../../Resources/resources/
     cp -f ../../Process/Calender/calendr.exe      ../../Resources/resources/
     cp -f ../../Process/Calculator/calc.exe       ../../Resources/resources/
-    cp -f ../../Process/AudioPlayer/audplr.exe    ../../Resources/resources/
     cp -f ../../Process/Files/file.exe            ../../Resources/resources/
     cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
-    cp -f ../../Process/ping/ping.exe             ../../Resources/resources/
-    cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
-    cp -f ../../Process/route/route.exe           ../../Resources/resources/
-    cp -f ../../Process/iptables/iptab.exe        ../../Resources/resources/
-    cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
+    if [ "${NO_AUDIO:-0}" -eq 0 ]; then
+        cp -f ../../Process/DeodhaiAudio/deoaud.exe   ../../Resources/resources/
+        cp -f ../../Process/AudioPlayer/audplr.exe    ../../Resources/resources/
+    fi
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        cp -f ../../Process/ping/ping.exe             ../../Resources/resources/
+        cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
+        cp -f ../../Process/route/route.exe           ../../Resources/resources/
+        cp -f ../../Process/iptables/iptab.exe        ../../Resources/resources/
+        cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
+    fi
 fi
 
 printf "${STY_GREEN}[llvm] AArch64 LLVM/Clang build complete.${STY_RST}\n"

@@ -189,6 +189,48 @@ static void virt_gpu_put_pxl(uint32_t x, uint32_t y, uint32_t color) {
 }
 
 /**
+ * @brief VirtGpuConsolePresent -- mirror console damage onto the scanout
+ * Copies rows from the console framebuffer (arbitrary pitch) into our
+ * tightly-packed backing, then transfers and flushes exactly that rect.
+ * Runs inline in the writer's context; the submit path only spin-polls,
+ * never sleeps. Clipped to the resource. --axiss
+ */
+void VirtGpuConsolePresent(uint32_t* src, uint32_t src_pitch, int x, int y, int w, int h) {
+	if (!src || src_pitch < 4)
+		return;
+	if (x < 0) {
+		w += x;
+		x = 0;
+	}
+	if (y < 0) {
+		h += y;
+		y = 0;
+	}
+	if (x >= (int)virt_display_width || y >= (int)virt_display_height)
+		return;
+	if (w > (int)virt_display_width - x)
+		w = (int)virt_display_width - x;
+	if (h > (int)virt_display_height - y)
+		h = (int)virt_display_height - y;
+	if (w <= 0 || h <= 0)
+		return;
+	uint32_t* dst = (uint32_t*)GPU_FB_BUFFER;
+	for (int j = 0; j < h; j++) {
+		uint32_t* s =
+			(uint32_t*)((uint8_t*)src + (uint64_t)(y + j) * src_pitch) + x;
+		uint32_t* d = dst + (uint64_t)(y + j) * virt_display_width + x;
+		for (int i = 0; i < w; i++)
+			d[i] = s[i];
+	}
+	VirtioCommonCfg* cfg = gpu_get_config_pointer();
+	int id = virt_gpu_default_resource_id();
+	if (!cfg || !id)
+		return;
+	virt_gpu_transfer_to_host2d(cfg, id, x, y, w, h);
+	virt_gpu_flush_rect(cfg, id, x, y, w, h);
+}
+
+/**
  * @brief virt_gpu_fill_screen -- fill the screen with specific color
  * @param width -- width of the screen
  * @param height -- height of the screen

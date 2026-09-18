@@ -47,6 +47,7 @@
 #define SCREEN_GET_PITCH     207
 #define SCREEN_REG_MNGR      208
 #define SCREEN_GET_FB     209
+#define SCREEN_RESTORE_BOOT_FB 210
 
 typedef struct _aucon_ {
 	uint32_t width;
@@ -116,6 +117,25 @@ void AuConsoleEarlyEnable(bool value);
 * console keeps working.
 */
 void AuConsoleSetDisplayOwned(void);
+
+/*
+* AuConsoleRestoreBootFb -- move the kernel console back onto the boot
+* framebuffer (see aucon.c). Used by TERM mode, which has no compositor
+* to present the GPU backing the console was repointed at.
+* Returns 1 when restored, 0 when there is nothing to restore.
+*/
+int AuConsoleRestoreBootFb(void);
+
+/*
+* AuConsolePresentFn -- mirrors console damage onto another scanout.
+* src is the console framebuffer, src_pitch its byte stride; (x, y, w, h)
+* is the damaged rectangle in pixels. The virtio-gpu driver installs this
+* so the text console stays visible on its display while no compositor
+* owns the screen (TERM mode). --axiss
+*/
+typedef void (*AuConsolePresentFn)(uint32_t* src, uint32_t src_pitch,
+	int x, int y, int w, int h);
+AU_EXTERN AU_EXPORT void AuConsoleSetPresentHook(AuConsolePresentFn fn);
 
 /*
  * AuConsoleGetScreenWidth -- return the screen

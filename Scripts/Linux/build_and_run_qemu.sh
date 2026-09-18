@@ -41,6 +41,15 @@ set -e
 #                           profile, run mode and guest options, then continue
 #                           into the normal build/run flow. Needs a terminal;
 #                           flags passed alongside preselect menu entries.
+#   --no-network            Drop the whole network userspace (netmngr daemon
+#                           plus ping, udpecho, route, iptab) from the build
+#                           and the image. Init skips the missing daemon.
+#   --no-audio              Drop the audio userspace (deoaud daemon and
+#                           AudioPlayer) from the build and the image.
+#   --no-boot-menu          Skip the EFI resolution menu and boot the default
+#                           mode (NOMENU marker on the ESP). The menu stays on
+#                           by default; headless, egl-headless and xr-demo
+#                           runs always skip it.
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
 #   --install-deps          Install required host packages for this distro.
 #   --initrd-size-mb=N      Override the auto-computed initrd2.img size.
@@ -97,6 +106,9 @@ INITRD_SIZE_MB=""
 ISO=0
 ISO_OUTPUT=""
 TUI=0
+NO_NETWORK=0
+NO_AUDIO=0
+NO_BOOT_MENU=0
 
 print_help(){
     printf "${STY_CYAN}"
@@ -128,9 +140,13 @@ run_build_tui() {
     local scanout_choice="$DIRECT_SCANOUT"
     local unikernel_choice="$UNIKERNEL"
     local soak_choice="$SOAK"
+    local network_on=1 audio_on=1 bootmenu_on=1
+    [ "$NO_NETWORK" -eq 1 ] && network_on=0
+    [ "$NO_AUDIO" -eq 1 ] && audio_on=0
+    [ "$NO_BOOT_MENU" -eq 1 ] && bootmenu_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -170,6 +186,9 @@ run_build_tui() {
         scanout_choice=0
         unikernel_choice=0
         soak_choice=0
+        network_on=1
+        audio_on=1
+        bootmenu_on=1
         memory_choice="default"
     }
 
@@ -196,6 +215,9 @@ run_build_tui() {
         DIRECT_SCANOUT="$scanout_choice"
         UNIKERNEL="$unikernel_choice"
         SOAK="$soak_choice"
+        NO_NETWORK=$((1 - network_on))
+        NO_AUDIO=$((1 - audio_on))
+        NO_BOOT_MENU=$((1 - bootmenu_on))
         case "$memory_choice" in
             default) unset XENEVA_QEMU_MEMORY ;;
             *) export XENEVA_QEMU_MEMORY="$memory_choice" ;;
@@ -218,6 +240,9 @@ run_build_tui() {
             scanout) scanout_choice=$((1 - scanout_choice)) ;;
             unikernel) unikernel_choice=$((1 - unikernel_choice)) ;;
             soak) soak_choice=$((1 - soak_choice)) ;;
+            network) network_on=$((1 - network_on)) ;;
+            audio) audio_on=$((1 - audio_on)) ;;
+            bootmenu) bootmenu_on=$((1 - bootmenu_on)) ;;
             memory) tui_cycle_memory ;;
             launch) tui_apply_and_launch ;;
             quit)
@@ -257,9 +282,12 @@ run_build_tui() {
         tui_row 4 "Direct scanout" "$(tui_on_off "$scanout_choice")"
         tui_row 5 "Unikernel shell" "$(tui_on_off "$unikernel_choice")"
         tui_row 6 "Scheduler soak" "$(tui_on_off "$soak_choice")"
-        tui_row 7 "Guest memory" "$memory_choice"
-        tui_row 8 "Launch" "build + run"
-        tui_row 9 "Quit" ""
+        tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
+        tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
+        tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
+        tui_row 10 "Guest memory" "$memory_choice"
+        tui_row 11 "Launch" "build + run"
+        tui_row 12 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
@@ -336,6 +364,9 @@ while [ $# -gt 0 ]; do
         --iso) ISO=1 ;;
         --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
         --tui) TUI=1 ;;
+        --no-network) NO_NETWORK=1 ;;
+        --no-audio) NO_AUDIO=1 ;;
+        --no-boot-menu) NO_BOOT_MENU=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -351,6 +382,50 @@ done
 # exec below when run mode xr-demo is picked). --axiss
 if [ "$TUI" -eq 1 ] && [ "$XR_DEMO_MENU" -eq 0 ]; then
     run_build_tui
+fi
+
+# Mutual exclusion for builders. Concurrent `make clean && make` runs in one
+# tree interleave objects and silently link mixed binaries; rebuilding or
+# repacking under a live guest corrupts its boot reads. The flock lives on
+# an fd held for the whole run (build, pack, and the QEMU session itself),
+# so a second build, relaunch, or TUI run fails here instead of corrupting
+# there. flock state is kernel-held: no stale lock survives a killed
+# process. XENEVA_BUILD_LOCKED skips re-acquiring across the xr-demo exec
+# chain, which inherits the held fd. --axiss
+if [ -z "${XENEVA_BUILD_LOCKED:-}" ]; then
+    mkdir -p "$REPO_ROOT/Build"
+    exec 9>"$REPO_ROOT/Build/.build.lock" || exit 1
+    if ! flock -n 9; then
+        printf "${STY_RED}[$0]: another build or run is holding the tree lock (Build/.build.lock).${STY_RST}\n"
+        printf "${STY_YELLOW}[$0]: Finish or stop the other run first -- concurrent builds mix objects.${STY_RST}\n"
+        exit 1
+    fi
+    export XENEVA_BUILD_LOCKED=1
+fi
+
+# A live guest owns these images: rebuilding or repacking under it corrupts
+# its boot reads (a second QEMU would already fail on the image lock, but
+# only after we mangled the files). Plain relaunches are serialized by the
+# tree lock above plus QEMU's own lock. --axiss
+if command -v fuser >/dev/null 2>&1; then
+    live_guests=""
+    for img in "$REPO_ROOT/fat.img" "$REPO_ROOT/initrd2.img"; do
+        if [ -f "$img" ]; then
+            live_guests="$live_guests $(fuser "$img" 2>/dev/null | sed 's/^[^:]*://' || true)"
+        fi
+    done
+    live_guests="$(printf '%s' "$live_guests" | tr -cs '0-9' ' ')"
+    case "$live_guests" in
+        ''|' ')
+            ;;
+        *)
+            printf "${STY_RED}[$0]: QEMU guest(s) still running against these images (pid${live_guests}).${STY_RST}\n"
+            printf "${STY_YELLOW}[$0]: Stop them first -- rebuilding or repacking under a live guest corrupts its boot.${STY_RST}\n"
+            exit 1
+            ;;
+    esac
+else
+    printf "${STY_YELLOW}[$0]: fuser not found; cannot check for live guests before building.${STY_RST}\n"
 fi
 
 if [ "$XR_DEMO_MENU" -eq 1 ]; then
@@ -451,6 +526,11 @@ if [ "$OPENXR" -eq 1 ]; then
 		exit 1
 	fi
 	BUILD_USER_APPS=1
+fi
+
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+	exit 1
 fi
 
 if [ "$XR_DEMO" -eq 1 ] && { [ "$HEADLESS" -eq 1 ] || [ "$EGL_HEADLESS" -eq 1 ] ||
@@ -600,7 +680,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -668,17 +748,34 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     echo "[+] Creating ${initrd_size_mb}MB FAT32 initrd2.img and packing resources..."
     dd if=/dev/zero of=initrd2.img bs=1M count="$initrd_size_mb"
     mkfs.vfat -F 32 initrd2.img
+    # Microkernel rule: a removed component stays out of the image even if
+    # a stale binary lingers in Resources/ from an earlier full build. --axiss
+    pack_excluded() {
+        case "$1" in
+            MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
+                [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
+            netmngr.exe|route.exe|iptab.exe|ping.exe|udpecho.exe)
+                [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
+            deoaud.exe|audplr.exe)
+                [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
+        esac
+        return 1
+    }
     if [ "$BLEED" -eq 1 ]; then
         echo "[bleed] Trimming fonts and nonessential payloads; keeping network, audio, and glass."
-        for resource in Resources/resources/*; do
-            case "$(basename "$resource")" in
-                MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf) continue ;;
-            esac
-            mcopy -o -s -i initrd2.img "$resource" ::/
-        done
-    else
-        mcopy -o -s -i initrd2.img Resources/resources/* ::/
     fi
+    if [ "$NO_NETWORK" -eq 1 ]; then
+        echo "[+] Network userspace excluded from the image (--no-network)."
+    fi
+    if [ "$NO_AUDIO" -eq 1 ]; then
+        echo "[+] Audio userspace excluded from the image (--no-audio)."
+    fi
+    for resource in Resources/resources/*; do
+        if pack_excluded "$(basename "$resource")"; then
+            continue
+        fi
+        mcopy -o -s -i initrd2.img "$resource" ::/
+    done
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
@@ -699,6 +796,17 @@ mmd -i fat.img ::/EFI/XENEVA
 mcopy -o -i fat.img BootAA64/Build/EFI/BOOT/BOOTAA64.efi ::/EFI/BOOT/BOOTAA64.EFI
 mcopy -o -i fat.img KernelAA64/KernelAA64.exe ::/EFI/XENEVA/xnkrnl.exe
 mcopy -o -i fat.img initrd2.img ::/initrd2.img
+
+# Boot-menu marker: interactive runs honor --no-boot-menu (the menu is on by
+# default). Headless, egl-headless and xr-demo always skip -- nothing can
+# answer there, and the XR flow drives the menu over the monitor socket.
+# The ISO inherits the marker inside efiboot.img. --axiss
+if [ "$XR_DEMO" -eq 0 ] && { [ "$NO_BOOT_MENU" -eq 1 ] || [ "$HEADLESS" -eq 1 ] || [ "$EGL_HEADLESS" -eq 1 ]; }; then
+    : > /tmp/xeneva-nomenu-marker
+    mcopy -o -i fat.img /tmp/xeneva-nomenu-marker ::/NOMENU
+    rm -f /tmp/xeneva-nomenu-marker
+    echo "[+] Boot menu skipped (NOMENU marker)."
+fi
 
 # --- Package as a bootable ISO instead of launching QEMU ---
 

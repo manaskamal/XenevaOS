@@ -366,8 +366,15 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeProcessSleep(500);
 	}
 	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
-	if (con == -1)
+	if (con == -1) {
 		_KePrint("[init]: failed to open /dev/console \r\n");
+	} else {
+		/* TERM owns the display: move the kernel console back onto the
+		 * boot framebuffer (ramfb tab). The virtio-gpu driver repoints it
+		 * at its own backing for the compositor, which never runs here,
+		 * so without this the shell would be alive but invisible. --axiss */
+		_KeFileIoControl(con, SCREEN_RESTORE_BOOT_FB, NULL);
+	}
 	init_run_term_command(ggid_misc_world, con);
 #else
 	proc = _KeCreateProcess(0, "netmngr");
@@ -398,14 +405,24 @@ extern "C" void main(int argc, char* argv[]) {
 
 	_KeProcessSleep(800);
 
-	proc = _KeCreateProcess(0, "deoaud");
-	_KePrint("deoaud proc id : %d \r\n", proc);
-	_KeSetUID(proc, UAC_DEAMONS);
-	_KeSetGID(proc, UAC_DEAMONS);
-	_KeCredAddSGroup(proc, ggid_misc_world);
-	_KeCredAddSGroup(proc, GROUP_AUDIO);
-	_KeCredAddSGroup(proc, ggid_misc_postbox);
-	_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+	/* Microkernel rule: a removed daemon is an absent binary, and init
+	 * must skip it without leaking a process slot. --no-audio drops
+	 * deoaud.exe from the image; without this guard init would create
+	 * the process and fail the exec anyway. --axiss */
+	int daud = _KeOpenFile("/deoaud.exe", FILE_OPEN_READ_ONLY);
+	if (daud != -1) {
+		_KeCloseFile(daud);
+		proc = _KeCreateProcess(0, "deoaud");
+		_KePrint("deoaud proc id : %d \r\n", proc);
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_AUDIO);
+		_KeCredAddSGroup(proc, ggid_misc_postbox);
+		_KeProcessLoadExec(proc, "/deoaud.exe", 0, NULL);
+	} else {
+		_KePrint("[init]: deoaud.exe absent, skipping audio\r\n");
+	}
 #endif /* non-TERM: TERM builds run console-only, no window manager --axiss */
 
 #elif ARCH_X64

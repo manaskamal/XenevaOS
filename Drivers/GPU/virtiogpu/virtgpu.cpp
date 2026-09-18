@@ -581,6 +581,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	virt_gpu_fill_screen(gpu_w, gpu_h, 0xFF000000);
 	virt_gpu_transfer_to_host2d(cfg, resource_id, 0, 0, gpu_w, gpu_h);
 	virt_gpu_flush(cfg, resource_id);
+	/* NOTE: the console-mirror hookup lives kernel-side (audrv resolves
+	 * VirtGpuConsolePresent from our export table). Calling the setter
+	 * from here faults: driver->kernel imports resolve only through the
+	 * k_exports allowlist, which has no console entry. --axiss */
 	mask_irqs();
 
 	AuVFSNode* devfs = AuVFSFind("/dev");
@@ -612,4 +616,8 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
  */
 VirtioCommonCfg* gpu_get_config_pointer() {
 	return _cfg;
+}
+
+int virt_gpu_default_resource_id() {
+	return default_scr_rsrc_id;
 }

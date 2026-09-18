@@ -485,9 +485,12 @@ extern "C" EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemT
 	XEUARTPrint("Library initialized \r\n");
 	XEClearScreen();
 	XEBootInfo bootinfo;
-	/* The streamlined profile boots straight into the default resolution
-	 * instead of blocking on the interactive EFI menu. */
+	/* The resolution menu shows by default. Packaging --no-boot-menu drops
+	 * a NOMENU marker on the ESP, and headless/egl/xr runs always skip --
+	 * nothing interactive can answer there. --axiss */
 	int index = 0;
+	if (!XEFileExists(ImageHandle, (CHAR16*)L"\\NOMENU"))
+		index = XEGetScreenResolutionMode(SystemTable);
 	/* Set the graphics resolution based on user selection */
 	UINTN Mode = XESetGraphicsMode(SystemTable, index);
 	XEGuiPrint("XenevaOS Loader 2.0 (XNLDR) ARM64\n");

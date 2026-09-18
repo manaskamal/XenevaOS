@@ -279,7 +279,7 @@ void XEShellReadLine() {
 			if (index > 0) {
 				printf("%c", c);
 				fflush(stdout);
-				cmdBuf[index--] = 0;
+				cmdBuf[--index] = '\0';
 			}
 			return;
 		}

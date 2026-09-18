@@ -72,14 +72,24 @@ void LaunchButtonPaint(LaunchButton* lb, ChWindow* win) {
 					   lb->y + lb->h / 2 - lb->buttonIcon->iconHeight / 2,
 					   &limit);
 	ChFontSetSize(win->app->baseFont, 11);
-	int font_length = ChFontGetWidth(win->app->baseFont, lb->title);
-	int font_height = ChFontGetHeight(win->app->baseFont, lb->title);
+	int font_length = (int)ChFontGetWidth(win->app->baseFont, lb->title);
+	int text_x = lb->x + lb->w / 2 - font_length / 2;
+	int text_y = lb->y + lb->h - 5;
+	/* White face over a hard opaque shadow. No scrim: the glass fill stays
+	 * untouched so bright wallpaper shows through around the glyphs. */
 	ChFontDrawTextClipped(win->canv,
 						  win->app->baseFont,
 						  lb->title,
-						  lb->x + lb->w / 2 - font_length / 2,
-						  lb->y + lb->h - 5,
-						  LIGHTSILVER,
+						  text_x + 1,
+						  text_y + 1,
+						  0xFF000000u,
+						  &limit);
+	ChFontDrawTextClipped(win->canv,
+						  win->app->baseFont,
+						  lb->title,
+						  text_x,
+						  text_y,
+						  0xFFFFFFFFu,
 						  &limit);
 }
 
