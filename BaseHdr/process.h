@@ -40,6 +40,7 @@
 #include <Cred/group.h>
 #include <Cred/user.h>
 #include <Cap/capability.h>
+#include <Sync/spinlock.h>
 
 #ifdef ARCH_ARM64
 #include <Hal/AA64/sched.h>
@@ -172,6 +173,8 @@ typedef struct _au_proc_ {
 	size_t proc_mem_heap;
 	size_t proc_heapmem_len;
 	size_t proc_mmap_len;
+	size_t mmap_next;
+	Spinlock* mmap_lock;
 
 	/** credentials **/
 	AuProcCredentials creds;
