@@ -100,8 +100,11 @@ static int host_looks_ipv6(const char* host) {
 
 static int ping4(const char* host) {
 	char* s = (char*)malloc(strlen(host) + 1);
-	hostent* ent;
-	char* addr;
+	addrinfo hints;
+	addrinfo* res = NULL;
+	sockaddr_in* resolved;
+	char addrbuf[64];
+	const char* addr;
 	uint32_t ipaddr;
 	int sock;
 	sockaddr_in dest;
@@ -114,31 +117,41 @@ static int ping4(const char* host) {
 	ssize_t len = 0;
 	int timeout;
 	uint64_t t0, t1;
+	int gerr;
 
 	if (!s)
 		return 1;
 	strcpy(s, host);
 
-	ent = gethostbyname(s);
-	if (!ent) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	gerr = getaddrinfo(s, NULL, &hints, &res);
+	if (gerr != 0 || !res || !res->ai_addr) {
 		printf("ping: unknown host %s\n", s);
 		free(s);
 		return 1;
 	}
 
-	addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
-	ipaddr = *(uint32_t*)ent->h_addr_list[0];
+	resolved = (sockaddr_in*)res->ai_addr;
+	ipaddr = resolved->sin_addr.s_addr;
+	addr = inet_ntop(AF_INET, &resolved->sin_addr, addrbuf, sizeof(addrbuf));
+	if (!addr)
+		addr = "?";
 
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
 	if (sock < 0) {
 		fprintf(stderr, "ping: failed to create socket \n");
+		freeaddrinfo(res);
 		free(s);
 		return 1;
 	}
 
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = htonl(ipaddr);
+	/* getaddrinfo/inet_pton already store network order. */
+	dest.sin_addr.s_addr = ipaddr;
+	freeaddrinfo(res);
 
 	/* Linux: "PING host (ip) 56(84) bytes of data." — 84 = 20 IP + 8 ICMP + 56 data */
 	printf("PING %s (%s) %d(%d) bytes of data.\n",
@@ -147,6 +160,7 @@ static int ping4(const char* host) {
 		   ICMP_DATA_BYTES,
 		   20 + BYTES_TO_SEND);
 	fflush(stdout);
+	_KePrint("PING %s (%s)\r\n", s, addr);
 
 	ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
 	memset(ping, 0, BYTES_TO_SEND);
@@ -172,10 +186,24 @@ static int ping4(const char* host) {
 		ping->checksum = 0;
 		ping->checksum = htons(ICMPCalculateChecksum((char*)ping, BYTES_TO_SEND));
 
-		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in)) <
-			0) {
-			printf("failed to send icmp data\n");
-			break;
+		{
+			int sent = -1;
+			int tries;
+			for (tries = 0; tries < 20 && sent < 0; tries++) {
+				sent = sendto(sock,
+							  (void*)ping,
+							  BYTES_TO_SEND,
+							  0,
+							  (sockaddr*)&dest,
+							  sizeof(sockaddr_in));
+				if (sent < 0)
+					_KeProcessSleep(100);
+			}
+			if (sent < 0) {
+				printf("failed to send icmp data\n");
+				_KePrint("ping: failed to send icmp data\r\n");
+				break;
+			}
 		}
 		pings_sent++;
 
@@ -200,6 +228,10 @@ static int ping4(const char* host) {
 					print_rtt_ms(t1 - stamped);
 					printf("\n");
 					fflush(stdout);
+					_KePrint("%d bytes from %s: icmp_seq=%d\r\n",
+							 BYTES_TO_SEND,
+							 from,
+							 ntohs(icmp->sequenceNum));
 					response_recved++;
 					got = 1;
 					break;
@@ -210,6 +242,7 @@ static int ping4(const char* host) {
 		if (!got) {
 			printf("Request timeout for icmp_seq=%u\n", (unsigned)seq);
 			fflush(stdout);
+			_KePrint("Request timeout for icmp_seq=%d\r\n", (int)seq);
 		}
 		if (pings_sent < PING_COUNT)
 			sleep(1);
@@ -218,6 +251,7 @@ static int ping4(const char* host) {
 	printf("--- %s ping statistics ---\n", s);
 	printf("%d packets transmitted, %d received\n", pings_sent, response_recved);
 	fflush(stdout);
+	_KePrint("%d packets transmitted, %d received\r\n", pings_sent, response_recved);
 	_KeCloseFile(sock);
 	free(ping);
 	free(data);
@@ -265,6 +299,7 @@ static int ping6(const char* host) {
 	/* Linux IPv6: "PING addr(addr) 56 data bytes" — reply lines still say 64 bytes */
 	printf("PING %s(%s) %d data bytes\n", host, addrstr, ICMP_DATA_BYTES);
 	fflush(stdout);
+	_KePrint("PING %s(%s)\r\n", host, addrstr);
 
 	ping = (ICMPHeader*)malloc(BYTES_TO_SEND);
 	if (!ping) {
@@ -299,10 +334,24 @@ static int ping6(const char* host) {
 		memcpy(ping->payload, &t0, sizeof(t0));
 		ping->checksum = 0;
 
-		if (sendto(sock, (void*)ping, BYTES_TO_SEND, 0, (sockaddr*)&dest, sizeof(sockaddr_in6)) <
-			0) {
-			printf("failed to send icmpv6 data\n");
-			break;
+		{
+			int sent = -1;
+			int tries;
+			for (tries = 0; tries < 20 && sent < 0; tries++) {
+				sent = sendto(sock,
+							  (void*)ping,
+							  BYTES_TO_SEND,
+							  0,
+							  (sockaddr*)&dest,
+							  sizeof(sockaddr_in6));
+				if (sent < 0)
+					_KeProcessSleep(100);
+			}
+			if (sent < 0) {
+				printf("failed to send icmpv6 data\n");
+				_KePrint("ping: failed to send icmpv6 data\r\n");
+				break;
+			}
 		}
 		pings_sent++;
 
@@ -329,6 +378,10 @@ static int ping6(const char* host) {
 					print_rtt_ms(t1 - stamped);
 					printf("\n");
 					fflush(stdout);
+					_KePrint("%d bytes from %s: icmp_seq=%d\r\n",
+							 BYTES_TO_SEND,
+							 from,
+							 ntohs(icmp->sequenceNum));
 					response_recved++;
 					got = 1;
 					break;
@@ -339,6 +392,7 @@ static int ping6(const char* host) {
 		if (!got) {
 			printf("Request timeout for icmp_seq=%u\n", (unsigned)seq);
 			fflush(stdout);
+			_KePrint("Request timeout for icmp_seq=%d\r\n", (int)seq);
 		}
 		if (pings_sent < PING_COUNT)
 			sleep(1);
@@ -347,6 +401,7 @@ static int ping6(const char* host) {
 	printf("--- %s ping statistics ---\n", host);
 	printf("%d packets transmitted, %d received\n", pings_sent, response_recved);
 	fflush(stdout);
+	_KePrint("%d packets transmitted, %d received\r\n", pings_sent, response_recved);
 	_KeCloseFile(sock);
 	free(ping);
 	free(data);

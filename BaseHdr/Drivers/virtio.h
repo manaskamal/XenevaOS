@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <aurora.h>
 #if defined(__GNUC__) || defined(__clang__)
 #ifndef __cplusplus
 #include <stdbool.h>
@@ -125,6 +126,9 @@ struct VirtioInputEvent {
 #define VIRTIO_NET_F_CTRL_VQ (1ULL << 17)
 #define VIRTIO_NET_HDR_GSO_NONE 0
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 typedef struct _virtio_net_hdr_ {
 	uint8_t flags;
 	uint8_t gso_type;
@@ -132,8 +136,13 @@ typedef struct _virtio_net_hdr_ {
 	uint16_t gso_size;
 	uint16_t csum_start;
 	uint16_t csum_offset;
-	uint16_t padding;
-}virtio_net_hdr_t;
+	uint16_t num_buffers; /* QEMU virtio-net consumes 12-byte hdr on TX */
+#ifdef _MSC_VER
+} virtio_net_hdr_t;
+#pragma pack(pop)
+#else
+} __attribute__((packed)) virtio_net_hdr_t;
+#endif
 
 
 typedef struct {
@@ -220,6 +229,9 @@ struct VirtioPCIDevice {
 	uint32_t notifyOffMultiplier;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief AuVirtioPCIInit -- walks the PCI capability list of a modern
  * virtio-pci device, maps its common/notify/isr/device config BARs, resets
@@ -227,7 +239,7 @@ struct VirtioPCIDevice {
  * @return false (device left reset) if the capability walk or the
  * ACKNOWLEDGE->DRIVER->FEATURES_OK handshake fails
  */
-extern bool AuVirtioPCIInit(uint64_t address, int bus, int dev, int func,
+AU_EXTERN AU_EXPORT bool AuVirtioPCIInit(uint64_t address, int bus, int dev, int func,
 							 uint32_t wantedFeaturesLow, struct VirtioPCIDevice* out);
 
 /**
@@ -238,7 +250,7 @@ extern bool AuVirtioPCIInit(uint64_t address, int bus, int dev, int func,
  * @return the negotiated queue size, or 0 on allocation/mapping failure or
  * when the device reports size 0/unavailable
  */
-extern uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev,
+AU_EXTERN AU_EXPORT uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev,
 									   uint16_t qidx,
 									   struct VirtqDesc** outDesc,
 									   struct VirtqAvailHdr** outAvail,
@@ -248,7 +260,14 @@ extern uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev,
 /**
  * @brief AuVirtioPCINotifyQueue -- kicks the device for queue qidx
  */
-extern void AuVirtioPCINotifyQueue(struct VirtioPCIDevice* dev, uint16_t qidx);
+AU_EXTERN AU_EXPORT void AuVirtioPCINotifyQueue(struct VirtioPCIDevice* dev, uint16_t qidx);
+
+AU_EXTERN AU_EXPORT void AuVirtioPCIPostAvail(struct VirtqDesc* desc,
+	struct VirtqAvailHdr* avail, uint16_t qsize, uint64_t bufPhys, uint32_t bufSize,
+	uint16_t nbuf, uint16_t flags);
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * @brief AuVirtioBlkInitialize -- initialize the virtio block device

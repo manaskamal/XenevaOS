@@ -80,7 +80,7 @@ XE_EXTERN {
 		socklen_t ai_addrlen;
 		sockaddr_* ai_addr;
 		char* ai_canonname;
-		struct _addinfo_* ai_next;
+		struct _addrinfo_* ai_next;
 	} addrinfo;
 
 	typedef struct _iovec_ {
@@ -120,7 +120,7 @@ XE_EXTERN {
 		void* route_entry;
 	} XERouteEntryInfo;
 
-	/* Netfilter Phase-0 (match BaseHdr/Net/netfilter.h) */
+	/* Netfilter (match BaseHdr/Net/netfilter.h) */
 #define NF_PRE_ROUTING  0
 #define NF_LOCAL_IN     1
 #define NF_FORWARD      2

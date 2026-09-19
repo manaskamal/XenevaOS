@@ -88,6 +88,11 @@ void IPv4HandlePacket(void* data, AuVFSNode* nic) {
 	local = AuAddrIsLocal4(pack->destAddress) ||
 		pack->destAddress == 0xFFFFFFFFu ||
 		((pack->destAddress & MAKE_IP(240, 0, 0, 0)) == MAKE_IP(224, 0, 0, 0));
+	{
+		AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+		if (ndev && ndev->ipv4addr && pack->destAddress == ndev->ipv4addr)
+			local = 1;
+	}
 
 	/* Wire RX: PREROUTING. Loopback reinject skips L2 PREROUTING. */
 	if (AuPacketGetOrigin() != AU_PKT_ORIGIN_LOCAL) {
@@ -163,7 +168,6 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 	uint32_t ip_dest;
 	AuRouteResult rr;
 	AuARPCache* cache;
-	uint8_t broadcast_addr[6];
 
 	if (!packet || !nic)
 		return;
@@ -206,16 +210,13 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 		ip_dest = rr.nexthop;
 
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
-		cache = AuARPGet(ip_dest);
-		if (!cache) {
-			AuARPRequestMAC(nic, ip_dest);
-			cache = AuARPGet(ip_dest);
-		}
-		memset(broadcast_addr, 0xFF, 6);
+		cache = AuARPResolve(nic, ip_dest);
+		if (!cache)
+			return;
 		AuEthernetSend(nic,
 					   packet,
 					   ntohs(packet->totalLength),
 					   ETHERNET_TYPE_IPV4,
-					   cache ? cache->hw_address : broadcast_addr);
+					   cache->hw_address);
 	}
 }

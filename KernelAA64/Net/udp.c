@@ -133,9 +133,10 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen == 0)
 		return 0;
 
+	AuNetRxPoll();
 	packet = (char*)AuSocketGet(sock);
 	if (!packet)
-		return -1;
+		return 0;
 
 	stored = *(size_t*)packet;
 	version = ((uint8_t*)(packet + sizeof(size_t)))[0] >> 4;

@@ -163,6 +163,7 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 
 	if (msg->msg_iovlen == 0)
 		return 0;
+	AuNetRxPoll();
 	char* packet = (char*)AuSocketGet(sock);
 	if (!packet)
 		return 0;
@@ -213,7 +214,8 @@ int AuICMPSend(AuSocket* sock, msghdr* msg, int flags) {
 	IPv4Header* resp = (IPv4Header*)kmalloc(totalLen);
 	memset(resp, 0, totalLen);
 	resp->totalLength = htons(totalLen);
-	resp->destAddress = htonl(name->sin_addr.s_addr);
+	/* sockaddr_in holds network/wire order already — do not htonl again. */
+	resp->destAddress = name->sin_addr.s_addr;
 	resp->srcAddress = netdev->ipv4addr;
 	resp->timeToLive = 64;
 	resp->protocol = 1;

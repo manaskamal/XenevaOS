@@ -123,9 +123,23 @@ extern int AuAddrIsLocal4(uint32_t address);
 extern int AuAddrIsLocal6(const ip6_addr* address);
 
 /* Install connected / default routes after address/gateway ioctl. */
-extern void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
-extern void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
-extern void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname);
-extern void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname);
+
+/* Global nameserver table (not tied to a bound NIC). Index is 1-based. */
+#define AU_DNS_MAX4 4
+#define AU_DNS_MAX6 2
+AU_EXTERN AU_EXPORT void AuDnsAddServer4(uint32_t addr);
+AU_EXTERN AU_EXPORT void AuDnsSetServer4(int index, uint32_t addr);
+extern int AuDnsGetServer4(int index, uint32_t* out);
+AU_EXTERN AU_EXPORT void AuDnsAddServer6(const ip6_addr* addr);
+AU_EXTERN AU_EXPORT void AuDnsSetServer6(int index, const ip6_addr* addr);
+extern int AuDnsGetServer6(int index, ip6_addr* out);
+
+/* Driver registers so socket recv can drain RX while userspace waits. */
+AU_EXTERN AU_EXPORT void AuNetRegisterRxPoll(void (*fn)(void));
+AU_EXTERN AU_EXPORT void AuNetRxPoll(void);
 
 #endif
