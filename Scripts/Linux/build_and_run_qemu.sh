@@ -42,7 +42,7 @@ set -e
 #                           into the normal build/run flow. Needs a terminal;
 #                           flags passed alongside preselect menu entries.
 #   --no-network            Drop the whole network userspace (netmngr daemon
-#                           plus ping, udpecho, route, iptab) from the build
+#                           plus ping, udpecho, route, iptable) from the build
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
@@ -61,7 +61,9 @@ set -e
 #   --term [cmd args...]    Open the QEMU window with a framebuffer TTY (no
 #                           compositor). Without extra args, init starts
 #                           xesh.exe on /dev/console. With extra args, init
-#                           runs the specified app (e.g. --term ping 1.1.1.1).
+#                           runs the specified app. Guest flags like ping -6
+#                           are collected; stop at the next host --option.
+#                           e.g. --term ping -6 fec0::2
 #   --iso[=PATH]            Package the assembled ESP (fat.img) as a UEFI
 #                           El Torito bootable ISO instead of launching QEMU.
 #                           Defaults to xeneva.iso at the repo root. Test it
@@ -348,9 +350,13 @@ while [ $# -gt 0 ]; do
         --term)
             TERM=1
             shift
-            # collect remaining args until next flag or end
+            # Guest argv (ping -6, iptable -A, ...) may start with '-'.
+            # Stop only at the next host option (--foo, -h, -xr-demo).
             TERM_CMD=""
-            while [ $# -gt 0 ] && [[ ! "$1" =~ ^- ]]; do
+            while [ $# -gt 0 ]; do
+                case "$1" in
+                    --*|-h|-xr-demo) break ;;
+                esac
                 if [ -n "$TERM_CMD" ]; then
                     TERM_CMD="$TERM_CMD $1"
                 else
@@ -754,7 +760,7 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         case "$1" in
             MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
-            netmngr.exe|route.exe|iptab.exe|ping.exe|udpecho.exe)
+            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
@@ -871,8 +877,10 @@ QEMU_ARGS=(
     # 1af4:1001 the shorthand defaults to --axiss
     -drive file=fat.img,format=raw,if=none,id=blk0
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
-    -netdev user,id=net0,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
+    -netdev user,id=net0,ipv4=on,net=10.0.2.0/24,host=10.0.2.2,dhcpstart=10.0.2.15,dns=10.0.2.3,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
     -device virtio-net-pci,netdev=net0
+    -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
+    -monitor unix:/tmp/xeneva-mon.sock,server,nowait
     -device ramfb,id=ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci

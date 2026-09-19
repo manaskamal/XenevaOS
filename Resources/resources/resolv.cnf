@@ -1,0 +1,4 @@
+# Stub resolver (RFC 1035). FAT 8.3 name; NETMngr rewrites after DHCP.
+# Default resolver per xenet.cpp; answer TTLs capped at 60s.
+nameserver 1.1.1.1
+nameserver 10.0.2.3

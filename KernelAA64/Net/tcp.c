@@ -540,6 +540,7 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen > 1)
 		return -1;
 
+	AuNetRxPoll();
 	buf = (CircBuffer*)pcb->rxbuf;
 	want = msg->msg_iov[0].iov_len;
 	dest = (uint8_t*)msg->msg_iov[0].iov_base;
@@ -600,6 +601,7 @@ int AuTCPSend(AuSocket* sock, msghdr* msg, int flags) {
 		sent += chunk;
 		remaining -= chunk;
 	}
+	AuNetRxPoll();
 	return (int)sent;
 }
 
@@ -696,6 +698,7 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 
 	aa64_calculate_ticks(1, 0, &s, &ss);
 	while (pcb->state == TCP_STATE_SYN_SENT) {
+		AuNetRxPoll();
 		AuSleepThread(AuGetCurrentThread(), 20);
 		AuScheduleNext();
 		aa64_calculate_ticks(0, 0, &ns, &nss);

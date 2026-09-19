@@ -38,6 +38,7 @@
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <Net/ipv4.h>
+#include <Hal/AA64/sched.h>
 
 list_t* arp_list;
 
@@ -68,12 +69,32 @@ void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr) {
  * @param address -- IP Address to look
  */
 AuARPCache* AuARPGet(uint32_t address) {
-	UARTDebugOut("[aurora]: ARP Checking \r\n");
-	for (int i = 0; i < arp_list->pointer; i++) {
+	int i;
+	for (i = 0; i < arp_list->pointer; i++) {
 		AuARPCache* arp = (AuARPCache*)list_get_at(arp_list, i);
-		ip_ntoa(ntohl(arp->ipAddress));
 		if (arp->ipAddress == address)
 			return arp;
+	}
+	return NULL;
+}
+
+AuARPCache* AuARPResolve(AuVFSNode* nic, uint32_t addr) {
+	AuARPCache* cache;
+	int n;
+
+	cache = AuARPGet(addr);
+	if (cache)
+		return cache;
+	if (!nic)
+		return NULL;
+	AuARPRequestMAC(nic, addr);
+	for (n = 0; n < 50; n++) {
+		AuNetRxPoll();
+		cache = AuARPGet(addr);
+		if (cache)
+			return cache;
+		AuSleepThread(AuGetCurrentThread(), 1);
+		AuScheduleNext();
 	}
 	return NULL;
 }
