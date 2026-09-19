@@ -27,6 +27,8 @@
 *
 **/
 
+#include <Serv/syscall.h>
+
 .global __chkstk 
 __chkstk:
     ret
@@ -34,7 +36,7 @@ __chkstk:
 .global _KePrint
 _KePrint:
     str x8, [sp, #-16]!
-    mov x16, 1
+    mov x16, SYS_TEXTOUT
     svc #0
 	mov x0, x6
 	ldr x8, [sp], #16
@@ -42,14 +44,14 @@ _KePrint:
 
 .global _KePauseThread
 _KePauseThread:
-    mov x16, 2
+    mov x16, SYS_PAUSE_THREAD
     svc #0
 	mov x0, x6
     ret
 
 .global _KeGetThreadID
 _KeGetThreadID:
-    mov x16, 3
+    mov x16, SYS_GET_THREAD_ID
     svc #0
 	mov x0, x6
     ret
@@ -57,14 +59,14 @@ _KeGetThreadID:
 
 .global _KeGetProcessID
 _KeGetProcessID:
-    mov x16, 4
+    mov x16, SYS_GET_PROCESS_ID
     svc #0
 	mov x0, x6
     ret
 
 .global _KeProcessExit
 _KeProcessExit:
-    mov x16, 5
+    mov x16, SYS_PROCESS_EXIT
     svc #0
 	mov x0, x6
     ret
@@ -79,7 +81,7 @@ _KeProcessExit:
 
 .global _KeProcessWaitForTermination
 _KeProcessWaitForTermination:
-      mov x16, 6
+      mov x16, SYS_PROCESS_WAIT
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -94,21 +96,21 @@ _KeProcessWaitForTermination:
 //========================================
 .global _KeCreateProcess
 _KeCreateProcess:
-      mov x16, 7
+      mov x16, SYS_CREATE_PROCESS
       svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeProcessLoadExec
 _KeProcessLoadExec:
-      mov x16, 8
+      mov x16, SYS_PROCESS_LOAD_EXEC
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeProcessSleep
 _KeProcessSleep:
-      mov x16, 23
+      mov x16, SYS_PROCESS_SLEEP
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -120,42 +122,42 @@ _KeProcessSleep:
 //===============================
 .global _KeSetSignal
 _KeSetSignal:
-	  mov x16, 25
+	  mov x16, SYS_SET_SIGNAL
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeCreateSharedMem
 _KeCreateSharedMem:
-      mov x16, 9
+      mov x16, SYS_CREATE_SHARED_MEM
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeObtainSharedMem
 _KeObtainSharedMem:
-      mov x16, 10
+      mov x16, SYS_OBTAIN_SHARED_MEM
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeUnmapSharedMem
 _KeUnmapSharedMem:
-      mov x16, 11
+      mov x16, SYS_UNMAP_SHARED_MEM
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeMemMap
 _KeMemMap:
-	  mov x16, 13
+	  mov x16, SYS_CREATE_MEM_MAPPING
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeMemUnmap
 _KeMemUnmap:
-	  mov x16, 14
+	  mov x16, SYS_UNMAP_MEM_MAPPING
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -169,7 +171,7 @@ _KeMemUnmap:
 //====================================
 .global _KeGetProcessHeapMem
 _KeGetProcessHeapMem:
-	  mov x16, 15
+	  mov x16, SYS_GET_PROCESS_HEAP_MEM
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -182,7 +184,7 @@ _KeGetProcessHeapMem:
 //=====================================
 .global _KeOpenFile
 _KeOpenFile:
-	  mov x16, 12
+	  mov x16, SYS_OPEN_FILE
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -196,7 +198,7 @@ _KeOpenFile:
 //====================================
 .global _KeReadFile
 _KeReadFile:
-	  mov x16, 16
+	  mov x16, SYS_READ_FILE
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -210,7 +212,7 @@ _KeReadFile:
 //====================================
 .global _KeWriteFile
 _KeWriteFile:
-	  mov x16, 17
+	  mov x16, SYS_WRITE_FILE
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -222,7 +224,7 @@ _KeWriteFile:
 //==================================
 .global _KeCreateDir
 _KeCreateDir:
-	  mov x16, 18
+	  mov x16, SYS_CREATE_DIR
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -235,7 +237,7 @@ _KeCreateDir:
 //====================================
 .global _KeRemoveFile
 _KeRemoveFile:
-	  mov x16, 19
+	  mov x16, SYS_REMOVE_FILE
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -246,14 +248,14 @@ _KeRemoveFile:
 //====================================
 .global _KeCloseFile
 _KeCloseFile:
-	  mov x16, 20
+	  mov x16, SYS_CLOSE_FILE
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeFileIoControl
 _KeFileIoControl:
-	  mov x16, 21
+	  mov x16, SYS_FILE_IO_CONTROL
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -264,7 +266,7 @@ _KeFileIoControl:
 //===============================
 .global _KeFileStat
 _KeFileStat:
-	  mov x16, 22
+	  mov x16, SYS_FILE_STAT
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -276,7 +278,7 @@ _KeFileStat:
 //===============================
 .global _KeGetSystemTimerTick
 _KeGetSystemTimerTick:
-	  mov x16, 26
+	  mov x16, SYS_GET_SYSTEM_TIMER_TICK
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -287,7 +289,7 @@ _KeGetSystemTimerTick:
 //===============================
 .global _KeGetFontID
 _KeGetFontID:
-	  mov x16, 27
+	  mov x16, SYS_GET_FONT_ID
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -298,7 +300,7 @@ _KeGetFontID:
 //===============================
 .global _KeGetNumFonts
 _KeGetNumFonts:
-	  mov x16, 28
+	  mov x16, SYS_GET_NUM_FONTS
 	  svc #0
 	  mov x0, x6
 	  ret
@@ -309,7 +311,7 @@ _KeGetNumFonts:
 //===============================
 .global _KeGetFontSize
 _KeGetFontSize:
-	  mov x16, 29
+	  mov x16, SYS_GET_FONT_SIZE
 	  svc #0
 	  mov x0,x6
 	  ret
@@ -317,105 +319,105 @@ _KeGetFontSize:
 
 .global _KeMemMapDirty
 _KeMemMapDirty:
-	  mov x16, 30
+	  mov x16, SYS_MEM_MAP_DIRTY
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeCreateTTY
 _KeCreateTTY:
-	  mov x16, 31
+	  mov x16, SYS_CREATE_TTY
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeCreateThread
 _KeCreateThread:
-	  mov x16, 32
+	  mov x16, SYS_CREATE_USER_THREAD
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeSetFileToProcess
 _KeSetFileToProcess:
-	  mov x16, 33
+	  mov x16, SYS_SET_FILE_TO_PROCESS
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeProcessHeapUnmap
 _KeProcessHeapUnmap:
-	  mov x16, 34
+	  mov x16, SYS_PROCESS_HEAP_UNMAP
 	  svc #0
 	  mov x0, x6
 	  ret
 
 .global _KeSendSignal
 _KeSendSignal:
-	  mov x16, 35
+	  mov x16, SYS_SEND_SIGNAL
 	  svc #0
 	  mov x0,x6
 	  ret
 
 .global _KeGetCurrentTime
 _KeGetCurrentTime:
-	 mov x16, 36
+	 mov x16, SYS_GET_CURRENT_TIME
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeOpenDir
 _KeOpenDir:
-	 mov x16, 37
+	 mov x16, SYS_OPEN_DIR
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeReadDir
 _KeReadDir:
-	 mov x16, 38
+	 mov x16, SYS_READ_DIR
 	 svc #0
 	 mov x0,x6
 	 ret
 
 .global _KeCreateTimer
 _KeCreateTimer:
-	 mov x16, 39
+	 mov x16, SYS_CREATE_TIMER
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeStartTimer
 _KeStartTimer:
-	 mov x16, 40
+	 mov x16, SYS_START_TIMER
 	 svc #0
 	 mov x0,x6
 	 ret
 
 .global _KeStopTimer
 _KeStopTimer:
-	 mov x16, 41
+	 mov x16, SYS_STOP_TIMER
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeDestroyTimer
 _KeDestroyTimer:
-	 mov x16, 42
+	 mov x16, SYS_DESTROY_TIMER
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeProcessGetFileDesc
 _KeProcessGetFileDesc:
-	 mov x16, 43
+	 mov x16, SYS_GET_FILE_DESC
 	 svc #0
 	 mov x0, x6
 	 ret
 
 .global _KeFileSetOffset
 _KeFileSetOffset:
-	mov x16, 44
+	mov x16, SYS_FILE_SET_OFFSET
 	svc #0
 	mov x0, x6
 	ret
@@ -423,42 +425,42 @@ _KeFileSetOffset:
 
 .global gettimeofday
 gettimeofday:
-	mov x16, 45
+	mov x16, SYS_GET_TIME_OF_DAY
 	svc #0
 	mov x0, x6
 	ret
 
 .global socket
 socket:
-   mov x16, 46
+   mov x16, SYS_CREATE_SOCKET
    svc #0
    mov x0, x6
    ret
 
 .global connect
 connect:
-   mov x16, 47
+   mov x16, SYS_NET_CONNECT
    svc #0
    mov x0, x6
    ret
 
 .global send
 send:
-   mov x16, 48
+   mov x16, SYS_NET_SEND
    svc #0
    mov x0, x6
    ret
 
 .global receive
 receive:
-   mov x16, 49
+   mov x16, SYS_NET_RECEIVE
    svc #0
    mov x0, x6
    ret
 
 .global socket_setopt
 socket_setopt:
-   mov x16, 50
+   mov x16, SYS_SOCKET_SET_OPT
    // rest will be passed through stack
    svc #0
    mov x0, x6
@@ -466,126 +468,126 @@ socket_setopt:
 
 .global bind
 bind:
-   mov x16, 51
+   mov x16, SYS_NET_BIND
    svc #0
    mov x0, x6
    ret
 
 .global accept
 accept:
-   mov x16, 52
+   mov x16, SYS_NET_ACCEPT
    svc #0
    mov x0, x6
    ret
 
 .global listen
 listen:
-	mov x16, 53
+	mov x16, SYS_NET_LISTEN
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeCreatePipe
 _KeCreatePipe:
-	mov x16, 54
+	mov x16, SYS_CREATE_PIPE
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetStorageDiskInfo
 _KeGetStorageDiskInfo:
-	mov x16, 55
+	mov x16, SYS_GET_VDISK_INFO
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetStoragePartitionInfo
 _KeGetStoragePartitionInfo:
-	mov x16, 56
+	mov x16, SYS_GET_VDISK_PARTITION_INFO
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetEnvironmentBlock
 _KeGetEnvironmentBlock:
-	mov x16, 57
+	mov x16, SYS_GET_ENVIRONMENT_BLOCK
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeCredChangeID
 _KeCredChangeID:
-    mov x16, 58
+    mov x16, SYS_CRED_CHANGE_ID
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeCredAddSGroup
 _KeCredAddSGroup:
-    mov x16, 59
+    mov x16, SYS_CRED_ADD_SGROUP
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeCredSetCap
 _KeCredSetCap:
-    mov x16, 60
+    mov x16, SYS_CRED_SET_CAP
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeCredGetCap
 _KeCredGetCap:
-    mov x16, 61
+    mov x16, SYS_CRED_GET_CAP
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeSetUID
 _KeSetUID:
-    mov x16, 62
+    mov x16, SYS_SET_UID
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeSetGID
 _KeSetGID:
-    mov x16, 63
+    mov x16, SYS_SET_GID
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetGlobalGroupID
 _KeGetGlobalGroupID:
-    mov x16, 64
+    mov x16, SYS_CRED_GET_GROUP_ID
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeProcessTokenAddSelf
  _KeProcessTokenAddSelf:
-    mov x16, 65
+    mov x16, SYS_PROCESS_TOKEN_ADD_SELF
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeProcessTokenGetThreadID
 _KeProcessTokenGetThreadID:
-    mov x16, 66
+    mov x16, SYS_PROCESS_TOKEN_GET_THREAD_ID
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeProcessTokenRemoveSelf
 _KeProcessTokenRemoveSelf:
-    mov x16, 67
+    mov x16, SYS_PROCESS_TOKEN_REMOVE_SELF
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KePowerDown
 _KePowerDown:
-    mov x16, 68
+    mov x16, SYS_POWER_DOWN
 	svc #0
 	/*haha, power down success hole eneiu return nahe*/
 	mov x0, x6
@@ -594,7 +596,7 @@ _KePowerDown:
 
 .global _KePowerReset
 _KePowerReset:
-    mov x16, 69
+    mov x16, SYS_POWER_RESET
 	svc #0
 	/* ki dhemali behh, return nahe buli janiu, return mari asu 
 	 * haha, bhakha ulai jai mukhere 
@@ -604,63 +606,63 @@ _KePowerReset:
 
 .global _KeGetCurrentUS
 _KeGetCurrentUS:
-    mov x16, 70
+    mov x16, SYS_GET_CURRENT_US
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetCurrentMS
 _KeGetCurrentMS:
-    mov x16, 71
+    mov x16, SYS_GET_CURRENT_MS
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeSetAlarm
 _KeSetAlarm:
-    mov x16, 72
+    mov x16, SYS_ALARM
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeSetITimer
 _KeSetITimer:
-    mov x16, 73
+    mov x16, SYS_SET_ITIMER
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetITimer
 _KeGetITimer:
-    mov x16, 74
+    mov x16, SYS_GET_ITIMER
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetNumProcessCount
 _KeGetNumProcessCount:
-    mov x16, 75
+    mov x16, SYS_GET_NUM_PROCESS_COUNT
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeProcessFetch
 _KeProcessFetch:
-    mov x16, 76
+    mov x16, SYS_PROCESS_FETCH
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeSetWalltime
 _KeSetWalltime:
-    mov x16, 77
+    mov x16, SYS_SET_WALLTIME
 	svc #0
 	mov x0, x6
 	ret
 
 .global _KeGetWalltime
 _KeGetWalltime:
-    mov x16, 78
+    mov x16, SYS_GET_WALLTIME
 	svc #0
 	mov x0, x6
 	ret
