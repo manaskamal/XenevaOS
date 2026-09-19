@@ -1,11 +1,12 @@
 /**
  * @file netfilter.c
- * Phase-0 linear netfilter hooks (iptables-shaped, XR-scale).
+ * Linear netfilter hooks (iptables-shaped, XR-scale).
  */
 
 #include <Net/netfilter.h>
 #include <Net/aunet.h>
 #include <Net/ipv4.h>
+#include <Net/ipv6.h>
 #include <Net/icmp.h>
 #include <Net/udp.h>
 #include <Mm/kmalloc.h>
@@ -21,7 +22,14 @@ static int AuNfDevMatch(const char* want, AuVFSNode* dev) {
 		return 1;
 	if (!dev)
 		return 0;
-	return strcmp(want, dev->filename) == 0;
+	if (strcmp(want, dev->filename) == 0)
+		return 1;
+	/* QEMU virtio-net is registered as e1000 plus a virtio-net alias. */
+	if (strcmp(want, "virtio-net") == 0 && strcmp(dev->filename, "e1000") == 0)
+		return 1;
+	if (strcmp(want, "e1000") == 0 && strcmp(dev->filename, "virtio-net") == 0)
+		return 1;
+	return 0;
 }
 
 static uint16_t AuNfGetPort(AuPacket* pkt, int dest) {
@@ -193,6 +201,10 @@ void AuNetfilterInstallXrPolicy(void) {
 	AuNfAddSimple(NF_LOCAL_IN, "virtio-net", NULL, IPV4_PROTOCOL_UDP, 53, 0, NF_ACCEPT);
 	/* Echo replies / ICMP errors (no conntrack this month). */
 	AuNfAddSimple(NF_LOCAL_IN, "virtio-net", NULL, 1, 0, 0, NF_ACCEPT);
+	/* ICMPv6 (echo + NDP). pkt->proto is IPv6 next-header 58, not IPv4 proto 1. */
+	AuNfAddSimple(NF_LOCAL_IN, "virtio-net", NULL, IPV6_NEXT_ICMPV6, 0, 0, NF_ACCEPT);
+	/* Outbound TCP (SYN-ACK / data) — no conntrack, so accept TCP on INPUT. */
+	AuNfAddSimple(NF_LOCAL_IN, "virtio-net", NULL, IPV4_PROTOCOL_TCP, 0, 0, NF_ACCEPT);
 	AuNfAddSimple(NF_LOCAL_IN, "virtio-net", NULL, 0, 0, 0, NF_DROP);
 	AuNfAddSimple(NF_FORWARD, NULL, NULL, 0, 0, 0, NF_DROP);
 

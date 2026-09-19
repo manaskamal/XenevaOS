@@ -1,6 +1,6 @@
 /**
  * @file packet.c
- * Phase-0 AuPacket helpers + loopback origin/depth.
+ * AuPacket helpers + loopback origin/depth.
  */
 
 #include <Net/packet.h>

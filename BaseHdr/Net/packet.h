@@ -1,5 +1,5 @@
 /**
- * Phase-0 AuPacket for netfilter hooks and loopback origin tracking.
+ * AuPacket for netfilter hooks and loopback origin tracking.
  */
 
 #ifndef __AU_PACKET_H__

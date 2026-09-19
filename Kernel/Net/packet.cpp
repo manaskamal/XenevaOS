@@ -1,5 +1,5 @@
 /**
- * x86 stub: Phase-0 AuPacket origin helpers (ACCEPT-all netfilter elsewhere).
+ * x86 stub: AuPacket origin helpers (ACCEPT-all netfilter elsewhere).
  */
 
 #include <Net/packet.h>
