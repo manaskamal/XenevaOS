@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <_xeneva.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 XE_EXTERN {
@@ -64,7 +65,34 @@ __attribute__((aligned(2)))
 		char** h_addr_list;
 	};
 
+#ifndef AI_PASSIVE
+#define AI_PASSIVE     0x01
+#define AI_CANONNAME   0x02
+#define AI_NUMERICHOST 0x04
+#define AI_NUMERICSERV 0x08
+#endif
+
+#ifndef EAI_NONAME
+#define EAI_BADFLAGS -1
+#define EAI_NONAME   -2
+#define EAI_AGAIN    -3
+#define EAI_FAIL     -4
+#define EAI_FAMILY   -5
+#define EAI_MEMORY   -6
+#define EAI_SERVICE  -7
+#define EAI_OVERFLOW -8
+#endif
+
 	XE_LIB hostent* gethostbyname(const char* name);
+	XE_LIB int getaddrinfo(const char* node,
+						   const char* service,
+						   const addrinfo* hints,
+						   addrinfo** res);
+	XE_LIB void freeaddrinfo(addrinfo* res);
+	XE_LIB const char* gai_strerror(int errcode);
+
+	/* Last upstream DNS server used by the stub resolver (0 if local/none). */
+	XE_LIB uint32_t xe_dns_last_server(void);
 
 #ifdef __cplusplus
 }
