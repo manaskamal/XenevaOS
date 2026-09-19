@@ -190,6 +190,7 @@ void AuVirtioNetRxinitialize(struct VirtioCommonCfg* common) {
 	UARTDebugOut("[aurora]: rx queue size : %d \r\n", qsize);
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+	memset((void*)queuePhys, 0, 0x1000);
 	rxqueue = (struct VirtioQueue*)P2V(queuePhys);
 	memset(rxqueue, 0, sizeof(*rxqueue));
 
@@ -204,6 +205,7 @@ void AuVirtioNetRxinitialize(struct VirtioCommonCfg* common) {
 
 	/* I address this as one 16 KiB physical run since the device descriptors expect that --axiss */
 	uint64_t rxbuff = (uint64_t)AuPmmngrAllocPages(4, 1, 0, AURORA_PAGE_DMA);
+	memset((void*)rxbuff, 0, 0x1000*4);
 	if (!rxbuff) {
 		UARTDebugOut("[aurora]: unable to allocate contiguous virtio RX buffer\r\n");
 		return;
@@ -238,6 +240,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	UARTDebugOut("[aurora]: tx queue size : %d \r\n", qsize);
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+	memset((void*)queuePhys, 0, 0x1000);
 	txqueue = (struct VirtioQueue*)P2V(queuePhys);
 	memset(txqueue, 0, sizeof(*txqueue));
 	common->QueueDesc = queuePhys;
@@ -250,6 +253,7 @@ void AuVirtioNetTxinitialize(struct VirtioCommonCfg* common) {
 	dsb_ish();
 
 	uint64_t txbuff = (uint64_t)AuPmmngrAllocPages(4, 1, 0, AURORA_PAGE_DMA);
+	memset((void*)txbuff, 0,0x1000*4);
 	if (!txbuff) {
 		UARTDebugOut("[aurora]: unable to allocate virtio TX buffer\r\n");
 		return;
@@ -309,6 +313,7 @@ static void AuVirtioTransmit(void* packet, uint16_t len) {
 static size_t AuVirtioWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	(void)node;
 	(void)file;
+	UARTDebugOut("AuVIRTIO Writing \r\n");
 	AuVirtioTransmit(buffer, (uint16_t)len);
 	return len;
 }

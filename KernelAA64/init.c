@@ -286,7 +286,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 
 	AuSchedulerInitialize();
-	AuEDFSelfTestStart();
+	//AuEDFSelfTestStart();
 #ifdef __XENEVA_SOAK__
 	AuSoakStart();
 #endif

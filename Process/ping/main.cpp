@@ -367,6 +367,8 @@ int main(int argc, char* argv[]) {
 	const char* host = NULL;
 	int use_ipv6 = 0;
 
+
+
 	for (int i = 0; i < argc; i++) {
 		if (!argv[i] || argv[i][0] == '\0')
 			continue;
