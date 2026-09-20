@@ -39,6 +39,7 @@
 #include <Sync/mutex.h>
 #include <Hal/x86_64_signal.h>
 #include <Serv/sysserv.h>
+#include <Serv/syscall.h>
 #include <ftmngr.h>
 #include <Fs/tty.h>
 #include <Fs/pipe.h>
@@ -72,64 +73,64 @@ uint64_t null_call(int64_t param1, int64_t param2, int64_t param3, int64_t
 
 /* syscall entries */
 static void* syscalls[AURORA_MAX_SYSCALL] = {
-	null_call,        //0
-	SeTextOut,       //1
-	PauseThread,      //2
-	GetThreadID,      //3
-	GetProcessID,     //4
-	ProcessExit,      //5
-	ProcessWaitForTermination, //6
-	CreateProcess,    //7
-	ProcessLoadExec,  //8
-	CreateSharedMem,  //9
-	ObtainSharedMem,  //10
-	UnmapSharedMem,   //11
-	OpenFile,         //12
-	CreateMemMapping, //13
-	UnmapMemMapping,  //14
-	GetProcessHeapMem, //15
-	ReadFile,         //16
-	WriteFile,        //17
-	CreateDir,        //18
-	RemoveFile,       //19
-	CloseFile,        //20
-	FileIoControl,    //21
-	FileStat,         //22
-	ProcessSleep,     //23
-	SignalReturn,     //24
-	SetSignal,        //25
-	GetSystemTimerTick, //26
-	AuFTMngrGetFontID, //27
-	AuFTMngrGetNumFonts, //28
-	AuFTMngrGetFontSize, //29
-	MemMapDirty, //30
-	AuTTYCreate, //31
-	CreateUserThread, //32
-	SetFileToProcess, //33
-	ProcessHeapUnmap, //34
-	SendSignal, //35
-	GetCurrentTime, //36
-	OpenDir, //37
-	ReadDir, //38
-	CreateTimer, //39
-	StartTimer, //40
-	StopTimer,  //41
-	DestroyTimer, //42
-	ProcessGetFileDesc, //43
-	FileSetOffset, //44
-	GetTimeOfDay, //45
-	AuCreateSocket, //46
-	NetConnect, //47
-	NetSend, //48
-	NetReceive, //49
-	AuSocketSetOpt, //50
-	NetBind, //51
-	NetAccept, //52
-	NetListen, //53
-	AuCreatePipe, //54
-	AuGetVDiskInfo, //55
-	AuGetVDiskPartitionInfo, //56
-	GetEnvironmenBlock, //57
+	[SYS_NULL]                 = null_call,
+	[SYS_TEXTOUT]              = SeTextOut,
+	[SYS_PAUSE_THREAD]         = PauseThread,
+	[SYS_GET_THREAD_ID]        = GetThreadID,
+	[SYS_GET_PROCESS_ID]       = GetProcessID,
+	[SYS_PROCESS_EXIT]         = ProcessExit,
+	[SYS_PROCESS_WAIT]         = ProcessWaitForTermination,
+	[SYS_CREATE_PROCESS]       = CreateProcess,
+	[SYS_PROCESS_LOAD_EXEC]    = ProcessLoadExec,
+	[SYS_CREATE_SHARED_MEM]    = CreateSharedMem,
+	[SYS_OBTAIN_SHARED_MEM]    = ObtainSharedMem,
+	[SYS_UNMAP_SHARED_MEM]     = UnmapSharedMem,
+	[SYS_OPEN_FILE]            = OpenFile,
+	[SYS_CREATE_MEM_MAPPING]   = CreateMemMapping,
+	[SYS_UNMAP_MEM_MAPPING]    = UnmapMemMapping,
+	[SYS_GET_PROCESS_HEAP_MEM] = GetProcessHeapMem,
+	[SYS_READ_FILE]            = ReadFile,
+	[SYS_WRITE_FILE]           = WriteFile,
+	[SYS_CREATE_DIR]           = CreateDir,
+	[SYS_REMOVE_FILE]          = RemoveFile,
+	[SYS_CLOSE_FILE]           = CloseFile,
+	[SYS_FILE_IO_CONTROL]      = FileIoControl,
+	[SYS_FILE_STAT]            = FileStat,
+	[SYS_PROCESS_SLEEP]        = ProcessSleep,
+	[SYS_SIGNAL_RETURN]        = SignalReturn,
+	[SYS_SET_SIGNAL]           = SetSignal,
+	[SYS_GET_SYSTEM_TIMER_TICK] = GetSystemTimerTick,
+	[SYS_GET_FONT_ID]          = AuFTMngrGetFontID,
+	[SYS_GET_NUM_FONTS]        = AuFTMngrGetNumFonts,
+	[SYS_GET_FONT_SIZE]        = AuFTMngrGetFontSize,
+	[SYS_MEM_MAP_DIRTY]        = MemMapDirty,
+	[SYS_CREATE_TTY]           = AuTTYCreate,
+	[SYS_CREATE_USER_THREAD]   = CreateUserThread,
+	[SYS_SET_FILE_TO_PROCESS]  = SetFileToProcess,
+	[SYS_PROCESS_HEAP_UNMAP]   = ProcessHeapUnmap,
+	[SYS_SEND_SIGNAL]          = SendSignal,
+	[SYS_GET_CURRENT_TIME]     = GetCurrentTime,
+	[SYS_OPEN_DIR]             = OpenDir,
+	[SYS_READ_DIR]             = ReadDir,
+	[SYS_CREATE_TIMER]         = CreateTimer,
+	[SYS_START_TIMER]          = StartTimer,
+	[SYS_STOP_TIMER]           = StopTimer,
+	[SYS_DESTROY_TIMER]        = DestroyTimer,
+	[SYS_GET_FILE_DESC]        = ProcessGetFileDesc,
+	[SYS_FILE_SET_OFFSET]      = FileSetOffset,
+	[SYS_GET_TIME_OF_DAY]      = GetTimeOfDay,
+	[SYS_CREATE_SOCKET]        = AuCreateSocket,
+	[SYS_NET_CONNECT]          = NetConnect,
+	[SYS_NET_SEND]             = NetSend,
+	[SYS_NET_RECEIVE]          = NetReceive,
+	[SYS_SOCKET_SET_OPT]       = AuSocketSetOpt,
+	[SYS_NET_BIND]             = NetBind,
+	[SYS_NET_ACCEPT]           = NetAccept,
+	[SYS_NET_LISTEN]           = NetListen,
+	[SYS_CREATE_PIPE]          = AuCreatePipe,
+	[SYS_GET_VDISK_INFO]       = AuGetVDiskInfo,
+	[SYS_GET_VDISK_PARTITION_INFO] = AuGetVDiskPartitionInfo,
+	[SYS_GET_ENVIRONMENT_BLOCK] = GetEnvironmenBlock,
 };
 
 //! System Call Handler Functions
