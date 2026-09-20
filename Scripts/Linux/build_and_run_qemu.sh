@@ -111,6 +111,7 @@ TUI=0
 NO_NETWORK=0
 NO_AUDIO=0
 NO_BOOT_MENU=0
+NO_DOOM=0
 
 print_help(){
     printf "${STY_CYAN}"
@@ -148,7 +149,7 @@ run_build_tui() {
     [ "$NO_BOOT_MENU" -eq 1 ] && bootmenu_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak network audio doom bootmenu memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -244,6 +245,7 @@ run_build_tui() {
             soak) soak_choice=$((1 - soak_choice)) ;;
             network) network_on=$((1 - network_on)) ;;
             audio) audio_on=$((1 - audio_on)) ;;
+            doom) NO_DOOM=$((1 - NO_DOOM)) ;;
             bootmenu) bootmenu_on=$((1 - bootmenu_on)) ;;
             memory) tui_cycle_memory ;;
             launch) tui_apply_and_launch ;;
@@ -287,9 +289,10 @@ run_build_tui() {
         tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
         tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
         tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
-        tui_row 10 "Guest memory" "$memory_choice"
-        tui_row 11 "Launch" "build + run"
-        tui_row 12 "Quit" ""
+        tui_row 10 "Doom addon" "$(tui_on_off "$NO_DOOM")"
+        tui_row 11 "Guest memory" "$memory_choice"
+        tui_row 12 "Launch" "build + run"
+        tui_row 13 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
@@ -371,6 +374,7 @@ while [ $# -gt 0 ]; do
         --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
         --tui) TUI=1 ;;
         --no-network) NO_NETWORK=1 ;;
+        --no-doom) NO_DOOM=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         -h|--help) print_help; exit 0 ;;
@@ -534,7 +538,7 @@ if [ "$OPENXR" -eq 1 ]; then
 	BUILD_USER_APPS=1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
 	printf "${STY_RED}[$0]: --no-network/--no-audio need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
@@ -686,7 +690,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -702,6 +706,8 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
+        cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
         echo "[+] External drivers built and deployed."
     fi
 
@@ -762,6 +768,8 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
             netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
+            doom.exe|doom2.wad)
+                [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
         esac
@@ -892,6 +900,12 @@ QEMU_ARGS=(
     -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
+    # ICH9 HDA (PCI class 04,03) matches audrv.cnf's [04,03]/hda.dll mapping
+    # and the ihda driver's AuPCIEScanClass(0x04, 0x03) probe. pa backend
+    # talks to the host PulseAudio/PipeWire server. --axiss
+    -audiodev pa,id=snd0
+    -device intel-hda
+    -device hda-output,audiodev=snd0
     -serial stdio
 )
 
