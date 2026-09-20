@@ -31,6 +31,8 @@
 section .text
 [BITS 64]
 
+%include "syscall_nasm.inc"
+
 global __chkstk
 __chkstk:
 ret
@@ -48,7 +50,7 @@ global _KePrint
 export _KePrint
 %endif
 _KePrint:
-      mov r12, 1
+      mov r12, SYS_TEXTOUT
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -65,7 +67,7 @@ global _KePauseThread
 export _KePauseThread
 %endif
 _KePauseThread:
-      mov r12, 2
+      mov r12, SYS_PAUSE_THREAD
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -83,7 +85,7 @@ global _KeGetThreadID
 export _KeGetThreadID
 %endif
 _KeGetThreadID:
-      mov r12, 3
+      mov r12, SYS_GET_THREAD_ID
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -101,7 +103,7 @@ global _KeGetProcessID
 export _KeGetProcessID
 %endif
 _KeGetProcessID:
-      mov r12, 4
+      mov r12, SYS_GET_PROCESS_ID
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -118,7 +120,7 @@ global _KeProcessExit
 export _KeProcessExit
 %endif
 _KeProcessExit:
-      mov r12, 5
+      mov r12, SYS_PROCESS_EXIT
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -139,7 +141,7 @@ global _KeProcessWaitForTermination
 export _KeProcessWaitForTermination
 %endif
 _KeProcessWaitForTermination:
-      mov r12, 6
+      mov r12, SYS_PROCESS_WAIT
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -160,7 +162,7 @@ global _KeCreateProcess
 export _KeCreateProcess
 %endif
 _KeCreateProcess:
-      mov r12, 7
+      mov r12, SYS_CREATE_PROCESS
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -173,7 +175,7 @@ global _KeProcessLoadExec
 export _KeProcessLoadExec
 %endif
 _KeProcessLoadExec:
-      mov r12, 8
+      mov r12, SYS_PROCESS_LOAD_EXEC
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -186,7 +188,7 @@ global _KeProcessSleep
 export _KeProcessSleep
 %endif
 _KeProcessSleep:
-      mov r12, 23
+      mov r12, SYS_PROCESS_SLEEP
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -205,7 +207,7 @@ export _KeSetSignal
 %endif
 _KeSetSignal:
       xor rax, rax
-	  mov r12, 25
+	  mov r12, SYS_SET_SIGNAL
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -218,7 +220,7 @@ global _KeCreateSharedMem
 export _KeCreateSharedMem
 %endif
 _KeCreateSharedMem:
-      mov r12, 9
+      mov r12, SYS_CREATE_SHARED_MEM
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -231,7 +233,7 @@ global _KeObtainSharedMem
 export _KeObtainSharedMem
 %endif
 _KeObtainSharedMem:
-      mov r12, 10
+      mov r12, SYS_OBTAIN_SHARED_MEM
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -244,7 +246,7 @@ global _KeUnmapSharedMem
 export _KeUnmapSharedMem
 %endif
 _KeUnmapSharedMem:
-      mov r12, 11
+      mov r12, SYS_UNMAP_SHARED_MEM
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -258,7 +260,7 @@ export _KeMemMap
 %endif
 _KeMemMap:
       xor rax, rax
-	  mov r12, 13
+	  mov r12, SYS_CREATE_MEM_MAPPING
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -272,7 +274,7 @@ export _KeMemUnmap
 %endif
 _KeMemUnmap:
       xor rax,rax
-	  mov r12, 14
+	  mov r12, SYS_UNMAP_MEM_MAPPING
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -293,7 +295,7 @@ export _KeGetProcessHeapMem
 %endif
 _KeGetProcessHeapMem:
       xor rax,rax
-	  mov r12, 15
+	  mov r12, SYS_GET_PROCESS_HEAP_MEM
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -313,7 +315,7 @@ export _KeOpenFile
 %endif
 _KeOpenFile:
       xor rax, rax
-	  mov r12, 12
+	  mov r12, SYS_OPEN_FILE
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -334,7 +336,7 @@ export _KeReadFile
 %endif
 _KeReadFile:
       xor rax,rax
-	  mov r12, 16
+	  mov r12, SYS_READ_FILE
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -355,7 +357,7 @@ export _KeWriteFile
 %endif
 _KeWriteFile:
       xor rax,rax
-	  mov r12, 17
+	  mov r12, SYS_WRITE_FILE
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -374,7 +376,7 @@ export _KeCreateDir
 %endif
 _KeCreateDir:
       xor rax,rax
-	  mov r12, 18
+	  mov r12, SYS_CREATE_DIR
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -394,7 +396,7 @@ export _KeRemoveFile
 %endif
 _KeRemoveFile:
       xor rax,rax
-	  mov r12, 19
+	  mov r12, SYS_REMOVE_FILE
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -412,7 +414,7 @@ export _KeCloseFile
 %endif
 _KeCloseFile:
       xor rax, rax
-	  mov r12, 20
+	  mov r12, SYS_CLOSE_FILE
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -426,7 +428,7 @@ export _KeFileIoControl
 %endif
 _KeFileIoControl:
       xor rax, rax
-	  mov r12, 21
+	  mov r12, SYS_FILE_IO_CONTROL
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -444,7 +446,7 @@ export _KeFileStat
 %endif
 _KeFileStat:
       xor rax, rax
-	  mov r12, 22
+	  mov r12, SYS_FILE_STAT
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -463,7 +465,7 @@ export _KeGetSystemTimerTick
 %endif
 _KeGetSystemTimerTick:
       xor rax, rax
-	  mov r12, 26
+	  mov r12, SYS_GET_SYSTEM_TIMER_TICK
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -481,7 +483,7 @@ export _KeGetFontID
 %endif
 _KeGetFontID:
       xor rax, rax
-	  mov r12, 27
+	  mov r12, SYS_GET_FONT_ID
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -499,7 +501,7 @@ export _KeGetNumFonts
 %endif
 _KeGetNumFonts:
       xor rax, rax
-	  mov r12, 28
+	  mov r12, SYS_GET_NUM_FONTS
 	  mov r13, 0
 	  mov r14, 0
 	  mov r15, 0
@@ -517,7 +519,7 @@ export _KeGetFontSize
 %endif
 _KeGetFontSize:
       xor rax, rax
-	  mov r12, 29
+	  mov r12, SYS_GET_FONT_SIZE
 	  mov r13, rcx
 	  mov r14, 0
 	  mov r15, 0
@@ -532,7 +534,7 @@ export _KeMemMapDirty
 %endif
 _KeMemMapDirty:
       xor rax, rax
-	  mov r12, 30
+	  mov r12, SYS_MEM_MAP_DIRTY
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -546,7 +548,7 @@ export _KeCreateTTY
 %endif
 _KeCreateTTY:
       xor rax, rax
-	  mov r12, 31
+	  mov r12, SYS_CREATE_TTY
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -560,7 +562,7 @@ export _KeCreateThread
 %endif
 _KeCreateThread:
       xor rax, rax
-	  mov r12, 32
+	  mov r12, SYS_CREATE_USER_THREAD
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -574,7 +576,7 @@ export _KeSetFileToProcess
 %endif
 _KeSetFileToProcess:
       xor rax, rax
-	  mov r12, 33
+	  mov r12, SYS_SET_FILE_TO_PROCESS
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, r8
@@ -588,7 +590,7 @@ export _KeProcessHeapUnmap
 %endif
 _KeProcessHeapUnmap:
       xor rax, rax
-	  mov r12, 34
+	  mov r12, SYS_PROCESS_HEAP_UNMAP
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -602,7 +604,7 @@ export _KeSendSignal
 %endif
 _KeSendSignal:
       xor rax, rax
-	  mov r12, 35
+	  mov r12, SYS_SEND_SIGNAL
 	  mov r13, rcx
 	  mov r14, rdx
 	  mov r15, 0
@@ -616,7 +618,7 @@ export _KeGetCurrentTime
 %endif
 _KeGetCurrentTime:
      xor rax, rax
-	 mov r12, 36
+	 mov r12, SYS_GET_CURRENT_TIME
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -630,7 +632,7 @@ export _KeOpenDir
 %endif
 _KeOpenDir:
      xor rax,rax
-	 mov r12, 37
+	 mov r12, SYS_OPEN_DIR
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -644,7 +646,7 @@ export _KeReadDir
 %endif
 _KeReadDir:
      xor rax, rax
-	 mov r12, 38
+	 mov r12, SYS_READ_DIR
 	 mov r13, rcx
 	 mov r14, rdx
 	 mov r15, 0
@@ -658,7 +660,7 @@ export _KeCreateTimer
 %endif
 _KeCreateTimer:
      xor rax, rax
-	 mov r12, 39
+	 mov r12, SYS_CREATE_TIMER
 	 mov r13, rcx
 	 mov r14, rdx
 	 mov r15, r8
@@ -672,7 +674,7 @@ export _KeStartTimer
 %endif
 _KeStartTimer:
      xor rax, rax
-	 mov r12, 40
+	 mov r12, SYS_START_TIMER
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -686,7 +688,7 @@ export _KeStopTimer
 %endif
 _KeStopTimer:
      xor rax, rax
-	 mov r12, 41
+	 mov r12, SYS_STOP_TIMER
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -700,7 +702,7 @@ export _KeDestroyTimer
 %endif
 _KeDestroyTimer:
      xor rax, rax
-	 mov r12, 42
+	 mov r12, SYS_DESTROY_TIMER
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -714,7 +716,7 @@ export _KeProcessGetFileDesc
 %endif
 _KeProcessGetFileDesc:
      xor rax, rax
-	 mov r12, 43
+	 mov r12, SYS_GET_FILE_DESC
 	 mov r13, rcx
 	 mov r14, 0
 	 mov r15, 0
@@ -728,7 +730,7 @@ export _KeFileSetOffset
 %endif
 _KeFileSetOffset:
     xor rax, rax
-	mov r12, 44
+	mov r12, SYS_FILE_SET_OFFSET
 	mov r13, rcx
 	mov r14, rdx
 	mov r15, 0
@@ -743,7 +745,7 @@ export gettimeofday
 %endif
 gettimeofday:
     xor rax, rax
-	mov r12, 45
+	mov r12, SYS_GET_TIME_OF_DAY
 	mov r13, rcx
 	mov r14, 0
 	mov r15, 0
@@ -757,7 +759,7 @@ export socket
 %endif
 socket:
    xor rax,rax
-   mov r12, 46
+   mov r12, SYS_CREATE_SOCKET
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -771,7 +773,7 @@ export connect
 %endif
 connect:
    xor rax, rax
-   mov r12, 47
+   mov r12, SYS_NET_CONNECT
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -785,7 +787,7 @@ export send
 %endif
 send:
    xor rax, rax
-   mov r12, 48
+   mov r12, SYS_NET_SEND
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -799,7 +801,7 @@ export receive
 %endif
 receive:
    xor rax,rax
-   mov r12, 49
+   mov r12, SYS_NET_RECEIVE
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -813,7 +815,7 @@ export socket_setopt
 %endif
 socket_setopt:
    xor rax, rax
-   mov r12, 50
+   mov r12, SYS_SOCKET_SET_OPT
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -828,7 +830,7 @@ export bind
 %endif
 bind:
    xor rax, rax
-   mov r12, 51
+   mov r12, SYS_NET_BIND
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -842,7 +844,7 @@ export accept
 %endif
 accept:
    xor rax, rax
-   mov r12, 52
+   mov r12, SYS_NET_ACCEPT
    mov r13, rcx
    mov r14, rdx
    mov r15, r8
@@ -856,7 +858,7 @@ export listen
 %endif
 listen:
     xor rax, rax
-	mov r12, 53
+	mov r12, SYS_NET_LISTEN
 	mov r13, rcx
 	mov r14, rdx
 	mov r15, 0
@@ -870,7 +872,7 @@ export _KeCreatePipe
 %endif
 _KeCreatePipe:
     xor rax, rax
-	mov r12, 54
+	mov r12, SYS_CREATE_PIPE
 	mov r13, rcx
 	mov r14, rdx
 	mov r15, 0
@@ -884,7 +886,7 @@ export _KeGetStorageDiskInfo
 %endif
 _KeGetStorageDiskInfo:
     xor rax,rax
-	mov r12, 55
+	mov r12, SYS_GET_VDISK_INFO
 	mov r13, rcx
 	mov r14, rdx
 	mov r15, 0,
@@ -898,7 +900,7 @@ export _KeGetStoragePartitionInfo
 %endif
 _KeGetStoragePartitionInfo:
     xor rax, rax
-	mov r12, 56
+	mov r12, SYS_GET_VDISK_PARTITION_INFO
 	mov r13, rcx
 	mov r14, rdx
 	mov r15, r8
@@ -912,23 +914,13 @@ export _KeGetEnvironmentBlock
 %endif
 _KeGetEnvironmentBlock:
     xor rax, rax
-	mov r12, 57
+	mov r12, SYS_GET_ENVIRONMENT_BLOCK
 	mov r13, 0
 	mov r14, 0
 	mov r15, 0
 	mov rdi, 0
 	syscall
 	ret
-
-
-
-
-
-      
-      
-
-      
-
 
 
 
