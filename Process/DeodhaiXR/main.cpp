@@ -336,6 +336,27 @@ static uint64_t profAccumTransfer = 0;
 void XRComposeFrame(ChCanvas* canvas) {
 	/* Split the frame into compose, present, and transfer stages for the overlay. --axiss */
 	uint64_t t0 = _KeGetCurrentMS();
+
+	/* Zoom transition tracking: force a full recompose on unzoom so no
+	 * stale canvas regions linger. */
+	static int wasZoomed = 0;
+	{
+		int zoomActive = 0;
+		for (Window* win = rootWin; win != NULL; win = win->next) {
+			WinSharedInfo* zinfo = (WinSharedInfo*)win->sharedInfo;
+			if (!zinfo->hide && zinfo->zoomed) {
+				zoomActive = 1;
+				break;
+			}
+		}
+		if (wasZoomed && !zoomActive) {
+			_window_update_all_ = true; // full recompose on unzoom
+			/* zoom covered the scanout: repaint the wallpaper everywhere
+			 * so no stale zoom pixels survive underneath. */
+			BackDirtyAdd(0, 0, (int)canvas->canvasWidth, (int)canvas->canvasHeight);
+		}
+		wasZoomed = zoomActive;
+	}
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
 
@@ -361,11 +382,36 @@ void XRComposeFrame(ChCanvas* canvas) {
 		if (info->hide)
 			continue;
 
+		if (info->zoomed)
+			continue; // handled in the zoom pass below
+
 		/** do either one -- dirty area tracking or else update all */
 		_compose_dirty_area_(canvas, win, focusedWin, info);
 
 		_compose_entire_window(
 			canvas, win, _window_update_all_, info, focusedWin, _window_moving_, _shadow_update);
+	}
+
+	/**
+	 * Zoomed (maximised) windows: stretched-fill upscale into the compose
+	 * canvas (the back surface the GPU flush presents from), above normal
+	 * windows; always-on-top and cursor still compose over them
+	 * afterwards. Fullscreen dirty is published so transfer moves it.
+	 */
+	for (Window* win = rootWin; win != NULL; win = win->next) {
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+
+		if (info->hide || !info->zoomed)
+			continue;
+
+		if (WinSharedFlagLoad(&info->dirty) || info->rect_count > 0 ||
+			WinSharedFlagLoad(&info->updateEntireWindow)) {
+			compose_window_zoomed(canvas, win, info);
+			info->rect_count = 0;
+			WinSharedFlagStore(&info->dirty, false);
+			WinSharedFlagStore(&info->updateEntireWindow, false);
+			AddDirtyClip(0, 0, (int)canvas->canvasWidth, (int)canvas->canvasHeight);
+		}
 	}
 
 	/**
@@ -598,6 +644,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->zoomed)
+			continue; // zoomed windows fill the screen; not draggable
 		//_KePrint("INFO->x %d, mx -> %d \r\n", info->x, x);
 		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) && y >= info->y &&
 			  y < (info->y + info->height)))
@@ -727,9 +775,41 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 		}
 	}
 
+	if (!mouseWin) {
+		/* zoomed (maximised) window covers the screen: it wins whatever
+		 * is left, keeping overlays/taskbar priority from above. */
+		for (Window* win = rootWin; win != NULL; win = win->next) {
+			WinSharedInfo* zinfo = (WinSharedInfo*)win->sharedInfo;
+			if (zinfo->hide || !zinfo->zoomed)
+				continue;
+			if (focusedWin != win && button) {
+				DeodhaiWindowSetFocused(win, 1);
+				_window_update_all_ = true;
+				_shadow_update = true;
+			}
+			mouseWin = win;
+			break;
+		}
+	}
+
 broadcast:
 	if (mouseWin) {
 		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
+		if (info->zoomed && !info->hide && info->width > 0 && info->height > 0 &&
+			screen_w > 0 && screen_h > 0) {
+			/* map screen coords back into the window's own pixels so
+			 * client hit-testing (titlebar buttons etc.) keeps working. */
+			mouse_x = (mouse_x * info->width) / (int)screen_w;
+			mouse_y = (mouse_y * info->height) / (int)screen_h;
+			if (mouse_x < 0)
+				mouse_x = 0;
+			if (mouse_y < 0)
+				mouse_y = 0;
+			if (mouse_x >= info->width)
+				mouse_x = info->width - 1;
+			if (mouse_y >= info->height)
+				mouse_y = info->height - 1;
+		}
 		//DeodhaiResizeCursorUpdate(mouse_x, mouse_y, info);
 		int handle = mouseWin->handle;
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
@@ -876,6 +956,7 @@ void DeodhaiCloseWindow(Window* win) {
 	int height = info->height;
 	int x = info->x;
 	int y = info->y;
+	int wasZoomed = info->zoomed ? 1 : 0;
 	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
 
 	/* iterate all popup window and close them */
@@ -900,8 +981,13 @@ void DeodhaiCloseWindow(Window* win) {
 	_KeMemUnmap(win->shadowBuffers,
 				(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
-	BackDirtyAdd(
-		x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
+	/* A zoomed window covered the whole scanout: only repainting its
+	 * normal rect would leave stale zoom pixels everywhere else. */
+	if (wasZoomed)
+		BackDirtyAdd(0, 0, (int)screen_w, (int)screen_h);
+	else
+		BackDirtyAdd(
+			x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
 	/* an always-on-top window lives in the alwaysOnTop list, not rootWin;
 	 * removing it via the rootWin-only helper corrupts both lists
 	 * (leaves alwaysOnTop/alwaysOnTopLast dangling to freed memory) --axiss */
@@ -937,6 +1023,7 @@ void DeodhaiCloseWindow(Window* win) {
 int main(int argc, char* argv[]) {
 	_KePrint("Hello DeodhaiXR \n");
 	_KePrint("DeodhaiXR - Copyright (C) Xeneva Pvt Ltd 2023-2026\n");
+	_KePrint("[deodhaiXR]: zoom compose active (stretched nearest)\n");
 
 	DeodhaiInitialiseData();
 

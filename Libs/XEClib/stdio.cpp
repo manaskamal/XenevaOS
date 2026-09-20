@@ -43,15 +43,17 @@ static size_t output_printf_len = 0;
  */
 FILE* fopen(const char* name, const char* mode) {
 	int mode_ = 0;
-	if (strcmp(mode, "r") == 0)
+	if (strcmp(mode, "r") == 0 || strcmp(mode, "rb") == 0)
 		mode_ |= FILE_OPEN_READ_ONLY;
 	else if (strcmp(mode, "w") == 0)
 		mode_ |= FILE_OPEN_WRITE;
-	else if (strcmp(mode, "a") == 0)
+	else if (strcmp(mode, "a") == 0 || strcmp(mode, "ab") == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
-	else if (strcmp(mode, "r+") == 0)
+	else if (strcmp(mode, "r+") == 0 || strcmp(mode, "rb+") == 0
+	         || strcmp(mode, "r+b") == 0)
 		mode_ |= FILE_OPEN_WRITE;
-	else if (strcmp(mode, "w+") == 0)
+	else if (strcmp(mode, "w+") == 0 || strcmp(mode, "wb+") == 0
+	         || strcmp(mode, "w+b") == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
 	else if (strcmp(mode, "wb") == 0)
 		mode_ |= FILE_OPEN_WRITE | FILE_OPEN_CREAT;
@@ -257,18 +259,9 @@ int rename(const char* oldpath, const char* newpath) {
 	return -1;
 }
 
-extern "C" void _store_stack_param(uint8_t* buffer);
-extern "C" void _store_stack_param_snprintf(uint8_t* buffer);
-extern "C" void _store_stack_param_sprintf(uint8_t* buffer);
-
 int sprintf(char* output, const char* format, ...) {
 	va_list list;
 	va_start(list, format);
-#ifdef ARCH_ARM64
-	uint8_t buffer[192];
-	_store_stack_param_sprintf(buffer);
-	list = (va_list)buffer;
-#endif
 	int len = 0;
 	len = _xeprint(output, MAX_STRING_LENGTH, format, list);
 	va_end(list);
@@ -278,11 +271,6 @@ int sprintf(char* output, const char* format, ...) {
 int snprintf(char* output, size_t sz, const char* format, ...) {
 	va_list list;
 	va_start(list, format);
-#ifdef ARCH_ARM64
-	uint64_t buffer[192];
-	_store_stack_param_snprintf((uint8_t*)buffer);
-	list = (va_list)buffer;
-#endif
 	int len = 0;
 	memset(output, 0, sz);
 	len = _xeprint(output, sz, format, list);
@@ -313,11 +301,6 @@ static void __stdout_write(const char* data, size_t len) {
 int printf(const char* format, ...) {
 	va_list list;
 	va_start(list, format);
-#ifdef ARCH_ARM64
-	uint8_t buffer[192];
-	_store_stack_param(buffer);
-	list = (va_list)buffer;
-#endif
 	char _output[MAX_STRING_LENGTH + 1];
 	memset(_output, '\0', MAX_STRING_LENGTH);
 	int len = _xeprint(_output, MAX_STRING_LENGTH, format, list);

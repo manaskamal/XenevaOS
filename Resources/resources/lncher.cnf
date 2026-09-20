@@ -26,4 +26,8 @@
 {[Title]Calender|
 [Icon]/icons/calndrl.bmp|
 [Param]|
-[App]/calendr.exe>
+[App]/calendr.exe}
+{[Title]Doom II|
+[Icon]/icons/snake.bmp|
+[Param]|
+[App]/doom.exe>
