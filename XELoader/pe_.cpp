@@ -99,18 +99,18 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 				break;
 			case IMAGE_REL_BASED_HIGH:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff >> 16) & UINT16_MAX;
-				_KePrint("Relocation Based HIGH \r\n");
+				//_KePrint("Relocation Based HIGH \r\n");
 				break;
 			case IMAGE_REL_BASED_LOW:
 				*reinterpret_cast<uint16_t*>(relocitem) += (diff & UINT16_MAX);
-				_KePrint("Relocation Based LOW \r\n");
+				//_KePrint("Relocation Based LOW \r\n");
 				break;
 			case IMAGE_REL_BASED_HIGHLOW:
 				*reinterpret_cast<uint32_t*>(relocitem) += (diff & UINT32_MAX);
-				_KePrint("Relocation Based HIGHLOW \r\n");
+				//_KePrint("Relocation Based HIGHLOW \r\n");
 				break;
 			case IMAGE_REL_BASED_HIGHADJ:
-				_KePrint("Rel based HIGHADJ \r\n");
+				//_KePrint("Rel based HIGHADJ \r\n");
 				break;
 			case IMAGE_REL_BASED_DIR64:
 				*reinterpret_cast<uint64_t*>(relocitem) += diff; // &UINT32_MAX);
@@ -121,7 +121,6 @@ void XELdrRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 			}
 		
 		}
-
 		uint32_t next_off = DIV_ROUND_UP(cur_block->BlockSize, 4) * 4;
 		cur_block = raw_offset<PIMAGE_RELOCATION_BLOCK>(cur_block, next_off);
 	}
@@ -213,9 +212,7 @@ void XELdrCreatePEObjects(void* exec) {
 	if (datadir.VirtualAddress == 0 || datadir.Size == 0) {
 		return;
 	}
-	if (_debug_buf){
-		_KePrint("Inside pe import dir %x \r\n", exec);
-	}
+	
 
 	PIMAGE_IMPORT_DIRECTORY importdir = raw_offset<PIMAGE_IMPORT_DIRECTORY>(exec, datadir.VirtualAddress);
 	for (size_t n = 0; importdir[n].ThunkTableRva; ++n) {
@@ -232,8 +229,6 @@ void XELdrCreatePEObjects(void* exec) {
 		while (*iat) {
 			PIMAGE_IMPORT_HINT_TABLE hint = raw_offset<PIMAGE_IMPORT_HINT_TABLE>(exec, *iat);
 			const char* fname = hint->name;
-			if (_debug_buf)
-				_KePrint("iat -> %x %s \r\n", *iat, fname);
 			++iat;
 		}
 	}
@@ -266,7 +261,7 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 		if (!dep_obj){
 			return;
 		}
-	
+	  
 		XELdrLinkDependencyPE(dep_obj);
 		void* dll_dep = (void*)dep_obj->load_addr;
 		PIMAGE_IMPORT_LOOKUP_TABLE_PE32P iat = raw_offset<PIMAGE_IMPORT_LOOKUP_TABLE_PE32P>(exec, importdir[n].ThunkTableRva);
@@ -278,7 +273,7 @@ void XELdrLinkDependencyPE(XELoaderObject* obj) {
 			++iat;
 		}
 	}
-	_KePrint("Finished debugging \r\n");
+
 	obj->linked = true;
 }
 
