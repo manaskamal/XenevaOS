@@ -36,6 +36,7 @@
 #include <Hal/AA64/sched.h>
 #include <_null.h>
 #include <Serv/sysserv.h>
+#include <Serv/syscall.h>
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
 #include <aucon.h>
@@ -51,8 +52,6 @@
 #include <Fs/pipe.h>
 #include <power.h>
 #include <timer.h>
-
-#define AURORA_MAX_SYSCALL 79
 
 AA64Registers* svcCurrentRegs;
 
@@ -82,164 +81,168 @@ AA64Registers* AA64GetCurrentRegCtx() {
 }
 
 static void* syscalls[AURORA_MAX_SYSCALL] = {
-	null_call,				   //0
-	UARTDebugOut,			   //1
-	PauseThread,			   //2
-	GetThreadID,			   //3
-	GetProcessID,			   //4
-	ProcessExit,			   //5
-	ProcessWaitForTermination, //6
-	CreateProcess,			   //7
-	ProcessLoadExec,		   //8
-	CreateSharedMem,		   //9
-	ObtainSharedMem,		   //10
-	UnmapSharedMem,			   //11
-	OpenFile,				   //12
-	CreateMemMapping,		   //13
-	UnmapMemMapping,		   //14
-	GetProcessHeapMem,		   //15
-	ReadFile,				   //16
-	WriteFile,				   //17
-	0,						   //18
-	0,						   //19
-	CloseFile,				   //20
-	FileIoControl,			   //21
-	FileStat,				   //22
-	ProcessSleep,			   //23
-	SignalReturn,			   //24
-	SetSignal,				   //25
-	AuGetSystemTimerTick,	   //26
-	AuFTMngrGetFontID,		   //27
-	AuFTMngrGetNumFonts,	   //28
-	AuFTMngrGetFontSize,	   //29
-	MemMapDirty,			   //30
-	AuTTYCreate,			   //31
-	CreateUserThread,		   //32
-	SetFileToProcess,		   //33
-	ProcessHeapUnmap,		   //34
-	SendSignal,				   //35
-	0,						   //36
-	OpenDir,				   //37
-	ReadDir,				   //38
-	0,						   //39
-	0,						   //40
-	0,						   //41
-	0,						   //42
-	ProcessGetFileDesc,		   //43
-	FileSetOffset,			   //44
-	0,						   //45
-	AuCreateSocket,			   //46
-	NetConnect,				   //47
-	NetSend,				   //48
-	NetReceive,				   //49
-	AuSocketSetOpt,			   //50
-	NetBind,				   //51
-	NetAccept,				   //52
-	NetListen,				   //53
-	AuCreatePipe,			   //54
-	AuGetVDiskInfo,			   //55,
-	AuGetVDiskPartitionInfo,   //56
-	GetEnvironmenBlock,		   //57
-	AuCredChangeID,			   //58
-	AuCredAddSGroup,		   //59
-	AuCredSetCap,			   //60
-	AuCredGetCap,			   //61
-	AuSetUID,				   //62
-	AuSetGID,				   //63
-	AuCredGetGroupID,		   //64
-	AuProcessTokenAddSelf,	   //65
-	AuProcessTokenGetThreadID, //66
-	AuProcessTokenRemoveSelf,  //67
-	AuPowerDown,			   //68
-	AuPowerReset,			   //69
-	AuGetCurrentUS,			   //70
-	AuGetCurrentMS,			   //71
-	Alarm,					   //72
-	SetITimer,				   //73
-	GetITimer,				   //74
-	AuProcGetNumProcessCount,  //75
-	AuProcessFetch,			   //76
-	AuSetWalltime,			   //77
-	AuGetWalltime,			   //78
+	[SYS_NULL]                 = null_call,
+	[SYS_TEXTOUT]              = UARTDebugOut,
+	[SYS_PAUSE_THREAD]         = PauseThread,
+	[SYS_GET_THREAD_ID]        = GetThreadID,
+	[SYS_GET_PROCESS_ID]       = GetProcessID,
+	[SYS_PROCESS_EXIT]         = ProcessExit,
+	[SYS_PROCESS_WAIT]         = ProcessWaitForTermination,
+	[SYS_CREATE_PROCESS]       = CreateProcess,
+	[SYS_PROCESS_LOAD_EXEC]    = ProcessLoadExec,
+	[SYS_CREATE_SHARED_MEM]    = CreateSharedMem,
+	[SYS_OBTAIN_SHARED_MEM]    = ObtainSharedMem,
+	[SYS_UNMAP_SHARED_MEM]     = UnmapSharedMem,
+	[SYS_OPEN_FILE]            = OpenFile,
+	[SYS_CREATE_MEM_MAPPING]   = CreateMemMapping,
+	[SYS_UNMAP_MEM_MAPPING]    = UnmapMemMapping,
+	[SYS_GET_PROCESS_HEAP_MEM] = GetProcessHeapMem,
+	[SYS_READ_FILE]            = ReadFile,
+	[SYS_WRITE_FILE]           = WriteFile,
+	[SYS_CREATE_DIR]           = 0,
+	[SYS_REMOVE_FILE]          = 0,
+	[SYS_CLOSE_FILE]           = CloseFile,
+	[SYS_FILE_IO_CONTROL]      = FileIoControl,
+	[SYS_FILE_STAT]            = FileStat,
+	[SYS_PROCESS_SLEEP]        = ProcessSleep,
+	[SYS_SIGNAL_RETURN]        = SignalReturn,
+	[SYS_SET_SIGNAL]           = SetSignal,
+	[SYS_GET_SYSTEM_TIMER_TICK] = AuGetSystemTimerTick,
+	[SYS_GET_FONT_ID]          = AuFTMngrGetFontID,
+	[SYS_GET_NUM_FONTS]        = AuFTMngrGetNumFonts,
+	[SYS_GET_FONT_SIZE]        = AuFTMngrGetFontSize,
+	[SYS_MEM_MAP_DIRTY]        = MemMapDirty,
+	[SYS_CREATE_TTY]           = AuTTYCreate,
+	[SYS_CREATE_USER_THREAD]   = CreateUserThread,
+	[SYS_SET_FILE_TO_PROCESS]  = SetFileToProcess,
+	[SYS_PROCESS_HEAP_UNMAP]   = ProcessHeapUnmap,
+	[SYS_SEND_SIGNAL]          = SendSignal,
+	[SYS_GET_CURRENT_TIME]     = 0,
+	[SYS_OPEN_DIR]             = OpenDir,
+	[SYS_READ_DIR]             = ReadDir,
+	[SYS_CREATE_TIMER]         = 0,
+	[SYS_START_TIMER]          = 0,
+	[SYS_STOP_TIMER]           = 0,
+	[SYS_DESTROY_TIMER]        = 0,
+	[SYS_GET_FILE_DESC]        = ProcessGetFileDesc,
+	[SYS_FILE_SET_OFFSET]      = FileSetOffset,
+	[SYS_GET_TIME_OF_DAY]      = 0,
+	[SYS_CREATE_SOCKET]        = AuCreateSocket,
+	[SYS_NET_CONNECT]          = NetConnect,
+	[SYS_NET_SEND]             = NetSend,
+	[SYS_NET_RECEIVE]          = NetReceive,
+	[SYS_SOCKET_SET_OPT]       = AuSocketSetOpt,
+	[SYS_NET_BIND]             = NetBind,
+	[SYS_NET_ACCEPT]           = NetAccept,
+	[SYS_NET_LISTEN]           = NetListen,
+	[SYS_CREATE_PIPE]          = AuCreatePipe,
+	[SYS_GET_VDISK_INFO]       = AuGetVDiskInfo,
+	[SYS_GET_VDISK_PARTITION_INFO] = AuGetVDiskPartitionInfo,
+	[SYS_GET_ENVIRONMENT_BLOCK] = GetEnvironmenBlock,
+	[SYS_CRED_CHANGE_ID]       = AuCredChangeID,
+	[SYS_CRED_ADD_SGROUP]      = AuCredAddSGroup,
+	[SYS_CRED_SET_CAP]         = AuCredSetCap,
+	[SYS_CRED_GET_CAP]         = AuCredGetCap,
+	[SYS_SET_UID]              = AuSetUID,
+	[SYS_SET_GID]              = AuSetGID,
+	[SYS_CRED_GET_GROUP_ID]    = AuCredGetGroupID,
+	[SYS_PROCESS_TOKEN_ADD_SELF] = AuProcessTokenAddSelf,
+	[SYS_PROCESS_TOKEN_GET_THREAD_ID] = AuProcessTokenGetThreadID,
+	[SYS_PROCESS_TOKEN_REMOVE_SELF] = AuProcessTokenRemoveSelf,
+	[SYS_POWER_DOWN]           = AuPowerDown,
+	[SYS_POWER_RESET]          = AuPowerReset,
+	[SYS_GET_CURRENT_US]       = AuGetCurrentUS,
+	[SYS_GET_CURRENT_MS]       = AuGetCurrentMS,
+	[SYS_ALARM]                = Alarm,
+	[SYS_SET_ITIMER]           = SetITimer,
+	[SYS_GET_ITIMER]           = GetITimer,
+	[SYS_GET_NUM_PROCESS_COUNT] = AuProcGetNumProcessCount,
+	[SYS_PROCESS_FETCH]        = AuProcessFetch,
+	[SYS_SET_WALLTIME]         = AuSetWalltime,
+	[SYS_GET_WALLTIME]         = AuGetWalltime,
 };
 
 #ifdef __KERNEL_PROFILER_ON__
 static char* syscall_name[AURORA_MAX_SYSCALL] = {
-	"null_call",				 //0
-	"UARTDebugOut",				 //1
-	"PauseThread",				 //2
-	"GetThreadID",				 //3
-	"GetProcessID",				 //4
-	"ProcessExit",				 //5
-	"ProcessWaitForTermination", //6
-	"CreateProcess",			 //7
-	"ProcessLoadExec",			 //8
-	"CreateSharedMem",			 //9
-	"ObtainSharedMem",			 //10
-	"UnmapSharedMem",			 //11
-	"OpenFile",					 //12
-	"CreateMemMapping",			 //13
-	"UnmapMemMapping",			 //14
-	"GetProcessHeapMem",		 //15
-	0,							 //16
-	"WriteFile",				 //17
-	0,							 //18
-	0,							 //19
-	"CloseFile",				 //20
-	0,							 //21
-	"FileStat",					 //22
-	0,							 //23
-	0,							 //24
-	0,							 //25
-	"AuGetSystemTimerTick",		 //26
-	"AuFTMngrGetFontID",		 //27
-	"AuFTMngrGetNumFonts",		 //28
-	"AuFTMngrGetFontSize",		 //29
-	"MemMapDirty",				 //30
-	"AuTTYCreate",				 //31
-	"CreateUserThread",			 //32
-	"SetFileToProcess",			 //33
-	"ProcessHeapUnmap",			 //34
-	0,							 //35
-	0,							 //36
-	"OpenDir",					 //37
-	"ReadDir",					 //38
-	0,							 //39
-	0,							 //40
-	0,							 //41
-	0,							 //42
-	"ProcessGetFileDesc",		 //43
-	"FileSetOffset",			 //44
-	0,							 //45
-	"AuCreateSocket",			 //46
-	"NetConnect",				 //47
-	"NetSend",					 //48
-	"NetReceive",				 //49
-	"AuSocketSetOpt",			 //50
-	"NetBind",					 //51
-	"NetAccept",				 //52
-	"NetListen",				 //53
-	0,							 //54
-	"AuGetVDiskInfo",			 //55,
-	"AuGetVDiskPartitionInfo",	 //56
-	"GetEnvironmenBlock",		 //57
-	"AuCredChangeID",			 //58
-	"AuCredAddSGroup",			 //59
-	"AuCredSetCap",				 //60
-	"AuCredGetCap",				 //61
-	"AuSetUID",					 //62
-	"AuSetGID",					 //63
-	"AuCredGetGroupID",			 //64
-	"AuProcessTokenAddSelf",	 //65
-	"AuProcessTokenGetThreadID", //66
-	"AuProcessTokenRemoveSelf",	 //67
-	"AuPowerDown",				 //68
-	"AuPowerReset",				 //69
-	"AuGetCurrentUS",			 //70
-	"AuGetCurrentMS",			 //71
-	"Alarm",					 //72
-	"AuProcGetNumProcessCount",	 //75
-	"AuProcessFetch",			 //76
+	[SYS_NULL]                 = "null_call",
+	[SYS_TEXTOUT]              = "UARTDebugOut",
+	[SYS_PAUSE_THREAD]         = "PauseThread",
+	[SYS_GET_THREAD_ID]        = "GetThreadID",
+	[SYS_GET_PROCESS_ID]       = "GetProcessID",
+	[SYS_PROCESS_EXIT]         = "ProcessExit",
+	[SYS_PROCESS_WAIT]         = "ProcessWaitForTermination",
+	[SYS_CREATE_PROCESS]       = "CreateProcess",
+	[SYS_PROCESS_LOAD_EXEC]    = "ProcessLoadExec",
+	[SYS_CREATE_SHARED_MEM]    = "CreateSharedMem",
+	[SYS_OBTAIN_SHARED_MEM]    = "ObtainSharedMem",
+	[SYS_UNMAP_SHARED_MEM]     = "UnmapSharedMem",
+	[SYS_OPEN_FILE]            = "OpenFile",
+	[SYS_CREATE_MEM_MAPPING]   = "CreateMemMapping",
+	[SYS_UNMAP_MEM_MAPPING]    = "UnmapMemMapping",
+	[SYS_GET_PROCESS_HEAP_MEM] = "GetProcessHeapMem",
+	[SYS_READ_FILE]            = "ReadFile",
+	[SYS_WRITE_FILE]           = "WriteFile",
+	[SYS_CREATE_DIR]           = "CreateDir",
+	[SYS_REMOVE_FILE]          = "RemoveFile",
+	[SYS_CLOSE_FILE]           = "CloseFile",
+	[SYS_FILE_IO_CONTROL]      = "FileIoControl",
+	[SYS_FILE_STAT]            = "FileStat",
+	[SYS_PROCESS_SLEEP]        = "ProcessSleep",
+	[SYS_SIGNAL_RETURN]        = "SignalReturn",
+	[SYS_SET_SIGNAL]           = "SetSignal",
+	[SYS_GET_SYSTEM_TIMER_TICK] = "AuGetSystemTimerTick",
+	[SYS_GET_FONT_ID]          = "AuFTMngrGetFontID",
+	[SYS_GET_NUM_FONTS]        = "AuFTMngrGetNumFonts",
+	[SYS_GET_FONT_SIZE]        = "AuFTMngrGetFontSize",
+	[SYS_MEM_MAP_DIRTY]        = "MemMapDirty",
+	[SYS_CREATE_TTY]           = "AuTTYCreate",
+	[SYS_CREATE_USER_THREAD]   = "CreateUserThread",
+	[SYS_SET_FILE_TO_PROCESS]  = "SetFileToProcess",
+	[SYS_PROCESS_HEAP_UNMAP]   = "ProcessHeapUnmap",
+	[SYS_SEND_SIGNAL]          = "SendSignal",
+	[SYS_GET_CURRENT_TIME]     = "GetCurrentTime",
+	[SYS_OPEN_DIR]             = "OpenDir",
+	[SYS_READ_DIR]             = "ReadDir",
+	[SYS_CREATE_TIMER]         = "CreateTimer",
+	[SYS_START_TIMER]          = "StartTimer",
+	[SYS_STOP_TIMER]           = "StopTimer",
+	[SYS_DESTROY_TIMER]        = "DestroyTimer",
+	[SYS_GET_FILE_DESC]        = "ProcessGetFileDesc",
+	[SYS_FILE_SET_OFFSET]      = "FileSetOffset",
+	[SYS_GET_TIME_OF_DAY]      = "GetTimeOfDay",
+	[SYS_CREATE_SOCKET]        = "AuCreateSocket",
+	[SYS_NET_CONNECT]          = "NetConnect",
+	[SYS_NET_SEND]             = "NetSend",
+	[SYS_NET_RECEIVE]          = "NetReceive",
+	[SYS_SOCKET_SET_OPT]       = "AuSocketSetOpt",
+	[SYS_NET_BIND]             = "NetBind",
+	[SYS_NET_ACCEPT]           = "NetAccept",
+	[SYS_NET_LISTEN]           = "NetListen",
+	[SYS_CREATE_PIPE]          = "AuCreatePipe",
+	[SYS_GET_VDISK_INFO]       = "AuGetVDiskInfo",
+	[SYS_GET_VDISK_PARTITION_INFO] = "AuGetVDiskPartitionInfo",
+	[SYS_GET_ENVIRONMENT_BLOCK] = "GetEnvironmenBlock",
+	[SYS_CRED_CHANGE_ID]       = "AuCredChangeID",
+	[SYS_CRED_ADD_SGROUP]      = "AuCredAddSGroup",
+	[SYS_CRED_SET_CAP]         = "AuCredSetCap",
+	[SYS_CRED_GET_CAP]         = "AuCredGetCap",
+	[SYS_SET_UID]              = "AuSetUID",
+	[SYS_SET_GID]              = "AuSetGID",
+	[SYS_CRED_GET_GROUP_ID]    = "AuCredGetGroupID",
+	[SYS_PROCESS_TOKEN_ADD_SELF] = "AuProcessTokenAddSelf",
+	[SYS_PROCESS_TOKEN_GET_THREAD_ID] = "AuProcessTokenGetThreadID",
+	[SYS_PROCESS_TOKEN_REMOVE_SELF] = "AuProcessTokenRemoveSelf",
+	[SYS_POWER_DOWN]           = "AuPowerDown",
+	[SYS_POWER_RESET]          = "AuPowerReset",
+	[SYS_GET_CURRENT_US]       = "AuGetCurrentUS",
+	[SYS_GET_CURRENT_MS]       = "AuGetCurrentMS",
+	[SYS_ALARM]                = "Alarm",
+	[SYS_SET_ITIMER]           = "SetITimer",
+	[SYS_GET_ITIMER]           = "GetITimer",
+	[SYS_GET_NUM_PROCESS_COUNT] = "AuProcGetNumProcessCount",
+	[SYS_PROCESS_FETCH]        = "AuProcessFetch",
+	[SYS_SET_WALLTIME]         = "AuSetWalltime",
+	[SYS_GET_WALLTIME]         = "AuGetWalltime",
 };
 #endif
 

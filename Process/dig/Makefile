@@ -1,7 +1,7 @@
-# LLVM iptable.exe (8.3 name; XEShell looks up <cmd>.exe)
+# LLVM dig.exe — dig-style DNS lookup (RFC 1035 / RFC 6761).
 
 TOOLCHAIN ?= gcc
-TARGET = iptable.exe
+TARGET = dig.exe
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr
 OBJDIR = obj
 CPP_OBJS = $(OBJDIR)/main.o

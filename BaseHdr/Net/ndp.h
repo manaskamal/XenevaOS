@@ -78,6 +78,7 @@ extern void NDProtocolInitialise();
 extern void NDProtocolAdd(AuVFSNode* nic, const ip6_addr* address, uint8_t* hwaddr);
 extern AuNDCache* AuNDGet(const ip6_addr* address);
 extern void AuNDRequestMAC(AuVFSNode* nic, const ip6_addr* addr);
+extern AuNDCache* AuNDResolve(AuVFSNode* nic, const ip6_addr* addr);
 extern void NDHandleNeighborSolicit(IPv6Header* ipv6, AuVFSNode* nic);
 extern void NDHandleNeighborAdvert(IPv6Header* ipv6, AuVFSNode* nic);
 

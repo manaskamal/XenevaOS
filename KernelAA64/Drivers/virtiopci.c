@@ -262,6 +262,29 @@ uint16_t AuVirtioPCISetupQueue(struct VirtioPCIDevice* dev, uint16_t qidx,
 	return qsize;
 }
 
+void AuVirtioPCIPostAvail(struct VirtqDesc* desc, struct VirtqAvailHdr* avail,
+						  uint16_t qsize, uint64_t bufPhys, uint32_t bufSize,
+						  uint16_t nbuf, uint16_t flags) {
+	uint16_t i;
+
+	if (!desc || !avail || !qsize || !nbuf || nbuf > qsize || !bufPhys || !bufSize)
+		return;
+	for (i = 0; i < nbuf; i++) {
+		desc[i].addr = bufPhys + (uint64_t)i * bufSize;
+		desc[i].len = bufSize;
+		desc[i].flags = flags;
+		desc[i].next = 0;
+		avail->ring[i] = i;
+	}
+	isb_flush();
+	dsb_ish();
+	avail->idx = nbuf;
+	isb_flush();
+	dsb_ish();
+	UARTDebugOut("virtio post avail idx=%d nbuf=%d desc0=%x\r\n",
+				 avail->idx, nbuf, (uint32_t)desc[0].addr);
+}
+
 /**
  * @brief AuVirtioPCINotifyQueue -- see Drivers/virtio.h
  */

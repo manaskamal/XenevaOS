@@ -207,6 +207,7 @@ void gpu_initialize_controlq(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	controlq_sz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
 	controlq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	UARTDebugOut("[virtio-gpu]: controlq size : %d \r\n", queueSz);
 	cfg->QueueDesc = queuePhys;
@@ -233,6 +234,7 @@ void gpu_initialize_cursorq(VirtioCommonCfg* cfg) {
 	UARTDebugOut("[virtio-gpu]: cursorq size : %d \r\n", queueSz);
 	cursorq_sz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+	memset((void*)queuePhys, 0, 0x1000);
 	cursorq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 	UARTDebugOut("[virtio-gpu]: controlq size : %d \r\n", queueSz);
 	cfg->QueueDesc = queuePhys;

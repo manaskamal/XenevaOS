@@ -1,5 +1,5 @@
 /**
- * Phase-0 netfilter-style hooks for Xeneva (linear rule list, XR-scale).
+ * Netfilter-style hooks for Xeneva (linear rule list, XR-scale).
  */
 
 #ifndef __AU_NETFILTER_H__

@@ -112,7 +112,7 @@ static int cmd_append(int sock, int argc, char** argv) {
 	int target = NF_ACCEPT;
 
 	if (argc < 1) {
-		printf("usage: iptables -A <chain> ... -j TARGET\n");
+		printf("usage: iptable -A <chain> ... -j TARGET\n");
 		return 1;
 	}
 	memset(&r, 0, sizeof(r));
@@ -126,8 +126,10 @@ static int cmd_append(int sock, int argc, char** argv) {
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-i") == 0 && i + 1 < argc) {
 			strncpy(r.in_dev, argv[++i], 15);
+			r.in_dev[15] = 0;
 		} else if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
 			strncpy(r.out_dev, argv[++i], 15);
+			r.out_dev[15] = 0;
 		} else if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) {
 			i++;
 			if (strcmp(argv[i], "udp") == 0)
@@ -152,15 +154,17 @@ static int cmd_append(int sock, int argc, char** argv) {
 	r.target = target;
 	if (_KeFileIoControl(sock, SOCK_NF_APPEND, &r)) {
 		printf("append failed\n");
+		fflush(stdout);
 		return 1;
 	}
 	printf("ok\n");
+	fflush(stdout);
 	return 0;
 }
 
 /*
  * Aurora argv: XEShell/LoadExec pass only trailing args (no prog name),
- * or sometimes "/iptables.exe" as argv[0]. Scan like ping/udpecho.
+ * or sometimes "/iptable.exe" as argv[0]. Scan like ping/udpecho.
  */
 static int is_prog(const char* s) {
 	if (!s || !s[0])
@@ -169,7 +173,7 @@ static int is_prog(const char* s) {
 		return 1;
 	if (strstr(s, ".exe"))
 		return 1;
-	if (strcmp(s, "iptables") == 0)
+	if (strcmp(s, "iptable") == 0 || strcmp(s, "iptables") == 0)
 		return 1;
 	return 0;
 }
@@ -180,7 +184,7 @@ int main(int argc, char* argv[]) {
 	int i = 0;
 
 	if (sock < 0) {
-		printf("iptables: socket failed\n");
+		printf("iptable: socket failed\n");
 		return 1;
 	}
 
@@ -188,7 +192,7 @@ int main(int argc, char* argv[]) {
 		i++;
 
 	if (i >= argc) {
-		printf("usage: iptables [-L|-F|-A ...]\n");
+		printf("usage: iptable [-L|-F|-A ...]\n");
 		return 1;
 	}
 
@@ -199,8 +203,9 @@ int main(int argc, char* argv[]) {
 	else if (strcmp(argv[i], "-A") == 0)
 		rc = cmd_append(sock, argc - (i + 1), argv + (i + 1));
 	else {
-		printf("usage: iptables [-L|-F|-A ...]\n");
+		printf("usage: iptable [-L|-F|-A ...]\n");
 		rc = 1;
 	}
+	fflush(stdout);
 	return rc;
 }

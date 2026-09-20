@@ -1,5 +1,5 @@
 /**
- * Minimal route tool — list / add / del IPv4 FIB entries (Week 4).
+ * Minimal route tool — list / add / del IPv4 FIB entries.
  */
 
 #include <stdint.h>

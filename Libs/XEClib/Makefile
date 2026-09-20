@@ -54,14 +54,15 @@ OBJDIR = obj
 CPP_SRCS = acosf.cpp arpa/inet.cpp atan2f.cpp atanf.cpp c++/ios.cpp c++/iostream.cpp \
            c++/istream.cpp c++/memory.cpp c++/new.cpp c++/ostream.cpp c++/_string.cpp \
            ceilf.cpp ctype.cpp errno.cpp fmodf.cpp math.cpp qsort.cpp roundf.cpp \
-           stat.cpp stdio.cpp stdlib.cpp string.cpp sys/xenet.cpp sys/_heap.cpp \
-           sys/_procheap.cpp            sys/_xeneva.cpp sys/_xeprint.cpp time.cpp \
+           stat.cpp stdio.cpp stdlib.cpp string.cpp sys/xenet.cpp sys/hosts.cpp \
+           sys/_heap.cpp sys/_procheap.cpp            sys/_xeneva.cpp sys/_xeprint.cpp time.cpp \
            _xeinput.cpp _xeprint.cpp cxx_abi.cpp
 
-S_SRCS = _callbase_arm64.s setjmp_arm64.s store_stack_arm64.s
+S_SRCS = _callbase_arm64.S setjmp_arm64.s store_stack_arm64.s
 
 CPP_OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPP_SRCS))
-S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
+S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(filter %.s,$(S_SRCS))) \
+         $(patsubst %.S,$(OBJDIR)/%.o,$(filter %.S,$(S_SRCS)))
 
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
@@ -91,6 +92,10 @@ $(OBJDIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 

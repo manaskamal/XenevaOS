@@ -89,9 +89,8 @@ struct VirtioNetCfg {
  * @param spiNum -- shared peripheral interrupt number
  * passed by system
  */
-void AuVirtioNetHandler(int spiNum) {
+static void AuVirtioNetRxPoll(void) {
 	uint16_t them;
-	(void)spiNum;
 	if (!rxqueue)
 		return;
 	them = rxqueue->used.index;
@@ -99,14 +98,23 @@ void AuVirtioNetHandler(int spiNum) {
 		uint32_t used_slot = rx_index % RX_BUFFER_COUNT;
 		uint32_t buf_id = rxqueue->used.ring[used_slot].index % RX_BUFFER_COUNT;
 		uint8_t* buffer = (uint8_t*)rx_hdrs + buf_id * RX_BUFFER_SIZE;
+		uint32_t totlen = rxqueue->used.ring[used_slot].length;
 		void* eth = (uint8_t*)buffer + sizeof(virtio_net_hdr_t);
-		if (nic)
-			AuEthernetHandle(eth, rxqueue->used.ring[used_slot].length, nic);
+		uint32_t ethlen = totlen > sizeof(virtio_net_hdr_t)
+			? totlen - (uint32_t)sizeof(virtio_net_hdr_t)
+			: 0;
+		if (nic && ethlen)
+			AuEthernetHandle(eth, (int)ethlen, nic);
 		rxqueue->available.ring[rxqueue->available.index % RX_BUFFER_COUNT] = buf_id;
 		rxqueue->available.index++;
 		dsb_ish();
 		isb_flush();
 	}
+}
+
+void AuVirtioNetHandler(int spiNum) {
+	(void)spiNum;
+	AuVirtioNetRxPoll();
 }
 /**
  * @brief AuVirtioNetReset -- reset the net device
@@ -126,6 +134,8 @@ static void AuVirtioNetReset(struct VirtioCommonCfg* common) {
  */
 void AuVirtioNetNotifyQueue(struct VirtioCommonCfg* cfg, uint16_t queueIdx) {
 	cfg->QueueSelect = queueIdx;
+	isb_flush();
+	dsb_ish();
 	uint16_t notify_off = cfg->QueueNotifyOff;
 
 	volatile uint16_t* notifyAddr =
@@ -295,6 +305,7 @@ static void AuVirtioTransmit(void* packet, uint16_t len) {
 	isb_flush();
 	AuVirtioNetNotifyQueue(_cfg, 1);
 	tx_index++;
+	AuVirtioNetRxPoll();
 }
 
 /**
@@ -467,6 +478,8 @@ void AuVirtioNetInitialize(uint64_t device) {
 	common->DeviceStatus |= 0x04;
 	isb_flush();
 	dsb_ish();
+	AuVirtioNetNotifyQueue(common, 0);
+	AuVirtioNetNotifyQueue(common, 1);
 
 	UARTDebugOut("[aurora]: virtio-net-dev initialized successfully \r\n");
 	AuTextOut("[aurora]: virtio-net-dev mac : ");
@@ -478,12 +491,12 @@ void AuVirtioNetInitialize(uint64_t device) {
 	ndev->ipv4gateway = MAKE_IP(10, 0, 2, 2);
 	ndev->ipv4subnet = MAKE_IP(255, 255, 255, 0);
 	ndev->dns_ipv4_1 = MAKE_IP(10, 0, 2, 3);
-	/* QEMU user-net style ULA defaults (mirror IPv4 10.0.2.x) */
-	ndev->ipv6addr.s6_addr[0] = 0xfd;
-	ndev->ipv6addr.s6_addr[1] = 0x00;
-	ndev->ipv6addr.s6_addr[15] = 0x15;
-	ndev->ipv6gateway.s6_addr[0] = 0xfd;
-	ndev->ipv6gateway.s6_addr[1] = 0x00;
+	/* QEMU slirp IPv6: guest fec0::64, router fec0::2. */
+	ndev->ipv6addr.s6_addr[0] = 0xfe;
+	ndev->ipv6addr.s6_addr[1] = 0xc0;
+	ndev->ipv6addr.s6_addr[15] = 0x64;
+	ndev->ipv6gateway.s6_addr[0] = 0xfe;
+	ndev->ipv6gateway.s6_addr[1] = 0xc0;
 	ndev->ipv6gateway.s6_addr[15] = 0x02;
 	ndev->ipv6prefixLen = 64;
 	for (int i = 0; i < 6; i++) {
@@ -510,6 +523,9 @@ void AuVirtioNetInitialize(uint64_t device) {
 		alias->device = ndev;
 		AuAddNetAdapter(alias, "virtio-net");
 		AuNetAddConnectedRoute4(alias, "virtio-net");
+		AuNetAddDefaultRoute4(alias, "virtio-net");
 		AuNetAddConnectedRoute6(alias, "virtio-net");
+		AuNetAddDefaultRoute6(alias, "virtio-net");
+		AuNetRegisterRxPoll(AuVirtioNetRxPoll);
 	}
 }

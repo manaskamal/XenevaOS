@@ -48,6 +48,80 @@
 #include <Drivers/uart.h>
 
 static hashmap_t* netadapters;
+static void (*_net_rx_poll)(void);
+
+void AuNetRegisterRxPoll(void (*fn)(void)) {
+	_net_rx_poll = fn;
+}
+
+void AuNetRxPoll(void) {
+	if (_net_rx_poll)
+		_net_rx_poll();
+}
+
+/* Global DNS nameserver table (independent of SO_BINDTODEVICE). */
+static uint32_t g_dns4[AU_DNS_MAX4];
+static ip6_addr g_dns6[AU_DNS_MAX6];
+
+void AuDnsAddServer4(uint32_t addr) {
+	int i;
+
+	if (!addr)
+		return;
+	for (i = 0; i < AU_DNS_MAX4; i++) {
+		if (g_dns4[i] == addr)
+			return;
+	}
+	for (i = 0; i < AU_DNS_MAX4; i++) {
+		if (g_dns4[i] == 0) {
+			g_dns4[i] = addr;
+			return;
+		}
+	}
+}
+
+void AuDnsSetServer4(int index, uint32_t addr) {
+	if (index < 1 || index > AU_DNS_MAX4)
+		return;
+	g_dns4[index - 1] = addr;
+}
+
+int AuDnsGetServer4(int index, uint32_t* out) {
+	if (!out || index < 1 || index > AU_DNS_MAX4)
+		return 1;
+	*out = g_dns4[index - 1];
+	return 0;
+}
+
+void AuDnsAddServer6(const ip6_addr* addr) {
+	int i;
+
+	if (!addr || ip6_addr_is_zero(addr))
+		return;
+	for (i = 0; i < AU_DNS_MAX6; i++) {
+		if (ip6_addr_equal(&g_dns6[i], addr))
+			return;
+	}
+	for (i = 0; i < AU_DNS_MAX6; i++) {
+		if (ip6_addr_is_zero(&g_dns6[i])) {
+			ip6_addr_copy(&g_dns6[i], addr);
+			return;
+		}
+	}
+}
+
+void AuDnsSetServer6(int index, const ip6_addr* addr) {
+	if (!addr || index < 1 || index > AU_DNS_MAX6)
+		return;
+	ip6_addr_copy(&g_dns6[index - 1], addr);
+}
+
+int AuDnsGetServer6(int index, ip6_addr* out) {
+	if (!out || index < 1 || index > AU_DNS_MAX6)
+		return 1;
+	ip6_addr_copy(out, &g_dns6[index - 1]);
+	return 0;
+}
 
 static size_t AuLoopbackWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	(void)node;
@@ -445,23 +519,42 @@ void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname) {
 	AuRouteTable6Add(entry);
 }
 
+static AuVFSNode* AuNetRadioNic(void) {
+	AuVFSNode* n = AuGetNetworkAdapter("virtio-net");
+	if (n)
+		return n;
+	return AuGetNetworkAdapter("e1000");
+}
+
 /**
  * @brief AuNetworkRoute -- select NIC for an IPv4 destination
  * @param address -- Address to consider (MAKE_IP/wire or host-order sockaddr)
  */
 AuVFSNode* AuNetworkRoute(uint32_t address) {
 	AuRouteResult rr;
+	AuVFSNode* nic;
 
 	if (AuAddrIsLocal4(address))
 		return AuGetNetworkAdapter("lo");
 
 	if (AuRouteLookup4(address, &rr) == 0 && rr.nic)
 		return rr.nic;
-	return NULL;
+
+	/* Single radio: seed connected/default from the NIC and retry. */
+	nic = AuNetRadioNic();
+	if (!nic)
+		return NULL;
+	AuNetAddConnectedRoute4(nic, nic->filename);
+	AuNetAddDefaultRoute4(nic, nic->filename);
+	if (AuRouteLookup4(address, &rr) == 0 && rr.nic)
+		return rr.nic;
+	UARTDebugOut("[aurora]: IPv4 FIB miss, using radio %s\r\n", nic->filename);
+	return nic;
 }
 
 AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
 	AuRouteResult6 rr;
+	AuVFSNode* nic;
 
 	if (!address)
 		return NULL;
@@ -471,5 +564,14 @@ AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
 
 	if (AuRouteLookup6(address, &rr) == 0 && rr.nic)
 		return rr.nic;
-	return NULL;
+
+	nic = AuNetRadioNic();
+	if (!nic)
+		return NULL;
+	AuNetAddConnectedRoute6(nic, nic->filename);
+	AuNetAddDefaultRoute6(nic, nic->filename);
+	if (AuRouteLookup6(address, &rr) == 0 && rr.nic)
+		return rr.nic;
+	UARTDebugOut("[aurora]: IPv6 FIB miss, using radio %s\r\n", nic->filename);
+	return nic;
 }

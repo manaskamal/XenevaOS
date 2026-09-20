@@ -97,9 +97,11 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 		UARTDebugOut("MSG_IOVLen : 0 \r\n");
 		return 0;
 	}
+	AuNetRxPoll();
 	char* data = (char*)AuSocketGet(sock);
+	/* Empty RX queue is not an error — return 0 so DHCP poll loops can wait. */
 	if (!data)
-		return -1;
+		return 0;
 	size_t pack_sz = *(size_t*)data;
 	if (msg->msg_iov[0].iov_len < pack_sz)
 		return -1;
@@ -255,87 +257,124 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 	}
 	case SOCK_ADD_DNS_SERVER: {
 		AuDNSEntry* dnsentry = (AuDNSEntry*)arg;
+		AuSocket* sock;
+		AuVFSNode* nic;
+		AuNetworkDevice* netdev;
 		if (!dnsentry)
 			return 1;
-		AuSocket* sock = (AuSocket*)file->device;
-		if (!sock)
-			return 1;
-		AuVFSNode* nic = (AuVFSNode*)sock->binedDev;
-		if (!nic)
-			return 1;
-		AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
-		if (!netdev)
-			return 1;
-		switch (dnsentry->index) {
-		case 1:
-			netdev->dns_ipv4_1 = dnsentry->address;
-			UARTDebugOut("[aurora]: net DNS Server added -> %d  %d\r\n",
-						 netdev->dns_ipv4_1,
-						 dnsentry->address);
-			return 0;
-		case 2:
-			netdev->dns_ipv4_2 = dnsentry->address;
-			UARTDebugOut("[aurora]: DNS Server 2 added -> %d \r\n", netdev->dns_ipv4_2);
-			return 0;
-		case 3:
-			netdev->dns_ipv4_3 = dnsentry->address;
-			UARTDebugOut("DNS Server 3 added -> %d \r\n", netdev->dns_ipv4_3);
-			return 0;
-		default:
-			UARTDebugOut("[aurora]: failed to add dns entry to index -> %d \r\n", dnsentry->index);
-			break;
+		/* Always update the global table so resolvers need not bind a NIC. */
+		if (dnsentry->index >= 1 && dnsentry->index <= AU_DNS_MAX4)
+			AuDnsSetServer4(dnsentry->index, dnsentry->address);
+		else
+			AuDnsAddServer4(dnsentry->address);
+
+		sock = (AuSocket*)file->device;
+		nic = sock ? (AuVFSNode*)sock->binedDev : NULL;
+		netdev = (nic && nic->device) ? (AuNetworkDevice*)nic->device : NULL;
+		if (netdev) {
+			switch (dnsentry->index) {
+			case 1:
+				netdev->dns_ipv4_1 = dnsentry->address;
+				break;
+			case 2:
+				netdev->dns_ipv4_2 = dnsentry->address;
+				break;
+			case 3:
+				netdev->dns_ipv4_3 = dnsentry->address;
+				break;
+			default:
+				break;
+			}
 		}
+		UARTDebugOut("[aurora]: DNS server idx %d -> %u (global)\r\n",
+					 dnsentry->index,
+					 dnsentry->address);
+		return 0;
 	}
 	case SOCK_GET_DNS_SERVER: {
 		AuDNSEntry* dnsentry = (AuDNSEntry*)arg;
-		UARTDebugOut("[aurora]: Getting dns entry of index -> %d \r\n", dnsentry->index);
+		AuSocket* sock;
+		AuVFSNode* nic;
+		AuNetworkDevice* netdev;
+		uint32_t addr = 0;
 		if (!dnsentry)
 			return 1;
-		AuSocket* sock = (AuSocket*)file->device;
-		if (!sock)
-			return 1;
-		AuVFSNode* nic = (AuVFSNode*)sock->binedDev;
-		if (!nic)
-			return 1;
-		AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
-		UARTDebugOut("[aurora] : netdev %d \r\n", netdev->dns_ipv4_1);
-		if (!netdev)
-			return 1;
-		switch (dnsentry->index) {
-		case 1:
-			dnsentry->address = netdev->dns_ipv4_1;
+		UARTDebugOut("[aurora]: Getting dns entry of index -> %d \r\n", dnsentry->index);
+		if (AuDnsGetServer4(dnsentry->index, &addr) == 0 && addr != 0) {
+			dnsentry->address = addr;
 			UARTDebugOut("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
 			return 0;
-		case 2:
-			dnsentry->address = netdev->dns_ipv4_2;
-			return netdev->dns_ipv4_2;
-		case 3:
-			dnsentry->address = netdev->dns_ipv4_3;
-			return netdev->dns_ipv4_3;
-		default:
-			UARTDebugOut("[aurora]: failed to get dns entry to index -> %d \r\n", dnsentry->index);
-			break;
 		}
+		/* Fall back to bound NIC slots if global empty at this index. */
+		sock = (AuSocket*)file->device;
+		nic = sock ? (AuVFSNode*)sock->binedDev : NULL;
+		netdev = (nic && nic->device) ? (AuNetworkDevice*)nic->device : NULL;
+		if (!netdev) {
+			nic = AuGetNetworkAdapter("virtio-net");
+			if (!nic)
+				nic = AuGetNetworkAdapter("e1000");
+			netdev = nic ? (AuNetworkDevice*)nic->device : NULL;
+		}
+		if (netdev) {
+			switch (dnsentry->index) {
+			case 1:
+				addr = netdev->dns_ipv4_1;
+				break;
+			case 2:
+				addr = netdev->dns_ipv4_2;
+				break;
+			case 3:
+				addr = netdev->dns_ipv4_3;
+				break;
+			default:
+				break;
+			}
+		}
+		/*
+		 * No fabricated default here: the stub resolver owns the fallback
+		 * (1.1.1.1) so dig reports the server it actually uses.
+		 */
+		dnsentry->address = addr;
+		UARTDebugOut("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
+		return 0;
 	}
 	case SOCK_NF_APPEND: {
+		AuNfRule rule;
+		int rc;
 		if (!arg)
 			return 1;
-		return AuNetfilterAppend((const AuNfRule*)arg) == 0 ? 0 : 1;
+		memcpy(&rule, arg, sizeof(rule));
+		rule.in_dev[AU_NF_IFNAMSIZ - 1] = '\0';
+		rule.out_dev[AU_NF_IFNAMSIZ - 1] = '\0';
+		rc = AuNetfilterAppend(&rule);
+		UARTDebugOut("[aurora]: nf append hook=%d proto=%d dport=%d target=%d in=%s rc=%d count=%d\r\n",
+					 rule.hook, rule.proto, rule.dport, rule.target, rule.in_dev, rc,
+					 AuNetfilterGetNum());
+		return rc == 0 ? 0 : 1;
 	}
 	case SOCK_NF_DELETE: {
+		int index;
 		if (!arg)
 			return 1;
-		return AuNetfilterDelete(*(int*)arg) == 0 ? 0 : 1;
+		memcpy(&index, arg, sizeof(index));
+		return AuNetfilterDelete(index) == 0 ? 0 : 1;
 	}
 	case SOCK_NF_FLUSH:
 		return AuNetfilterFlush();
 	case SOCK_NF_GETNUM:
 		return AuNetfilterGetNum();
 	case SOCK_NF_LIST: {
-		AuNfRuleInfo* info = (AuNfRuleInfo*)arg;
-		if (!info || !info->rule)
+		AuNfRuleInfo uinfo;
+		AuNfRule krule;
+		if (!arg)
 			return 1;
-		return AuNetfilterGetEntry(info->index, info->rule) == 0 ? 0 : 1;
+		memcpy(&uinfo, arg, sizeof(uinfo));
+		if (!uinfo.rule)
+			return 1;
+		if (AuNetfilterGetEntry(uinfo.index, &krule) != 0)
+			return 1;
+		memcpy(uinfo.rule, &krule, sizeof(krule));
+		return 0;
 	}
 	}
 	return 1;
