@@ -252,7 +252,7 @@ int AuTimerCalculateAlarm(AA64Thread* thr, uint64_t seconds) {
 }
 
 static inline uint64_t _timeval_to_us(const timeval_t* tv) {
-	return (uint64_t)tv->tv_sec * 1000000ULL;
+	return (uint64_t)tv->tv_sec * 1000000ULL + (uint64_t)tv->tv_usec;
 }
 
 static inline uint64_t _us_to_timeval(uint64_t us, timeval_t* tv) {

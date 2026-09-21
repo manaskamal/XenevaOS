@@ -34,8 +34,12 @@
 extern "C" {
 #endif
 
-/* va list parameter list */
+/* va list parameter list.
+ * On AArch64 va_list is the compiler builtin (see below); the flat
+ * pointer version only applies to the legacy x86/x64 path. */
+#if !defined(ARCH_ARM64) && !defined(__aarch64__)
 typedef unsigned char* va_list;
+#endif
 
 /* width of stack == width of int */
 #define STACKITEM int64_t
@@ -53,12 +57,23 @@ typedef unsigned char* va_list;
 #define va_end(AP)
 
 #define va_arg(AP, TYPE) (AP += VA_SIZE(TYPE), *((TYPE*)(AP - VA_SIZE(TYPE))))
-#elif ARCH_ARM64
-#define va_start(ap, last) ((ap) = (va_list)(&(last)) + 8)
+#elif defined(ARCH_ARM64) || defined(__aarch64__)
+/* AArch64: use the compiler's native va_list/va_start/va_arg.
+ * The old hand-rolled "ap = &last + 8" pointer walk is wrong on AArch64:
+ * it only works when combined with the _store_stack_param register
+ * snapshot, which covers printf/sprintf/snprintf but NOT forwarded
+ * va_lists (vfprintf/vprintf/vsnprintf/vsprintf, I_Error, M_snprintf).
+ * The builtins are correct for the target ABI (AAPCS64 or WoA). */
 
-#define va_arg(ap, T) (*(T*)((ap) += 8, (ap) - 8))
+typedef __builtin_va_list va_list;
 
-#define va_end(ap) ((ap) = (va_list)0)
+#define va_start(ap, last) __builtin_va_start(ap, last)
+
+#define va_arg(ap, T) __builtin_va_arg(ap, T)
+
+#define va_end(ap) __builtin_va_end(ap)
+
+#define va_copy(dst, src) __builtin_va_copy(dst, src)
 #endif
 
 #ifdef __cplusplus

@@ -85,6 +85,7 @@ typedef struct _ChSharedWin_ {
 	bool hide;
 	double alphaValue;
 	bool windowReady;
+	bool zoomed;
 } ChSharedWinInfo;
 
 static inline bool ChSharedFlagLoad(const bool* flag) {

@@ -53,9 +53,9 @@ ChWindow* mainWin;
 ChFont* dispFont;
 CalculatorDisplay* mainDisp;
 
-#define CALCULATOR_BACK_COLOR 0xBF353535
-#define CALC_DISPLAY_DARK	  0xBF6598DE
-#define CALC_DISPLAY_LIGHT	  0xBF8BADDC
+#define CALCULATOR_BACK_COLOR 0xFF353535
+#define CALC_DISPLAY_DARK	  0xFF6598DE
+#define CALC_DISPLAY_LIGHT	  0xFF8BADDC
 
 #define MAX_DIGIT 1024
 

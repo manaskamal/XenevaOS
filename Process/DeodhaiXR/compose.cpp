@@ -32,6 +32,9 @@
 #include "compose.h"
 #include "_fastcpy.h"
 #include <color.h>
+#if defined(ARCH_ARM64)
+#include <arm_neon.h>
+#endif
 
 extern Window* _get_always_on_top();
 
@@ -241,6 +244,110 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 		}
 		info->rect_count = 0;
 		WinSharedFlagStore(&info->dirty, false);
+	}
+}
+
+/**
+ * @brief compose_window_zoomed -- stretched-fill upscale of a window
+ * buffer into the compose canvas (the back surface the GPU flush
+ * presents from), honoring WinSharedInfo->zoomed. Fullscreen dirty is
+ * published by the caller so transfer moves the whole frame.
+ * The whole buffer (titlebar chrome included) stretches: the bar stays
+ * visible and its buttons stay clickable via remapped input.
+ * Nearest-neighbor. Fixed-point stepping (no float), 4-wide opaque
+ * fast path; only translucent pixels pay for a blend call.
+ */
+void compose_window_zoomed(ChCanvas* canvas, Window* win, WinSharedInfo* info) {
+	int sw = (int)canvas->canvasWidth;
+	int sh = (int)canvas->canvasHeight;
+	int ww = info->width;
+	int wh = info->height;
+	uint32_t* dstBase;
+	uint32_t* srcBase;
+	uint32_t xstep;
+	uint32_t ystep;
+	uint32_t ypos;
+	int dy;
+
+	if (sw <= 0 || sh <= 0 || ww <= 0 || wh <= 0)
+		return;
+	dstBase = canvas->buffer;
+	srcBase = (uint32_t*)win->backBuffer;
+	if (!dstBase || !srcBase)
+		return;
+
+	xstep = (uint32_t)(((uint64_t)(uint32_t)ww << 16) / (uint32_t)sw);
+	ystep = (uint32_t)(((uint64_t)(uint32_t)wh << 16) / (uint32_t)sh);
+	ypos = 0;
+
+	for (dy = 0; dy < sh; dy++) {
+		int sy = (int)(ypos >> 16);
+		uint32_t* srow;
+		uint32_t* drow;
+		uint32_t xpos;
+		int dx;
+		ypos += ystep;
+		if (sy < 0)
+			sy = 0;
+		else if (sy >= wh)
+			sy = wh - 1;
+		srow = srcBase + (size_t)sy * (size_t)ww;
+		drow = dstBase + (size_t)dy * (size_t)sw;
+		xpos = 0;
+		dx = 0;
+#if defined(ARCH_ARM64)
+		for (; dx <= sw - 4; dx += 4) {
+			int sx0 = (int)(xpos >> 16);
+			int sx1, sx2, sx3;
+			uint32_t tmp[4];
+			uint32x4_t src4;
+			uint32x4_t alpha;
+			uint64x2_t opaque_pairs;
+			xpos += xstep;
+			sx1 = (int)(xpos >> 16);
+			xpos += xstep;
+			sx2 = (int)(xpos >> 16);
+			xpos += xstep;
+			sx3 = (int)(xpos >> 16);
+			xpos += xstep;
+			tmp[0] = srow[sx0];
+			tmp[1] = srow[sx1];
+			tmp[2] = srow[sx2];
+			tmp[3] = srow[sx3];
+			src4 = vld1q_u32(tmp);
+			alpha = vshrq_n_u32(src4, 24);
+			opaque_pairs =
+				vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(255)));
+			if (vgetq_lane_u64(opaque_pairs, 0) == UINT64_MAX &&
+				vgetq_lane_u64(opaque_pairs, 1) == UINT64_MAX) {
+				vst1q_u32(drow + dx, src4);
+				continue;
+			}
+			{
+				uint64x2_t transparent_pairs =
+					vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(0)));
+				if (vgetq_lane_u64(transparent_pairs, 0) == UINT64_MAX &&
+					vgetq_lane_u64(transparent_pairs, 1) == UINT64_MAX)
+					continue;
+			}
+			for (int i = 0; i < 4; i++)
+				drow[dx + i] = ChColorAlphaBlend2(drow[dx + i], tmp[i]);
+		}
+#endif
+		for (; dx < sw; dx++) {
+			int sx = (int)(xpos >> 16);
+			uint32_t f;
+			xpos += xstep;
+			if (sx < 0)
+				sx = 0;
+			else if (sx >= ww)
+				sx = ww - 1;
+			f = srow[sx];
+			if ((f & 0xFF000000) == 0xFF000000)
+				drow[dx] = f;
+			else
+				drow[dx] = ChColorAlphaBlend2(drow[dx], f);
+		}
 	}
 }
 
