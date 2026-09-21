@@ -33,6 +33,10 @@
 #define DG_MAXCHAN 64
 #define DG_SRC_RATE_DEFAULT 11025
 
+// From doomgeneric_xe.cpp (doomgeneric.h can't be included here: its
+// DG_Init declaration collides with this file's sound-module DG_Init).
+extern uint32_t DG_GetTicksMs(void);
+
 // Parsed lump, attached to sfxinfo_t::driver_data by CacheSounds
 // (lazily on first StartSound as well).
 typedef struct {
@@ -201,6 +205,14 @@ static void DG_MixerThread(void) {
 
     while (dg_mixerRun) {
         size_t wr;
+        // Pace to the audio clock: one 1024-frame chunk at 48kHz is
+        // ~21.3ms of audio. Measure the mix+write cost and sleep only the
+        // remainder of a 20ms budget (slightly ahead of realtime; the 8KB
+        // device buffer absorbs jitter). A fixed sleep overshoots because
+        // it ignores the XFER time, drifting behind realtime -> gaps.
+        // Without any sleep the mixer hogs the (single) vCPU and starves
+        // the game thread.
+        uint32_t t0 = DG_GetTicksMs();
         DG_MixChunk();
         wr = _KeWriteFile(fd, dg_mixbuf, DG_MIX_CHUNK);
         if ((long)wr < 0) {
@@ -212,6 +224,9 @@ static void DG_MixerThread(void) {
                 wroteOnce = 1;
                 _KePrint("[dgsnd] mixer: first write ok\n");
             }
+            uint32_t dt = DG_GetTicksMs() - t0;
+            if (dt < 20)
+                _KeProcessSleep(20 - dt);
         }
     }
 

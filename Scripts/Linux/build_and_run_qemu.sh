@@ -900,12 +900,12 @@ QEMU_ARGS=(
     -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
-    # ICH9 HDA (PCI class 04,03) matches audrv.cnf's [04,03]/hda.dll mapping
-    # and the ihda driver's AuPCIEScanClass(0x04, 0x03) probe. pa backend
-    # talks to the host PulseAudio/PipeWire server. --axiss
+    # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
+    # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
+    # and the virtsnd driver's AuPCIEScanClass probe. pa backend talks
+    # to the host PulseAudio/PipeWire server. --axiss
     -audiodev pa,id=snd0
-    -device intel-hda
-    -device hda-output,audiodev=snd0
+    -device virtio-sound-pci,audiodev=snd0,disable-legacy=on
     -serial stdio
 )
 
