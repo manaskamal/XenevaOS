@@ -53,11 +53,17 @@ int AuPowerDown() {
 			return 1;
 	}
 
-	if (proc->creds.uid != 0)
+	if (proc->creds.uid != 0) {
+		UARTDebugOut("[pwrdbg]: denied uid=%d\r\n", (int)proc->creds.uid);
 		return 1;
+	}
 
-	if (proc->creds.gid != 0)
+	if (proc->creds.gid != 0) {
+		UARTDebugOut("[pwrdbg]: denied gid=%d\r\n", (int)proc->creds.gid);
 		return 1;
+	}
+
+	UARTDebugOut("[pwrdbg]: flushing disks\r\n");
 
 	/* flush every registered disk's write cache before tearing anything
 	 * down. still a no-op per disk til some storage driver actually
@@ -72,18 +78,22 @@ int AuPowerDown() {
 	// call system_down for xeneva for freeing up resources
 	// call all drivers to turn off itself before powering off
 	AuDrvUnloadAll();
+	UARTDebugOut("[pwrdbg]: drivers unloaded\r\n");
 
 	/** suspend timers */
 	suspendTimer();
+	UARTDebugOut("[pwrdbg]: timers suspended\r\n");
 
 	/* de-initialize the interrupt controller*/
 	GICDisable();
+	UARTDebugOut("[pwrdbg]: GIC off, cleaning caches\r\n");
 
 	/* dirty cache lines were getting lost across power-off/reset
 	 * with this commented out --axiss */
 	aa64_clean_invalidate_dcache();
 	tlb_flush_vmalle1is(); //need better naming schems boss --axiss
 
+	UARTDebugOut("[pwrdbg]: calling PSCI off\r\n");
 	AuAA64BoardPowerDown();
 
 	//false here
