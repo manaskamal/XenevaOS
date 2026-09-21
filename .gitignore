@@ -66,3 +66,5 @@ session-*.md
 
 # Downloaded Android SDK tools; use Tools/quest-adb.sh to install locally
 Tools/platform-tools/
+*.dll
+*.map

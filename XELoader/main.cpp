@@ -132,7 +132,7 @@ int XELdrLoadObject(XELoaderObject *obj){
 			}
 
 			if (secthdr[i].VirtualSize > secthdr[i].SizeOfRawData) {
-				//memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
+				memset(raw_offset<void*>(block, secthdr[i].SizeOfRawData), 0, secthdr[i].VirtualSize - secthdr[i].SizeOfRawData);
 			}
 		}
 	}
@@ -140,7 +140,6 @@ int XELdrLoadObject(XELoaderObject *obj){
 	uint8_t* aligned_buf = (uint8_t*)first_ptr;
 
 	XELdrRelocatePE(aligned_buf, nt, diff);
-
 	XELdrCreatePEObjects(first_ptr);
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
@@ -243,9 +242,7 @@ int XELdrStartProc(char* filename, XELoaderObject *obj) {
 	}
 	uint8_t* aligned_buff = (uint8_t*)first_ptr;
 	XELdrRelocatePE(aligned_buff, nt, diff);
-
 	XELdrCreatePEObjects(aligned_buff);
-
 	obj->load_addr = _image_load_base_;
 	obj->loaded = true;
 	obj->entry_addr = _image_load_base_ + nt->OptionalHeader.AddressOfEntryPoint;
@@ -291,12 +288,10 @@ extern "C" void main(int argc, char* argv[]) {
 	/* load the main object */
 	char* filename = argv[0];
 
-	
+
 	XELoaderObject* mainobj = XELdrCreateObj(filename);
 	
-
 	XELdrStartProc(filename, mainobj);
-
 
 	XELdrLoadAllObject();
 	

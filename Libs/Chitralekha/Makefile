@@ -121,7 +121,7 @@ $(DEFFILE): $(OBJS)
 $(DLLTARGET): $(OBJS) $(DEFFILE)
 	@echo "Linking $(DLLTARGET)..."
 	$(CXX) $(CXXFLAGS) -fuse-ld=lld-link -nostdlib -shared -o $(DLLTARGET) $(OBJS) $(LIBS) \
-	-Wl,/DEF:$(DEFFILE) -Wl,/IMPLIB:$(IMPLIB) -Wl,//NOENTRY -Wl,//NODEFAULTLIB \
+	-Wl,/DEF:$(DEFFILE) -Wl,/IMPLIB:$(IMPLIB) -Wl,//NOENTRY -Wl,//NODEFAULTLIB -Wl,-filealign:0x1000 \
 	-Wl,//BASE:0x0000000400000000 
 
 $(TARGET): $(OBJS)

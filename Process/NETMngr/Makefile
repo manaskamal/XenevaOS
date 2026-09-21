@@ -30,7 +30,7 @@ ifeq ($(TOOLCHAIN), llvm)
                $(INCLUDES)
     # Entry must match the linked crt (Init/crt0arm64.s provides _aumain;
     # _xemain lives only in XECrt for dynamic builds). --axiss
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native, -Wl,-filealign:0x1000
 endif
 
 .PHONY: all clean llvm dynamic
