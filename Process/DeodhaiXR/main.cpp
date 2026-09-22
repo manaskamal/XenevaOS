@@ -883,6 +883,7 @@ void DeodhaiWindowHide(Window* win) {
 		WinSharedFlagStore(&info->updateEntireWindow, true);
 		WinSharedFlagStore(&info->dirty, true);
 		focusedWin = win;
+		DeodhaiWindowMakeTop(win);
 		PostEvent shown;
 		memset(&shown, 0, sizeof(PostEvent));
 		shown.type = DEODHAI_REPLY_FOCUS_CHANGED;

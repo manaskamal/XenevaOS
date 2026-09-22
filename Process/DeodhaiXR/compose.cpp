@@ -179,7 +179,6 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 			r1.y = info->y + r_y;
 			r1.w = r_w;
 			r1.h = r_h;
-			bool overlap = false;
 			Rect clipRect[100];
 			int clipCount = 0;
 			Window* clipWin = NULL;
@@ -208,26 +207,23 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 					AddDirtyClip(dst_x, dst_y, w, h);
 				}
 			} else {
+				clipRect[0] = r1;
+				clipCount = 1;
+
 				if (focusedWin != win) {
 					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 						if (clipWin == win)
+							continue;
+						if (clipInfo->hide)
 							continue;
 						r2.x = clipInfo->x;
 						r2.y = clipInfo->y;
 						r2.w = clipInfo->width;
 						r2.h = clipInfo->height;
 
-						if (ClipCheckIntersect(&r1, &r2)) {
-							overlap = true;
-							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
-						}
+						ClipSubtractRectList(clipRect, &clipCount, &r2);
 					}
-				}
-
-				if (clipCount == 0 && !overlap) {
-					compose_window_rect(
-						canvas, win, info, r1.x, r1.y, r_w, r_h, r_x, r_y, clip_bottom);
 				}
 
 				for (int l = 0; l < clipCount; l++) {
@@ -426,7 +422,8 @@ void _compose_entire_window(ChCanvas* canvas,
 			r1.h = height + SHADOW_SIZE * 2;
 
 			Rect clip[100];
-			int clipCount = 0;
+			clip[0] = r1;
+			int clipCount = 1;
 			Window* clipWin = NULL;
 			WinSharedInfo* clipInfo = NULL;
 
@@ -435,25 +432,20 @@ void _compose_entire_window(ChCanvas* canvas,
 
 				if (clipWin == win)
 					continue;
+				if (clipInfo->hide)
+					continue;
 
 				r2.x = clipInfo->x;
 				r2.y = clipInfo->y;
 				r2.w = clipInfo->width;
 				r2.h = clipInfo->height;
 
-				if (ClipCheckIntersect(&r1, &r2)) {
-					ClipCalculateRect(&r1, &r2, clip, &clipCount);
-				}
+				ClipSubtractRectList(clip, &clipCount, &r2);
 			}
 
 			(void)focusedWin;
 			(void)_shadow_update;
 			(void)_window_moving_;
-
-			if (clipCount == 0) {
-				compose_window_rect(
-					canvas, win, info, winx, winy, width, height, 0, 0, clip_bottom);
-			}
 
 			for (int k = 0; k < clipCount; k++) {
 				int k_x = clip[k].x;
@@ -502,7 +494,6 @@ void _compose_always_on_top_dirty(
 			r1.y = info->y + r_y;
 			r1.w = r_w;
 			r1.h = r_h;
-			bool overlap = false;
 			Rect clipRect[100];
 			int clipCount = 0;
 			Window* clipWin = NULL;
@@ -533,26 +524,23 @@ void _compose_always_on_top_dirty(
 					AddDirtyClip(dst_x, dst_y, w, h);
 				}
 			} else {
+				clipRect[0] = r1;
+				clipCount = 1;
+
 				if (focusedWin != win) {
 					for (clipWin = win; clipWin != NULL; clipWin = clipWin->next) {
 						clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
 						if (clipWin == win)
+							continue;
+						if (clipInfo->hide)
 							continue;
 						r2.x = clipInfo->x;
 						r2.y = clipInfo->y;
 						r2.w = clipInfo->width;
 						r2.h = clipInfo->height;
 
-						if (ClipCheckIntersect(&r1, &r2)) {
-							overlap = true;
-							ClipCalculateRect(&r1, &r2, clipRect, &clipCount);
-						}
+						ClipSubtractRectList(clipRect, &clipCount, &r2);
 					}
-				}
-
-				if (clipCount == 0 && !overlap) {
-					compose_window_rect(
-						canvas, win, info, r1.x, r1.y, r_w, r_h, r_x, r_y, clip_bottom);
 				}
 
 				for (int l = 0; l < clipCount; l++) {
