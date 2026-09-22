@@ -52,9 +52,11 @@
 #include "alpha.h"
 #include "nanojpg.h"
 #include <arm_neon.h>
+#include <keycode.h>
 #include "compose.h"
 #include "unikernel.h"
 #include "xr_present.h"
+#include "keybind.h"
 #include <sys/_ketime.h>
 
 static uint32_t screen_w;
@@ -1101,6 +1103,9 @@ int main(int argc, char* argv[]) {
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenCommit();
 
+	/** intialize key data structure */
+	ChitralekhaKeyInitialise();
+
 	_KePrint("Canvas updated \r\n");
 
 	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
@@ -1151,6 +1156,7 @@ int main(int argc, char* argv[]) {
 
 	BackDirtyInitialise();
 	InitialiseDirtyClipList();
+	_DeodhaiKeyBindInitialize();
 
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KePrint("Postbox fd created : %d \n", postbox_fd);
@@ -1220,8 +1226,26 @@ int main(int argc, char* argv[]) {
 				 _KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0; i++) {
 				if (queued.type == AU_INPUT_MOUSE)
 					DeodhaiHandleMouseInput(canv, &queued);
-				else if (queued.type == AU_INPUT_KEYBOARD)
-					DeodhaiBroadcastKey(queued.code);
+				else if (queued.type == AU_INPUT_KEYBOARD){
+					ChitralekhaProcessKey(queued.code);
+			        char key = ChitralekhaGetKeyPress(queued.code);
+                    bool _key_brodcast_to_focus_win = true;
+			        if (ChitralekhaKeyGetCTRL()){
+				       int spcode = _DeodhaiGetSpecialCode(key, 1);
+					   /** Special codes are beyond 400, so do check */
+					   if (spcode >= 400 ){
+						_key_brodcast_to_focus_win = false;
+					    PostEvent spe;
+					    memset(&spe, 0, sizeof(PostEvent));
+					    spe.type = DEODHAI_REPLY_KEY_EVENT;
+					    spe.dword = spcode;
+					    DeodhaiBroadcastMessage(&spe, NULL);
+					   }
+				    }
+					if (_key_brodcast_to_focus_win)
+					   DeodhaiBroadcastKey(queued.code);
+					memset(&queued, 0, sizeof(AuInputMessage));
+			    }
 			}
 		} else {
 			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
@@ -1239,6 +1263,8 @@ int main(int argc, char* argv[]) {
 		fpsComposeMsAccum += (_KeGetCurrentMS() - composeStart);
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
+			_KePrint("Key input is ongoing \r\n");
+			
 			DeodhaiBroadcastKey(kybrd_input.code);
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}

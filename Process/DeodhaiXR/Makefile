@@ -29,7 +29,7 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include -I../../Libs/OpenXR
 
 CPP_SRCS = alpha.cpp animation.cpp backdirty.cpp clip.cpp compose.cpp cursor.cpp \
-           dirty.cpp main.cpp rect.cpp surface.cpp window.cpp
+           dirty.cpp main.cpp rect.cpp surface.cpp window.cpp keybind.cpp
 ifeq ($(OPENXR),1)
 CPP_SRCS += xr_qemu.cpp xr_present.cpp
 endif

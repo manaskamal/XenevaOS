@@ -69,6 +69,16 @@
 #define DEODHAI_MOUSE_MSG_SCROLL_UP	  0x05
 #define DEODHAI_MOUSE_MSG_SCROLL_DOWN 0x06
 
+/** SPECIAL MESSAGE CODE -- are responded by
+ *  broadcast listener
+ */
+#define DEODHAI_FORCE_OPEN_LAUNCHER  400
+#define DEODHAI_FORCE_OPEN_SETTINGS  401
+#define DEODHAI_FORCE_OPEN_SEARCH    402
+#define DEODHAI_FORCE_OPEN_CALENDER  403
+#define DEODHAI_FORCE_OPEN_TERMINAL  404
+#define DEODHAI_FORCE_OPEN_NOTIFICATION 405
+
 typedef struct _ChApp_ {
 	int postboxfd;
 	int sharedWinkey;

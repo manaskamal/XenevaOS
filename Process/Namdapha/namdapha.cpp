@@ -249,6 +249,10 @@ void NamdaphaHandleMessage(PostEvent* e) {
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT: {
 		int code = e->dword;
+		if (code == DEODHAI_FORCE_OPEN_LAUNCHER){
+			_KePrint("Namdapha: force launcher open received \r\n");
+			NamdaphaHideWindow(gobutton);
+		}
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
