@@ -244,3 +244,22 @@ void ClipGetBehindRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* r_count)
 	list[count].h = y2 - y1;
 	*r_count = count + 1;
 }
+
+void ClipSubtractRectList(Rect* inputList, int* inputCount, Rect* cut_rect) {
+	Rect outputList[100];
+	int outputCount = 0;
+	
+	for (int i = 0; i < *inputCount; i++) {
+		if (ClipCheckIntersect(&inputList[i], cut_rect)) {
+			Rect sub = inputList[i];
+			ClipCalculateRect(&sub, cut_rect, outputList, &outputCount);
+		} else {
+			if (outputCount < 100) {
+				outputList[outputCount++] = inputList[i];
+			}
+		}
+	}
+	
+	memcpy(inputList, outputList, outputCount * sizeof(Rect));
+	*inputCount = outputCount;
+}
