@@ -60,6 +60,12 @@
 #define WINDOW_FLAG_ANIMATION_FADE_IN  (1 << 9)
 #define WINDOW_FLAG_ANIMATION_FADE_OUT (1 << 10)
 #define WINDOW_FLAG_POPUP			   (1 << 11)
+/* Opt in to the compositor's glassmorphic pipeline. The blur buffers are
+ * allocated by the compositor when the window is created, so this flag MUST
+ * be passed to ChCreateWindow. The compositor then blends every translucent
+ * pixel against the blurred desktop backdrop (DeodhaiXR WINDOW_FLAG_GLASS).
+ * Pair it with ChWindowSetGlassMorphism() (chrome) and translucent fills in
+ * the client paint code (content). */
 #define WINDOW_FLAG_GLASS			   (1 << 12)
 
 #define CHITRALEKHA_WIDGET_TYPE_CONTROL (1 << 1)
@@ -342,6 +348,19 @@ XE_EXTERN {
 	* @param flags -- flags to set
 	*/
 	XE_LIB void ChWindowSetFlags(ChWindow * win, uint16_t flags);
+
+	/*
+	* ChWindowSetGlassMorphism -- apply the glassmorphic look to a window
+	* @param win -- Pointer to the window
+	* @param alpha -- opacity of the glass pane, 0 (invisible) .. 255 (opaque)
+	*
+	* Toolkit-level opt-in for the deodhai glass pipeline. The window must be
+	* created with WINDOW_FLAG_GLASS (the compositor allocates its backdrop
+	* blur buffers at creation time); this call then paints a translucent pane
+	* over the whole surface so the blurred desktop shows through, and turns the
+	* uniform window fade off so glass pixels are not blended twice.
+	*/
+	XE_LIB void ChWindowSetGlassMorphism(ChWindow * win, uint8_t alpha);
 
 	/*
      * ChWindowMove -- moves target window to a new location

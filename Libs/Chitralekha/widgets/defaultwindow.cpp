@@ -45,6 +45,14 @@
 #define DEFAULT_TITLEBAR_FOCUS_DARK	 0xFF454F58
 #endif
 
+/* When a window opts into the glass pipeline (WINDOW_FLAG_GLASS) the default
+ * chrome is drawn with translucent fills too, so the compositor's blurred
+ * desktop backdrop shows through the titlebar and edges -- not just the
+ * client area the app paints. --axiss */
+#define GLASS_TITLEBAR_ALPHA 0xC8
+#define GLASS_CHROME_EDGE	 0x5A3E3E3E
+#define GLASS_ACTIVITY_EDGE	 0x4D808080
+
 /*
  * ChWindowPaintCloseButton -- close button painter
  */
@@ -121,6 +129,11 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 		dark_color = DEFAULT_TITLEBAR_FOCUS_DARK;
 	}
 
+	if (win->flags & WINDOW_FLAG_GLASS) {
+		light_color = SET_ALPHA(light_color, GLASS_TITLEBAR_ALPHA);
+		dark_color = SET_ALPHA(dark_color, GLASS_TITLEBAR_ALPHA);
+	}
+
 	ChDrawRect(win->canv, 0, 0, win->info->width, 26, light_color);
 	ChFont* font = win->app->baseFont;
 	ChFontSetSize(win->app->baseFont, 10);
@@ -128,7 +141,12 @@ void ChWindowPaintTitlebar(ChWindow* win) {
 	int font_height = ChFontGetHeight(font, win->title);
 	ChFontDrawText(
 		win->canv, font, win->title, win->info->width / 2 - font_width / 2, 26 / 2 + 4, 16, WHITE);
-	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, 26, LIGHTBLACK);
+	ChDrawRectUnfilled(win->canv,
+					   0,
+					   0,
+					   win->info->width,
+					   26,
+					   (win->flags & WINDOW_FLAG_GLASS) ? GLASS_CHROME_EDGE : LIGHTBLACK);
 
 	for (int i = 0; i < win->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* global = (ChWinGlobalControl*)list_get_at(win->GlobalControls, i);
@@ -148,7 +166,12 @@ void ChWindowPaintMainActivity(ChWindow* win) {
 		if (wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
 	}
-	ChDrawRectUnfilled(win->canv, 0, 0, win->info->width, win->info->height, GRAY);
+	ChDrawRectUnfilled(win->canv,
+					   0,
+					   0,
+					   win->info->width,
+					   win->info->height,
+					   (win->flags & WINDOW_FLAG_GLASS) ? GLASS_ACTIVITY_EDGE : GRAY);
 }
 
 void ChDefaultWinPaint(ChWindow* win) {

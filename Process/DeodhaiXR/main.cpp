@@ -1071,7 +1071,7 @@ int main(int argc, char* argv[]) {
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	{
-		char* wall = "/XE1_2.jpg";
+		const char* wall = "/XE1_2.jpg";
 		if (screen_w == 1920 && screen_h == 1080)
 			wall = "/XEArch.jpg";
 		else if (screen_w == 480 && screen_h == 320)
@@ -1103,7 +1103,8 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("Canvas updated \r\n");
 
-	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	char gpu_path[] = "/dev/virtiogpu";
+	gpu_fd = _KeOpenFile(gpu_path, FILE_OPEN_READ_ONLY);
 
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;
