@@ -77,8 +77,8 @@ ChSidebarSection* ChSidebarAddSection(ChSidebar* sb, const char* title) {
 	return sec;
 }
 
-#define BASELINE_RATIO_NUM 4
-#define BASELINE_RATIO_DEN 5
+#define BASELINE_RATIO_NUM 7
+#define BASELINE_RATIO_DEN 10
 
 static int _sidebar_baseline_y(int rowTop, int rowHeight, int fontSz) {
 	/*int ascent = (fontSz * BASELINE_RATIO_NUM) / BASELINE_RATIO_DEN;
@@ -351,9 +351,11 @@ void ChSidebarMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butto
 			int prevSelS = -1, prevSelI = -1;
 			for (int s = 0; s < sb->sectionCount; s++) {
 				for (int i = 0; i < sb->sections[s].itemCount; i++) {
-					sb->sections[s].items[i].selected = 0;
-					prevSelS = s;
-					prevSelI = i;
+					if (sb->sections[s].items[i].selected) {
+						prevSelS = s;
+						prevSelI = i;
+						sb->sections[s].items[i].selected = 0;
+					}
 				}
 			}
 
