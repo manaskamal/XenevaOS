@@ -37,3 +37,4 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**Application Development**](Development/ApplicationDevelopment.md) — Writing user-space applications (GUI, Terminal) for XenevaOS.
 - [**Driver Development**](Development/DriverDevelopment.md) — Developing dynamic drivers and interacting with kernel APIs.
 - [**Project Architecture(MSVC)**](Development/ProjectArchitecture(MSVC).md)- Discusses various artifacts and project inter dependencies.
+- [**DeodhaiXR Guide**](Development/DeodhaiXR-Guide.md) — Complete study guide for the DeodhaiXR window compositor and XR shell: surfaces, the shared-memory atomic door, damage algebra, composition passes, the frame loop, and the three present paths.
