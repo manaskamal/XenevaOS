@@ -610,21 +610,22 @@ void ChFontDrawCharClipped(
 		y_v = limit->y;
 	}
 
-	/* Check width and height for limiting drawing */
-	if ((y_v + draw_height) > (limit->y + limit->h))
-		draw_height = (limit->y + limit->h) - peny;
+	int screen_draw_height = draw_height - buff_q_off;
+	if ((y_v + screen_draw_height) > (limit->y + limit->h))
+		screen_draw_height = (limit->y + limit->h) - y_v;
 
-	if (draw_height < 0)
-		draw_height = 0;
+	if (screen_draw_height < 0)
+		screen_draw_height = 0;
 
-	if ((x_v + draw_width) > (limit->x + limit->w))
-		draw_width = (limit->x + limit->w) - x_v;
+	int screen_draw_width = draw_width - buff_p_off;
+	if ((x_v + screen_draw_width) > (limit->x + limit->w))
+		screen_draw_width = (limit->x + limit->w) - x_v;
 
-	if (draw_width < 0)
-		draw_width = 0;
+	if (screen_draw_width < 0)
+		screen_draw_width = 0;
 
-	for (int j = y_v, q = buff_q_off; j < y_v + draw_height && q < draw_height; j++, q++) {
-		for (int i = x_v, p = buff_p_off; i < x_v + draw_width && p < draw_width; i++, p++) {
+	for (int j = y_v, q = buff_q_off; j < y_v + screen_draw_height && q < draw_height; j++, q++) {
+		for (int i = x_v, p = buff_p_off; i < x_v + screen_draw_width && p < draw_width; i++, p++) {
 			if (i < 0 || j < 0 || i >= canv->canvasWidth || j >= canv->canvasHeight)
 				continue;
 			if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0) {
@@ -893,21 +894,22 @@ int ChFontDrawTextClipped(
 			y_v = limit->y;
 		}
 
-		/* Check width and height for limiting drawing */
-		if ((y_v + draw_height) > (limit->y + limit->h))
-			draw_height = (limit->y + limit->h) - peny;
+		int screen_draw_height = draw_height - buff_q_off;
+		if ((y_v + screen_draw_height) > (limit->y + limit->h))
+			screen_draw_height = (limit->y + limit->h) - y_v;
 
-		if (draw_height < 0)
-			draw_height = 0;
+		if (screen_draw_height < 0)
+			screen_draw_height = 0;
 
-		if ((x_v + draw_width) > (limit->x + limit->w))
-			draw_width = (limit->x + limit->w) - x_v;
+		int screen_draw_width = draw_width - buff_p_off;
+		if ((x_v + screen_draw_width) > (limit->x + limit->w))
+			screen_draw_width = (limit->x + limit->w) - x_v;
 
-		if (draw_width < 0)
-			draw_width = 0;
+		if (screen_draw_width < 0)
+			screen_draw_width = 0;
 
-		for (int i = x_v, p = buff_p_off; i < x_v + draw_width && p < draw_width; i++, p++) {
-			for (int j = y_v, q = buff_q_off; j < y_v + draw_height && q < draw_height; j++, q++) {
+		for (int i = x_v, p = buff_p_off; i < x_v + screen_draw_width && p < draw_width; i++, p++) {
+			for (int j = y_v, q = buff_q_off; j < y_v + screen_draw_height && q < draw_height; j++, q++) {
 				if (font->face->glyph->bitmap.buffer[q * font->face->glyph->bitmap.width + p] > 0) {
 					double val =
 						font->face->glyph->bitmap
