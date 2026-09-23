@@ -68,6 +68,70 @@ uint32_t resvmask;
 size_t h_res, v_res;
 BOOL early_;
 bool bypass_autextout;
+/* Set once the compositor owns the display. The compositor's canvas aliases
+ * this same framebuffer, so further text output here would scribble over the
+ * live desktop. UART output never routes through here and is unaffected. */
+static bool display_owned;
+
+/* Present hook for the no-compositor case (see aucon.h). Skipped once the
+ * display token is claimed; from there the compositor owns presentation
+ * and must not fight a second submitter over the GPU command queue. */
+static AuConsolePresentFn present_hook;
+
+/* Dirty-row tracking for the mirror. Low-level painters (AuPutC/AuPutS)
+ * only mark rows; high-level entries (AuTextOut, AuConsoleWrite) suppress
+ * per-fragment submits and flush once, so a userspace write that paints
+ * char-by-char still costs exactly one transfer+flush. Rows are text rows
+ * (16 px each); conversion to pixels happens only here. --axiss */
+static int mirror_suppress;
+static int mirror_dirty_top;
+static int mirror_dirty_bot;
+static bool mirror_dirty_valid;
+
+static void AuConsoleMarkDirty(int y_top, int y_bot) {
+	if (y_bot < y_top) {
+		/* Cursor wrapped backwards: a scroll moved every row. */
+		mirror_dirty_top = 0;
+		mirror_dirty_bot = 0x7fffffff;
+		mirror_dirty_valid = true;
+		return;
+	}
+	if (!mirror_dirty_valid) {
+		mirror_dirty_top = y_top;
+		mirror_dirty_bot = y_bot;
+		mirror_dirty_valid = true;
+	} else {
+		if (y_top < mirror_dirty_top)
+			mirror_dirty_top = y_top;
+		if (y_bot > mirror_dirty_bot)
+			mirror_dirty_bot = y_bot;
+		if (mirror_dirty_bot == 0x7fffffff)
+			mirror_dirty_top = 0;
+	}
+}
+
+static void AuConsoleFlushMirror(void) {
+	int y_px, bot_px;
+	if (!mirror_dirty_valid)
+		return;
+	mirror_dirty_valid = false;
+	if (!present_hook || display_owned || !aucon)
+		return;
+	if (mirror_dirty_bot == 0x7fffffff) {
+		present_hook(aucon->buffer, aucon->pitch, 0, 0,
+			(int)aucon->width, (int)aucon->height);
+		return;
+	}
+	y_px = mirror_dirty_top * 16;
+	bot_px = (mirror_dirty_bot + 1) * 16;
+	if (y_px < 0)
+		y_px = 0;
+	if (bot_px > (int)aucon->height)
+		bot_px = aucon->height;
+	if (bot_px > y_px)
+		present_hook(aucon->buffer, aucon->pitch, 0, y_px,
+			(int)aucon->width, bot_px - y_px);
+}
 
 void (*_print_func)(const char* text, ...);
 
@@ -127,13 +191,13 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	case TIOSPGRP:
 		return 0;
 	case SCREEN_GETWIDTH: {
-		uint32_t width = aucon->width;
+		uint32_t width = aucon->desktop_width;
 		ioctl->uint_1 = width;
 		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
 		break;
 	}
 	case SCREEN_GETHEIGHT: {
-		uint32_t height = aucon->height;
+		uint32_t height = aucon->desktop_height;
 		ioctl->uint_1 = height;
 		break;
 	}
@@ -165,7 +229,11 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		}
 		uint64_t vmaddr = (uint64_t)AuGetFreePage(1, NULL);
 		uint64_t fbaddr = (uint64_t)__framebuffer;
-		for (int i = 0; i < aucon->size / PAGE_SIZE; i++) {
+		/* 800x600 (and any size not a multiple of 4096) used to omit the
+		 * last partial page. Init splash then died on _fill_screen and the
+		 * guest stayed black. 1024x768 happened to be exact. --axiss */
+		size_t fb_pages = (aucon->size + PAGE_SIZE - 1) / PAGE_SIZE;
+		for (size_t i = 0; i < fb_pages; i++) {
 			AuMapPage((uint64_t)fbaddr + (i * PAGE_SIZE),
 					  vmaddr + (i * PAGE_SIZE),
 					  PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
@@ -177,6 +245,10 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 
 	case SCREEN_REG_MNGR: {
 		return 1;
+		break;
+	}
+	case SCREEN_RESTORE_BOOT_FB: {
+		ret = AuConsoleRestoreBootFb();
 		break;
 	}
 	}
@@ -296,6 +368,8 @@ static size_t AuConsoleWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer,
 	(void)file;
 	if (!buffer)
 		return 0;
+	/* Batch the per-char AuPutS paints below into one mirror submit. --axiss */
+	mirror_suppress++;
 	in = (uint8_t*)buffer;
 	for (i = 0; i < length; i++) {
 		char c = (char)in[i];
@@ -313,6 +387,8 @@ static size_t AuConsoleWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer,
 		tmp[1] = 0;
 		AuPutS(tmp);
 	}
+	mirror_suppress--;
+	AuConsoleFlushMirror();
 	return length;
 }
 
@@ -348,6 +424,15 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	aucon->buffer = (uint32_t*)0xFFFFD00000200000;
 	aucon->width = info->X_Resolution;
 	aucon->height = info->Y_Resolution;
+	/* Desktop size for the compositor: manual loader override if present,
+	 * else the GOP mode. Text output keeps using width/height above. --axiss */
+	aucon->desktop_width = info->X_Resolution;
+	aucon->desktop_height = info->Y_Resolution;
+	if (info->DesktopOverrideWidth >= 640 && info->DesktopOverrideWidth <= 4096 &&
+		info->DesktopOverrideHeight >= 480 && info->DesktopOverrideHeight <= 4096) {
+		aucon->desktop_width = info->DesktopOverrideWidth;
+		aucon->desktop_height = info->DesktopOverrideHeight;
+	}
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
@@ -447,6 +532,14 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
  * @brief Put a character to console output 
  * @param c -- character to print
  */
+void AuConsoleSetDisplayOwned(void) {
+	display_owned = true;
+}
+
+void AuConsoleSetPresentHook(AuConsolePresentFn fn) {
+	present_hook = fn;
+}
+
 void AuPutC(char c) {
 	if (early_) {
 		if (is_uart_initialized())
@@ -457,6 +550,13 @@ void AuPutC(char c) {
 		}
 		return;
 	}
+
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
+
+	int pc_top = (int)console_y;
+	bool pc_scrolled = false;
 
 	if (console_x > v_res / 9) {
 		console_x = 0;
@@ -488,7 +588,14 @@ void AuPutC(char c) {
 
 		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
+		pc_scrolled = true;
 	}
+	if (pc_scrolled)
+		AuConsoleMarkDirty(1, 0); /* reversed => full screen */
+	else
+		AuConsoleMarkDirty(pc_top, (int)console_y);
+	if (!mirror_suppress)
+		AuConsoleFlushMirror();
 }
 
 /**
@@ -504,6 +611,12 @@ void AuPutS(char* str) {
 		return;
 	}
 
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
+
+	int ps_top = (int)console_y;
+	bool ps_scrolled = false;
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
 		if (*str > 0xFF) {
@@ -513,8 +626,17 @@ void AuPutS(char* str) {
 			console_x = 0;
 		} else if (*str == '\r') {
 		} else if (*str == '\b') {
-			if (console_x > 0)
+			/* Destructive: this console has no line discipline to echo
+			 * erase sequences, so clear the cell or the glyph stays
+			 * behind forever. Geometry matches the glyph painter below:
+			 * 8 px plus the background column, 16 rows. --axiss */
+			if (console_x > 0) {
 				--console_x;
+				for (size_t y = 0; y < 16; ++y)
+					for (size_t x = 0; x < 9; ++x)
+						AuPutPixel(x + console_x * 9, y + console_y * 16,
+							CONSOLE_BACKGROUND);
+			}
 		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
@@ -548,7 +670,14 @@ void AuPutS(char* str) {
 
 		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
+		ps_scrolled = true;
 	}
+	if (ps_scrolled)
+		AuConsoleMarkDirty(1, 0); /* reversed => full screen */
+	else
+		AuConsoleMarkDirty(ps_top, (int)console_y);
+	if (!mirror_suppress)
+		AuConsoleFlushMirror();
 }
 
 /**
@@ -565,6 +694,12 @@ void AuPutS_Color(char* str, uint32_t color) {
 		return;
 	}
 
+	/* Compositor owns the scanout; keep the pixels, drop the glyph. */
+	if (display_owned)
+		return;
+
+	int pc2_top = (int)console_y;
+	bool pc2_scrolled = false;
 	uint32_t* lfb = aucon->buffer;
 	while (*str) {
 		if (*str > 0xFF) {
@@ -574,8 +709,14 @@ void AuPutS_Color(char* str, uint32_t color) {
 			console_x = 0;
 		} else if (*str == '\r') {
 		} else if (*str == '\b') {
-			if (console_x > 0)
+			/* Destructive, same rationale as AuPutS above. --axiss */
+			if (console_x > 0) {
 				--console_x;
+				for (size_t y = 0; y < 16; ++y)
+					for (size_t x = 0; x < 9; ++x)
+						AuPutPixel(x + console_x * 9, y + console_y * 16,
+							CONSOLE_BACKGROUND);
+			}
 		} else {
 			const bx_fontcharbitmap_t entry = bx_vgafont[*str];
 			for (size_t y = 0; y < 16; ++y) {
@@ -609,7 +750,14 @@ void AuPutS_Color(char* str, uint32_t color) {
 
 		memset(lfb + h_res * (v_res - 16), 0, h_res * 16 * sizeof(uint32_t));
 		console_y--;
+		pc2_scrolled = true;
 	}
+	if (pc2_scrolled)
+		AuConsoleMarkDirty(1, 0); /* reversed => full screen */
+	else
+		AuConsoleMarkDirty(pc2_top, (int)console_y);
+	if (!mirror_suppress)
+		AuConsoleFlushMirror();
 }
 
 #ifdef _MSC_VER
@@ -633,6 +781,8 @@ void AuTextOut(const char* format, ...) {
 
 	va_list args = (va_list)buffer;
 #endif
+	/* Batch the AuPutS fragments below into one mirror submit. --axiss */
+	mirror_suppress++;
 	while (*format) {
 		if (*format == '%') {
 			++format;
@@ -693,6 +843,8 @@ void AuTextOut(const char* format, ...) {
 		}
 		++format;
 	}
+	mirror_suppress--;
+	AuConsoleFlushMirror();
 	va_end(args);
 }
 
@@ -709,6 +861,8 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 	va_list args = ((va_list)reg_save_area + 8);
 #define AU_VA_ARG(type) va_arg(args, type)
 #endif
+	/* Batch the AuPutS fragments below into one mirror submit. --axiss */
+	mirror_suppress++;
 	while (*format) {
 		if (*format == '%') {
 			++format;
@@ -769,6 +923,8 @@ void AuTextOutpro_Call(const char* format, void* reg_save_area, void* entry_sp) 
 		}
 		++format;
 	}
+	mirror_suppress--;
+	AuConsoleFlushMirror();
 #ifndef __GNUC__
 	va_end(args);
 #endif
@@ -786,36 +942,96 @@ void AuConsoleEarlyEnable(bool value) {
 /**
  * @brief AuConsoleGetScreenWidth -- return the screen
  * width
- * @return return screen width 
+ * @return return screen width
+ * The only caller is the tablet driver: report the desktop size the
+ * compositor draws at, not the firmware GOP console size, so absolute
+ * pointer input spans the whole desktop at any resolution.
+ * --axiss
  */
 uint32_t AuConsoleGetScreenWidth() {
 	if (!aucon)
 		return 0;
-	return aucon->width;
+	return aucon->desktop_width ? aucon->desktop_width : aucon->width;
 }
 
 /**
  * @brief AuConsoleGetScreenHeight -- return the screen
  * height
  * @return return screen height
+ * See AuConsoleGetScreenWidth: desktop size for pointer mapping.
+ * --axiss
  */
 uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)
 		return 0;
-	return aucon->height;
+	return aucon->desktop_height ? aucon->desktop_height : aucon->height;
 }
 
 void AuConsoleFlushFramebuffer() {
 	aa64_data_cache_clean_range(aucon->buffer, aucon->size);
 }
 
+/* Boot-framebuffer geometry saved on the first repoint, so the console
+ * can be moved back when no compositor will ever present the GPU backing
+ * (TERM mode). Cursor position is deliberately not stashed: text continues
+ * where it left off. --axiss */
+static bool bootfb_saved;
+static uint32_t* bootfb_phys;
+static uint32_t* bootfb_virt;
+static size_t bootfb_w;
+static size_t bootfb_h;
+static size_t bootfb_scanline;
+static size_t bootfb_pitch;
+static size_t bootfb_size;
+
 void AuConsoleSetConInfo(uint64_t phys, uint64_t virtual, size_t xres, size_t yres) {
+	if (aucon && !bootfb_saved) {
+		bootfb_phys = __framebuffer;
+		bootfb_virt = aucon->buffer;
+		bootfb_w = aucon->width;
+		bootfb_h = aucon->height;
+		bootfb_scanline = aucon->scanline;
+		bootfb_pitch = aucon->pitch;
+		bootfb_size = aucon->size;
+		bootfb_saved = true;
+	}
 	__framebuffer = (uint32_t*)phys;
 	aucon->buffer = (uint32_t*)virtual;
 	aucon->width = xres;
 	aucon->height = yres;
+	aucon->scanline = (uint16_t)xres;
+	aucon->pitch = (uint32_t)(xres * 4);
 	aucon->size = xres * yres * 4;
-	//bypass_autextout = true;
+	h_res = (uint32_t)xres;
+	v_res = (uint32_t)yres;
+}
+
+/**
+ * @brief AuConsoleRestoreBootFb -- move the kernel console back onto the
+ * boot (GOP/ramfb) framebuffer saved by the first SetConInfo repoint
+ * @return 1 when restored, 0 when there is nothing to restore
+ */
+int AuConsoleRestoreBootFb(void) {
+	if (!aucon || !bootfb_saved || !bootfb_virt)
+		return 0;
+	__framebuffer = bootfb_phys;
+	aucon->buffer = bootfb_virt;
+	aucon->width = bootfb_w;
+	aucon->height = bootfb_h;
+	aucon->scanline = (uint16_t)bootfb_scanline;
+	aucon->pitch = (uint32_t)bootfb_pitch;
+	aucon->size = bootfb_size;
+	h_res = (uint32_t)bootfb_w;
+	v_res = (uint32_t)bootfb_h;
+	UARTDebugOut("[aucon]: console restored to boot framebuffer\r\n");
+	/* Paint everything written so far in one go, so the mirror does not
+	 * start from a black scanout. Drop any pending dirty range first:
+	 * the full repaint supersedes it. --axiss */
+	mirror_dirty_valid = false;
+	if (present_hook && !display_owned)
+		present_hook(aucon->buffer, aucon->pitch, 0, 0,
+			(int)aucon->width, (int)aucon->height);
+	return 1;
 }
 
 void AuConsoleBypassAuTextOut() {

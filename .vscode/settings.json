@@ -1,14 +1,10 @@
 {
-    "C_Cpp.default.intelliSenseMode": "gcc-x64",
-    "C_Cpp.codeAnalysis.runAutomatically": true,
-    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-    "C_Cpp.errorSquiggles": "disabled",
-
+    "clangd.path": "/usr/bin/clangd",
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}",
         "--header-insertion=iwyu",
         "--clang-tidy",
-        "--suggest-missing-include insertion"
+        "--suggest-missing-includes"
     ],
     "[c]": {
         "editor.formatOnSave": true,

@@ -90,6 +90,7 @@ XE_EXTERN {
 	XE_LIB void itoa_s(int i, unsigned base, char* buf);
 	XE_LIB void PrintOSName();
 	XE_LIB void abort(void);
+	XE_LIB int atexit(void (*func)(void));
 
 // Functions are from Visopsys project
 // These are unofficial, Andy-special extensions of the atoi() and atoll()

@@ -39,6 +39,7 @@
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
 #include <list.h>
+#include <Hal/AA64/sched.h>
 
 list_t* nd_list;
 
@@ -77,6 +78,27 @@ AuNDCache* AuNDGet(const ip6_addr* address) {
 	return NULL;
 }
 
+AuNDCache* AuNDResolve(AuVFSNode* nic, const ip6_addr* addr) {
+	AuNDCache* cache;
+	int n;
+
+	cache = AuNDGet(addr);
+	if (cache)
+		return cache;
+	if (!nic || !addr)
+		return NULL;
+	AuNDRequestMAC(nic, addr);
+	for (n = 0; n < 50; n++) {
+		AuNetRxPoll();
+		cache = AuNDGet(addr);
+		if (cache)
+			return cache;
+		AuSleepThread(AuGetCurrentThread(), 1);
+		AuScheduleNext();
+	}
+	return NULL;
+}
+
 void AuNDRequestMAC(AuVFSNode* nic, const ip6_addr* addr) {
 	AuNetworkDevice* ndev;
 	size_t totalLen;
@@ -90,7 +112,7 @@ void AuNDRequestMAC(AuVFSNode* nic, const ip6_addr* addr) {
 	if (!nic || !addr)
 		return;
 	ndev = (AuNetworkDevice*)nic->device;
-	if (!ndev)
+	if (!ndev || ip6_addr_is_zero(&ndev->ipv6addr))
 		return;
 
 	icmpLen = (uint16_t)(sizeof(NDNeighborSolicit) + sizeof(NDOptLinkLayer));
@@ -195,18 +217,32 @@ void NDHandleNeighborSolicit(IPv6Header* ipv6, AuVFSNode* nic) {
 
 void NDHandleNeighborAdvert(IPv6Header* ipv6, AuVFSNode* nic) {
 	NDNeighborAdvert* na;
-	NDOptLinkLayer* opt;
+	uint8_t* optp;
 	uint16_t payloadLen;
+	uint16_t remain;
 
 	if (!ipv6 || !nic)
 		return;
 
 	payloadLen = ntohs(ipv6->payloadLen);
-	if (payloadLen < sizeof(NDNeighborAdvert) + sizeof(NDOptLinkLayer))
+	if (payloadLen < sizeof(NDNeighborAdvert))
 		return;
 
 	na = (NDNeighborAdvert*)&ipv6->payload;
-	opt = (NDOptLinkLayer*)na->options;
-	if (opt->type == NDP_OPT_TARGET_LINK && opt->length == 1)
-		NDProtocolAdd(nic, &na->target, opt->mac);
+	optp = (uint8_t*)na->options;
+	remain = (uint16_t)(payloadLen - sizeof(NDNeighborAdvert));
+	while (remain >= 8) {
+		NDOptLinkLayer* opt = (NDOptLinkLayer*)optp;
+		uint16_t olen;
+
+		if (!opt->length)
+			break;
+		olen = (uint16_t)(opt->length * 8);
+		if (olen > remain)
+			break;
+		if (opt->type == NDP_OPT_TARGET_LINK && opt->length == 1)
+			NDProtocolAdd(nic, &na->target, opt->mac);
+		optp += olen;
+		remain = (uint16_t)(remain - olen);
+	}
 }

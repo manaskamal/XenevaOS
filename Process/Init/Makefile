@@ -11,6 +11,11 @@ ifeq ($(BLEED),1)
     BLEED_FLAGS = -D__XENEVA_BLEED__
 endif
 
+UNIKERNEL ?= 0
+ifeq ($(UNIKERNEL),1)
+    BLEED_FLAGS += -D__XENEVA_UNIKERNEL__
+endif
+
 CPP_SRCS = _init.cpp splash.cpp
 S_SRCS = crt0arm64.s
 

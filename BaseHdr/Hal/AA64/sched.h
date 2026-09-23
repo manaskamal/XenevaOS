@@ -136,6 +136,15 @@ typedef struct _aa64_task_ {
 	uint64_t* sigs[32];
 	struct _aa64_task_* next;
 	struct _aa64_task_* prev;
+	/* EDF real-time class (implicit-deadline periodic model). Zeroed by
+	 * default: thread is best-effort round-robin. See Hal/sched_edf.c. */
+	uint8_t edf_enabled;
+	uint8_t edf_waiting;
+	uint64_t edf_period_us;
+	uint64_t edf_wcet_us;
+	uint64_t edf_deadline_us;
+	uint64_t edf_release_us;
+	uint64_t edf_misses;
 }AA64Thread;
 
 
@@ -229,6 +238,24 @@ extern void AuHandleSleepThreads();
  * @param thread -- pointer to thread struct
  */
 extern void AuThreadMakeReady(AA64Thread* thread);
+
+/* Scheduler list lock (mask + spinlock, DAIF save/restore). Tick path
+ * runs masked already; thread context must use these (or the locking
+ * AuThread* wrappers) around list access. */
+extern uint64_t AuSchedLock(void);
+extern void AuSchedUnlock(uint64_t saved_daif);
+extern bool AuSchedValidateLists(void);
+
+/* EDF real-time class, see Hal/sched_edf.c. All no-ops / NULL-safe when
+ * the thread is not EDF-enabled; best-effort threads are unaffected. */
+extern bool AuEDFSetParams(AA64Thread* thread, uint64_t period_us, uint64_t wcet_us);
+extern void AuEDFRemove(AA64Thread* thread);
+extern void AuEDFWaitPeriod(AA64Thread* thread);
+extern void AuEDFHandleReleases(uint64_t now_us);
+extern AA64Thread* AuEDFPickNext(void);
+extern uint64_t AuEDFGetMisses(AA64Thread* thread);
+extern void AuEDFSelfTestStart(void);
+extern void AuSoakStart(void);
 
 #endif
 

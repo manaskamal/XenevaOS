@@ -1,20 +1,35 @@
 # XenevaOS Chitralekha Library Makefile (GCC / LLVM Build)
 
+DLLTARGET = chlkha.dll
+IMPLIB = libChitralekha.a
+DEFFILE = Chitralekha.def
 TARGET = libChitralekha.a
+
+XECLIB_PATH = ../XEClib/libXEClib.a 
+XECRT_PATH = ../XECrt/xecrt.lib
+
+LIBS = $(XECLIB_PATH) $(XECRT_PATH)
 
 # Default toolchain is GCC
 TOOLCHAIN ?= gcc
 
 # Triggered when you run "make llvm"
-.PHONY: all clean llvm
+.PHONY: all clean llvm dll dll-internal
 llvm:
 	@$(MAKE) TOOLCHAIN=llvm all
+dll:
+	@$(MAKE) TOOLCHAIN=llvm dll-internal
 
 INCLUDES = -I./ -I../XEClib/includes -I../../BaseHdr -I../XEClib/includes/c++ -I../../Ports/freetype2/include
 
 BLEED ?= 0
 ifeq ($(BLEED),1)
 	BLEED_FLAGS = -D__XENEVA_BLEED__
+endif
+
+UNIKERNEL ?= 0
+ifeq ($(UNIKERNEL),1)
+	UNIKERNEL_FLAGS = -D__XENEVA_UNIKERNEL__
 endif
 
 ifeq ($(TOOLCHAIN), llvm)
@@ -27,10 +42,13 @@ ifeq ($(TOOLCHAIN), llvm)
 
 	CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check \
 	           -fno-strict-aliasing -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
-	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA $(BLEED_FLAGS) \
+	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA $(BLEED_FLAGS) $(UNIKERNEL_FLAGS) \
 	           -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
 	           -Wno-implicit-function-declaration -Wno-c++11-narrowing \
 	           $(INCLUDES)
+
+dll-internal: $(DLLTARGET)
+
 else
 	# GCC configuration
 	CROSS_COMPILE ?= aarch64-linux-gnu-
@@ -40,7 +58,7 @@ else
 
 	CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
 	           -O2 -fPIE -fno-exceptions -fno-rtti \
-	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA $(BLEED_FLAGS) \
+	           -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT -DCOLOR_RGBA $(BLEED_FLAGS) $(UNIKERNEL_FLAGS) \
 	           $(INCLUDES)
 endif
 
@@ -92,6 +110,19 @@ S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
 all: $(TARGET)
+
+$(DEFFILE): $(OBJS)
+	@echo "Generating export list..."
+	@echo "EXPORTS" > $@
+	for obj in $(OBJS); do \
+		llvm-nm --defined-only -g $$obj | awk '{print $$3}'; \
+	done | sort -u >> $@
+
+$(DLLTARGET): $(OBJS) $(DEFFILE)
+	@echo "Linking $(DLLTARGET)..."
+	$(CXX) $(CXXFLAGS) -fuse-ld=lld-link -nostdlib -shared -o $(DLLTARGET) $(OBJS) $(LIBS) \
+	-Wl,/DEF:$(DEFFILE) -Wl,/IMPLIB:$(IMPLIB) -Wl,//NOENTRY -Wl,//NODEFAULTLIB -Wl,-filealign:0x1000 \
+	-Wl,//BASE:0x0000000400000000 
 
 $(TARGET): $(OBJS)
 	@echo "Archiving $(TARGET)..."

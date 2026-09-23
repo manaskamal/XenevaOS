@@ -35,6 +35,9 @@
 #include <widgets/list.h>
 
 #define NAMDAPHA_TIME_BUTTON_COLOR 0xFF7B7878
+/* The date string is 10 chars (~71px at the date size); the old 65px-wide
+ * clock button clipped it. --axiss */
+#define NAMDAPHA_TIME_BUTTON_W 100
 #ifdef NAMDAPHA_HORIZONTAL
 #define NAMDAPHA_WIDTH 65
 #else
@@ -94,6 +97,7 @@ typedef struct _NamdaphaButton_ {
 	bool hover;
 	bool hover_painted;
 	bool kill_focus;
+	uint64_t last_action_ms;
 	uint16_t ownerId;
 	uint32_t winHandle;
 	char* title;

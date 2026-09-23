@@ -40,6 +40,12 @@
 #include "nmdapha.h"
 #include "section.h"
 #include <widgets/window.h>
+#ifdef __XENEVA_UNIKERNEL__
+int NamdaphaMain(int argc, char* arv[]);
+extern "C" void NamdaphaThread() {
+	NamdaphaMain(0, NULL);
+}
+#endif
 
 typedef struct _nm_time_ {
 	int day;
@@ -107,9 +113,12 @@ void NamdaphaHideWindow(NamdaphaButton* button) {
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
 }
 
-/* NamdaphaTimeButtonPaint -- paint the time button */
+/* NamdaphaTimeButtonPaint -- paint the time button. Only the clock uses
+ * this painter, so its background is opaque: the old fully-transparent
+ * fill let bright wallpaper wash out the small white glyphs through the
+ * glass bar until '-' and '7' were unreadable. --axiss */
 void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
-	ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
+	ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_TIME_BUTTON_COLOR);
 	ChFontSetSize(app->baseFont, 13);
 	int font_w = ChFontGetWidth(app->baseFont, button->title);
 	int font_h = ChFontGetHeight(app->baseFont, button->title);
@@ -124,7 +133,7 @@ void NamdaphaTimeButtonPaint(NamdaphaButton* button, ChWindow* win) {
 	memset(&date, 0, 20);
 
 	sprintf(date, "%02d-%02d-%02d", _time.day, _time.month, _time.year);
-	ChFontSetSize(app->baseFont, 11);
+	ChFontSetSize(app->baseFont, 12);
 	int date_w = ChFontGetWidth(app->baseFont, date);
 	ChFontDrawText(win->canv,
 				   app->baseFont,
@@ -182,6 +191,23 @@ void NamdaphaPaint(ChWindow* win) {
 	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
+/* NamdaphaFormatTime -- render "HH:MM AM" into out, which needs 9 bytes.
+ * The old code assembled this with 2-byte stack buffers that had no room
+ * for NUL terminators and overflowed the 8-byte currenttime heap buffer.
+ * Shared by startup and the minute timer so both show the same format. */
+static void NamdaphaFormatTime(char* out, int hour24, int minute) {
+	int hour12 = hour24 > 12 ? hour24 - 12 : hour24;
+	out[0] = (char)('0' + hour12 / 10);
+	out[1] = (char)('0' + hour12 % 10);
+	out[2] = ':';
+	out[3] = (char)('0' + minute / 10);
+	out[4] = (char)('0' + minute % 10);
+	out[5] = ' ';
+	out[6] = hour24 < 12 ? 'A' : 'P';
+	out[7] = 'M';
+	out[8] = '\0';
+}
+
 /*
 * NamdaphaHandleMessage -- handle incoming 'Deodhai' messages
 * @param e -- Pointer to PostEvent memory location where
@@ -193,35 +219,7 @@ void NamdaphaHandleMessage(PostEvent* e) {
 	case TIMER_MESSAGE_CODE: {
 		XETime time;
 		_KeGetCurrentTime(&time);
-		uint8_t hour_ = time.hour;
-		char hour[2];
-		if (hour_ > 12)
-			hour_ -= 12;
-		itoa_s(hour_, 10, hour);
-		if (hour_ < 10) {
-			hour[1] = hour[0];
-			hour[0] = '0';
-		}
-		char minute[2];
-		itoa_s(time.minute, 10, minute);
-		if (time.minute < 10) {
-			minute[1] = minute[0];
-			minute[0] = '0';
-		}
-		char code[2];
-		if (time.hour < 12) {
-			code[0] = 'A';
-			code[1] = 'M';
-		} else {
-			code[0] = 'P';
-			code[1] = 'M';
-		}
-		strcpy(currenttime, hour);
-		strcpy(currenttime + 2, ":");
-		strcpy(currenttime + 3, minute);
-		strcpy(currenttime + 5, " ");
-		strcpy(currenttime + 6, code);
-		currenttime[8] = '\0';
+		NamdaphaFormatTime(currenttime, time.hour, time.minute);
 		timebutton->drawNamdaphaButton(timebutton, win);
 		ChWindowUpdate(win, timebutton->x, timebutton->y, timebutton->w, timebutton->h, 0, 1);
 		memset(e, 0, sizeof(PostEvent));
@@ -509,10 +507,10 @@ int main(int argc, char* arv[]) {
 	list_add(windowList, win);
 
 	int threadID = _KeGetThreadID();
-	/* create a timer inorder to update the current time */
-	//_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
-	//_KeStartTimer(threadID);
-	memset(&_time, 0, sizeof(XETime));
+	/* Minute timer keeps the clock button advancing past boot time. --axiss */
+	_KeCreateTimer(threadID, _KE_TIMER_UNDIFINED_MAXCOUNT, _KE_TIMER_UPDATE_ORDER_MINUTE);
+	_KeStartTimer(threadID);
+	memset(&_time, 0, sizeof(NamdaphaTime));
 	uint32_t year, day, month;
 	NamdaphaGetYMD(&year, &month, &day, TZ_SEC_IST_INDIA);
 	_time.day = day;
@@ -538,14 +536,15 @@ int main(int argc, char* arv[]) {
 	NmButtonInfoRead(defaultappico);
 
 	_KePrint("[namdapha]: default app icon loaded \r\n");
-	/* allocate memory for time string */
-	currenttime = (char*)malloc(strlen("00:00 CC"));
-	memset(currenttime, 0, strlen("00:00 CC"));
-	sprintf(currenttime, "%02d-%02d", _time.hour, _time.minute);
+	/* 9 bytes hold "HH:MM AM" plus NUL; the old 8-byte buffer overflowed
+	 * by one on every minute tick. --axiss */
+	currenttime = (char*)malloc(16);
+	memset(currenttime, 0, 16);
+	NamdaphaFormatTime(currenttime, _time.hour, _time.minute);
 
 	/* now initialise the time button */
-	timebutton =
-		NmCreateButton(win->info->width - NAMDAPHA_WIDTH, 10, NAMDAPHA_WIDTH, 50, "06:51 PM");
+	timebutton = NmCreateButton(
+		win->info->width - NAMDAPHA_TIME_BUTTON_W, 10, NAMDAPHA_TIME_BUTTON_W, 50, "06:51 PM");
 	timebutton->mouseEvent = 0;
 	timebutton->drawNamdaphaButton = NamdaphaTimeButtonPaint;
 	timebutton->nmbuttoninfo = 0;

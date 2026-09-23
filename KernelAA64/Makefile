@@ -16,6 +16,11 @@ ifeq ($(BLEED),1)
     BLEED_FLAGS = -D__XENEVA_BLEED__
 endif
 
+SOAK ?= 0
+ifeq ($(SOAK),1)
+    SOAK_FLAGS = -D__XENEVA_SOAK__
+endif
+
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
 llvm:
@@ -43,7 +48,7 @@ ifeq ($(TOOLCHAIN), llvm)
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -74,7 +79,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) \
               $(INCLUDES)
 endif
 

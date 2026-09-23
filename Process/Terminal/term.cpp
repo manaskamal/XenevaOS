@@ -40,6 +40,7 @@
 #include <sys/mman.h>
 #include "esccode.h"
 #include <sys/_ketty.h>
+#include <sys/_ketime.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -139,23 +140,24 @@ static void _terminal_erase_cursor(Terminal* t) {
 	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
 }
 
-/**
- * @brief _terminal_blink_cursor -- blinks the cursor
- * @param signum -- signal number
- */
-static void _terminal_blink_cursor(int signum) {
-	if (term.cursor_hide)
+/* TerminalBlinkTick -- synchronous block-cursor toggle, driven from
+ * TerminalThread's idle loop. The old SIGALRM handler painted
+ * asynchronously in the middle of streaming output: blocks got stamped at
+ * stale cursor positions that later erases (which always target the
+ * *current* position) never cleaned up, smearing blocks across the text.
+ * Painting only from the reader thread makes every block's lifetime
+ * explicit: parked before a burst, redrawn after, toggled only while idle.
+ * --axiss */
+static void TerminalBlinkTick(Terminal* t) {
+	if (t->cursor_hide || t->scrolling)
 		return;
-	if (!term.scrolling) {
-		if (term.blink_visible) {
-			_terminal_erase_cursor(&term);
-			term.blink_visible = false;
-		} else {
-			term.blink_visible = true;
-			_terminal_redraw_cursor(&term);
-		}
+	if (t->blink_visible) {
+		_terminal_erase_cursor(t);
+		t->blink_visible = false;
+	} else {
+		t->blink_visible = true;
+		_terminal_redraw_cursor(t);
 	}
-	alarm(1);
 }
 /*
  * TerminalDrawArrayFont -- draw bitmap fonts using defined array
@@ -403,7 +405,11 @@ void TerminalPrintChar(Terminal* t, char c, uint32_t fgcolor, uint32_t bgcolor) 
 		backColor = TERMINAL_BLACK;
 		t->lastCursorY = t->cursorY;
 		t->lastCursorX = t->cursorX;
-		_terminal_erase_cursor(t);
+		/* No per-character erase here: the batch owner (TerminalThread)
+		 * parks the cursor once before painting and redraws it once after.
+		 * Erasing per char cost a ChWindowUpdate -- and in shared-buffer
+		 * builds a full compositor round-trip -- for every single byte,
+		 * throttling output to ~60 chars/sec. --axiss */
 		t->cursorY++;
 		t->cursorX = 0;
 		if (t->cursorY >= t->scrollBot) {
@@ -429,7 +435,7 @@ void TerminalPrintChar(Terminal* t, char c, uint32_t fgcolor, uint32_t bgcolor) 
 		TerminalPutChar(t, c, backColor, fgColor);
 		t->lastCursorX = t->cursorX;
 		t->lastCursorY = t->cursorY;
-		_terminal_erase_cursor(t);
+		/* See above: cursor parking lives with the batch, not the byte. */
 		t->cursorX++;
 		if (t->cursorX == t->cols) {
 			t->cursorX = 0;
@@ -1155,31 +1161,49 @@ void TerminalThread() {
 	char* buf = (char*)malloc(1024);
 	memset(buf, 0, 1024);
 	int bytes_read = 0;
+	uint64_t last_blink_ms = _KeGetCurrentMS();
 	while (1) {
 		bytes_read = _KeReadFile(master_fd, buf, 1024);
 		if (bytes_read >= 1024) {
 			bytes_read = 1024;
 		}
 
-		for (int i = 0; i < bytes_read; i++) {
-			TerminalProcessLine(&term, buf[i]);
-		}
-
-		/* now bytes_read tells the terminal
-		 * is dirty, so we need redraw of all 
-		 * cells 
-		 */
-		if ((bytes_read > 0) || _update_terminal_) {
+		if (bytes_read > 0 || _update_terminal_) {
+			/* Park the block cursor for the whole burst: output below
+			 * moves it, and repainting it per byte both throttled us to
+			 * one compositor round-trip per character and stranded blocks
+			 * at stale positions. --axiss */
+			bool was_visible = term.blink_visible && !term.scrolling && !term.cursor_hide;
+			if (was_visible) {
+				_terminal_erase_cursor(&term);
+				term.blink_visible = false;
+			}
+			for (int i = 0; i < bytes_read; i++) {
+				TerminalProcessLine(&term, buf[i]);
+			}
 			TerminalFlush(&term);
 			bytes_read = 0;
 			_update_terminal_ = false;
+			if (was_visible && !term.scrolling && !term.cursor_hide) {
+				term.blink_visible = true;
+				_terminal_redraw_cursor(&term);
+			}
+			last_blink_ms = _KeGetCurrentMS();
+			/* No sleep on data: loop straight back to drain the rest of
+			 * the burst. The compositor ack inside ChWindowUpdate already
+			 * paces us to one present per frame. */
+		} else {
+			/* Idle: blink here instead of from a signal handler, and nap
+			 * so an empty pty doesn't hot-spin. Master reads return 0
+			 * when empty, so this branch is the only sleeper. --axiss */
+			uint64_t now = _KeGetCurrentMS();
+			if (now - last_blink_ms >= 500)
+			{
+				TerminalBlinkTick(&term);
+				last_blink_ms = now;
+			}
+			_KeProcessSleep(60);
 		}
-
-#ifdef ARCH_ARM64
-		_KeProcessSleep(60);
-#elif ARCH_X64
-		_KeProcessSleep(10000);
-#endif
 	}
 }
 
@@ -1272,10 +1296,6 @@ int main(int argc, char* arv[]) {
 	/*term_buffer = (TermCell*)malloc(ws_col * ws_row * sizeof(TermCell));
 	memset(term_buffer, 0x0, static_cast<uint64_t>(ws_col) * ws_row * sizeof(TermCell));*/
 
-	signal(SIGALRM, _terminal_blink_cursor);
-
-	_KePrint("Signal alarm created \r\n");
-
 	ChWindowPaint(win);
 
 	int term_id = _KeGetProcessID();
@@ -1297,14 +1317,8 @@ int main(int argc, char* arv[]) {
 	ChWindowBroadcastIcon(app, "/icons/term.bmp");
 
 	term.blink_visible = 1;
-	/** setup periodic timer for cursor **/
-	/*struct itimerval blink_timer;
-	blink_timer.it_value.tv_sec = 0;
-	blink_timer.it_value.tv_usec = 500000;
-	blink_timer.it_interval.tv_sec = 0;
-	blink_timer.it_interval.tv_usec = 500000;
-	setitimer(ITIMER_REAL, &blink_timer, NULL);*/
-	alarm(1);
+	/* Cursor blink is driven synchronously from TerminalThread's idle loop
+	 * (see TerminalBlinkTick); no SIGALRM involved, so nothing to arm here. */
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));

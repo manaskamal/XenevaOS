@@ -522,10 +522,23 @@ void GICEnableSPIIRQ(uint32_t irq) {
 	} else {
 		uint32_t reg = irq / 32;
 		uint32_t bit = irq % 32;
-		//GICClearPendingIRQ(irq);
-		//GICD_ICFGR(spi_id / 16) |= (1u << bit);
+		/* Program a disabled IRQ: distributor forwards only when target,
+		 * priority, trigger and group are all valid. Order matters --
+		 * disable/clear first, enable last.
+		 * QEMU GICv2 ignores ITARGETSR/ICFGR/IPRIORITYR writes while
+		 * GICD_CTLR.Enable is set, so drop the distributor around the
+		 * config and restore it before ISENABLER. */
+		GICD_ICENABLE(reg) = (1u << bit);
+		dsb_sy_barrier();
+		GICClearPendingIRQ(irq);
+		uint32_t saved_ctlr = gic_inl_((uint64_t*)GICD(__gic), GICD_CTLR);
+		gic_outl_((uint64_t*)GICD(__gic), GICD_CTLR, saved_ctlr & ~0x3u);
+		dsb_sy_barrier();
+		isb_flush();
+		/* Leave the SPI in Group0: this kernel runs Secure and Secure
+		 * IAR reads of Group1 without AckCtl return 1022 (spurious
+		 * storm, no delivery). Do NOT move SPIs to Group1. */
 		GICSetEdgeTriggered(irq);
-		GICIsIRQEdgeTriggered(irq);
 
 		if (__gic.version >= GIC_VERSION_3) {
 			/** route it to cpu0 **/
@@ -539,26 +552,39 @@ void GICEnableSPIIRQ(uint32_t irq) {
 		}
 
 		*(volatile uint8_t*)(GICD(__gic) + GICD_IPRIORITYR(irq)) = 0x80;
-		GICD_ISENABLER(reg) |= (1u << bit);
+		dsb_sy_barrier();
+		isb_flush();
+		gic_outl_((uint64_t*)GICD(__gic), GICD_CTLR, saved_ctlr);
+		dsb_sy_barrier();
+		isb_flush();
+		GICD_ISENABLER(reg) = (1u << bit);
+		dsb_sy_barrier();
+		isb_flush();
 	}
 }
 
 void GICSetTargetCPU(int spi) {
 	if (__gic.version >= GIC_VERSION_3)
 		return;
+	if (spi < 32)
+		return;
 
-	uint32_t reg_index = spi / 4;
-	uint32_t byteShift = spi % 4;
-
-	uint32_t val = GICD_ITARGETSR(reg_index);
-	/* CPU0 mask is bit 0. The old (1 << 0x01) targeted CPU1, on which
-	 * nothing is scheduled under QEMU - so the SPI never fired --axiss */
-	uint8_t cpu_mask = (1u << 0);
-	val &= ~(0xFF << (byteShift * 8));
-	val |= (cpu_mask << (byteShift * 8));
-	GICD_ITARGETSR(reg_index) = val;
+	/* ITARGETSR is byte-accessible: one byte per INTID at 0x800+INTID.
+	 * The old word RMW (0xFF << (byte*8)) is signed-overflow UB for
+	 * byte 3 and races with concurrent distributor updates. A single
+	 * byte store to CPU0 mask (0x01) is exact and readback-verifiable.
+	 * Must program while the SPI is disabled; the caller
+	 * (GICEnableSPIIRQ) disables first, but double-ensure here.
+	 * NOTE: on uniprocessor QEMU GICv2 this register is RAZ/WI by
+	 * design (internal target is hardwired to CPU0, reads 0) -- a 0
+	 * readback is NORMAL, not an error. Keep the write for SMP. --axiss */
+	uint32_t reg = (uint32_t)spi / 32u;
+	uint32_t bit = (uint32_t)spi % 32u;
+	GICD_ICENABLE(reg) = (1u << bit);
+	dsb_sy_barrier();
+	*(volatile uint8_t*)(GICD(__gic) + 0x0800u + (uint32_t)spi) = 0x01u;
+	dsb_sy_barrier();
 	isb_flush();
-	dsb_ish();
 }
 void GICClearPendingIRQ(uint32_t irq) {
 	if (__gic.version >= GIC_VERSION_3)
@@ -566,8 +592,9 @@ void GICClearPendingIRQ(uint32_t irq) {
 
 	uint32_t bit = irq % 32;
 	volatile uint32_t* reg = (volatile uint32_t*)(GICD(__gic) + GICD_ICPENDR(irq));
-	//UARTDebugOut("Clear pending reg : %x \n", (GICD(__gic) + GICD_ICPENDR(irq)));
-	*reg |= (1U << bit);
+	/* ICPENDR is write-1-to-clear: plain store, never RMW. */
+	*reg = (1U << bit);
+	dsb_sy_barrier();
 }
 
 void GICCheckPending(uint32_t irq) {

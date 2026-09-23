@@ -286,6 +286,7 @@ static void virtio_snd_alloc_controlq(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	controlq_sz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	memset((void*)queuePhys,0, 0x1000);
 	controlq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 #if DEBUG
 	UARTDebugOut("[virtio-snd]: controlq size : %d \r\n", queueSz);
@@ -320,6 +321,7 @@ static void virtio_snd_alloc_eventq(struct VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	eventq_sz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
 	eventq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 
 #if DEBUG
@@ -353,6 +355,7 @@ static void virtio_snd_alloc_txq(VirtioCommonCfg* cfg) {
 	int queueSz = cfg->QueueSize;
 	txq_sz = queueSz;
 	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
+	memset((void*)queuePhys, 0, 0x1000);
 	txq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
 #if DEBUG
 	UARTDebugOut("[virtio-snd]: txq size : %d \r\n", queueSz);

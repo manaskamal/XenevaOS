@@ -120,6 +120,7 @@ static int AuICMPv6Receive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen == 0)
 		return 0;
 
+	AuNetRxPoll();
 	packet = (char*)AuSocketGet(sock);
 	if (!packet)
 		return 0;
@@ -170,10 +171,10 @@ static int AuICMPv6Send(AuSocket* sock, msghdr* msg, int flags) {
 	name = (sockaddr_in6*)msg->msg_name;
 	nic = AuNetworkRoute6((const ip6_addr*)&name->sin6_addr);
 	if (!nic)
-		return -1;
+		return -114; /* ENETUNREACH */
 	netdev = (AuNetworkDevice*)nic->device;
-	if (!netdev)
-		return -1;
+	if (!netdev || ip6_addr_is_zero(&netdev->ipv6addr))
+		return -114;
 
 	payloadLen = (uint16_t)msg->msg_iov[0].iov_len;
 	totalLen = sizeof(IPv6Header) + payloadLen;
@@ -200,6 +201,7 @@ static int AuICMPv6Send(AuSocket* sock, msghdr* msg, int flags) {
 	}
 
 	IPV6SendPacket(pkt, nic);
+	AuNetRxPoll();
 	kfree(pkt);
 	return (int)payloadLen;
 }

@@ -36,7 +36,11 @@
 #include <ft2build.h>
 #include "draw.h"
 #include "color.h"
+#include <math.h>
 #include FT_FREETYPE_H
+#if defined(ARCH_ARM64)
+#include <arm_neon.h>
+#endif
 
 #ifndef _USE_FREETYPE
 /* our libc only has acosf (float), no acos (double). stb hides STBTT_cos
@@ -92,6 +96,152 @@ static inline uint32_t ChFontBlendCoverage(uint32_t dst, uint32_t src, uint8_t c
 	return 0xFF000000U | (red << 16) | (green << 8) | blue;
 }
 
+#if defined(ARCH_ARM64)
+/* Blend atlas coverage four pixels at a time on the compositor's hot text path. --axiss */
+static void ChFontBlendFour(uint32_t* dest, uint16x4_t cov, uint16x4_t cr, uint16x4_t cg, uint16x4_t cb) {
+	uint32x4_t dst4 = vld1q_u32(dest);
+	uint16x4_t dr = vmovn_u32(vshrq_n_u32(vandq_u32(dst4, vdupq_n_u32(0x00FF0000)), 16));
+	uint16x4_t dg = vmovn_u32(vshrq_n_u32(vandq_u32(dst4, vdupq_n_u32(0x0000FF00)), 8));
+	uint16x4_t db = vmovn_u32(vandq_u32(dst4, vdupq_n_u32(0x000000FF)));
+	uint16x4_t inv = vsub_u16(vdup_n_u16(255), cov);
+	uint16x4_t or_ = vshr_n_u16(vmla_u16(vmul_u16(cr, cov), dr, inv), 8);
+	uint16x4_t og = vshr_n_u16(vmla_u16(vmul_u16(cg, cov), dg, inv), 8);
+	uint16x4_t ob = vshr_n_u16(vmla_u16(vmul_u16(cb, cov), db, inv), 8);
+	uint32x4_t out = vorrq_u32(vdupq_n_u32(0xFF000000), vshlq_n_u32(vmovl_u16(or_), 16));
+	out = vorrq_u32(out, vshlq_n_u32(vmovl_u16(og), 8));
+	out = vorrq_u32(out, vmovl_u16(ob));
+	vst1q_u32(dest, out);
+}
+#endif
+
+static void ChFontBlitCoverageRow(uint32_t* dest, const uint8_t* source, int width, uint32_t color) {
+	int x = 0;
+#if defined(ARCH_ARM64)
+	uint32x4_t color4 = vdupq_n_u32(0xFF000000U | (color & 0x00FFFFFFU));
+	uint16x4_t cr = vdup_n_u16((color >> 16) & 0xFF);
+	uint16x4_t cg = vdup_n_u16((color >> 8) & 0xFF);
+	uint16x4_t cb = vdup_n_u16(color & 0xFF);
+	for (; x + 8 <= width; x += 8) {
+		uint8x8_t cov8 = vld1_u8(source + x);
+		uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(cov8), 0);
+		if (bits == 0)
+			continue;
+		if (bits == ~0ULL) {
+			vst1q_u32(dest + x, color4);
+			vst1q_u32(dest + x + 4, color4);
+			continue;
+		}
+		uint16x8_t cov16 = vmovl_u8(cov8);
+		ChFontBlendFour(dest + x, vget_low_u16(cov16), cr, cg, cb);
+		ChFontBlendFour(dest + x + 4, vget_high_u16(cov16), cr, cg, cb);
+	}
+#endif
+	for (; x < width; x++) {
+		if (source[x])
+			dest[x] = ChFontBlendCoverage(dest[x], color, source[x]);
+	}
+}
+
+static void ChFontFreeAtlas(ChFont* font) {
+	if (font->atlasPixels) {
+		free(font->atlasPixels);
+		font->atlasPixels = NULL;
+	}
+	font->atlasReady = 0;
+	font->atlasW = 0;
+	font->atlasH = 0;
+}
+
+static void ChFontBakeAtlas(ChFont* font) {
+	/* Bake printable ASCII once per size; uncached codepoints keep the glyph fallback. --axiss */
+	ChFontFreeAtlas(font);
+	int w = CH_FONT_ATLAS_W;
+	int h = CH_FONT_ATLAS_H;
+	uint8_t* pixels = (uint8_t*)malloc((size_t)w * (size_t)h);
+	if (!pixels)
+		return;
+	memset(pixels, 0, (size_t)w * (size_t)h);
+	int used = stbtt_BakeFontBitmap(font->buffer,
+									0,
+									(float)font->fontSz,
+									pixels,
+									w,
+									h,
+									CH_FONT_ATLAS_FIRST,
+									CH_FONT_ATLAS_COUNT,
+									font->atlasChars);
+	if (used <= 0) {
+		free(pixels);
+		return;
+	}
+	font->atlasPixels = pixels;
+	font->atlasW = w;
+	font->atlasH = h;
+	font->atlasReady = 1;
+}
+
+static int ChFontBlitBaked(ChCanvas* canv,
+						   ChFont* font,
+						   unsigned char cp,
+						   int penx,
+						   int peny,
+						   uint32_t color,
+						   const ChRect* clip,
+						   int* advance_out) {
+	if (!font->atlasReady || cp < CH_FONT_ATLAS_FIRST ||
+		cp >= CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT)
+		return 0;
+	const stbtt_bakedchar* baked = &font->atlasChars[cp - CH_FONT_ATLAS_FIRST];
+	int gw = (int)baked->x1 - (int)baked->x0;
+	int gh = (int)baked->y1 - (int)baked->y0;
+	if (advance_out)
+		*advance_out = (int)baked->xadvance;
+	if (gw <= 0 || gh <= 0)
+		return 1;
+
+	int left = penx + (int)floorf(baked->xoff);
+	int top = peny + (int)floorf(baked->yoff);
+	int right = left + gw;
+	int bottom = top + gh;
+	int clipLeft = 0;
+	int clipTop = 0;
+	int clipRight = canv->canvasWidth;
+	int clipBottom = canv->canvasHeight;
+	if (clip) {
+		if (clip->x > clipLeft)
+			clipLeft = clip->x;
+		if (clip->y > clipTop)
+			clipTop = clip->y;
+		if (clip->x + clip->w < clipRight)
+			clipRight = clip->x + clip->w;
+		if (clip->y + clip->h < clipBottom)
+			clipBottom = clip->y + clip->h;
+	}
+	int src_x = (int)baked->x0;
+	int src_y = (int)baked->y0;
+	if (left < clipLeft) {
+		src_x += clipLeft - left;
+		left = clipLeft;
+	}
+	if (top < clipTop) {
+		src_y += clipTop - top;
+		top = clipTop;
+	}
+	if (right > clipRight)
+		right = clipRight;
+	if (bottom > clipBottom)
+		bottom = clipBottom;
+	if (left >= right || top >= bottom)
+		return 1;
+
+	for (int y = top; y < bottom; y++) {
+		const uint8_t* source = font->atlasPixels + (src_y + (y - top)) * font->atlasW + src_x;
+		uint32_t* dest = canv->buffer + y * canv->canvasWidth + left;
+		ChFontBlitCoverageRow(dest, source, right - left, color);
+	}
+	return 1;
+}
+
 static void ChFontBlitGlyph(
 	ChCanvas* canv, const ChFontGlyphCacheEntry* glyph, int penx, int peny, uint32_t color, const ChRect* clip) {
 	if (!glyph->bitmap || glyph->width <= 0 || glyph->height <= 0)
@@ -121,10 +271,7 @@ static void ChFontBlitGlyph(
 	for (int y = top; y < bottom; ++y) {
 		const uint8_t* source = glyph->bitmap + (y - (peny + glyph->yOffset)) * glyph->width + (left - (penx + glyph->xOffset));
 		uint32_t* destination = canv->buffer + y * canv->canvasWidth + left;
-		for (int x = left; x < right; ++x, ++source, ++destination) {
-			if (*source)
-				*destination = ChFontBlendCoverage(*destination, color, *source);
-		}
+		ChFontBlitCoverageRow(destination, source, right - left, color);
 	}
 }
 #endif
@@ -199,6 +346,7 @@ ChFont* ChInitialiseFont(char* fontname) {
 	stbtt_GetFontVMetrics(&font->stbFont, &font->stbAscent, &font->stbDescent, &font->stbLineGap);
 	font->lineHeight =
 		(uint32_t)((font->stbAscent - font->stbDescent + font->stbLineGap) * font->stbScale);
+	ChFontBakeAtlas(font);
 #endif
 	/* start decoding true type font */
 	//TTFLoadFont(canv,font->buffer);
@@ -226,6 +374,7 @@ void ChFontSetSize(ChFont* font, int size) {
 	font->stbScale = stbtt_ScaleForPixelHeight(&font->stbFont, (float)font->fontSz);
 	font->lineHeight =
 		(uint32_t)((font->stbAscent - font->stbDescent + font->stbLineGap) * font->stbScale);
+	ChFontBakeAtlas(font);
 #endif
 	font->fontHeight = font->fontSz;
 }
@@ -301,9 +450,13 @@ void ChFontDrawText(
 			int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp);
 			penx += (int)(kern * font->stbScale);
 		}
-		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
-		ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
-		penx += glyph->advance;
+		int advance = 0;
+		if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, NULL, &advance)) {
+			ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+			ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
+			advance = glyph->advance;
+		}
+		penx += advance;
 		prevCp = cp;
 		string++;
 	}
@@ -378,8 +531,10 @@ void ChFontDrawChar(
 		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
 		penx += (int)(kern * font->stbScale);
 	}
-	ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
-	ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
+	if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, NULL, NULL)) {
+		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+		ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
+	}
 	font->kern = (uint32_t)cp;
 #endif
 }
@@ -495,8 +650,10 @@ void ChFontDrawCharClipped(
 		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
 		penx += (int)(kern * font->stbScale);
 	}
-	ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
-	ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
+	if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, limit, NULL)) {
+		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+		ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
+	}
 	font->kern = (uint32_t)cp;
 #endif
 }
@@ -540,9 +697,14 @@ int64_t ChFontGetWidth(ChFont* font, char* string) {
 		int cp = (unsigned char)*string;
 		if (prevCp)
 			width += (int)(stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp) * font->stbScale);
-		int advance, lsb;
-		stbtt_GetCodepointHMetrics(&font->stbFont, cp, &advance, &lsb);
-		width += (int64_t)(advance * font->stbScale);
+		if (font->atlasReady && cp >= CH_FONT_ATLAS_FIRST &&
+			cp < CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT)
+			width += (int64_t)font->atlasChars[cp - CH_FONT_ATLAS_FIRST].xadvance;
+		else {
+			int advance, lsb;
+			stbtt_GetCodepointHMetrics(&font->stbFont, cp, &advance, &lsb);
+			width += (int64_t)(advance * font->stbScale);
+		}
 		prevCp = cp;
 		string++;
 	}
@@ -580,8 +742,12 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 #else
 	if (!font)
 		return -1;
+	unsigned char cp = (unsigned char)c;
+	if (font->atlasReady && cp >= CH_FONT_ATLAS_FIRST &&
+		cp < CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT)
+		return (int64_t)font->atlasChars[cp - CH_FONT_ATLAS_FIRST].xadvance;
 	int advance, lsb;
-	stbtt_GetCodepointHMetrics(&font->stbFont, (unsigned char)c, &advance, &lsb);
+	stbtt_GetCodepointHMetrics(&font->stbFont, cp, &advance, &lsb);
 	return (int64_t)(advance * font->stbScale);
 #endif
 }
@@ -781,9 +947,13 @@ int ChFontDrawTextClipped(
 			int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp);
 			penx += (int)(kern * font->stbScale);
 		}
-		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
-		ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
-		penx += glyph->advance;
+		int advance = 0;
+		if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, limit, &advance)) {
+			ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
+			ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
+			advance = glyph->advance;
+		}
+		penx += advance;
 		prevCp = cp;
 		string++;
 	}
@@ -802,6 +972,7 @@ int ChFontClose(ChFont* font) {
 	//FT_Done_FreeType(font->lib);
 #ifndef _USE_FREETYPE
 	ChFontClearGlyphCache(font);
+	ChFontFreeAtlas(font);
 #endif
 	_KeUnmapSharedMem(font->key);
 	free(font);

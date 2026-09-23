@@ -90,6 +90,13 @@ int AuProcessTokenAddSelf(uint8_t category) {
 	_tokens[category].proc = proc;
 	_tokens[category].thread_id = current_thr->thread_id;
 	UARTDebugOut("[aurora]: process registered to token : %s \r\n", _token_id_to_string(category));
+	if (category == PROCESS_TOKEN_DISPLAY) {
+		/* The compositor draws into the same physical framebuffer the
+		 * kernel console writes to. Mute further framebuffer text so boot
+		 * and driver messages stop scribbling over the live desktop. UART
+		 * logging continues uninterrupted. --axiss */
+		AuConsoleSetDisplayOwned();
+	}
 	return 0;
 }
 

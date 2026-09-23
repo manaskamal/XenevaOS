@@ -163,6 +163,52 @@ XEFile* XEOpenAndReadFile(EFI_HANDLE ImageHandle, CHAR16* Filename) {
 }
 
 /*
+ * XEFileExists -- probe for a file without reading it
+ * @param ImageHandle -- Image handle passed by EFI firmware
+ * @param Filename -- name and path of the file
+ * @return true when the file can be opened for reading
+ */
+bool XEFileExists(EFI_HANDLE ImageHandle, CHAR16* Filename) {
+	EFI_STATUS Status;
+	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SimpleFileSystem = nullptr;
+	EFI_GUID loadedImageProtocol = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+	EFI_LOADED_IMAGE* loadedImage = nullptr;
+	EFI_FILE_PROTOCOL* Root = nullptr;
+	EFI_FILE_PROTOCOL* File = nullptr;
+
+	EFI_GUID sfsprotocol = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+
+	Status = gBS->HandleProtocol(ImageHandle, &loadedImageProtocol, (void**)&loadedImage);
+	if (EFI_ERROR(Status)) {
+		XEGuiPrint("Failed to locate image handle \n");
+		return false;
+	}
+
+	Status =
+		gBS->HandleProtocol(loadedImage->DeviceHandle, &sfsprotocol, (VOID**)&SimpleFileSystem);
+	if (EFI_ERROR(Status)) {
+		XEGuiPrint("Failed to locate file system protocol \n");
+		return false;
+	}
+
+	Status = SimpleFileSystem->OpenVolume(SimpleFileSystem, &Root);
+	if (EFI_ERROR(Status)) {
+		XEGuiPrint("Failed to open the root directory \n");
+		return false;
+	}
+
+	/* A miss here is the normal case (no marker file), so stay silent
+	 * and let the caller fall back to its default path. --axiss */
+	Status = Root->Open(Root, &File, Filename, EFI_FILE_MODE_READ, 0);
+	Root->Close(Root);
+	if (EFI_ERROR(Status))
+		return false;
+
+	File->Close(File);
+	return true;
+}
+
+/*
  * XECloseFile -- Close an opened file
  * it just free up the buffer allocated
  * @param file -- Pointer to the file structure

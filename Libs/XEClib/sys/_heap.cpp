@@ -44,7 +44,27 @@ void xe_free_page(void* ptr, int pages);
 #define MORECORE_CANNOT_TRIM 0
 #define USE_DL_PREFIX
 #define LACKS_TIME_H
+/* Unikernel builds run XELnch and Namdapha as threads in one process, so
+ * they share this allocator. dlmalloc's built-in atomic spin lock makes
+ * its global state safe across timer preemption. */
+#define LACKS_SCHED_H
+/* The PE/COFF Clang target does not advertise the GNU version macros used by
+ * dlmalloc's built-in lock selector, so provide the lock explicitly. */
+typedef int MLOCK_T;
+static MLOCK_T malloc_global_mutex = 0;
+static inline int xe_malloc_lock(MLOCK_T* lock) {
+	while (__atomic_exchange_n(lock, 1, __ATOMIC_ACQUIRE)) {
+		while (__atomic_load_n(lock, __ATOMIC_RELAXED))
+			__asm__ __volatile__("yield");
+	}
+	return 0;
+}
 #define USE_LOCKS 0
+#define INITIAL_LOCK(lock) (*(lock) = 0)
+#define DESTROY_LOCK(lock) (0)
+#define ACQUIRE_LOCK(lock) xe_malloc_lock(lock)
+#define RELEASE_LOCK(lock) (__atomic_store_n((lock), 0, __ATOMIC_RELEASE), 0)
+#define TRY_LOCK(lock) (!__atomic_exchange_n((lock), 1, __ATOMIC_ACQUIRE))
 #define MALLOC_FAILURE_ACTION 
 
 #define CALL_MMAP(size) xe_request_page(size)
@@ -604,7 +624,7 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define LACKS_SYS_MMAN_H 1
 #define LACKS_FCNTL_H 1
 #define LACKS_TIME_H 1
-#define ABORT for(;;);
+#define ABORT  for(;;);
 #define LACKS_STDLIB_H 1
 #define LACKS_STRING_H 1
 #define LACKS_WINDOWS_H 1
@@ -3194,6 +3214,7 @@ static int init_mparams(void) {
         size_t psize;
         size_t gsize;
 
+
 #ifndef WIN32
         psize = malloc_getpagesize;
         gsize = ((DEFAULT_GRANULARITY != 0) ? DEFAULT_GRANULARITY : psize);
@@ -3264,9 +3285,10 @@ static int init_mparams(void) {
             magic &= ~(size_t)7U;   /* improve chances of fault for bad values */
             /* Until memory modes commonly available, use volatile-write */
             (*(volatile size_t*)(&(mparams.magic))) = magic;
+
         }
     }
-
+ 
     RELEASE_MALLOC_GLOBAL_LOCK();
     return 1;
 }
@@ -4649,11 +4671,10 @@ void* dlmalloc(size_t bytes) {
 
        The ugly goto's here ensure that postaction occurs along all paths.
     */
-
+   // _KePrint("dlmalloc called \r\n");
 #if USE_LOCKS
     ensure_initialization(); /* initialize in sys_alloc if not using locks */
 #endif
-
     if (!PREACTION(gm)) {
         void* mem;
         size_t nb;
@@ -4663,7 +4684,6 @@ void* dlmalloc(size_t bytes) {
             nb = (bytes < MIN_REQUEST) ? MIN_CHUNK_SIZE : pad_request(bytes);
             idx = small_index(nb);
             smallbits = gm->smallmap >> idx;
-
             if ((smallbits & 0x3U) != 0) { /* Remainderless fit to a smallbin. */
                 mchunkptr b, p;
                 idx += ~smallbits & 1;       /* Uses next bin if idx empty */
@@ -4710,9 +4730,9 @@ void* dlmalloc(size_t bytes) {
                 }
             }
         }
-        else if (bytes >= MAX_REQUEST)
+        else if (bytes >= MAX_REQUEST){
             nb = MAX_SIZE_T; /* Too big to allocate. Force failure (in sys alloc) */
-        else {
+        }else {
             nb = pad_request(bytes);
             if (gm->treemap != 0 && (mem = tmalloc_large(gm, nb)) != 0) {
                 check_malloced_chunk(gm, mem, nb);
@@ -4751,13 +4771,11 @@ void* dlmalloc(size_t bytes) {
             check_malloced_chunk(gm, mem, nb);
             goto postaction;
         }
-
         mem = sys_alloc(gm, nb);
     postaction:
         POSTACTION(gm);
         return mem;
     }
-
     return 0;
 }
 

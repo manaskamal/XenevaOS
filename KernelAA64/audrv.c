@@ -364,6 +364,18 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
 	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
 	AuKernelLinkDLL((void*)virtual_base);
+	/* Console mirror: resolve the driver's present function through its
+	 * own export table and hand it to aucon. Done kernel-side because
+	 * driver->kernel imports resolve only through the k_exports
+	 * allowlist -- calling the setter from the driver faults. Only a hit
+	 * touches the hook: drivers loaded later (xhci, ...) must not disarm
+	 * an armed mirror with their inevitable lookup miss. --axiss */
+	AuConsolePresentFn present =
+		(AuConsolePresentFn)AuGetProcAddress((void*)virtual_base, "VirtGpuConsolePresent");
+	if (present) {
+		AuConsoleSetPresentHook(present);
+		UARTDebugOut("[audrv]: console mirror hooked\r\n");
+	}
 	driver->entry = (au_drv_entry)entry_addr;
 	driver->unload = (au_drv_unload)unload_addr;
 	driver->base = AU_DRIVER_BASE_START;

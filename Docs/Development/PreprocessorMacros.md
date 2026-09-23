@@ -33,6 +33,7 @@ Kernel uses inbuilt profiler to measure the latency values while performing cert
 
 - `__XENEVA_BLEED__` — selects the AArch64 LLVM benchmark and low-memory profile. It removes deliberate boot delays and selected diagnostics, enables the reduced startup configuration, and activates the direct shared compositor-buffer path.
 - `__XENEVA_DIRECT_SCANOUT__` — makes DeodhaiXR use the mapped GOP framebuffer as its canvas when the framebuffer is 32-bit and tightly pitched. Select it through `--direct-scanout`; it is independent of bleed and falls back to the cached canvas when the mode is incompatible.
+- `__XENEVA_UNIKERNEL__` — one user-space XR shell process: DeodhaiXR links XELnch and Namdapha as threads and does not `LoadExec` them. The kernel, virtio, and other apps stay separate processes. Select it through `--unikernel`. Do not mix unikernel and normal `deodxr.exe` in one image.
 
 Use `Scripts/Linux/build_and_run_qemu.sh --bleed` to select this profile. The script propagates the macro consistently to the bootloader, kernel, Chitralekha, init, DeodhaiXR, XELnch, and Namdapha and records the deployed user-space profile. Do not define it manually for only part of the system or mix normal and bleed binaries.
 

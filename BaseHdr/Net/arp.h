@@ -83,6 +83,12 @@ extern void ARPProtocolAdd(AuVFSNode* nic, uint32_t address, uint8_t* hwaddr);
 extern AuARPCache* AuARPGet(uint32_t address);
 
 /*
+ * AuARPResolve -- ARP for addr and wait for a reply (poll RX).
+ * Returns NULL if no reply. Does not send IP to the Ethernet broadcast.
+ */
+extern AuARPCache* AuARPResolve(AuVFSNode* nic, uint32_t addr);
+
+/*
  * AuARPRequestMAC -- request a mac address from
  * server
  */

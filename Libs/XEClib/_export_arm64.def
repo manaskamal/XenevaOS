@@ -70,3 +70,12 @@ EXPORTS
     _KeProcessFetch
     _KeSetWalltime
     _KeGetWalltime
+    _KeCredChangeID
+    _KeCredAddSGroup
+    _KeCredSetCap
+    _KeCredGetCap
+    _KeSetUID
+    _KeSetGID
+    _KeGetGlobalGroupID
+    _KePowerDown
+    _KePowerReset

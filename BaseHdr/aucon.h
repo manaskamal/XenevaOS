@@ -47,6 +47,7 @@
 #define SCREEN_GET_PITCH     207
 #define SCREEN_REG_MNGR      208
 #define SCREEN_GET_FB     209
+#define SCREEN_RESTORE_BOOT_FB 210
 
 typedef struct _aucon_ {
 	uint32_t width;
@@ -57,6 +58,12 @@ typedef struct _aucon_ {
 	uint32_t size;
 	uint32_t pitch;
 	bool early_mode;
+	/* desktop_width/height -- size reported to the compositor for the
+	 * desktop scanout. Equals width/height unless the loader passed a
+	 * manual desktop override (resolutions the firmware GOP never
+	 * offers). Text drawing always uses width/height (real GOP). --axiss */
+	uint32_t desktop_width;
+	uint32_t desktop_height;
 }AuConsole;
 
 /*
@@ -100,6 +107,35 @@ AU_EXTERN AU_EXPORT void AuTextOut_profiler(const char* text, ...);
 * @param value -- boolean value
 */
 void AuConsoleEarlyEnable(bool value);
+
+/*
+* AuConsoleSetDisplayOwned -- hand the scanout to the compositor.
+* Once the display owner claims PROCESS_TOKEN_DISPLAY, framebuffer text
+* output is muted (UART logging is unaffected). The compositor draws into
+* the same physical framebuffer, so any further AuTextOut would scribble
+* over the live desktop. --term never claims the token, so its framebuffer
+* console keeps working.
+*/
+void AuConsoleSetDisplayOwned(void);
+
+/*
+* AuConsoleRestoreBootFb -- move the kernel console back onto the boot
+* framebuffer (see aucon.c). Used by TERM mode, which has no compositor
+* to present the GPU backing the console was repointed at.
+* Returns 1 when restored, 0 when there is nothing to restore.
+*/
+int AuConsoleRestoreBootFb(void);
+
+/*
+* AuConsolePresentFn -- mirrors console damage onto another scanout.
+* src is the console framebuffer, src_pitch its byte stride; (x, y, w, h)
+* is the damaged rectangle in pixels. The virtio-gpu driver installs this
+* so the text console stays visible on its display while no compositor
+* owns the screen (TERM mode). --axiss
+*/
+typedef void (*AuConsolePresentFn)(uint32_t* src, uint32_t src_pitch,
+	int x, int y, int w, int h);
+AU_EXTERN AU_EXPORT void AuConsoleSetPresentHook(AuConsolePresentFn fn);
 
 /*
  * AuConsoleGetScreenWidth -- return the screen

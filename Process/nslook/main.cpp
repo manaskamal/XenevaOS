@@ -43,16 +43,76 @@
 * main -- main entry
 */
 int main(int argc, char* argv[]) {
-	printf("\n");
-	char* s = (char*)malloc(strlen(argv[1]) + 1);
-	strcpy(s, argv[1]);
-	printf("Getting nameserver info for %s DNS Pack -> %d \n", s, sizeof(DNSPacket));
-	hostent* ent = gethostbyname(s);
-	char* addr = inet_ntoa(*(struct in_addr*)ent->h_addr_list[0]);
-	printf("Non-authorative answer \n");
-	printf("Server : %s \n", s);
-	printf("Address: %s\r\n", addr);
-	while (1) {
-		_KePauseThread();
+	addrinfo hints;
+	addrinfo* res = NULL;
+	addrinfo* rp;
+	int err;
+	char buf[64];
+	uint32_t server;
+	int n = 0;
+	const char* name = NULL;
+
+	for (int i = 0; i < argc; i++) {
+		if (!argv[i] || argv[i][0] == '\0')
+			continue;
+		if (argv[i][0] == '/' || strstr(argv[i], ".exe") || strcmp(argv[i], "nslook") == 0)
+			continue;
+		if (argv[i][0] == '-') {
+			printf("nslook: unknown option %s\n", argv[i]);
+			_KePrint("nslook: unknown option %s\r\n", argv[i]);
+			return 1;
+		}
+		name = argv[i];
+		break;
 	}
+
+	if (!name) {
+		printf("usage: nslook <name>\n");
+		_KePrint("nslook: usage: nslook <name>\r\n");
+		return 1;
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+
+	err = getaddrinfo(name, NULL, &hints, &res);
+	if (err != 0) {
+		printf("nslook: %s: %s\n", name, gai_strerror(err));
+		_KePrint("nslook: %s: %s\r\n", name, gai_strerror(err));
+		return 1;
+	}
+
+	server = xe_dns_last_server();
+	printf("Non-authoritative answer\n");
+	printf("Name: %s\n", name);
+	_KePrint("nslook: Name: %s\r\n", name);
+	if (server) {
+		struct in_addr ina;
+		ina.s_addr = server;
+		printf("Server: %s\n", inet_ntoa(ina));
+		_KePrint("nslook: Server: %s\r\n", inet_ntoa(ina));
+	} else {
+		printf("Server: (local zone / cache)\n");
+		_KePrint("nslook: Server: (local zone / cache)\r\n");
+	}
+
+	for (rp = res; rp; rp = (addrinfo*)rp->ai_next) {
+		const char* s = NULL;
+		if (rp->ai_family == AF_INET) {
+			sockaddr_in* in = (sockaddr_in*)rp->ai_addr;
+			s = inet_ntop(AF_INET, &in->sin_addr, buf, sizeof(buf));
+		} else if (rp->ai_family == AF_INET6) {
+			sockaddr_in6* in6 = (sockaddr_in6*)rp->ai_addr;
+			s = inet_ntop(AF_INET6, &in6->sin6_addr, buf, sizeof(buf));
+		}
+		if (s) {
+			printf("Address: %s\n", s);
+			_KePrint("nslook: Address: %s\r\n", s);
+			n++;
+		}
+	}
+
+	freeaddrinfo(res);
+	return n > 0 ? 0 : 1;
 }

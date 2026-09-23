@@ -313,8 +313,10 @@ aa64_store_fp:
    str q29, [x0, #(29*16)]
    str q30, [x0, #(30*16)]
    str q31, [x0, #(31*16)]
-   mrs x1,fpcr
-   mrs x2,fpsr
+   mrs x3, fpcr
+   str x3, [x1]
+   mrs x3, fpsr
+   str x3, [x2]
    ret
 
 .global aa64_restore_fp
@@ -351,8 +353,10 @@ aa64_restore_fp:
    ldr q29, [x0, #(29*16)]
    ldr q30, [x0, #(30*16)]
    ldr q31, [x0, #(31*16)]
-   msr fpcr, x1
-   msr fpsr, x2
+   ldr x3, [x1]
+   msr fpcr, x3
+   ldr x3, [x2]
+   msr fpsr, x3
    ret
 
 

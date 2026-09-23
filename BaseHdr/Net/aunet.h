@@ -106,16 +106,15 @@ AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuVFSNode* netfs,char* name);
 */
 AU_EXTERN AU_EXPORT AuVFSNode* AuGetNetworkAdapter(char* name);
 
-/* AuNetworkRoute -- For now, route table is
-* is not implemented, simply return the default
-* network card installed in Xeneva
-* @param address -- Address to consider
-*/
+/*
+ * AuNetworkRoute -- select NIC via FIB (RFC 1122 §3.3.1).
+ * Local/127/8 → lo. FIB hit → that NIC. Miss → NULL (ENETUNREACH).
+ */
 extern AuVFSNode* AuNetworkRoute(uint32_t address);
 
 /*
- * AuNetworkRoute6 -- select NIC for an IPv6 destination
- * @param address -- IPv6 destination
+ * AuNetworkRoute6 -- select NIC for an IPv6 destination.
+ * Miss → NULL (no silent virtio-net fallback).
  */
 extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
 
@@ -123,8 +122,24 @@ extern AuVFSNode* AuNetworkRoute6(const ip6_addr* address);
 extern int AuAddrIsLocal4(uint32_t address);
 extern int AuAddrIsLocal6(const ip6_addr* address);
 
-/* Install connected route for a NIC after its address/mask is set. */
-extern void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
-extern void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
+/* Install connected / default routes after address/gateway ioctl. */
+AU_EXTERN AU_EXPORT void AuNetAddConnectedRoute4(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddConnectedRoute6(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddDefaultRoute4(AuVFSNode* nic, const char* ifname);
+AU_EXTERN AU_EXPORT void AuNetAddDefaultRoute6(AuVFSNode* nic, const char* ifname);
+
+/* Global nameserver table (not tied to a bound NIC). Index is 1-based. */
+#define AU_DNS_MAX4 4
+#define AU_DNS_MAX6 2
+AU_EXTERN AU_EXPORT void AuDnsAddServer4(uint32_t addr);
+AU_EXTERN AU_EXPORT void AuDnsSetServer4(int index, uint32_t addr);
+extern int AuDnsGetServer4(int index, uint32_t* out);
+AU_EXTERN AU_EXPORT void AuDnsAddServer6(const ip6_addr* addr);
+AU_EXTERN AU_EXPORT void AuDnsSetServer6(int index, const ip6_addr* addr);
+extern int AuDnsGetServer6(int index, ip6_addr* out);
+
+/* Driver registers so socket recv can drain RX while userspace waits. */
+AU_EXTERN AU_EXPORT void AuNetRegisterRxPoll(void (*fn)(void));
+AU_EXTERN AU_EXPORT void AuNetRxPoll(void);
 
 #endif

@@ -574,8 +574,10 @@ bool AuPCIEAllocMSI(uint64_t device, size_t vector, int bus, int dev, int func) 
 				bool bit64_cap = (msctl & (1 << 7));
 				bool maskcap = (msctl & (1 << 8));
 
-				/* for GICv2 msi_data is 0*/
-				uint64_t msi_data = 0;
+				/* GICv2m SETSPI_NS doorbell: data must be the SPI INTID.
+			 * Hard-coding 0 fires SPI0, never the allocated vector,
+			 * so used.idx advances with no IRQ on our SPI. */
+				uint32_t msi_data = AuGICGetMSIData((int)vector);
 
 				uint64_t msi_addr = AuGICGetMSIAddress((int)vector);
 

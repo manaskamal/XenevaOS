@@ -275,10 +275,44 @@ int main(int argc, char* argv[]) {
 
 	int sock_fd = socket(AF_RAW, SOCK_RAW, 0);
 
-	char ifname[5];
+	char ifname[12];
 	strcpy(ifname, "virtio-net");
 
 	socket_setopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1);
+
+	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
+	memset(rtentry, 0, sizeof(XERouteEntry));
+	rtentry->ifname = (char*)malloc(16);
+	strcpy(rtentry->ifname, "virtio-net");
+
+	/*
+	 * virtnet.dll sets QEMU usernet addresses on the NIC; seed connected
+	 * + default now so ping 1.1.1.1 works even if DHCP RX is delayed.
+	 */
+	{
+		uint32_t ifaddr = 0, gateway = 0, subnet = 0;
+		_KeFileIoControl(e1000, NET_GET_IPV4_ADDRESS, &ifaddr);
+		_KeFileIoControl(e1000, NET_GET_GATEWAY_ADDRESS, &gateway);
+		_KeFileIoControl(e1000, NET_GET_SUBNET_MASK, &subnet);
+		if (ifaddr && subnet) {
+			rtentry->dest = ifaddr & subnet;
+			rtentry->netmask = subnet;
+			rtentry->ifaddress = ifaddr;
+			rtentry->gateway = 0;
+			rtentry->flags = RTF_UP | RTF_CONNECTED;
+			_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
+			_KePrint("[netmngr]: seeded connected route\r\n");
+		}
+		if (gateway) {
+			rtentry->dest = 0;
+			rtentry->netmask = 0;
+			rtentry->ifaddress = ifaddr;
+			rtentry->gateway = gateway;
+			rtentry->flags = RTF_UP | RTF_GATEWAY;
+			_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
+			_KePrint("[netmngr]: seeded default route via gateway\r\n");
+		}
+	}
 
 	uint8_t stage = 1;
 	xid = rand();
@@ -295,21 +329,14 @@ int main(int argc, char* argv[]) {
 	uint8_t eth_broadcast[6];
 	memset(eth_broadcast, 0xFF, 6);
 
-	XERouteEntry* rtentry = (XERouteEntry*)malloc(sizeof(XERouteEntry));
-	rtentry->ifname = (char*)malloc(strlen("e1000"));
-	strcpy(rtentry->ifname, "virtio-net");
-	bool rt_entry_filled = false;
 	int timeout = 10000;
 	while (timeout--) {
 		int size = socket_receive(sock_fd, buf, 4096, 0);
-		if (size == 0) {
-			_KePrint("Socket didn't have data in it \r\n");
+		if (size <= 0) {
+			/* 0 = empty queue; negative = transient — keep polling for Offer/ACK */
 			_KeProcessSleep(100);
 			continue;
 		}
-
-		if (size == -1)
-			break;
 
 		Ethernet* eth = (Ethernet*)buf;
 
@@ -361,12 +388,11 @@ int main(int argc, char* argv[]) {
 			printf("DHCP Packet received from -> %s \r\n", src_ip);
 			_KePrint("DHCP Packet received from -> %s \r\n", src_ip);
 			uint32_t yiaddr = dhcp->yiaddr;
+			uint32_t subnet = 0;
+			uint32_t gateway = 0;
 			char yiaddr_ip[16];
 			ip_ntoa(ntohl(yiaddr), yiaddr_ip);
 			_KeFileIoControl(e1000, NET_SET_IPV4_ADDRESS, &yiaddr);
-			rtentry->dest = dhcp->siaddr;
-			rtentry->ifaddress = yiaddr;
-			rt_entry_filled = true;
 			printf("Interface address -> %s  %x\r\n", yiaddr_ip, yiaddr);
 			/* check for gateway and subnet */
 			uint8_t* opt = dhcp->options;
@@ -375,57 +401,110 @@ int main(int argc, char* argv[]) {
 				uint8_t len = *opt++;
 				if (opt_type == 1) {
 					/* subnet mask */
-					uint32_t ip_data;
-					memcpy(&ip_data, opt, 4);
+					memcpy(&subnet, opt, 4);
 					char addr[16];
-					ip_ntoa(ntohl(ip_data), addr);
-					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &ip_data);
-					printf("Subnet mask %s %x\n", addr, ip_data);
-					_KePrint("Subnet mask %s %x \n", addr, ip_data);
-					rtentry->netmask = ip_data;
-					rt_entry_filled = true;
+					ip_ntoa(ntohl(subnet), addr);
+					_KeFileIoControl(e1000, NET_SET_SUBNET_MASK, &subnet);
+					printf("Subnet mask %s %x\n", addr, subnet);
+					_KePrint("Subnet mask %s %x \n", addr, subnet);
 				} else if (opt_type == 3) {
-					/* gateway address */
-					uint32_t ip_data;
-					memcpy(&ip_data, opt, 4);
+					/* gateway address — kernel installs 0/0 via ioctl */
+					memcpy(&gateway, opt, 4);
 					char addr[16];
-					ip_ntoa(ntohl(ip_data), addr);
-					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &ip_data);
-					printf("Gateway : %s %x\n", addr, ip_data);
-					_KePrint("Gateway : %s - %x \r\n", addr, ip_data);
-					rtentry->gateway = ip_data;
-					rt_entry_filled = true;
+					ip_ntoa(ntohl(gateway), addr);
+					_KeFileIoControl(e1000, NET_SET_GATEWAY_ADDRESS, &gateway);
+					printf("Gateway : %s %x\n", addr, gateway);
+					_KePrint("Gateway : %s - %x \r\n", addr, gateway);
 				} else if (opt_type == 6) {
-					/* DNS Server */
-					uint32_t ip_data;
-					memcpy(&ip_data, opt, 4);
-					char addr[16];
-					ip_ntoa(ntohl(ip_data), addr);
-					XEDNSEntry dns;
-					dns.index = 1;
-					dns.address = ip_data;
-					_KeFileIoControl(sock_fd, SOCK_ADD_DNS_SERVER, &dns);
-					printf("DNS server %s\n", addr);
-					_KePrint("DNS server %s \r\n", addr);
+					/* DNS servers (option length is N*4) → kernel + /resolv.cnf
+					 * /resolv.cnf lists 1.1.1.1 first (primary), DHCP after. */
+					int nservers = len / 4;
+					int si;
+					char resolv_body[256];
+					int rlen = 0;
+					FILE* rf;
+					if (nservers > 3)
+						nservers = 3;
+					resolv_body[0] = '\0';
+					rlen = snprintf(resolv_body, sizeof(resolv_body),
+									"# Generated by netmngr (DHCP option 6)\n"
+									"nameserver 1.1.1.1\n");
+					if (rlen < 0)
+						rlen = 0;
+					for (si = 0; si < nservers; si++) {
+						uint32_t ip_data;
+						char addr[16];
+						XEDNSEntry dns;
+						int add;
+						memcpy(&ip_data, opt + (si * 4), 4);
+						ip_ntoa(ntohl(ip_data), addr);
+						dns.index = si + 1;
+						dns.address = ip_data;
+						_KeFileIoControl(sock_fd, SOCK_ADD_DNS_SERVER, &dns);
+						printf("DNS server %s\n", addr);
+						_KePrint("DNS server %s \r\n", addr);
+						/* DHCP may legitimately supply 1.1.1.1; skip dup. */
+						if (strcmp(addr, "1.1.1.1") == 0)
+							continue;
+						add = snprintf(resolv_body + rlen,
+									   sizeof(resolv_body) - (size_t)rlen,
+									   "nameserver %s\n",
+									   addr);
+						if (add > 0)
+							rlen += add;
+					}
+					rf = fopen("/resolv.cnf", "w+");
+					if (rf) {
+						fwrite(resolv_body, 1, (size_t)rlen, rf);
+						fclose(rf);
+						_KePrint("[netmngr]: wrote /resolv.cnf\r\n");
+					} else {
+						_KePrint("[netmngr]: failed to write /resolv.cnf\r\n");
+					}
 				}
 				opt += len;
 			}
 
-			if (rt_entry_filled) {
-				int ret = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry);
-				if (ret) {
-					printf("[NetManager]: Failed to add Route Entry \n");
-					_KePrint("[netmanagr]: failed to add route entry \r\n");
-				}
-				free(rtentry->ifname);
-				free(rtentry);
+			/*
+			 * Connected + default with RTF_*. Kernel virtio ioctl
+			 * already seeds these; still install via SOCK_ROUTE_TABLE_ADD
+			 * so dumps work if the driver path did not run.
+			 */
+			if (subnet) {
+				rtentry->dest = yiaddr & subnet;
+				rtentry->netmask = subnet;
+				rtentry->ifaddress = yiaddr;
+				rtentry->gateway = 0;
+				rtentry->flags = RTF_UP | RTF_CONNECTED;
+				if (_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry))
+					_KePrint("[netmngr]: connected route add failed\r\n");
 			}
+			if (gateway) {
+				rtentry->dest = 0;
+				rtentry->netmask = 0;
+				rtentry->ifaddress = yiaddr;
+				rtentry->gateway = gateway;
+				rtentry->flags = RTF_UP | RTF_GATEWAY;
+				if (_KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_ADD, rtentry))
+					_KePrint("[netmngr]: default route add failed\r\n");
+			}
+			{
+				int n = _KeFileIoControl(sock_fd, SOCK_ROUTE_TABLE_GETNUMENTRY, 0);
+				_KePrint("[netmngr]: route table entries = %d\r\n", n);
+			}
+			free(rtentry->ifname);
+			free(rtentry);
 
 			break;
 		}
 	}
 
-	/* Now here we need to use Kernel TCP functionalities 
-	 * to verify if the system is Internet-ready 
+	/*
+	 * Stay resident so later DHCP refresh is possible and --term
+	 * ping is not racing a daemon that already exited.
 	 */
+	_KePrint("[netmngr]: DHCP done (or timed out); daemon idle\r\n");
+	while (1) {
+		_KeProcessSleep(5000);
+	}
 }

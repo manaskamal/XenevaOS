@@ -83,6 +83,26 @@ typedef struct _aa64_regs_ {
 }AA64Registers;
 //#pragma pack(pop)
 
+/* Saved immediately on exception entry, before any C code can use NEON/FP.
+ * The assembly wrappers place this frame directly below AA64Registers. */
+typedef struct AU_ALIGN(16) _aa64_fp_frame_ {
+	uint8_t q[32][16];
+	uint64_t fpcr;
+	uint64_t fpsr;
+} AA64FpFrame;
+
+#if defined(__cplusplus)
+static_assert(sizeof(AA64Registers) == 256, "AA64 register frame layout changed");
+static_assert(sizeof(AA64FpFrame) == 528, "AA64 FP frame layout changed");
+#else
+_Static_assert(sizeof(AA64Registers) == 256, "AA64 register frame layout changed");
+_Static_assert(sizeof(AA64FpFrame) == 528, "AA64 FP frame layout changed");
+#endif
+
+static inline AA64FpFrame* AA64ExceptionFpFrame(AA64Registers* regs) {
+	return (AA64FpFrame*)((uint8_t*)regs - sizeof(AA64FpFrame));
+}
+
 
 
 /**

@@ -149,13 +149,26 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 	if (fd != -1)
 		file = proc->fds[fd];
 
-	size_t lookup_addr = NULL;
-	if (!address)
-		lookup_addr = (size_t)AuGetFreePage(true, (void*)PROCESS_MMAP_ADDRESS);
-	else
-		lookup_addr = (size_t)address;
-
 	len = PAGE_ALIGN(len); //simply align the length
+	/* Reserve the complete VA range atomically. AuGetFreePage only found one
+	 * page, so two unikernel threads could select the same address before
+	 * either installed a PTE. A monotonic per-process cursor also matches the
+	 * existing contiguous proc_mmap_len cleanup contract. */
+	size_t lookup_addr;
+	if (!address) {
+		AuAcquireSpinlock(proc->mmap_lock);
+		lookup_addr = proc->mmap_next;
+		proc->mmap_next += len;
+		proc->proc_mmap_len += len;
+		AuReleaseSpinlock(proc->mmap_lock);
+	} else {
+		lookup_addr = (size_t)address;
+		AuAcquireSpinlock(proc->mmap_lock);
+		if (lookup_addr + len > proc->mmap_next)
+			proc->mmap_next = lookup_addr + len;
+		proc->proc_mmap_len += len;
+		AuReleaseSpinlock(proc->mmap_lock);
+	}
 	AuMMFileBack* fb = NULL;
 
 	if (file && (file->flags & FS_FLAG_GENERAL)) {
@@ -313,7 +326,6 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 	if (file)
 		file->flags |= FS_FLAG_CACHED;
 
-	proc->proc_mmap_len += len;
 	return (void*)lookup_addr;
 }
 

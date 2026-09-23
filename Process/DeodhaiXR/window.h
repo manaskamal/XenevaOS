@@ -99,6 +99,11 @@ typedef struct _win_ {
 	uint32_t* shadowTmp;
 	uint32_t* glassTmp;
 	uint32_t* glassBlur;
+	bool glassBlurValid;
+	int glassBlurX;
+	int glassBlurY;
+	int glassBlurW;
+	int glassBlurH;
 	uint16_t shWinKey;
 	uint16_t backBufferKey;
 	uint32_t handle;

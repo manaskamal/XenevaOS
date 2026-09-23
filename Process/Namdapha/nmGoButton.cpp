@@ -35,30 +35,36 @@ ButtonInfo* gobtn;
 ButtonInfo* gobtnHover;
 ButtonInfo* gobtnClick;
 
-void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
-	uint32_t button_col = GO_BUTTON_COLOR;
-	bool hover_icon = false;
-	ButtonInfo* icon = gobtn;
-	if (button->hover) {
-		button_col = GO_BUTTON_COLOR;
-		icon = gobtnHover;
-	}
-	if (button->clicked) {
-		button_col = GO_BUTTON_PRESSED;
-		icon = gobtnClick;
-	}
-	/*if (button->hover)
-		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, button_col);*/
-	if (button->clicked)
-		ChDrawRect(win->canv, 10, win->info->height - 60, NAMDAPHA_WIDTH - 20, 50, NAMDAPHA_COLOR);
+static ButtonInfo* go_icon_or_fallback(ButtonInfo* preferred, ButtonInfo* fallback) {
+	if (preferred && preferred->imageData)
+		return preferred;
+	if (fallback && fallback->imageData)
+		return fallback;
+	return NULL;
+}
 
-	if (!button->clicked && !button->hover)
+void NamdaphaGoButtonPaint(NamdaphaButton* button, ChWindow* win) {
+	ButtonInfo* icon = go_icon_or_fallback(gobtn, NULL);
+	if (button->hover)
+		icon = go_icon_or_fallback(gobtnHover, gobtn);
+	if (button->clicked)
+		icon = go_icon_or_fallback(gobtnClick, gobtn);
+
+	/* Click/hover used to fill with NAMDAPHA_COLOR (alpha 0) and then
+	 * draw GoIconL/GoIconS, which are not shipped. That wiped the sprite
+	 * from the staging buffer and the dirty copy published empty glass. --axiss */
+	if (button->clicked)
+		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, GO_BUTTON_PRESSED);
+	else if (button->hover)
+		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, GO_BUTTON_HOVER);
+	else
 		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR);
 
-	NmButtonInfoDrawIcon(icon,
-						 win->canv,
-						 button->x + button->w / 2 - gobtn->iconWidth / 2,
-						 button->y + button->h / 2 - gobtn->iconHeight / 2);
+	if (icon && gobtn)
+		NmButtonInfoDrawIcon(icon,
+							 win->canv,
+							 button->x + button->w / 2 - gobtn->iconWidth / 2,
+							 button->y + button->h / 2 - gobtn->iconHeight / 2);
 }
 
 NamdaphaButton* NamdaphaInitialiseGoButton(ChWindow* win) {

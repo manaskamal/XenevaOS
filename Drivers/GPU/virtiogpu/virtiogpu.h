@@ -33,6 +33,7 @@
 #define __VIRTIO_GPU_H__
 
 #include <stdint.h>
+#include <aurora.h>
 #include <Drivers/virtio.h>
 
 #define VIRTIO_GPU_FLAG_FENCE (1<<0)
@@ -241,6 +242,24 @@ extern void gpu_attach_back_cmd(VirtioCommonCfg* cfg, void* req, uint32_t len1, 
  * @return system config descriptor from pcie config space
  */
 extern VirtioCommonCfg* gpu_get_config_pointer();
+
+/**
+ * @brief virt_gpu_default_resource_id -- resource id of the scanout
+ * created at driver init (the one the console mirror presents to)
+ */
+extern int virt_gpu_default_resource_id();
+
+/**
+ * @brief VirtGpuConsolePresent -- copy a console damage rect into the
+ * scanout backing and transfer+flush exactly that rect. Installed as the
+ * kernel console present hook; aucon only calls it while no compositor
+ * owns the display. Exported: under this toolchain AU_EXPORT is the only
+ * thing lld honors for COFF exports, and the kernel resolves the hook by
+ * plain name from our export table -- an unexported symbol silently never
+ * matches (C linkage alone is not enough). --axiss
+ */
+AU_EXTERN AU_EXPORT void VirtGpuConsolePresent(uint32_t* src, uint32_t src_pitch,
+	int x, int y, int w, int h);
 
 
 

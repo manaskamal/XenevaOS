@@ -38,6 +38,26 @@
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
+/* Mouse and keyboard have different IRQ producers. Keep independent SPSC
+ * queues so neither producer races the other's write index. --axiss */
+static AuInputRing mouse_ring;
+static AuInputRing keyboard_ring;
+static uint8_t ring_read_preference;
+
+static void AuDevInputRingPublish(AuInputRing* ring, AuInputMessage* msg) {
+	if (!msg)
+		return;
+	uint32_t write = ring->write;
+	uint32_t next = (write + 1) % NUM_INPUT_RING_PACKETS;
+	if (next == ring->read) {
+		/* The producer never mutates the consumer-owned read index. */
+		ring->dropped++;
+		return;
+	}
+	memcpy(&ring->packets[write], msg, sizeof(AuInputMessage));
+	dsb_sy_barrier();
+	ring->write = next;
+}
 
 static AuInputMessage kbd_q[NUM_KEYBOARD_PACKETS];
 static uint32_t kbd_r;
@@ -67,6 +87,7 @@ void AuDevWriteMice(AuInputMessage* outmsg) {
 	if (!mice_)
 		return;
 	memcpy(mice_->device, outmsg, sizeof(AuInputMessage));
+	AuDevInputRingPublish(&mouse_ring, outmsg);
 }
 
 /*
@@ -106,6 +127,7 @@ void AuDevWriteKybrd(AuInputMessage* outmsg) {
 	uint32_t next;
 	if (!outmsg)
 		return;
+	AuDevInputRingPublish(&keyboard_ring, outmsg);
 	next = (kbd_w + 1) % NUM_KEYBOARD_PACKETS;
 	if (next == kbd_r)
 		kbd_r = (kbd_r + 1) % NUM_KEYBOARD_PACKETS;
@@ -118,6 +140,46 @@ void AuDevWriteKybrd(AuInputMessage* outmsg) {
 		console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
 	memcpy(&console_kbd_q[console_kbd_w], outmsg, sizeof(AuInputMessage));
 	console_kbd_w = cnext;
+}
+
+size_t AuDevInputRingRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	(void)fs;
+	if (!file || !buffer || length < sizeof(AuInputMessage))
+		return 0;
+	AuInputRing* ring = NULL;
+	/* Alternate when both queues are ready; otherwise drain the available one. */
+	if (keyboard_ring.read != keyboard_ring.write &&
+		(mouse_ring.read == mouse_ring.write || ring_read_preference == 0)) {
+		ring = &keyboard_ring;
+		ring_read_preference = 1;
+	} else if (mouse_ring.read != mouse_ring.write) {
+		ring = &mouse_ring;
+		ring_read_preference = 0;
+	} else if (keyboard_ring.read != keyboard_ring.write) {
+		ring = &keyboard_ring;
+		ring_read_preference = 1;
+	}
+	if (!ring)
+		return 0;
+	uint32_t read = ring->read;
+	dsb_sy_barrier();
+	memcpy(buffer, &ring->packets[read], sizeof(AuInputMessage));
+	dsb_sy_barrier();
+	ring->read = (read + 1) % NUM_INPUT_RING_PACKETS;
+	return sizeof(AuInputMessage);
+}
+
+static int AuDevInputRingIoControl(AuVFSNode* file, int code, void* arg) {
+	if (!file || !arg || code != INPUT_RING_IOCODE_GET_STATS)
+		return 0;
+	AuInputRingStats* stats = (AuInputRingStats*)arg;
+	stats->mouse_dropped = mouse_ring.dropped;
+	stats->keyboard_dropped = keyboard_ring.dropped;
+	stats->mouse_pending =
+		(mouse_ring.write + NUM_INPUT_RING_PACKETS - mouse_ring.read) % NUM_INPUT_RING_PACKETS;
+	stats->keyboard_pending =
+		(keyboard_ring.write + NUM_INPUT_RING_PACKETS - keyboard_ring.read) % NUM_INPUT_RING_PACKETS;
+	return 1;
 }
 
 /*
@@ -254,5 +316,17 @@ void AuDevInputInitialise() {
 	kybrd_->read = AuDevInputKybrdRead;
 	kybrd_->write = AuDevInputKybrdWrite;
 	AuDevFSAddFile(devfs, "/", kybrd_);
-	AuTextOut("[aurora]: device input : kybrd and mouse fs registerd \r\n");
+
+	memset(&mouse_ring, 0, sizeof(mouse_ring));
+	memset(&keyboard_ring, 0, sizeof(keyboard_ring));
+	ring_read_preference = 0;
+	AuVFSNode* ring = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(ring, 0, sizeof(AuVFSNode));
+	strcpy(ring->filename, "input-ring");
+	ring->flags |= FS_FLAG_DEVICE;
+	ring->device = &mouse_ring;
+	ring->read = AuDevInputRingRead;
+	ring->iocontrol = AuDevInputRingIoControl;
+	AuDevFSAddFile(devfs, "/", ring);
+	AuTextOut("[aurora]: device input : kybrd, mouse, and input-ring registered \r\n");
 }

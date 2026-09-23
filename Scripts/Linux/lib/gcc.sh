@@ -29,21 +29,21 @@ fi
 ( cd ../../BootAA64 && make clean && make all )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make all )
+( cd ../../KernelAA64 && make clean && make SOAK="${SOAK:-0}" all )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
     ( cd ../../Libs/XEClib && make clean && make all )
-    ( cd ../../Libs/Chitralekha && make clean && make all )
+    ( cd ../../Libs/Chitralekha && make clean && make UNIKERNEL="${UNIKERNEL:-0}" all )
 
     # All AArch64 user-space applications
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch DeodhaiAudio
         Calender Calculator AudioPlayer Files Control
-        ping udpecho XEShell
+        ping udpecho XEShell NETMngr
     )
     for app in "${APPS[@]}"; do
-        ( cd "../../Process/$app" && make clean && make all )
+        ( cd "../../Process/$app" && make clean && make UNIKERNEL="${UNIKERNEL:-0}" DIRECT_SCANOUT="${DIRECT_SCANOUT:-0}" all )
     done
 
     # Deploy the freshly built application binaries into the resources tree so
@@ -62,6 +62,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/ping/ping.exe             ../../Resources/resources/
     cp -f ../../Process/udpecho/udpecho.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
+    cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
 fi
 
 printf "${STY_GREEN}[gcc] AArch64 GCC build complete.${STY_RST}\n"

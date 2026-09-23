@@ -38,6 +38,9 @@
 #include <widgets/button.h>
 #include <widgets/window.h>
 #include <widgets/menu.h>
+#include <sys/time.h>
+#include <signal.h>
+#include <unistd.h>
 #include <keycode.h>
 #include <widgets/menubar.h>
 #include <widgets/msgbox.h>
@@ -545,10 +548,8 @@ int main(int argc, char* argv[]) {
 		printf("Calculator v1.0 for Xeneva OS \n");*/
 
 	app = ChitralekhaStartApp(argc, argv);
-	_KePrint("Chitralekha app started \r\n");
 	mainWin =
 		ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Calculator", 400, 480 / 2 - 400 / 2, 380, 400);
-	_KePrint("Window is created \r\n");
 	mainWin->color = CALCULATOR_BACK_COLOR;
 	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
@@ -576,6 +577,7 @@ int main(int argc, char* argv[]) {
 
 	/* setup the jump buffer */
 	setjmp(mainWin->jump);
+
 	while (1) {
 		int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
 		WindowHandleMessage(&e);

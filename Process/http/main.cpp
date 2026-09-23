@@ -274,8 +274,10 @@ int main(int argc, char* argv[]) {
 	if (verbose && got_any)
 		fprintf(stderr, "* Closing connection\n");
 
-	if (!got_any)
+	if (!got_any) {
 		fprintf(stderr, "curl: (28) Operation timed out\n");
+		_KePrint("curl: (28) Operation timed out\r\n");
+	}
 
 	free(buf);
 	if (outfile)

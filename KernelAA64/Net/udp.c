@@ -133,9 +133,10 @@ int AuUDPReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (msg->msg_iovlen == 0)
 		return 0;
 
+	AuNetRxPoll();
 	packet = (char*)AuSocketGet(sock);
 	if (!packet)
-		return -1;
+		return 0;
 
 	stored = *(size_t*)packet;
 	version = ((uint8_t*)(packet + sizeof(size_t)))[0] >> 4;
@@ -215,10 +216,10 @@ int AuUDPSend(AuSocket* sock, msghdr* msg, int flags) {
 		UDPHeader* udp;
 
 		if (!nic)
-			return 0;
+			return -114; /* ENETUNREACH */
 		netdev = (AuNetworkDevice*)nic->device;
 		if (!netdev)
-			return 0;
+			return -114;
 
 		udpLen = (uint16_t)(sizeof(UDPHeader) + msg->msg_iov[0].iov_len);
 		total_len = sizeof(IPv6Header) + udpLen;
@@ -263,8 +264,8 @@ int AuUDPSend(AuSocket* sock, msghdr* msg, int flags) {
 		UDPHeader* udp;
 
 		if (!nic) {
-			UARTDebugOut("[aurora]:UDP: Failed to route address \r\n");
-			return 0;
+			UARTDebugOut("[aurora]:UDP: ENETUNREACH (no FIB route)\r\n");
+			return -114; /* ENETUNREACH */
 		}
 		netdev = (AuNetworkDevice*)nic->device;
 		if (!netdev) {

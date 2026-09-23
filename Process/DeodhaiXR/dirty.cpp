@@ -28,6 +28,7 @@
 **/
 
 #include "dirty.h"
+#include "xr_present.h"
 #include <stdlib.h>
 #include <string.h>
 #include <_xeneva.h>
@@ -124,13 +125,44 @@ void AddDirtyClip(int x, int y, int w, int h) {
  * to dirty rect boundary
  * @param canvas -- pointer to canvas
  */
+/* DirtyFlushBounding -- one synchronous transfer+flush for the whole frame.
+ * Each 0x202 is a full virtqueue round-trip, so N rects meant N round-trips
+ * and the guest watched its own screen assemble piece by piece. Merging to
+ * one bounding box trades (sometimes more) bytes for exactly one round-trip
+ * per frame -- on TCG the latency win dominates. --axiss */
+static void DirtyFlushBounding(int display_id, const Rect* rects, uint32_t count) {
+	int64_t left = rects[0].x;
+	int64_t top = rects[0].y;
+	int64_t right = left + rects[0].w;
+	int64_t bottom = top + rects[0].h;
+	for (uint32_t i = 1; i < count; i++) {
+		int64_t r = (int64_t)rects[i].x + rects[i].w;
+		int64_t b = (int64_t)rects[i].y + rects[i].h;
+		if (rects[i].x < left)
+			left = rects[i].x;
+		if (rects[i].y < top)
+			top = rects[i].y;
+		if (r > right)
+			right = r;
+		if (b > bottom)
+			bottom = b;
+	}
+	ioctl.uint_1 = display_id;
+	ioctl.ushort_1 = (uint16_t)left;
+	ioctl.ushort_2 = (uint16_t)top;
+	ioctl.ulong_1 = (uint64_t)(right - left);
+	ioctl.ulong_2 = (uint64_t)(bottom - top);
+	_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+}
+
 void DirtyScreenUpdate(ChCanvas* canvas) {
 	int display_id = _get_gpu_display_id();
 	bool gpu_enabled = _is_gpu_enabled();
-	bool gpu_update = false;
-	bool framebuffer_update = false;
 
-	for (int i = 0; i < _dirty_count; i++) {
+	/* Clip everything to the canvas first, compacting valid rects down so
+	 * the present paths below only ever see drawable damage. */
+	uint32_t valid = 0;
+	for (uint32_t i = 0; i < _dirty_count; i++) {
 		int64_t left = dirtyRect[i].x;
 		int64_t top = dirtyRect[i].y;
 		int64_t right = left + dirtyRect[i].w;
@@ -139,35 +171,41 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 			left = 0;
 		if (top < 0)
 			top = 0;
-		if (right > canvas->canvasWidth)
+		if (right > (int64_t)canvas->canvasWidth)
 			right = canvas->canvasWidth;
-		if (bottom > canvas->canvasHeight)
+		if (bottom > (int64_t)canvas->canvasHeight)
 			bottom = canvas->canvasHeight;
 		if (right <= left || bottom <= top)
 			continue;
-		dirtyRect[i].x = (int)left;
-		dirtyRect[i].y = (int)top;
-		dirtyRect[i].w = (int)(right - left);
-		dirtyRect[i].h = (int)(bottom - top);
-
-		gpu_update = 1;
-		if (!gpu_enabled) {
-			ChCanvasScreenUpdate(
-				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
-			framebuffer_update = true;
-		}
-	}
-	if (framebuffer_update)
-		ChCanvasScreenCommit();
-	if (gpu_update && gpu_enabled) {
-		ioctl.uint_1 = display_id;
-		ioctl.ushort_1 = 0;
-		ioctl.ushort_2 = 0;
-		ioctl.ulong_1 = canvas->screenWidth;
-		ioctl.ulong_2 = canvas->screenHeight;
-		_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+		dirtyRect[valid].x = (int)left;
+		dirtyRect[valid].y = (int)top;
+		dirtyRect[valid].w = (int)(right - left);
+		dirtyRect[valid].h = (int)(bottom - top);
+		valid++;
 	}
 	_dirty_count = 0;
+	if (valid == 0)
+		return;
+
+	if (XrPresentEnabled()) {
+		/* xrEndFrame copied the full-resolution flat canvas into the scanout;
+		 * its damage rectangles remain in source/output coordinates. --axiss */
+		if (gpu_enabled)
+			DirtyFlushBounding(display_id, dirtyRect, valid);
+		return;
+	}
+
+	if (!gpu_enabled) {
+		/* Plain RAM copies are cheap; keep per-rect updates and the single
+		 * commit barrier at the presentation boundary. */
+		for (uint32_t i = 0; i < valid; i++)
+			ChCanvasScreenUpdate(
+				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+		ChCanvasScreenCommit();
+		return;
+	}
+
+	DirtyFlushBounding(display_id, dirtyRect, valid);
 }
 
 /*
@@ -175,4 +213,11 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
  */
 uint32_t GetDirtyRectCount() {
 	return _dirty_count;
+}
+
+bool GetDirtyRect(uint32_t index, Rect* rect) {
+	if (!rect || index >= _dirty_count)
+		return false;
+	*rect = dirtyRect[index];
+	return true;
 }

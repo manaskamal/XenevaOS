@@ -35,9 +35,11 @@
 #include <Net/ipv6.h>
 #include <Net/udp.h>
 #include <Net/aunet.h>
+#include <Net/route.h>
 #include <Net/ethernet.h>
 #include <Net/ndp.h>
 #include <Net/packet.h>
+#include <Net/netfilter.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
@@ -108,11 +110,43 @@ uint16_t IPv6PseudoChecksum(const ip6_addr* src, const ip6_addr* dst,
 
 void IPv6HandlePacket(void* data, AuVFSNode* nic) {
 	IPv6Header* pack = (IPv6Header*)data;
+	AuPacket pkt;
+	int local;
 
 	if (!pack || !nic)
 		return;
 	if (IPv6GetVersion(pack) != 6)
 		return;
+
+	memset(&pkt, 0, sizeof(pkt));
+	pkt.data = pack;
+	pkt.len = (uint16_t)(sizeof(IPv6Header) + ntohs(pack->payloadLen));
+	pkt.l3_off = 0;
+	pkt.l4_off = (uint16_t)sizeof(IPv6Header);
+	pkt.proto = pack->nextHeader;
+	pkt.origin = AuPacketGetOrigin();
+	pkt.in_dev = nic;
+	pkt.verdict = NF_ACCEPT;
+	local = AuAddrIsLocal6(&pack->destIP) || ip6_is_multicast(&pack->destIP);
+	{
+		AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
+		if (ndev && !ip6_addr_is_zero(&ndev->ipv6addr) &&
+			ip6_addr_equal(&pack->destIP, &ndev->ipv6addr))
+			local = 1;
+	}
+
+	if (AuPacketGetOrigin() != AU_PKT_ORIGIN_LOCAL) {
+		if (AuNetfilterHook(NF_PRE_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
+	if (local) {
+		if (AuNetfilterHook(NF_LOCAL_IN, &pkt) == NF_DROP)
+			return;
+	} else {
+		if (AuNetfilterHook(NF_FORWARD, &pkt) == NF_DROP)
+			return;
+		return;
+	}
 
 	switch (pack->nextHeader) {
 	case IPV6_NEXT_ICMPV6:
@@ -151,7 +185,7 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	AuVFSNode* deliver;
 	ip6_addr next_hop;
 	AuNDCache* cache;
-	uint8_t broadcast_addr[6];
+	uint8_t mcast_mac[6];
 	size_t totalLen;
 
 	if (!packet || !nic)
@@ -159,6 +193,28 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	ndev = (AuNetworkDevice*)nic->device;
 	if (!ndev)
 		return;
+
+	{
+		AuPacket pkt;
+		AuVFSNode* out = nic;
+
+		if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal6(&packet->destIP)) {
+			out = AuGetNetworkAdapter("lo");
+			if (!out)
+				out = nic;
+		}
+		memset(&pkt, 0, sizeof(pkt));
+		pkt.data = packet;
+		pkt.len = (uint16_t)(sizeof(IPv6Header) + ntohs(packet->payloadLen));
+		pkt.l4_off = (uint16_t)sizeof(IPv6Header);
+		pkt.proto = packet->nextHeader;
+		pkt.out_dev = out;
+		pkt.verdict = NF_ACCEPT;
+		if (AuNetfilterHook(NF_LOCAL_OUT, &pkt) == NF_DROP)
+			return;
+		if (AuNetfilterHook(NF_POST_ROUTING, &pkt) == NF_DROP)
+			return;
+	}
 
 	/* Loopback / local delivery: reinject at IP (never AuEthernetSend). */
 	if (ndev->type == NETDEV_TYPE_LOOPBACK || AuAddrIsLocal6(&packet->destIP)) {
@@ -175,42 +231,33 @@ void IPV6SendPacket(IPv6Header* packet, AuVFSNode* nic) {
 	ip6_addr_copy(&next_hop, &packet->destIP);
 
 	if (ndev->type == NETDEV_TYPE_ETHERNET) {
+		AuRouteResult6 rr6;
+
 		cache = NULL;
 		if (ip6_is_linklocal(&packet->destIP) || ip6_is_multicast(&packet->destIP)) {
 			/* on-link */
-		} else if (ndev->ipv6prefixLen == 0 ||
-			!ip6_prefix_equal(&packet->destIP, &ndev->ipv6addr, ndev->ipv6prefixLen)) {
-			if (!ip6_addr_is_zero(&ndev->ipv6gateway))
-				ip6_addr_copy(&next_hop, &ndev->ipv6gateway);
+		} else if (AuRouteLookup6(&packet->destIP, &rr6) == 0 &&
+			(rr6.flags & RTF_GATEWAY) && !ip6_addr_is_zero(&rr6.nexthop)) {
+			ip6_addr_copy(&next_hop, &rr6.nexthop);
 		}
 
 		if (ip6_is_multicast(&next_hop)) {
 			/* Map IPv6 multicast to Ethernet MAC 33:33:xx:xx:xx:xx */
-			broadcast_addr[0] = 0x33;
-			broadcast_addr[1] = 0x33;
-			broadcast_addr[2] = next_hop.s6_addr[12];
-			broadcast_addr[3] = next_hop.s6_addr[13];
-			broadcast_addr[4] = next_hop.s6_addr[14];
-			broadcast_addr[5] = next_hop.s6_addr[15];
+			mcast_mac[0] = 0x33;
+			mcast_mac[1] = 0x33;
+			mcast_mac[2] = next_hop.s6_addr[12];
+			mcast_mac[3] = next_hop.s6_addr[13];
+			mcast_mac[4] = next_hop.s6_addr[14];
+			mcast_mac[5] = next_hop.s6_addr[15];
 			totalLen = sizeof(IPv6Header) + ntohs(packet->payloadLen);
-			AuEthernetSend(nic, packet, totalLen, ETHERNET_TYPE_IPV6, broadcast_addr);
+			AuEthernetSend(nic, packet, totalLen, ETHERNET_TYPE_IPV6, mcast_mac);
 			return;
 		}
 
-		cache = AuNDGet(&next_hop);
-		if (!cache) {
-			/*
-			 * Fire NS but do not block the sender (ARP-style sleep inflated
-			 * ping RTT by ~100ms+). Retry cache once; else broadcast MAC —
-			 * QEMU/user-net still delivers; NA will fill the cache for later.
-			 */
-			AuNDRequestMAC(nic, &next_hop);
-			cache = AuNDGet(&next_hop);
-		}
-
-		memset(broadcast_addr, 0xFF, 6);
+		cache = AuNDResolve(nic, &next_hop);
+		if (!cache)
+			return;
 		totalLen = sizeof(IPv6Header) + ntohs(packet->payloadLen);
-		AuEthernetSend(nic, packet, totalLen, ETHERNET_TYPE_IPV6,
-			cache ? cache->hw_address : broadcast_addr);
+		AuEthernetSend(nic, packet, totalLen, ETHERNET_TYPE_IPV6, cache->hw_address);
 	}
 }

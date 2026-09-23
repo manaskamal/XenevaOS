@@ -34,11 +34,8 @@
 #if defined(ARCH_ARM64)
 #include <arm_neon.h>
 #endif
-#include <math.h>
 #include "window.h"
 #include <stdlib.h>
-
-static const uint8_t alpha_shuffle[16] = {3, 3, 3, 3, 7, 7, 7, 7, 11, 11, 11, 11, 15, 15, 15, 15};
 
 void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 #if defined(ARCH_ARM64)
@@ -120,6 +117,14 @@ void __pixel_blend_neon(uint32_t* dst, const uint32_t* src, int width) {
 
 #define GLASS_BLUR_RADIUS 6
 
+static int clamp_coord(int value, int lo, int hi) {
+	if (value < lo)
+		return lo;
+	if (value > hi)
+		return hi;
+	return value;
+}
+
 static void __blur_pass_horizontal(uint32_t* tmp,
 								   const uint32_t* src,
 								   int src_w,
@@ -129,41 +134,49 @@ static void __blur_pass_horizontal(uint32_t* tmp,
 								   int rw,
 								   int r_h,
 								   int radius) {
+	int x_max = src_w > 0 ? src_w - 1 : 0;
+	int y_max = src_h > 0 ? src_h - 1 : 0;
+	int diameter = 2 * radius + 1;
+
 	for (int row = 0; row < r_h; row++) {
-		uint16_t sum_r = 0, sum_g = 0, sum_b = 0;
-		int diameter = 2 * radius + 1;
+		/* Channel deltas must stay signed. Unsigned 8-bit extraction wraps a
+		 * darker incoming pixel through 0 and lands in the green channel. --axiss */
+		int32_t sum_r = 0, sum_g = 0, sum_b = 0;
+		int sy = clamp_coord(ry + row, 0, y_max);
 
 		for (int k = -radius; k <= radius; k++) {
-			int sx = rx + k;
-			if (sx < 0)
-				sx = 0;
-			if (sx >= src_w)
-				sx = src_w - 1;
-			uint32_t px = src[(ry + row) * src_w + sx];
-			sum_r += (px >> 16) & 0xFF;
-			sum_g += (px >> 8) & 0xFF;
-			sum_b += (px >> 0) & 0xFF;
+			int sx = clamp_coord(rx + k, 0, x_max);
+			uint32_t px = src[sy * src_w + sx];
+			sum_r += (int32_t)((px >> 16) & 0xFF);
+			sum_g += (int32_t)((px >> 8) & 0xFF);
+			sum_b += (int32_t)((px >> 0) & 0xFF);
 		}
 		for (int col = 0; col < rw; col++) {
-			tmp[row * rw + col] = (0xFFu << 24) | ((uint32_t)(sum_r / diameter) << 16) |
-								  ((uint32_t)(sum_g / diameter) << 8) |
-								  (uint32_t)(sum_b / diameter);
+			int32_t ar = sum_r / diameter;
+			int32_t ag = sum_g / diameter;
+			int32_t ab = sum_b / diameter;
+			if (ar < 0)
+				ar = 0;
+			if (ag < 0)
+				ag = 0;
+			if (ab < 0)
+				ab = 0;
+			if (ar > 255)
+				ar = 255;
+			if (ag > 255)
+				ag = 255;
+			if (ab > 255)
+				ab = 255;
+			tmp[row * rw + col] =
+				(0xFFu << 24) | ((uint32_t)ar << 16) | ((uint32_t)ag << 8) | (uint32_t)ab;
 
-			int remove_x = rx + col - radius;
-			int add_x = rx + col + radius + 1;
-			if (remove_x < 0)
-				remove_x = 0;
-			if (remove_x >= src_w)
-				remove_x = src_w - 1;
-			if (add_x < 0)
-				add_x = 0;
-			if (add_x >= src_w)
-				add_x = src_w - 1;
-			uint32_t rem = src[(ry + row) * src_w + remove_x];
-			uint32_t add = src[(ry + row) * src_w + add_x];
-			sum_r += ((add >> 16) & 0xFF) - ((rem >> 16) & 0xFF);
-			sum_g += ((add >> 8) & 0xFF) - ((rem >> 8) & 0xFF);
-			sum_b += ((add >> 0) & 0xFF) - ((rem >> 0) & 0xFF);
+			int remove_x = clamp_coord(rx + col - radius, 0, x_max);
+			int add_x = clamp_coord(rx + col + radius + 1, 0, x_max);
+			uint32_t rem = src[sy * src_w + remove_x];
+			uint32_t add = src[sy * src_w + add_x];
+			sum_r += (int32_t)((add >> 16) & 0xFF) - (int32_t)((rem >> 16) & 0xFF);
+			sum_g += (int32_t)((add >> 8) & 0xFF) - (int32_t)((rem >> 8) & 0xFF);
+			sum_b += (int32_t)((add >> 0) & 0xFF) - (int32_t)((rem >> 0) & 0xFF);
 		}
 	}
 }
@@ -173,7 +186,7 @@ blur_pass_vertical_neon(uint32_t* out, const uint32_t* tmp, int rw, int rh, int 
 	int diameter = 2 * radius + 1;
 
 	for (int col = 0; col < rw; col++) {
-		uint16_t sum_r = 0, sum_g = 0, sum_b = 0;
+		int32_t sum_r = 0, sum_g = 0, sum_b = 0;
 
 		for (int k = -radius; k <= radius; k++) {
 			int sr = k;
@@ -188,9 +201,23 @@ blur_pass_vertical_neon(uint32_t* out, const uint32_t* tmp, int rw, int rh, int 
 		}
 
 		for (int row = 0; row < rh; row++) {
-			out[row * rw + col] = (0xFFu << 24) | ((uint32_t)(sum_r / diameter) << 16) |
-								  ((uint32_t)(sum_g / diameter) << 8) |
-								  (uint32_t)(sum_b / diameter);
+			int32_t ar = sum_r / diameter;
+			int32_t ag = sum_g / diameter;
+			int32_t ab = sum_b / diameter;
+			if (ar < 0)
+				ar = 0;
+			if (ag < 0)
+				ag = 0;
+			if (ab < 0)
+				ab = 0;
+			if (ar > 255)
+				ar = 255;
+			if (ag > 255)
+				ag = 255;
+			if (ab > 255)
+				ab = 255;
+			out[row * rw + col] =
+				(0xFFu << 24) | ((uint32_t)ar << 16) | ((uint32_t)ag << 8) | (uint32_t)ab;
 
 			int remove_y = row - radius;
 			int add_y = row + radius + 1;
@@ -205,9 +232,9 @@ blur_pass_vertical_neon(uint32_t* out, const uint32_t* tmp, int rw, int rh, int 
 
 			uint32_t rem = tmp[remove_y * rw + col];
 			uint32_t add = tmp[add_y * rw + col];
-			sum_r += ((add >> 16) & 0xFF) - ((rem >> 16) & 0xFF);
-			sum_g += ((add >> 8) & 0xFF) - ((rem >> 8) & 0xFF);
-			sum_b += ((add >> 0) & 0xFF) - ((rem >> 0) & 0xFF);
+			sum_r += (int32_t)((add >> 16) & 0xFF) - (int32_t)((rem >> 16) & 0xFF);
+			sum_g += (int32_t)((add >> 8) & 0xFF) - (int32_t)((rem >> 8) & 0xFF);
+			sum_b += (int32_t)((add >> 0) & 0xFF) - (int32_t)((rem >> 0) & 0xFF);
 		}
 	}
 }
@@ -222,61 +249,104 @@ void glass_precompute_blur(uint32_t* out_blur,
 						   int rw,
 						   int rh,
 						   int radius) {
+	if (!out_blur || !tmp || !canvas || canvas_w <= 0 || canvas_h <= 0 || rw <= 0 || rh <= 0)
+		return;
+	if (radius < 0)
+		radius = 0;
 	__blur_pass_horizontal(tmp, canvas, canvas_w, canvas_h, rx, ry, rw, rh, radius);
 	blur_pass_vertical_neon(out_blur, tmp, rw, rh, radius);
+}
+
+void glass_invalidate(Window* win) {
+	if (win)
+		win->glassBlurValid = false;
+}
+
+void glass_prepare_window(Window* win,
+						  WinSharedInfo* info,
+						  const uint32_t* back_surface,
+						  int canvas_w,
+						  int canvas_h) {
+	if (!win || !info || !back_surface)
+		return;
+	if (!(win->flags & WINDOW_FLAG_GLASS) || !win->glassBlur || !win->glassTmp)
+		return;
+	if (info->width <= 0 || info->height <= 0)
+		return;
+	if (win->glassBlurValid && win->glassBlurX == info->x && win->glassBlurY == info->y &&
+		win->glassBlurW == info->width && win->glassBlurH == info->height)
+		return;
+
+	/* Blur the wallpaper behind the whole window once, stored at window
+	 * stride. Dirty and clipped compose then index this buffer with
+	 * window-local coordinates instead of re-blurring each fragment. --axiss */
+	glass_precompute_blur(win->glassBlur,
+						  win->glassTmp,
+						  back_surface,
+						  canvas_w,
+						  canvas_h,
+						  info->x,
+						  info->y,
+						  info->width,
+						  info->height,
+						  4);
+	win->glassBlurValid = true;
+	win->glassBlurX = info->x;
+	win->glassBlurY = info->y;
+	win->glassBlurW = info->width;
+	win->glassBlurH = info->height;
 }
 
 void _blend_scanline_glass_neon(uint32_t* canvas_row,
 								const uint32_t* win_row,
 								const uint32_t* blur_row,
 								int width) {
-#if defined(ARCH_ARM64)
-	uint8x16_t shuf = vld1q_u8(alpha_shuffle);
 	int x = 0;
-
+#if defined(ARCH_ARM64)
 	for (; x <= width - 4; x += 4) {
-		uint8x16_t s = vld1q_u8((const uint8_t*)(win_row + x));
-		uint8x16_t b = vld1q_u8((const uint8_t*)(blur_row + x));
-		uint8x16_t d = vld1q_u8((const uint8_t*)(canvas_row + x));
-
-		uint8x16_t sa = vqtbl1q_u8(s, shuf);
-		uint8x16_t inv = vsubq_u8(vdupq_n_u8(255), sa);
-
-		uint16x8_t lo =
-			vmlal_u8(vmull_u8(vget_low_u8(s), vget_low_u8(sa)), vget_low_u8(b), vget_low_u8(inv));
-		uint16x8_t hi = vmlal_u8(
-			vmull_u8(vget_high_u8(s), vget_high_u8(sa)), vget_high_u8(b), vget_high_u8(inv));
-
-		uint8x16_t blended = vcombine_u8(vshrn_n_u16(lo, 8), vshrn_n_u16(hi, 8));
-
-		uint8x16_t zero = vdupq_n_u8(0);
-		uint8x16_t is_zero = vceqq_u8(sa, zero);
-		uint8x16_t is_nonzero = vmvnq_u8(is_zero);
-
-		uint8x16_t result = vorrq_u8(vandq_u8(blended, is_nonzero), vandq_u8(d, is_zero));
-		vst1q_u8((uint8_t*)(canvas_row + x), result);
+		uint32x4_t src4 = vld1q_u32(win_row + x);
+		uint32x4_t alpha = vshrq_n_u32(src4, 24);
+		uint64x2_t opaque_pairs = vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(255)));
+		if (vgetq_lane_u64(opaque_pairs, 0) == UINT64_MAX &&
+			vgetq_lane_u64(opaque_pairs, 1) == UINT64_MAX) {
+			vst1q_u32(canvas_row + x, src4);
+			continue;
+		}
+		for (int i = 0; i < 4; i++) {
+			uint32_t sp = win_row[x + i];
+			uint32_t bp = blur_row[x + i];
+			uint8_t sa = (uint8_t)(sp >> 24);
+			if (sa == 255) {
+				canvas_row[x + i] = sp;
+			} else if (sa == 0) {
+				canvas_row[x + i] = bp;
+			} else {
+				uint32_t inv = 255 - sa;
+				uint8_t r =
+					(uint8_t)(((sp >> 16 & 0xFF) * sa + (bp >> 16 & 0xFF) * inv) >> 8);
+				uint8_t g =
+					(uint8_t)(((sp >> 8 & 0xFF) * sa + (bp >> 8 & 0xFF) * inv) >> 8);
+				uint8_t b =
+					(uint8_t)(((sp >> 0 & 0xFF) * sa + (bp >> 0 & 0xFF) * inv) >> 8);
+				canvas_row[x + i] = (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+			}
+		}
 	}
-
-	/** scalar tail */
-	for (; x < width; x++) {
-#else
-	for (int x = 0; x < width; x++) {
 #endif
+	for (; x < width; x++) {
 		uint32_t sp = win_row[x];
 		uint32_t bp = blur_row[x];
 		uint8_t sa = (uint8_t)(sp >> 24);
-
 		if (sa == 255) {
 			canvas_row[x] = sp;
 		} else if (sa == 0) {
 			canvas_row[x] = bp;
 		} else {
 			uint32_t inv = 255 - sa;
-			uint8_t a = (uint8_t)(((sp >> 24 & 0xFF) * sa + (bp >> 24 & 0xFF) * inv) >> 8);
 			uint8_t r = (uint8_t)(((sp >> 16 & 0xFF) * sa + (bp >> 16 & 0xFF) * inv) >> 8);
 			uint8_t g = (uint8_t)(((sp >> 8 & 0xFF) * sa + (bp >> 8 & 0xFF) * inv) >> 8);
 			uint8_t b = (uint8_t)(((sp >> 0 & 0xFF) * sa + (bp >> 0 & 0xFF) * inv) >> 8);
-			canvas_row[x] = ((uint32_t)a << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+			canvas_row[x] = (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 		}
 	}
 }
@@ -428,69 +498,4 @@ void _shadow_compose_neon(uint32_t* canv,
 			dst[x] = (0xFFu << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 		}
 	}
-}
-
-#define CORNER_RADIUS 12
-
-void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int winh) {
-	int w = winw;
-	int h = winh;
-	uint8_t* mask = (uint8_t*)malloc(radius * radius);
-
-	for (int y = 0; y < radius; y++) {
-		for (int x = 0; x < radius; x++) {
-			float dx = (float)(radius - 1 - x);
-			float dy = (float)(radius - 1 - y);
-			float dist = sqrtf(dx * dx + dy * dy) - (float)(radius - 1);
-
-			float a = 1.0f - fmaxf(0.0f, fminf(1.0f, dist + 0.5f));
-			mask[y * radius + x] = (uint8_t)(a * 255.0f);
-		}
-	}
-
-	for (int y = 0; y < radius; y++) {
-		uint32_t* top_row = backbuff + y * w;
-		uint32_t* bot_row = backbuff + (h - 1 - y) * w;
-
-		for (int x = 0; x < radius; x++) {
-			uint8_t ma = mask[y * radius + x];
-
-			//top left
-			uint32_t* p = &top_row[x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			else
-				*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//top right
-			p = &top_row[w - 1 - x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//bottom left
-			p = &bot_row[x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00FFFFFF) | 0xFF000000;
-			else
-				*p = (*p & 0x00FFFFFF) | ((uint32_t)ma << 24);
-
-			//bottom right
-			p = &bot_row[w - 1 - x];
-			if (ma == 0)
-				*p = 0x00000000;
-			else if (ma == 255)
-				*p = (*p & 0x00ffffff) | 0xff000000;
-			else
-				*p = (*p & 0x00ffffff) | ((uint32_t)ma << 24);
-		}
-	}
-
-	free(mask);
 }

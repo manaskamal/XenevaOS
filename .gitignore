@@ -48,7 +48,8 @@ dump.s
 Process/**/*.elf
 Process/**/*.exe
 Libs/**/*.a
-
+dump.bin
+dump2.bin
 # Exclude compiled user-space applications
 Resources/resources/*.exe
 Resources/resources/ARCH_ARM64/*.exe
@@ -61,3 +62,9 @@ compile_commands.json
 
 # Personal notes / drafts, not meant for the repo
 notes/
+session-*.md
+
+# Downloaded Android SDK tools; use Tools/quest-adb.sh to install locally
+Tools/platform-tools/
+*.dll
+*.map

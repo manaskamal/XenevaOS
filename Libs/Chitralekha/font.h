@@ -55,6 +55,10 @@ XE_EXTERN{
 
 #ifndef _USE_FREETYPE
 #define CH_FONT_GLYPH_CACHE_SIZE 256
+#define CH_FONT_ATLAS_FIRST		 32
+#define CH_FONT_ATLAS_COUNT		 95
+#define CH_FONT_ATLAS_W			 512
+#define CH_FONT_ATLAS_H			 512
 
 	/* caching the rasterized glyph + metrics here so we're not
 	 * re-rasterizing the same char every repaint, thats wasteful as hell --axiss */
@@ -98,6 +102,11 @@ XE_EXTERN{
 		int stbDescent;
 		int stbLineGap;
 		ChFontGlyphCacheEntry glyphCache[CH_FONT_GLYPH_CACHE_SIZE];
+		uint8_t* atlasPixels;
+		int atlasW;
+		int atlasH;
+		int atlasReady;
+		stbtt_bakedchar atlasChars[CH_FONT_ATLAS_COUNT];
 #endif
 	}ChFont;
 
