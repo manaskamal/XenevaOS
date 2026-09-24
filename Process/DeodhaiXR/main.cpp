@@ -255,8 +255,8 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  * fully jpeg encoder is needed, i use synfig studio
  * for jpeg encoder
  */
-void DrawWallpaper(ChCanvas* canv, char* filename) {
-	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+void DrawWallpaper(ChCanvas* canv, const char* filename) {
+	int image = _KeOpenFile((char*)filename, FILE_OPEN_READ_ONLY);
 	if (image < 0) {
 		/* Missing wallpaper (e.g. res-specific jpg not in initrd): keep the
 		 * back surface as-is instead of hanging in the decoder --axiss */
@@ -1080,7 +1080,7 @@ int main(int argc, char* argv[]) {
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	{
-		char* wall = "/XE1_2.jpg";
+		const char* wall = "/XE1_2.jpg";
 		if (screen_w == 1920 && screen_h == 1080)
 			wall = "/XEArch.jpg";
 		else if (screen_w == 480 && screen_h == 320)
@@ -1092,7 +1092,7 @@ int main(int argc, char* argv[]) {
 		/* Res-specific jpgs may not ship in initrd; fall back to the one
 		 * guaranteed wallpaper instead of drawing gray --axiss */
 		{
-			int probe = _KeOpenFile(wall, FILE_OPEN_READ_ONLY);
+			int probe = _KeOpenFile((char*)wall, FILE_OPEN_READ_ONLY);
 			if (probe < 0)
 				wall = "/XE1_2.jpg";
 			else
@@ -1115,7 +1115,8 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("Canvas updated \r\n");
 
-	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	char gpu_path[] = "/dev/virtiogpu";
+	gpu_fd = _KeOpenFile(gpu_path, FILE_OPEN_READ_ONLY);
 
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;

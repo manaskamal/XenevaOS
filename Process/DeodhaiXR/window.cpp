@@ -134,6 +134,13 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	shwin->alpha = false;
 	shwin->dirty = false;
 	shwin->windowReady = false;
+	/* Shared segments come from recycled physical pages (AuCreateSHM does
+	 * not zero them). Every flag must be initialised here, otherwise a new
+	 * window inherits the previous owner's state -- e.g. zoomed=true from
+	 * a maximised window makes the next window open fullscreen. */
+	shwin->updateEntireWindow = false;
+	shwin->hide = false;
+	shwin->alphaValue = 1.0;
 	shwin->zoomed = false;
 	win->handle = DeodhaiAllocateNewHandle();
 	if (flags & WINDOW_FLAG_GLASS) {

@@ -30,4 +30,8 @@
 {[Title]Doom II|
 [Icon]/icons/snake.bmp|
 [Param]|
-[App]/doom.exe>
+[App]/doom.exe}
+{[Title]NetSurf|
+[Icon]/icons/doc.bmp|
+[Param]|
+[App]/netsurf.exe>

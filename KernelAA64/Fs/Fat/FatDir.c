@@ -195,7 +195,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 		}
 
 		parent_clust = FatReadFAT(fsys, parent_clust);
-		if (parent_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
+		if (FAT_IS_EOC(parent_clust))
 			break;
 	}
 
@@ -247,7 +247,7 @@ int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
 		}
 
 		dir_clust = FatReadFAT(fsys, dir_clust);
-		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
+		if (FAT_IS_EOC(dir_clust))
 			break;
 	}
 

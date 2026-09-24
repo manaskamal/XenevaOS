@@ -35,13 +35,14 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher)
     else
         echo "[llvm] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
             ../../Resources/resources/route.exe ../../Resources/resources/iptable.exe \
             ../../Resources/resources/netmngr.exe ../../Resources/resources/dig.exe \
-            ../../Resources/resources/nslook.exe
+            ../../Resources/resources/nslook.exe ../../Resources/resources/telnet.exe \
+            ../../Resources/resources/finger.exe ../../Resources/resources/gopher.exe
     fi
     for app in "${APPS[@]}"; do
         ( cd "../../Process/$app" && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" DIRECT_SCANOUT="${DIRECT_SCANOUT:-0}" OPENXR="${OPENXR:-0}" llvm )
@@ -71,6 +72,9 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
         cp -f ../../Process/dig/dig.exe               ../../Resources/resources/
         cp -f ../../Process/nslook/nslook.exe         ../../Resources/resources/
+        cp -f ../../Process/Telnet/telnet.exe         ../../Resources/resources/
+        cp -f ../../Process/Finger/finger.exe         ../../Resources/resources/
+        cp -f ../../Process/Gopher/gopher.exe         ../../Resources/resources/
     fi
 fi
 
