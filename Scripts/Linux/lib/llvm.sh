@@ -26,7 +26,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # removed component is never built, deployed, or packed. --axiss
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
-        Calender Calculator Files Control XEShell
+        Calender Calculator Files Control XEShell btctl
     )
     if [ "${NO_AUDIO:-0}" -eq 0 ]; then
         APPS+=(DeodhaiAudio AudioPlayer)
@@ -59,6 +59,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/Files/file.exe            ../../Resources/resources/
     cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
+    cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
     if [ "${NO_AUDIO:-0}" -eq 0 ]; then
         cp -f ../../Process/DeodhaiAudio/deoaud.exe   ../../Resources/resources/
         cp -f ../../Process/AudioPlayer/audplr.exe    ../../Resources/resources/
