@@ -45,6 +45,7 @@
 #define AURORA_MAX_SOUND_CARDS 256
 
 AuSound* _cards[AURORA_MAX_SOUND_CARDS];
+int au_sound_last_id = -1;
 
 static AuDSP* dsp_first;
 static AuDSP* dsp_last;
@@ -298,5 +299,6 @@ int AuSoundRegisterCard(AuSound* snd) {
 		return 1;
 	}
 	_cards[index] = snd;
+	au_sound_last_id = index;
 	return 0;
 }

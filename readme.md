@@ -19,8 +19,6 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 - x64 and arm64 Kernel
 - Fully Higher Half Memory with MMIO mappings
 - Driver _loading and linking_ through dll files
-- SSE/SSE3
-- USB3
 - Intel High Definition Audio
 - Multiprocessor support (multiprocessor scheduler not ready!!)
 - Application loader and dynamic library (shared library)
@@ -33,10 +31,15 @@ XenevaOS is an open-source project that welcomes contributions from developers, 
 - USB3 Class drivers (USB HID Mouse, USB Tablet, USB MSC driver) ..etc
 - Audio Server called "Deodhai-Audio" with 
     (44kHz/16bit audio format, stereo/mono panning, gain control)
-- Networking (IPv4, UDP/IP, TCP/IP, ICMP)
+- Networking (IPv4/6, UDP/IP, TCP/IP, ICMP, NDP, Routing)
+- Bluetooth Stack with Bluetooth HCI UART
 - DWC2 otg driver as usb controller 
 - Virtio drivers
 - Upcoming RISC-V implementation
+- Networking tools (Telnet/dig/nslook/ping/curl/Gopher/iptables)
+- Netsurf (work in progress)
+- Games (Doom II, Knplay with pacman,flappy bird, etc)
+
 
 ## __ARCH Specific Board Support__ :
 - iMX8MP SoC based (__Toradex Verdin Dahlia SoM__) [work in progress]

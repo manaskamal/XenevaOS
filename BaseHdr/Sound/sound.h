@@ -110,6 +110,11 @@ AU_EXTERN AU_EXPORT void AuSoundRemoveDSP(uint16_t id);
  */
 AU_EXTERN AU_EXPORT int AuSoundRegisterCard(AuSound* snd);
 
+/**
+ * @brief au_sound_last_id -- card index assigned by last AuSoundRegisterCard call
+ */
+extern int au_sound_last_id;
+
 /*
 * AuSoundStart -- Starts the Sound card
 */
