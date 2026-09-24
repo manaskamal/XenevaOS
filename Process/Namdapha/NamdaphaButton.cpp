@@ -124,19 +124,29 @@ void NmButtonMouseEvent(NamdaphaButton* wid, ChWindow* win, int x, int y, int bu
 }
 
 void NmButtonDefaultPaint(NamdaphaButton* button, ChWindow* win) {
-	//if (button->focused){
-	//	ChColorDrawHorizontalGradient(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_FOCUSED_BUTTON_DARK, NAMDAPHA_FOCUSED_BUTTON_LIGHT);
-	//}
-	//else{
-	//	uint32_t color = NAMDAPHA_COLOR;
-	//	if (button->hover) {
-	//		ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR_LIGHT);
-	//	}
-	//	else{
-	//		ChColorDrawHorizontalGradient(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR, NAMDAPHA_COLOR_LIGHT);
-	//		//ChDrawRect(win->canv, button->x, button->y, button->w, button->h, BLACK);
-	//	}
-	//}
+	if (button->focused) {
+		ChColorDrawHorizontalGradient(win->canv,
+									  button->x,
+									  button->y,
+									  button->w,
+									  button->h,
+									  NAMDAPHA_COLOR,
+									  NAMDAPHA_COLOR_LIGHT);
+	} else {
+		uint32_t color = NAMDAPHA_COLOR;
+		if (button->hover) {
+			ChDrawRect(win->canv, button->x, button->y, button->w, button->h, NAMDAPHA_COLOR_LIGHT);
+		} /**else {
+			ChColorDrawHorizontalGradient(win->canv,
+										  button->x,
+										  button->y,
+										  button->w,
+										  button->h,
+										  NAMDAPHA_COLOR,
+										  NAMDAPHA_COLOR_LIGHT);
+			//		//ChDrawRect(win->canv, button->x, button->y, button->w, button->h, BLACK);
+		}**/
+	}
 	if (button->nmbuttoninfo) {
 		NmButtonInfoDrawIcon(button->nmbuttoninfo,
 							 win->canv,

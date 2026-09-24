@@ -145,6 +145,17 @@ void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl* ctl) {
 	ChWindowCloseWindow(win);
 }
 
+void ChGlobalMaximAction(ChWindow* win, ChWinGlobalControl* ctl){
+	if (win->info->zoomed == false)
+	  win->info->zoomed = true;
+	else
+	  win->info->zoomed = false;
+
+	/* just give the compositor a space to do the things */
+	_KeProcessSleep(10);
+
+}
+
 void ChGlobalMinimiseAction(ChWindow* win, ChWinGlobalControl* ctl) {
 	ChWindowHide(win);
 }
@@ -190,6 +201,7 @@ ChCreateWindow(ChitralekhaApp* app, uint16_t attrib, char* title, int x, int y, 
 	win->info->rect_count = 0;
 	win->info->updateEntireWindow = 0;
 	win->info->hide = 0;
+	win->info->zoomed = 0;
 	win->focused = true;
 	win->color = WINDOW_DEFAULT_BACKGROUND;
 	win->GlobalControls = initialize_list();
@@ -222,6 +234,7 @@ ChCreateWindow(ChitralekhaApp* app, uint16_t attrib, char* title, int x, int y, 
 	maxim->hoverOutlineColor = 0xFFAFA3A3;
 	maxim->clickedOutlineColor = 0xFF444444;
 	maxim->ChGlobalMouseEvent = ChGlobalCtlMouseHandler;
+	maxim->ChGlobalActionEvent = ChGlobalMaximAction;
 
 	ChWinGlobalControl* minim = ChCreateGlobalButton(win,
 													 win->info->width - 25 - 20 * 2,

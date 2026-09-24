@@ -249,7 +249,7 @@ void NamdaphaHandleMessage(PostEvent* e) {
 		/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT: {
 		int code = e->dword;
-		if (code == DEODHAI_FORCE_OPEN_LAUNCHER){
+		if (code == DEODHAI_FORCE_OPEN_LAUNCHER) {
 			_KePrint("Namdapha: force launcher open received \r\n");
 			NamdaphaHideWindow(gobutton);
 		}
@@ -332,17 +332,13 @@ void NamdaphaHandleMessage(PostEvent* e) {
 		break;
 	}
 	case DEODHAI_BROADCAST_FOCUS_CHANGED: {
-		//goto skip2;
-		//									  for (int i = 0; i < button_list->pointer; i++) {
-		//										  NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-		//										  nb->focused = false;
-		//										  if (nb->ownerId == e->dword) {
-		//											  nb->focused = true;
-		//										  }
-		//									  }
-
-		//									 //
-		//								  skip2:
+		for (int i = 0; i < button_list->pointer; i++) {
+			NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+			nb->focused = false;
+			if (nb->ownerId == e->dword) {
+				nb->focused = true;
+			}
+		}
 		NamdaphaPaint(win);
 		memset(e, 0, sizeof(PostEvent));
 		_KeProcessSleep(10);
@@ -350,50 +346,68 @@ void NamdaphaHandleMessage(PostEvent* e) {
 	}
 
 	case DEODHAI_BROADCAST_WINDESTROYED: {
-		//int ownerId = e->dword;
-		//int handle = e->dword2;
-		//NamdaphaButton* destroyable = NULL;
-		//int index = 0;
-		//for (int i = 0; i < button_list->pointer; i++) {
-		// NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-		// if (nb->ownerId == ownerId) {
-		//	 destroyable = nb;
-		//	 list_remove(button_list, i);
-		//	 index = i;
-		//	 /* if this index is the last of the list */
-		//	 if (index == button_list->pointer)
-		//		 nbutton_y_loc = nb->y;
-		//
-		//	 break;
-		// }
-		//}
+		_KePrint("Namdapha; windestroy message received \r\n");
+		int ownerId = e->dword;
+		int handle = e->dword2;
+		NamdaphaButton* destroyable = NULL;
+		int index = 0;
+		for (int i = 0; i < button_list->pointer; i++) {
+			NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+			if (nb->ownerId == ownerId) {
+				destroyable = nb;
+				list_remove(button_list, i);
+				index = i;
+				/* if this index is the last of the list */
+				if (index == button_list->pointer) {
+#ifdef NAMDAPHA_VERTICAL
+					nbutton_y_loc = nb->y;
+#else
+					nbutton_x_loc = nb->x;
+#endif
 
-		//if (destroyable) {
-		// int pos_y = destroyable->y;
-		// for (int i = index; i < button_list->pointer; i++) {
-		//	 NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
-		//	 nb->y = pos_y;
-		//	 nbutton_y_loc = (nb->y + nb->h) + NAMDAPHA_BUTTON_YPAD;
-		// }
-		// if (destroyable->nmbuttoninfo->usageCount > 1) {
-		//	 destroyable->nmbuttoninfo->usageCount -= 1;
-		// }
-		// else {
+					break;
+				}
+			}
+		}
 
-		//	 if (destroyable->nmbuttoninfo != defaultappico){
-		//		 _KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer, destroyable->nmbuttoninfo->fileSize);
-		//		 free(destroyable->nmbuttoninfo->filename);
-		//		 free(destroyable->nmbuttoninfo);
-		//		 destroyable->nmbuttoninfo = NULL;
-		//	 }
-		// }
-		// free(destroyable->title);
-		// free(destroyable);
-		//}
+		if (destroyable) {
+			int pos_y = destroyable->y;
+			int pos_x = destroyable->x;
+			for (int i = index; i < button_list->pointer; i++) {
+				NamdaphaButton* nb = (NamdaphaButton*)list_get_at(button_list, i);
+				nb->y = pos_y;
+				nb->x = pos_x;
+#ifdef NAMDAPHA_VERTICAL
+				nbutton_y_loc = (nb->y + nb->h) + NAMDAPHA_BUTTON_YPAD;
+#else
+				nbutton_x_loc = (nb->x + nb->w) + NAMDAPHA_BUTTON_XPAD;
+				pos_x = nbutton_x_loc;
+#endif
+			}
+			if (destroyable->nmbuttoninfo->usageCount > 1) {
+				destroyable->nmbuttoninfo->usageCount -= 1;
+			} else {
+				if (destroyable->nmbuttoninfo != defaultappico) {
+					_KeMemUnmap(destroyable->nmbuttoninfo->fileBuffer,
+								destroyable->nmbuttoninfo->fileSize);
+					free(destroyable->nmbuttoninfo->filename);
+					free(destroyable->nmbuttoninfo);
+					destroyable->nmbuttoninfo = NULL;
+				}
+			}
+			free(destroyable->title);
+			free(destroyable);
+		}
 
-		//if (nbutton_y_loc <= (timebutton->y + timebutton->h)) {
-		// nbutton_y_loc = (timebutton->y + timebutton->h) + NAMDAPHA_BUTTON_YPAD;
-		//}
+#ifdef NAMDAPHA_VERTICAL
+		if (nbutton_y_loc <= (timebutton->y + timebutton->h)) {
+			nbutton_y_loc = (timebutton->y + timebutton->h) + NAMDAPHA_BUTTON_YPAD;
+		}
+#else
+		if (nbutton_x_loc <= (gobutton->x + gobutton->w)) {
+			nbutton_x_loc = (gobutton->x + gobutton->w) + NAMDAPHA_BUTTON_XPAD;
+		}
+#endif
 
 		NamdaphaPaint(win);
 		memset(e, 0, sizeof(PostEvent));

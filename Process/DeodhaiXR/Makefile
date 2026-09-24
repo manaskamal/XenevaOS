@@ -65,7 +65,7 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
 
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native, -Wl,-filealign:0x1000
 else
     # GCC configuration
     CXX = $(CROSS_COMPILE)g++

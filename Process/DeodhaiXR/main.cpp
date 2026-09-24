@@ -797,8 +797,8 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 broadcast:
 	if (mouseWin) {
 		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
-		if (info->zoomed && !info->hide && info->width > 0 && info->height > 0 &&
-			screen_w > 0 && screen_h > 0) {
+		if (info->zoomed && !info->hide && info->width > 0 && info->height > 0 && screen_w > 0 &&
+			screen_h > 0) {
 			/* map screen coords back into the window's own pixels so
 			 * client hit-testing (titlebar buttons etc.) keeps working. */
 			mouse_x = (mouse_x * info->width) / (int)screen_w;
@@ -862,12 +862,18 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
-	if (currentCursor->xpos <= 0) currentCursor->xpos = 0;
-	if (currentCursor->ypos <= 0) currentCursor->ypos = 0;
-	if (currentCursor->xpos + 24 >= canv->screenWidth) currentCursor->xpos = canv->screenWidth - 24;
-	if (currentCursor->ypos + 24 >= canv->screenHeight) currentCursor->ypos = canv->screenHeight - 24;
-	if (currentCursor->xpos >= canv->screenWidth) currentCursor->xpos = 0;
-	if (currentCursor->ypos >= canv->screenHeight) currentCursor->ypos = 0;
+	if (currentCursor->xpos <= 0)
+		currentCursor->xpos = 0;
+	if (currentCursor->ypos <= 0)
+		currentCursor->ypos = 0;
+	if (currentCursor->xpos + 24 >= canv->screenWidth)
+		currentCursor->xpos = canv->screenWidth - 24;
+	if (currentCursor->ypos + 24 >= canv->screenHeight)
+		currentCursor->ypos = canv->screenHeight - 24;
+	if (currentCursor->xpos >= canv->screenWidth)
+		currentCursor->xpos = 0;
+	if (currentCursor->ypos >= canv->screenHeight)
+		currentCursor->ypos = 0;
 }
 
 /**
@@ -1180,7 +1186,9 @@ int main(int argc, char* argv[]) {
 	 * ring open is invisible on serial. Say it here instead. --axiss */
 	if (input_ring_fd >= 0)
 		_KePrint("[deodhaiXR]: input-ring live, fd=%d (mice=%d kybrd=%d)\r\n",
-				 input_ring_fd, mouse_fd, kybrd_fd);
+				 input_ring_fd,
+				 mouse_fd,
+				 kybrd_fd);
 	else
 		_KePrint("[deodhaiXR]: input-ring open failed, falling back to mice/kybrd\r\n");
 	PostEvent event;
@@ -1224,29 +1232,30 @@ int main(int argc, char* argv[]) {
 			const int input_events_per_frame = 128;
 			AuInputMessage queued;
 			for (int i = 0; i < input_events_per_frame &&
-				 _KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0; i++) {
+							_KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0;
+				 i++) {
 				if (queued.type == AU_INPUT_MOUSE)
 					DeodhaiHandleMouseInput(canv, &queued);
-				else if (queued.type == AU_INPUT_KEYBOARD){
+				else if (queued.type == AU_INPUT_KEYBOARD) {
 					ChitralekhaProcessKey(queued.code);
-			        char key = ChitralekhaGetKeyPress(queued.code);
-                    bool _key_brodcast_to_focus_win = true;
-			        if (ChitralekhaKeyGetCTRL()){
-				       int spcode = _DeodhaiGetSpecialCode(key, 1);
-					   /** Special codes are beyond 400, so do check */
-					   if (spcode >= 400 ){
-						_key_brodcast_to_focus_win = false;
-					    PostEvent spe;
-					    memset(&spe, 0, sizeof(PostEvent));
-					    spe.type = DEODHAI_REPLY_KEY_EVENT;
-					    spe.dword = spcode;
-					    DeodhaiBroadcastMessage(&spe, NULL);
-					   }
-				    }
+					char key = ChitralekhaGetKeyPress(queued.code);
+					bool _key_brodcast_to_focus_win = true;
+					if (ChitralekhaKeyGetCTRL()) {
+						int spcode = _DeodhaiGetSpecialCode(key, 1);
+						/** Special codes are beyond 400, so do check */
+						if (spcode >= 400) {
+							_key_brodcast_to_focus_win = false;
+							PostEvent spe;
+							memset(&spe, 0, sizeof(PostEvent));
+							spe.type = DEODHAI_REPLY_KEY_EVENT;
+							spe.dword = spcode;
+							DeodhaiBroadcastMessage(&spe, NULL);
+						}
+					}
 					if (_key_brodcast_to_focus_win)
-					   DeodhaiBroadcastKey(queued.code);
+						DeodhaiBroadcastKey(queued.code);
 					memset(&queued, 0, sizeof(AuInputMessage));
-			    }
+				}
 			}
 		} else {
 			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
@@ -1265,7 +1274,7 @@ int main(int argc, char* argv[]) {
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
 			_KePrint("Key input is ongoing \r\n");
-			
+
 			DeodhaiBroadcastKey(kybrd_input.code);
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
@@ -1464,33 +1473,39 @@ int main(int argc, char* argv[]) {
 			uint64_t nowMs = _KeGetCurrentMS();
 			uint64_t windowMs = nowMs - fpsWindowStart;
 			if (windowMs >= 1000) {
-			uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
-			uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
-			uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
-			uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
-			uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
-			_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
-					 (int)fps,
-					 (int)avgComposeMs,
-					 (int)fpsFrameCount,
-					 (int)windowMs,
-					 (int)frameTime);
-			if (input_ring_fd >= 0) {
-				AuInputRingStats stats;
-				memset(&stats, 0, sizeof(stats));
-				if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
-					_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d pending_keyboard=%d\r\n",
-							 (int)stats.mouse_dropped, (int)stats.keyboard_dropped,
-							 (int)stats.mouse_pending, (int)stats.keyboard_pending);
-			}
-			_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n", (int)avgC,
-					 (int)avgP, (int)avgT);
-			fpsFrameCount = 0;
-			fpsComposeMsAccum = 0;
-			profAccumCompose = 0;
-			profAccumPresent = 0;
-			profAccumTransfer = 0;
-			fpsWindowStart = nowMs;
+				uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
+				uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
+				uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
+				uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
+				uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+				_KePrint(
+					"[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
+					(int)fps,
+					(int)avgComposeMs,
+					(int)fpsFrameCount,
+					(int)windowMs,
+					(int)frameTime);
+				if (input_ring_fd >= 0) {
+					AuInputRingStats stats;
+					memset(&stats, 0, sizeof(stats));
+					if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
+						_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d "
+								 "pending_keyboard=%d\r\n",
+								 (int)stats.mouse_dropped,
+								 (int)stats.keyboard_dropped,
+								 (int)stats.mouse_pending,
+								 (int)stats.keyboard_pending);
+				}
+				_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n",
+						 (int)avgC,
+						 (int)avgP,
+						 (int)avgT);
+				fpsFrameCount = 0;
+				fpsComposeMsAccum = 0;
+				profAccumCompose = 0;
+				profAccumPresent = 0;
+				profAccumTransfer = 0;
+				fpsWindowStart = nowMs;
 			}
 		}
 

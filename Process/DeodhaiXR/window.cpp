@@ -134,6 +134,7 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	shwin->alpha = false;
 	shwin->dirty = false;
 	shwin->windowReady = false;
+	shwin->zoomed = false;
 	win->handle = DeodhaiAllocateNewHandle();
 	if (flags & WINDOW_FLAG_GLASS) {
 		win->glassBlur = (uint32_t*)_KeMemMap(

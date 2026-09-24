@@ -47,8 +47,8 @@
  * and STBTT_acos behind the same #ifndef STBTT_cos guard so if you only
  * define one, stb silently clobbers the other with its default.
  * learned that one the hard way --axiss */
-#define STBTT_cos(x) cos(x)
-#define STBTT_acos(x) ((double)acosf((float)(x)))
+#define STBTT_cos(x)	cos(x)
+#define STBTT_acos(x)	((double)acosf((float)(x)))
 #define STBTT_assert(x) ((void)0)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -75,8 +75,14 @@ static ChFontGlyphCacheEntry* ChFontGetCachedGlyph(ChFont* font, unsigned char c
 	int height = 0;
 	int xOffset = 0;
 	int yOffset = 0;
-	glyph->bitmap = stbtt_GetCodepointBitmap(
-		&font->stbFont, font->stbScale, font->stbScale, codepoint, &width, &height, &xOffset, &yOffset);
+	glyph->bitmap = stbtt_GetCodepointBitmap(&font->stbFont,
+											 font->stbScale,
+											 font->stbScale,
+											 codepoint,
+											 &width,
+											 &height,
+											 &xOffset,
+											 &yOffset);
 	glyph->width = (int16_t)width;
 	glyph->height = (int16_t)height;
 	glyph->xOffset = (int16_t)xOffset;
@@ -90,15 +96,18 @@ static inline uint32_t ChFontBlendCoverage(uint32_t dst, uint32_t src, uint8_t c
 	if (coverage == 255)
 		return 0xFF000000U | (src & 0x00FFFFFFU);
 	uint32_t inv = 255U - coverage;
-	uint32_t red = ((((src >> 16) & 0xFFU) * coverage) + (((dst >> 16) & 0xFFU) * inv) + 127U) / 255U;
-	uint32_t green = ((((src >> 8) & 0xFFU) * coverage) + (((dst >> 8) & 0xFFU) * inv) + 127U) / 255U;
+	uint32_t red =
+		((((src >> 16) & 0xFFU) * coverage) + (((dst >> 16) & 0xFFU) * inv) + 127U) / 255U;
+	uint32_t green =
+		((((src >> 8) & 0xFFU) * coverage) + (((dst >> 8) & 0xFFU) * inv) + 127U) / 255U;
 	uint32_t blue = (((src & 0xFFU) * coverage) + ((dst & 0xFFU) * inv) + 127U) / 255U;
 	return 0xFF000000U | (red << 16) | (green << 8) | blue;
 }
 
 #if defined(ARCH_ARM64)
 /* Blend atlas coverage four pixels at a time on the compositor's hot text path. --axiss */
-static void ChFontBlendFour(uint32_t* dest, uint16x4_t cov, uint16x4_t cr, uint16x4_t cg, uint16x4_t cb) {
+static void
+ChFontBlendFour(uint32_t* dest, uint16x4_t cov, uint16x4_t cr, uint16x4_t cg, uint16x4_t cb) {
 	uint32x4_t dst4 = vld1q_u32(dest);
 	uint16x4_t dr = vmovn_u32(vshrq_n_u32(vandq_u32(dst4, vdupq_n_u32(0x00FF0000)), 16));
 	uint16x4_t dg = vmovn_u32(vshrq_n_u32(vandq_u32(dst4, vdupq_n_u32(0x0000FF00)), 8));
@@ -114,7 +123,8 @@ static void ChFontBlendFour(uint32_t* dest, uint16x4_t cov, uint16x4_t cr, uint1
 }
 #endif
 
-static void ChFontBlitCoverageRow(uint32_t* dest, const uint8_t* source, int width, uint32_t color) {
+static void
+ChFontBlitCoverageRow(uint32_t* dest, const uint8_t* source, int width, uint32_t color) {
 	int x = 0;
 #if defined(ARCH_ARM64)
 	uint32x4_t color4 = vdupq_n_u32(0xFF000000U | (color & 0x00FFFFFFU));
@@ -242,8 +252,12 @@ static int ChFontBlitBaked(ChCanvas* canv,
 	return 1;
 }
 
-static void ChFontBlitGlyph(
-	ChCanvas* canv, const ChFontGlyphCacheEntry* glyph, int penx, int peny, uint32_t color, const ChRect* clip) {
+static void ChFontBlitGlyph(ChCanvas* canv,
+							const ChFontGlyphCacheEntry* glyph,
+							int penx,
+							int peny,
+							uint32_t color,
+							const ChRect* clip) {
 	if (!glyph->bitmap || glyph->width <= 0 || glyph->height <= 0)
 		return;
 
@@ -256,25 +270,106 @@ static void ChFontBlitGlyph(
 	int clipRight = canv->canvasWidth;
 	int clipBottom = canv->canvasHeight;
 	if (clip) {
-		if (clip->x > clipLeft) clipLeft = clip->x;
-		if (clip->y > clipTop) clipTop = clip->y;
-		if (clip->x + clip->w < clipRight) clipRight = clip->x + clip->w;
-		if (clip->y + clip->h < clipBottom) clipBottom = clip->y + clip->h;
+		if (clip->x > clipLeft)
+			clipLeft = clip->x;
+		if (clip->y > clipTop)
+			clipTop = clip->y;
+		if (clip->x + clip->w < clipRight)
+			clipRight = clip->x + clip->w;
+		if (clip->y + clip->h < clipBottom)
+			clipBottom = clip->y + clip->h;
 	}
-	if (left < clipLeft) left = clipLeft;
-	if (top < clipTop) top = clipTop;
-	if (right > clipRight) right = clipRight;
-	if (bottom > clipBottom) bottom = clipBottom;
+	if (left < clipLeft)
+		left = clipLeft;
+	if (top < clipTop)
+		top = clipTop;
+	if (right > clipRight)
+		right = clipRight;
+	if (bottom > clipBottom)
+		bottom = clipBottom;
 	if (left >= right || top >= bottom)
 		return;
 
 	for (int y = top; y < bottom; ++y) {
-		const uint8_t* source = glyph->bitmap + (y - (peny + glyph->yOffset)) * glyph->width + (left - (penx + glyph->xOffset));
+		const uint8_t* source = glyph->bitmap + (y - (peny + glyph->yOffset)) * glyph->width +
+								(left - (penx + glyph->xOffset));
 		uint32_t* destination = canv->buffer + y * canv->canvasWidth + left;
 		ChFontBlitCoverageRow(destination, source, right - left, color);
 	}
 }
 #endif
+
+#define UTF8_INVALID 0xFFFD
+
+size_t ChFontDecodeUTF8(const uint8_t* s, size_t maxLen, uint32_t* out_cp) {
+	if (maxLen == 0) {
+		*out_cp = UTF8_INVALID;
+		return 0;
+	}
+
+	uint8_t b0 = s[0];
+
+	/**
+	 * Check if character is ASCII or UTF8 formatted
+	 */
+	if (b0 < 0x80) {
+		*out_cp = b0;
+		return 1;
+	}
+
+	int len;
+	uint32_t cp;
+	uint32_t min_cp;
+
+	if ((b0 & 0xE0) == 0xC0) {
+		len = 2;
+		cp = b0 & 0x1F;
+		min_cp = 0x80;
+	} else if ((b0 & 0xF0) == 0xE0) {
+		len = 3;
+		cp = b0 & 0x0F;
+		min_cp = 0x800;
+	} else if ((b0 & 0xF8) == 0xF0) {
+		len = 4;
+		cp = b0 & 0x07;
+		min_cp = 0x10000;
+	} else {
+		*out_cp = UTF8_INVALID;
+		return 1;
+	}
+
+	if ((size_t)len > maxLen) {
+		*out_cp = UTF8_INVALID;
+		return 1;
+	}
+
+	for (int i = 1; i < len; i++) {
+		uint8_t b = s[i];
+		if ((b & 0xC0) != 0x80) {
+			*out_cp = UTF8_INVALID;
+			return 1;
+		}
+		cp = (cp << 6) | (b & 0x3F);
+	}
+
+	if (cp < min_cp) {
+		*out_cp = UTF8_INVALID;
+		return 1;
+	}
+
+	if (cp >= 0xD800 && cp <= 0xDFFF) {
+		*out_cp = UTF8_INVALID;
+		return 1;
+	}
+
+	if (cp > 0x10FFFF) {
+		*out_cp = UTF8_INVALID;
+		return 1;
+	}
+
+	*out_cp = cp;
+	return len;
+}
 
 /* 
  * ChInitialiseFont -- initialise a font by a name
@@ -400,9 +495,18 @@ void ChFontDrawText(
 	uint32_t prev = 0;
 	FT_UInt glyfIndx;
 	FT_Error err = 0;
-	while (*string) {
-		glyfIndx = FT_Get_Char_Index(font->face, *string);
+
+	const uint8_t* p8 = (const uint8_t*)string;
+	size_t remaining = strlen(string);
+	while (*p8) {
+		uint32_t codePoint;
+		size_t n = ChFontDecodeUTF8(p8, remaining, &codePoint);
+		p8 += n;
+		remaining -= n;
+
+		glyfIndx = FT_Get_Char_Index(font->face, codePoint);
 		err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
+
 		if (err)
 			continue;
 
@@ -488,7 +592,47 @@ void ChFontDrawChar(
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
 	FT_UInt glyfIndx;
 	FT_Error err = 0;
-	glyfIndx = FT_Get_Char_Index(font->face, c);
+
+	uint8_t b = (uint8_t)c;
+
+	if (font->utf8_remaining > 0) {
+		if ((b & 0xC0) == 0x80) {
+			font->utf8_cp = (font->utf8_cp << 6) | (b & 0x3F);
+			font->utf8_remaining--;
+			if (font->utf8_remaining > 0)
+				return;
+		} else {
+			font->utf8_remaining = 0;
+			font->utf8_cp = 0;
+			ChFontDrawChar(canv, font, c, penx, peny, sz, color);
+			return;
+		}
+	} else {
+		if (b < 0x80) {
+			font->utf8_cp = b;
+			font->utf8_remaining = 0;
+		} else if ((b & 0xE0) == 0xC0) {
+			font->utf8_cp = b & 0x1F;
+			font->utf8_remaining = 1;
+			return;
+		} else if ((b & 0xF0) == 0xE0) {
+			font->utf8_cp = b & 0x0F;
+			font->utf8_remaining = 2;
+			return;
+		} else if ((b & 0xF8) == 0xF0) {
+			font->utf8_cp = b & 0x07;
+			font->utf8_remaining = 3;
+			return;
+		} else {
+			font->utf8_cp = 0xFFFD;
+			font->utf8_remaining = 0;
+		}
+	}
+
+	uint32_t cp = font->utf8_cp;
+	font->utf8_cp = 0;
+	font->utf8_remaining = 0;
+	glyfIndx = FT_Get_Char_Index(font->face, cp);
 	err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
 	if (err)
 		return;
@@ -573,12 +717,52 @@ void ChFontDrawCharClipped(
 	if (penx < limit->x)
 		return;
 
+	uint8_t b = (uint8_t)c;
+
+	if (font->utf8_remaining > 0) {
+		if ((b & 0xC0) == 0x80) {
+			font->utf8_cp = (font->utf8_cp << 6) | (b & 0x3F);
+			font->utf8_remaining--;
+			if (font->utf8_remaining > 0)
+				return;
+		} else {
+			font->utf8_remaining = 0;
+			font->utf8_cp = 0;
+			ChFontDrawCharClipped(canv, font, c, penx, peny, color, limit);
+			return;
+		}
+	} else {
+		if (b < 0x80) {
+			font->utf8_cp = b;
+			font->utf8_remaining = 0;
+		} else if ((b & 0xE0) == 0xC0) {
+			font->utf8_cp = b & 0x1F;
+			font->utf8_remaining = 1;
+			return;
+		} else if ((b & 0xF0) == 0xE0) {
+			font->utf8_cp = b & 0x0F;
+			font->utf8_remaining = 2;
+			return;
+		} else if ((b & 0xF8) == 0xF0) {
+			font->utf8_cp = b & 0x07;
+			font->utf8_remaining = 3;
+			return;
+		} else {
+			font->utf8_cp = 0xFFFD;
+			font->utf8_remaining = 0;
+		}
+	}
+
+	uint32_t cp = font->utf8_cp;
+	font->utf8_cp = 0;
+	font->utf8_remaining = 0;
+
 	int w = font->face->glyph->metrics.width;
 	int h = font->face->glyph->metrics.height;
 	FT_Bool use_kerning = FT_HAS_KERNING(font->face);
 	FT_UInt glyfIndx;
 	FT_Error err = 0;
-	glyfIndx = FT_Get_Char_Index(font->face, c);
+	glyfIndx = FT_Get_Char_Index(font->face, cp);
 	err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
 	if (err)
 		return;
@@ -696,7 +880,8 @@ int64_t ChFontGetWidth(ChFont* font, char* string) {
 	while (*string) {
 		int cp = (unsigned char)*string;
 		if (prevCp)
-			width += (int)(stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp) * font->stbScale);
+			width +=
+				(int)(stbtt_GetCodepointKernAdvance(&font->stbFont, prevCp, cp) * font->stbScale);
 		if (font->atlasReady && cp >= CH_FONT_ATLAS_FIRST &&
 			cp < CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT)
 			width += (int64_t)font->atlasChars[cp - CH_FONT_ATLAS_FIRST].xadvance;
@@ -829,6 +1014,7 @@ int ChFontClamp(int val, int min, int max) {
 		return max;
 	return val;
 }
+
 /*
  * ChFontDrawTextClipped -- draws text using specific font within
  * a clipped boundary
@@ -861,8 +1047,15 @@ int ChFontDrawTextClipped(
 	uint32_t prev = 0;
 	FT_UInt glyfIndx;
 	FT_Error err = 0;
-	while (*string) {
-		glyfIndx = FT_Get_Char_Index(font->face, *string);
+	const uint8_t* p8 = (const uint8_t*)string;
+	size_t remaining = strlen(string);
+
+	while (*p8) {
+		uint32_t codePoint;
+		size_t n = ChFontDecodeUTF8(p8, remaining, &codePoint);
+		p8 += n;
+		remaining -= n;
+		glyfIndx = FT_Get_Char_Index(font->face, codePoint);
 		err = FT_Load_Glyph(font->face, glyfIndx, FT_LOAD_RENDER);
 		if (err)
 			continue;

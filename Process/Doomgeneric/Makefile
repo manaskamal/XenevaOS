@@ -51,7 +51,7 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-macro-redefined \
                $(INCLUDES)
     CXXFLAGS = $(CFLAGS) -std=c++17
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native, -Wl,-filealign:0x1000
 else
     # GCC configuration
     CXX = $(CROSS_COMPILE)g++
