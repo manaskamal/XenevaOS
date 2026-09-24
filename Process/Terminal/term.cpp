@@ -288,19 +288,42 @@ void TerminalScroll(Terminal* t, int lines) {
 	}
 
 	uint32_t* pixels = win->canv->buffer;
-	int canvasW = win->canv->canvasWidth;
+	int canvasW = (int)win->canv->canvasWidth;
+	int canvasH = (int)win->canv->canvasHeight;
 
 	int regionPx = _terminal_cell_to_pixelX(t, 0);
 	int regionPy = _terminal_cell_to_pixelY(t, t->scrollTop);
 	int regionW = t->cols * t->cellW;
 	int regionH = regionRows * t->cellH;
 
+	if (regionPx < 0)
+		regionPx = 0;
+	if (regionPy < 0)
+		regionPy = 0;
+	if (regionPx >= canvasW || regionPy >= canvasH)
+		regionW = 0;
+	if (regionPx + regionW > canvasW)
+		regionW = canvasW - regionPx;
+	if (regionPy + regionH > canvasH)
+		regionH = canvasH - regionPy;
+	if (regionW < 0)
+		regionW = 0;
+	if (regionH < 0)
+		regionH = 0;
+
 	int shiftRows = regionRows - lines;
 	int shiftH = shiftRows * t->cellH;
+	int srcOff = lines * t->cellH;
 
-	for (int y = 0; y < shiftH; y++) {
-		uint32_t* dst = pixels + (regionPy + y) * canvasW + regionPx;
-		uint32_t* src = pixels + (regionPy + y + lines * t->cellH) * canvasW + regionPx;
+	for (int y = 0; y < shiftH && regionW > 0; y++) {
+		int dy = regionPy + y;
+		int sy = dy + srcOff;
+		uint32_t* dst;
+		uint32_t* src;
+		if (dy < 0 || sy < 0 || dy >= canvasH || sy >= canvasH)
+			continue;
+		dst = pixels + dy * canvasW + regionPx;
+		src = pixels + sy * canvasW + regionPx;
 		memmove(dst, src, regionW * sizeof(uint32_t));
 	}
 
@@ -308,9 +331,14 @@ void TerminalScroll(Terminal* t, int lines) {
 	int exposedPy = _terminal_cell_to_pixelY(t, exposedRow);
 	int exposedH = lines * t->cellH;
 
-	for (int y = 0; y < exposedH; y++) {
-		uint32_t* row = pixels + (exposedPy + y) * canvasW + regionPx;
-		for (int x = 0; x < regionW; x++)
+	for (int y = 0; y < exposedH && regionW > 0; y++) {
+		int py = exposedPy + y;
+		uint32_t* row;
+		int x;
+		if (py < 0 || py >= canvasH)
+			continue;
+		row = pixels + py * canvasW + regionPx;
+		for (x = 0; x < regionW; x++)
 			row[x] = t->defaultBG;
 	}
 
@@ -1031,9 +1059,15 @@ void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
 	TerminalFlush(t);
 }
 
-/* custom key mappings, it's a bug */
-#define TERMINAL_KEY_RIGHT 0x2E
-#define TERMINAL_KEY_LEFT  0x33
+/* Special keys must match on scancode: ChitralekhaGetKeyPress returns ASCII
+ * values that collide with printable keys (KEY_KP_8=='8', and the arrow map
+ * yields '3'/'.') , so rawkey matching hijacked '8', '3' and '.' while
+ * typing addresses and commands. --axiss */
+#define TERMINAL_SCANCODE_RELEASE 0x80
+#define TERMINAL_SCANCODE_MASK	   0x7f
+#define TERMINAL_SCANCODE_UP	   0x48
+#define TERMINAL_SCANCODE_LEFT	   0x4b
+#define TERMINAL_SCANCODE_RIGHT	   0x4d
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -1072,8 +1106,9 @@ void TerminalHandleMessage(PostEvent* e) {
 			}
 		}
 
-		/** check from extended key code map **/
-		if (rawkey == KEY_KP_8) {
+		/** check from extended key code map (scancode 0x48: Up / keypad 8) **/
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_UP) {
 			TerminalHistoryUp(&term);
 			memset(e, 0, sizeof(PostEvent));
 			return;
@@ -1086,7 +1121,8 @@ void TerminalHandleMessage(PostEvent* e) {
 			return;
 		}**/
 
-		if (rawkey == TERMINAL_KEY_LEFT) {
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_LEFT) {
 			if (term.cursorX > term.inputStartX) {
 				_terminal_erase_cursor(&term);
 				term.cursorX--;
@@ -1095,7 +1131,8 @@ void TerminalHandleMessage(PostEvent* e) {
 			memset(e, 0, sizeof(PostEvent));
 		}
 
-		if (rawkey == TERMINAL_KEY_RIGHT) {
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_RIGHT) {
 			if (term.cursorX < term.inputStartX + term.intputLen) {
 				_terminal_erase_cursor(&term);
 				term.cursorX++;
