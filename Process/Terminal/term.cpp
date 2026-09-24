@@ -66,7 +66,12 @@ char oscBuf[64];
 int oscLen;
 int shell_id;
 
-#define TERMINAL_BLACK 0xFF373434
+/* Glassmorphic palette: the alpha byte makes the compositor's
+ * WINDOW_FLAG_GLASS blend show the blurred desktop backdrop through the
+ * surface. _SOLID keeps the block cursor legible. --axiss */
+#define TERMINAL_BLACK		 0xCC373434
+#define TERMINAL_BLACK_SOLID 0xFF373434
+#define TERMINAL_GLASS_ALPHA 0xC8
 
 static inline int _terminal_cell_to_pixelX(Terminal* t, int col) {
 	return t->originX + col * t->cellW;
@@ -120,7 +125,7 @@ static void _terminal_redraw_cursor(Terminal* t) {
 		clip.y = py;
 		clip.w = t->cellW;
 		clip.h = t->cellH;
-		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK, &clip);
+		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
 	}
 	// draw the character here
 	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
@@ -1249,14 +1254,18 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 680, 450);
+	win = ChCreateWindow(
+		app, (WINDOW_FLAG_MOVABLE | WINDOW_FLAG_GLASS), "Xeneva Terminal", 300, 100, 680, 450);
 	if (!win || !win->info) {
 		_KePrint("term: failed to create window \r\n");
 		return 1;
 	}
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
-	win->color = 0xFF373434;
+	win->color = TERMINAL_BLACK;
+	/* Chitralekha glass option: translucent chrome over the compositor's
+	 * blurred desktop backdrop. Cells keep their own translucent fills. */
+	ChWindowSetGlassMorphism(win, TERMINAL_GLASS_ALPHA);
 
 	consolas = ChInitialiseFont(CONSOLAS);
 	if (!consolas) {
@@ -1277,13 +1286,20 @@ int main(int argc, char* arv[]) {
 	int f_h = ChFontGetHeightChar(consolas, 'A');
 	term.baseine = f_h - 4;
 #endif
+	/* Cell needs a few px below the 'A'-height metric: descenders
+	 * (g, j, p, q, y) sink ~4px past the baseline and the per-cell
+	 * clip would shave them off. */
+#ifdef _USE_FREETYPE
+	term.cellH = f_h;
+#else
+	term.cellH = f_h + 4;
+#endif
 
 	if (f_w <= 0)
 		f_w = 8;
 	if (f_h <= 0)
 		f_h = 12;
 	term.cellW = f_w;
-	term.cellH = f_h;
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height
@@ -1297,7 +1313,7 @@ int main(int argc, char* arv[]) {
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	term.defaultBG = 0xFF373434; // 0xFF000000;// BLACK;
+	term.defaultBG = TERMINAL_BLACK; // 0xFF000000;// BLACK;
 	term.defaultFg = WHITE;
 	term.scrollTop = 0;
 	term.scrollBot = term.rows - 1;

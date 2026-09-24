@@ -46,6 +46,10 @@ set -e
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
+#   --no-doom               Drop the Doom addon (doom.exe + doom2.wad) from
+#                           the image.
+#   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
+#                           the image.
 #   --no-boot-menu          Skip the EFI resolution menu and boot the default
 #                           mode (NOMENU marker on the ESP). The menu stays on
 #                           by default; headless, egl-headless and xr-demo
@@ -114,6 +118,7 @@ NO_BOOT_MENU=0
 NO_DOOM=0
 BT_SERIAL="${XENEVA_BT_SERIAL:-/tmp/bt-server-bredr}"
 NO_BT=0
+NO_NETSURF=0
 
 print_help(){
     printf "${STY_CYAN}"
@@ -151,7 +156,7 @@ run_build_tui() {
     [ "$NO_BOOT_MENU" -eq 1 ] && bootmenu_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak network audio doom bootmenu memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu doom netsurf memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -194,6 +199,8 @@ run_build_tui() {
         network_on=1
         audio_on=1
         bootmenu_on=1
+        NO_DOOM=0
+        NO_NETSURF=0
         memory_choice="default"
     }
 
@@ -248,6 +255,7 @@ run_build_tui() {
             network) network_on=$((1 - network_on)) ;;
             audio) audio_on=$((1 - audio_on)) ;;
             doom) NO_DOOM=$((1 - NO_DOOM)) ;;
+            netsurf) NO_NETSURF=$((1 - NO_NETSURF)) ;;
             bootmenu) bootmenu_on=$((1 - bootmenu_on)) ;;
             memory) tui_cycle_memory ;;
             launch) tui_apply_and_launch ;;
@@ -291,10 +299,11 @@ run_build_tui() {
         tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
         tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
         tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
-        tui_row 10 "Doom addon" "$(tui_on_off "$NO_DOOM")"
-        tui_row 11 "Guest memory" "$memory_choice"
-        tui_row 12 "Launch" "build + run"
-        tui_row 13 "Quit" ""
+        tui_row 10 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
+        tui_row 11 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
+        tui_row 12 "Guest memory" "$memory_choice"
+        tui_row 13 "Launch" "build + run"
+        tui_row 14 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
@@ -377,6 +386,7 @@ while [ $# -gt 0 ]; do
         --tui) TUI=1 ;;
         --no-network) NO_NETWORK=1 ;;
         --no-doom) NO_DOOM=1 ;;
+        --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         --bt-serial) BT_SERIAL="/tmp/bt-server-bredr" ;;
@@ -543,8 +553,8 @@ if [ "$OPENXR" -eq 1 ]; then
 	BUILD_USER_APPS=1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
-	printf "${STY_RED}[$0]: --no-network/--no-audio need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
 
@@ -695,7 +705,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -771,10 +781,12 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         case "$1" in
             MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
-            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe)
+            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
             doom.exe|doom2.wad)
                 [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;
+            netsurf.exe)
+                [ "$NO_NETSURF" -eq 1 ] && return 0 || return 1 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
         esac

@@ -287,6 +287,21 @@ ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, 
 		h = win->info->height;
 	}
 
+	/* Clip the dirty rect to the window. Widgets that extend past the
+	 * canvas (e.g. a textbox taller than its window) otherwise make the
+	 * row copy below read past the canvas mapping and fault the app
+	 * with an EL0 data abort. */
+	if (x + w > win->info->width) {
+		_KePrint("Clipping w -> %d \r\n", w);
+		w = win->info->width - x;
+	}
+	if (y + h > win->info->height) {
+		_KePrint("Clipping h -> %d \r\n", h);
+		h = win->info->height - y;
+	}
+	if (w <= 0 || h <= 0)
+		return;
+
 	if (lfb != canvaddr) {
 		for (int i = 0; i < h; i++)
 			_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x,
@@ -345,6 +360,29 @@ XE_EXTERN XE_EXPORT void ChWindowPaint(ChWindow* win) {
 		if (--timeout)
 			break;
 	}
+}
+
+/*
+ * ChWindowSetGlassMorphism -- apply the glassmorphic look to a window.
+ * @param win -- Pointer to the window
+ * @param alpha -- opacity of the glass pane, 0 (invisible) .. 255 (opaque)
+ *
+ * The compositor's blur buffers are allocated at window creation, so the
+ * window must have been created with WINDOW_FLAG_GLASS. This call makes the
+ * surface actually read as glass: it paints a translucent pane over the whole
+ * buffer (so the blurred backdrop shows through) and clears the uniform
+ * window fade (info->alpha), because glass blending is per-pixel and the two
+ * would otherwise double-blend. Content drawn afterwards -- terminal cells,
+ * widgets -- keeps whatever alpha its painter chooses.
+ */
+XE_EXTERN XE_EXPORT void ChWindowSetGlassMorphism(ChWindow* win, uint8_t alpha) {
+	if (!win || !win->canv || !win->info)
+		return;
+	win->flags |= WINDOW_FLAG_GLASS;
+	win->info->alpha = false;
+	uint32_t tint = SET_ALPHA(win->color, alpha);
+	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, tint);
+	ChWindowUpdate(win, 0, 0, win->info->width, win->info->height, 1, 0);
 }
 
 /*
