@@ -58,7 +58,7 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 	if (!ndev)
 		return;
 	list_t* raw_sockets = AuRawSocketGetList();
-	UARTDebugOut("Adding to raw_sockets \r\n");
+	//UARTDebugOut("Adding to raw_sockets \r\n");
 	for (int i = 0; i < raw_sockets->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(raw_sockets, i);
 		AuSocketAdd(sock, frame, size);

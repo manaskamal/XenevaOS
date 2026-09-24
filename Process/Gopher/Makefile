@@ -31,7 +31,7 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable \
                -Wno-macro-redefined \
                $(INCLUDES)
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native -Wl,-filealign:0x1000
 endif
 
 .PHONY: all clean llvm
