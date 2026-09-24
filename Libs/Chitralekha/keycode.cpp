@@ -279,6 +279,9 @@ char ChitralekhaKeyToASCII(int code) {
 					case '7':
 						key = KEY_AMPERSAND;
 						break;
+					case '8':
+						key = KEY_ASTERISK;
+						break;
 					case '9':
 						key = KEY_LEFTPARENTHESIS;
 						break;

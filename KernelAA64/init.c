@@ -71,6 +71,8 @@
 #include <Fs/Fat/FatDir.h>
 #include <Log/klog.h>
 
+extern void AuBtInitialize(void);
+
 extern int _fltused = 1;
 static bool _littleboot_used;
 
@@ -286,6 +288,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 
 	AuSchedulerInitialize();
+	AuBtInitialize();
 	//AuEDFSelfTestStart();
 #ifdef __XENEVA_SOAK__
 	AuSoakStart();
