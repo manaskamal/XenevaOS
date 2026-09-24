@@ -6,9 +6,10 @@
 #include <widgets/sidebar.h>
 #include <widgets/textbox.h>
 #include <widgets/button.h>
+#include "notes_editor.h"
 
 extern ChSidebar* notesSidebar;
-extern ChTextBox* notesTextBox;
+extern ChNotesEditor* notesEditor;
 
 /* Initialize the XENotes User Interface */
 void NotesInitializeUI(ChWindow* mainWin);

@@ -12,6 +12,7 @@
 #include <keycode.h>
 #include "notes_ui.h"
 #include "notes_fs.h"
+#include "notes_editor.h"
 
 ChitralekhaApp* app;
 ChWindow* mainWin;
@@ -22,21 +23,15 @@ void NotesClose(ChWindow* win, ChWinGlobalControl* ctl) {
 }
 
 void NotesHandleKey(int ascii_code) {
-	if (!notesTextBox) return;
+	if (!notesEditor) return;
 	
 	_KePrint("XENotes received key: %d\r\n", ascii_code);
 	
-	int len = notesTextBox->text ? strlen(notesTextBox->text) : 0;
-	if (ascii_code == KEY_BACKSPACE) {
-		if (len > 0) {
-			if (strncmp(notesTextBox->text, "Title: ", 7) == 0 && len <= 7) {
-				return;
-			}
-			notesTextBox->text[len - 1] = '\0';
-		}
-	} else if (ascii_code == KEY_RETURN) {
-		if (strncmp(notesTextBox->text, "Title: ", 7) == 0) {
-			char* title = notesTextBox->text + 7;
+	int len = notesEditor->textLength;
+	if (ascii_code == KEY_RETURN) {
+		char* currentText = ChNotesEditorGetText(notesEditor);
+		if (strncmp(currentText, "Title: ", 7) == 0) {
+			char* title = currentText + 7;
 			while (*title == ' ') title++;
 			char noteTitle[SIDEBAR_MAX_LABEL];
 			if (strlen(title) == 0) {
@@ -54,21 +49,16 @@ void NotesHandleKey(int ascii_code) {
 				}
 			}
 			NotesCreateNew(noteTitle, mainWin);
-			ChTextBoxSetText(notesTextBox, (char*)"");
-			ChTextBoxUpdate(notesTextBox, mainWin);
+			ChNotesEditorSetText(notesEditor, (char*)"");
+			free(currentText);
 			return;
-		} else if (len < 32760) {
-			strcat(notesTextBox->text, "\n");
 		}
-	} else if (ascii_code >= 32 && ascii_code <= 126) { // Printable chars
-		if (len < 32760) {
-			char s[2] = {(char)ascii_code, '\0'};
-			strcat(notesTextBox->text, s);
-		}
+		free(currentText);
 	}
 	
-	_KePrint("XENotes current text: '%s'\r\n", notesTextBox->text);
-	ChTextBoxUpdate(notesTextBox, mainWin);
+	if (len < 32760) {
+		ChNotesEditorHandleKey(notesEditor, ascii_code);
+	}
 }
 
 void WindowHandleMessage(PostEvent* e) {

@@ -16,19 +16,23 @@ void NotesLoadFile(const char* filename, ChWindow* win) {
 	_KeReadFile(fd, buffer, 32766);
 	_KeCloseFile(fd);
 	
-	if (notesTextBox) {
-		ChTextBoxSetText(notesTextBox, buffer);
+	if (notesEditor) {
+		ChNotesEditorSetText(notesEditor, buffer);
 	}
 }
 
 void NotesSaveFile(const char* filename) {
-	if (!notesTextBox || !notesTextBox->text) return;
+	if (!notesEditor) return;
+	
+	char* currentText = ChNotesEditorGetText(notesEditor);
+	if (!currentText) return;
 	
 	int fd = _KeOpenFile((char*)filename, FILE_OPEN_WRITE | FILE_OPEN_CREAT); // Assuming this creates or truncates
 	if (fd >= 0) {
-		_KeWriteFile(fd, notesTextBox->text, strlen(notesTextBox->text));
+		_KeWriteFile(fd, currentText, strlen(currentText));
 		_KeCloseFile(fd);
 	}
+	free(currentText);
 }
 
 void NotesPopulateSidebar(ChWindow* win) {
