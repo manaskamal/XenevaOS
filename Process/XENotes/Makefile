@@ -8,7 +8,7 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include
 
-CPP_SRCS = main.cpp notes_ui.cpp notes_fs.cpp
+CPP_SRCS = main.cpp notes_ui.cpp notes_fs.cpp notes_editor.cpp custom_btn.cpp
 S_SRCS = crt_arm64.s
 
 OBJDIR = obj

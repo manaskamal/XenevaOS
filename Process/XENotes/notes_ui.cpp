@@ -5,11 +5,49 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <widgets/toolbar.h>
+#include "custom_btn.h"
 
 ChSidebar* notesSidebar = NULL;
-ChTextBox* notesTextBox = NULL;
+ChNotesEditor* notesEditor = NULL;
 static int currentNoteSection = -1;
 static int currentNoteIdx = -1;
+
+void OnBoldClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_BOLD, 0);
+}
+
+void OnItalicClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_ITALIC, 0);
+}
+
+void OnSizeUpClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_SIZE_UP, 0);
+}
+
+void OnSizeDownClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_SIZE_DOWN, 0);
+}
+
+void OnListClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_LIST, 0);
+}
+
+void OnColorRedClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_COLOR, 0xFFFF0000);
+}
+
+void OnColorBlueClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_COLOR, 0xFF0000FF);
+}
+
+void OnColorGreenClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_COLOR, 0xFF00C000);
+}
+
+void OnColorBlackClicked(ChWidget* wid, ChWindow* win) {
+	ChNotesEditorApplyFormat(notesEditor, FORMAT_COLOR, 0xFF000000);
+}
 
 void OnNoteSelected(ChSidebarItem* item, ChWindow* mainWin) {
 	if (!item || item->label[0] == '\0') return;
@@ -24,11 +62,11 @@ void OnNoteSelected(ChSidebarItem* item, ChWindow* mainWin) {
 
 	/* Save text of previous note before switching */
 	if (prevNoteItem && strcmp(prevNoteItem->label, "[+] New Note") != 0) {
-		if (notesTextBox && notesTextBox->text && strncmp(notesTextBox->text, "Title: ", 7) != 0) {
+		if (notesEditor && notesEditor->textBuffer) {
 			if (prevNoteItem->data) {
 				free(prevNoteItem->data);
 			}
-			prevNoteItem->data = strdup(notesTextBox->text);
+			prevNoteItem->data = ChNotesEditorGetText(notesEditor);
 		}
 	}
 
@@ -47,21 +85,17 @@ void OnNoteSelected(ChSidebarItem* item, ChWindow* mainWin) {
 	}
 
 	if (strcmp(item->label, "[+] New Note") == 0) {
-		ChTextBoxSetText(notesTextBox, (char*)"Title: ");
-		ChTextBoxUpdate(notesTextBox, mainWin);
+		ChNotesEditorSetText(notesEditor, (char*)"Title: ");
 	} else if (item->data) {
-		ChTextBoxSetText(notesTextBox, (char*)item->data);
-		ChTextBoxUpdate(notesTextBox, mainWin);
+		ChNotesEditorSetText(notesEditor, (char*)item->data);
 	} else if (strcmp(item->label, "Welcome to XENotes") == 0) {
 		const char* welcome =
 			"Welcome to XENotes!\n\nThis is your modern, fast note taking app in XenevaOS.\n\nFeatures:\n- Create notes with [+] New Note\n- Smooth text editing\n- Fast native graphics\n";
 		item->data = strdup(welcome);
-		ChTextBoxSetText(notesTextBox, (char*)item->data);
-		ChTextBoxUpdate(notesTextBox, mainWin);
+		ChNotesEditorSetText(notesEditor, (char*)item->data);
 	} else {
 		item->data = strdup("");
-		ChTextBoxSetText(notesTextBox, (char*)"");
-		ChTextBoxUpdate(notesTextBox, mainWin);
+		ChNotesEditorSetText(notesEditor, (char*)"");
 	}
 }
 
@@ -104,14 +138,69 @@ void NotesInitializeUI(ChWindow* mainWin) {
 	
 	/* Create the Text Box (Right Pane) */
 	int tbX = 200;
-	int tbY = 0;
+	int tbY = 32; // Leave room for toolbar
 	int tbW = mainWin->info->width - 200;
-	int tbH = mainWin->info->height - 26;
+	int tbH = mainWin->info->height - 26 - 32;
 	
-	notesTextBox = ChCreateTextBox(mainWin, tbX, tbY, tbW, tbH);
-	ChTextBoxSetText(notesTextBox, (char*)"Title: ");
+	notesEditor = ChCreateNotesEditor(mainWin, tbX, tbY, tbW, tbH);
+	ChNotesEditorSetText(notesEditor, (char*)"Title: ");
+	
+	ChToolbar* toolbar = ChToolbarCreate(tbX, 26, tbW, 32, TOOLBAR_HORIZONTAL);
+	
+	// Add custom tool buttons
+	CustomBtn* btnBold = CreateCustomBtn(0, 0, 32, 28, "B", 0, false);
+	btnBold->base.ChActionHandler = OnBoldClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnBold, 32, 28);
+	
+	CustomBtn* btnItal = CreateCustomBtn(0, 0, 32, 28, "I", 0, false);
+	btnItal->base.ChActionHandler = OnItalicClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnItal, 32, 28);
+	
+	ChToolbarAddSeparator(toolbar);
+	
+	CustomBtn* btnAUp = CreateCustomBtn(0, 0, 32, 28, "A+", 0, false);
+	btnAUp->base.ChActionHandler = OnSizeUpClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnAUp, 32, 28);
+	
+	CustomBtn* btnADown = CreateCustomBtn(0, 0, 32, 28, "A-", 0, false);
+	btnADown->base.ChActionHandler = OnSizeDownClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnADown, 32, 28);
+	
+	ChToolbarAddSeparator(toolbar);
+	
+	CustomBtn* btnList = CreateCustomBtn(0, 0, 48, 28, "List", 0, false);
+	btnList->base.ChActionHandler = OnListClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnList, 48, 28);
+	
+	ChToolbarAddSeparator(toolbar);
+	
+	CustomBtn* btnRed = CreateCustomBtn(0, 0, 28, 28, "", 0xFFFF0000, true);
+	btnRed->base.ChActionHandler = OnColorRedClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnRed, 28, 28);
+	
+	CustomBtn* btnBlue = CreateCustomBtn(0, 0, 28, 28, "", 0xFF0000FF, true);
+	btnBlue->base.ChActionHandler = OnColorBlueClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnBlue, 28, 28);
+	
+	CustomBtn* btnGreen = CreateCustomBtn(0, 0, 28, 28, "", 0xFF00C000, true);
+	btnGreen->base.ChActionHandler = OnColorGreenClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnGreen, 28, 28);
+	
+	CustomBtn* btnBlack = CreateCustomBtn(0, 0, 28, 28, "", 0xFF000000, true);
+	btnBlack->base.ChActionHandler = OnColorBlackClicked;
+	ChToolbarAddWidget(toolbar, (ChWidget*)btnBlack, 28, 28);
 	
 	/* Add widgets to window */
 	ChWindowAddWidget(mainWin, (ChWidget*)notesSidebar);
-	ChWindowAddWidget(mainWin, (ChWidget*)notesTextBox);
+	ChWindowAddWidget(mainWin, (ChWidget*)toolbar);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnBold);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnItal);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnAUp);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnADown);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnList);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnRed);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnBlue);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnGreen);
+	ChWindowAddWidget(mainWin, (ChWidget*)btnBlack);
+	ChWindowAddWidget(mainWin, (ChWidget*)notesEditor);
 }
