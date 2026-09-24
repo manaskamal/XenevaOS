@@ -37,3 +37,5 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**Application Development**](Development/ApplicationDevelopment.md) — Writing user-space applications (GUI, Terminal) for XenevaOS.
 - [**Driver Development**](Development/DriverDevelopment.md) — Developing dynamic drivers and interacting with kernel APIs.
 - [**Project Architecture(MSVC)**](Development/ProjectArchitecture(MSVC).md)- Discusses various artifacts and project inter dependencies.
+- [**DeodhaiXR Guide**](Development/DeodhaiXR-Guide.md) — Complete study guide for the DeodhaiXR window compositor and XR shell: surfaces, the shared-memory atomic door, damage algebra, composition passes, the frame loop, and the three present paths.
+- [**Memory System Guide**](Development/MemorySystem-Guide.md) — Complete study guide for the AArch64 memory system: the TLSF kernel heap, its kmalloc wiring layer, the region-aware buddy physical allocator, the verification harness, and the x86 contrast set (bitmap PMM, list heap, `#if 0` buddy draft).

@@ -49,6 +49,12 @@
 #define FAT_EOC_MARK  0xFFFFFFF8
 #define FAT_BAD_CLUSTER 0xFFFFFFF7
 
+/* FAT32 end-of-chain marks span 0x0FFFFFF8-0x0FFFFFFF, and mkfs/mtools
+ * terminate chains with 0x0FFFFFFF. Equality against FAT_EOC_MARK alone
+ * misses that terminator, so cluster-chain walks must use this range
+ * test -- otherwise they step off the end of the chain and loop forever. */
+#define FAT_IS_EOC(clust) ((((uint32_t)(clust)) & 0x0FFFFFFF) >= (FAT_EOC_MARK & 0x0FFFFFFF))
+
 
 #ifdef ARCH_X64
 #pragma pack(push,1)
