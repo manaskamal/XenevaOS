@@ -60,7 +60,7 @@ int memcmp(const void* first, const void* second, size_t length) {
 	return (0); //return successful code
 }
 
-void* memcpy(void* __restrict dest, void* __restrict src, size_t len) {
+void* memcpy(void* __restrict dest, const void* __restrict src, size_t len) {
 	//_fastcpy(dest, src, count);
 
 	//volatile uint8_t* t = (volatile uint8_t*)dest;

@@ -236,6 +236,9 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 					node_to_ret = node_;
 			}
 		}
+		/* TEMP-BT-TEST (revert before commit): is bt0 visible to opens? */
+		if (strcmp(pathname, "bt0") == 0)
+			UARTDebugOut("[bt-test]: open bt0 %s\r\n", node_to_ret ? "FOUND" : "MISS");
 
 		next = strchr(next + 1, '/');
 		if (next)

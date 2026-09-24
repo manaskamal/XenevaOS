@@ -116,6 +116,8 @@ NO_NETWORK=0
 NO_AUDIO=0
 NO_BOOT_MENU=0
 NO_DOOM=0
+BT_SERIAL="${XENEVA_BT_SERIAL:-/tmp/bt-server-bredr}"
+NO_BT=0
 NO_NETSURF=0
 
 print_help(){
@@ -387,6 +389,9 @@ while [ $# -gt 0 ]; do
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
+        --bt-serial) BT_SERIAL="/tmp/bt-server-bredr" ;;
+        --bt-serial=*) BT_SERIAL="${1#--bt-serial=}" ;;
+        --no-bt) NO_BT=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -920,7 +925,30 @@ QEMU_ARGS=(
     -device virtio-sound-pci,audiodev=snd0,disable-legacy=on
     -serial stdio
 )
+bt_power_off_for_proxy() {
+    local i prop
+    command -v busctl >/dev/null 2>&1 || return 0
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        busctl call org.bluez /org/bluez/hci0 org.freedesktop.DBus.Properties \
+            Set ssv org.bluez.Adapter1 Powered b false >/dev/null 2>&1 || true
+        prop=$(busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered 2>/dev/null || true)
+        case "$prop" in
+            "b false") return 0 ;;
+        esac
+        sleep 0.2
+    done
+    echo "[+] Bluetooth: adapter still powered; btproxy may report 'Device or resource busy'"
+}
 
+if [ "$NO_BT" -eq 1 ]; then
+    echo "[+] Bluetooth: disabled (--no-bt), guest uses mock controller"
+elif [ -S "$BT_SERIAL" ]; then
+    bt_power_off_for_proxy
+    QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
+    echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
+else
+    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0), guest uses mock"
+fi
 if [ "$XR_DEMO" -eq 1 ]; then
 	# Core XR transport: D-Bus exports Console_1 to the viewer, using either
 	# CPU scanout with VNC or EGL DMA-BUF scanout. The Unix monitor handles
