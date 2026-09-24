@@ -507,6 +507,7 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 	int zeroPad = 0;
 	int leftJust = 0;
 	int fieldWidth = 0;
+	int precision = -1;
 	int isLong = 0;
 	long long intArg = 0;
 	double doubleArg;
@@ -562,9 +563,18 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 			}
 		}
 
+		precision = -1;
+		if (format[inCount] == '.') {
+			inCount += 1;
+			precision = 0;
+			while ((format[inCount] >= '0') && (format[inCount] <= '9')) {
+				precision = precision * 10 + (format[inCount] - '0');
+				inCount++;
+			}
+		}
+
 		if (isLong) {
-			intArg = (long long)va_arg(list, unsigned);
-			intArg |= (((long long)va_arg(list, unsigned)) << 32);
+			intArg = (long long)va_arg(list, unsigned long long);
 		} else if ((format[inCount] == 'e') || (format[inCount] == 'E') ||
 				   (format[inCount] == 'f') || (format[inCount] == 'F') ||
 				   (format[inCount] == 'g') || (format[inCount] == 'G')) {
@@ -574,15 +584,17 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		switch (format[inCount]) {
 		case 'd':
 		case 'i': {
-			if (fieldWidth) {
+			if (fieldWidth || precision >= 0) {
 				if (isLong)
 					digits = _ldigits(intArg, 10, 1);
 				else
 					digits = _digits(intArg, 10, 1);
 
 				if (!leftJust) {
+					while (precision >= 0 && digits++ < precision)
+						output[outCount++] = '0';
 					while (digits++ < fieldWidth)
-						output[outCount++] = (zeroPad ? '0' : ' ');
+						output[outCount++] = ((zeroPad && precision < 0) ? '0' : ' ');
 				}
 			}
 			if (isLong)
@@ -601,15 +613,17 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		}
 
 		case 'u': {
-			if (fieldWidth) {
+			if (fieldWidth || precision >= 0) {
 				if (isLong)
 					digits = _ldigits(intArg, 10, 0);
 				else
 					digits = _digits(intArg, 10, 0);
 
 				if (!leftJust) {
+					while (precision >= 0 && digits++ < precision)
+						output[outCount++] = '0';
 					while (digits++ < fieldWidth)
-						output[outCount++] = (zeroPad ? '0' : ' ');
+						output[outCount++] = ((zeroPad && precision < 0) ? '0' : ' ');
 				}
 			}
 
@@ -633,17 +647,24 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		case 's': {
 			const char* str = intArg ? (const char*)(uint64_t)intArg : "(NULL)";
 			int slen = strlen(str);
-			int pad = fieldWidth;
+			int pad;
 
-			if (fieldWidth && !leftJust) {
+			if (precision >= 0 && precision < slen)
+				slen = precision;
+
+			pad = fieldWidth - slen;
+			if (pad < 0)
+				pad = 0;
+
+			if (!leftJust) {
 				while (pad-- > 0)
 					output[outCount++] = ' ';
 			}
 
-			strcpy(output + outCount, str);
-			outCount += slen;
+			for (int i = 0; i < slen; i++)
+				output[outCount++] = str[i];
 
-			if (fieldWidth && leftJust) {
+			if (leftJust) {
 				while (pad-- > 0)
 					output[outCount++] = ' ';
 			}
@@ -678,15 +699,17 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 			break;
 		}
 		case 'o': {
-			if (fieldWidth) {
+			if (fieldWidth || precision >= 0) {
 				if (isLong)
 					digits = _ldigits(intArg, 8, 0);
 				else
 					digits = _digits(intArg, 8, 0);
 
 				if (!leftJust) {
+					while (precision >= 0 && digits++ < precision)
+						output[outCount++] = '0';
 					while (digits++ < fieldWidth)
-						output[outCount++] = (zeroPad ? '0' : ' ');
+						output[outCount++] = ((zeroPad && precision < 0) ? '0' : ' ');
 				}
 			}
 
@@ -705,15 +728,17 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		}
 		case 'x':
 		case 'X': {
-			if (fieldWidth) {
+			if (fieldWidth || precision >= 0) {
 				if (isLong)
 					digits = _ldigits(intArg, 16, 0);
 				else
 					digits = _digits(intArg, 16, 0);
 
 				if (!leftJust) {
+					while (precision >= 0 && digits++ < precision)
+						output[outCount++] = '0';
 					while (digits++ < fieldWidth)
-						output[outCount++] = (zeroPad ? '0' : ' ');
+						output[outCount++] = ((zeroPad && precision < 0) ? '0' : ' ');
 				}
 			}
 
@@ -738,9 +763,10 @@ int _xeprint(char* output, int outputlen, const char* format, va_list list) {
 		case 'g':
 		case 'G': {
 			doubleArg = (double)va_arg(list, double);
-			list += sizeof(int);
 
-			if (fieldWidth)
+			if (precision >= 0)
+				dtoa(doubleArg, (output + outCount), precision);
+			else if (fieldWidth)
 				dtoa(doubleArg, (output + outCount), fieldWidth);
 			else
 				dtoa(doubleArg, (output + outCount), 6);

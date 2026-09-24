@@ -231,6 +231,9 @@ char* sztoa(size_t value, char* str, int base) {
 void exit(int errno) {
 	//sys_exit();
 	_KePrint("Exiting app \n");
+	_KeProcessExit();
+	// Should never return; halt if the syscall ever does.
+	while (1) { }
 }
 
 /*

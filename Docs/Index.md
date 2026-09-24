@@ -29,6 +29,7 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**Threads & Processes**](Kernel/Thread.md) — Internal workings of kernel threads and user processes.
 - [**Drivers Subsystem**](Kernel/Drivers.md) — Core principles of the XenevaOS hardware driver model.
 - [**USB Stack**](Kernel/usb.md) — How USB buses and controllers are initialized.
+- [**Bluetooth**](Kernel/Bluetooth.md) — AArch64 host, `/dev/bt0`, bonds, and LE Audio.
 - [**Driver Framework**](Kernel/Drivers.md#driver-framework) --- Discusses the Driver framework model of XenevaOS and how it can be used to write Hardware Drivers.
 - [**Kernel Networking**](Kernel/Network.md) -- Discusses the networking model and implementation of different protocols in XenevaOS.
 
@@ -37,3 +38,5 @@ Use the Table of Contents below to navigate through the project's documentation.
 - [**Application Development**](Development/ApplicationDevelopment.md) — Writing user-space applications (GUI, Terminal) for XenevaOS.
 - [**Driver Development**](Development/DriverDevelopment.md) — Developing dynamic drivers and interacting with kernel APIs.
 - [**Project Architecture(MSVC)**](Development/ProjectArchitecture(MSVC).md)- Discusses various artifacts and project inter dependencies.
+- [**DeodhaiXR Guide**](Development/DeodhaiXR-Guide.md) — Complete study guide for the DeodhaiXR window compositor and XR shell: surfaces, the shared-memory atomic door, damage algebra, composition passes, the frame loop, and the three present paths.
+- [**Memory System Guide**](Development/MemorySystem-Guide.md) — Complete study guide for the AArch64 memory system: the TLSF kernel heap, its kmalloc wiring layer, the region-aware buddy physical allocator, the verification harness, and the x86 contrast set (bitmap PMM, list heap, `#if 0` buddy draft).

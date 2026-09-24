@@ -203,6 +203,16 @@ void init_basic_gid_to_dev() {
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, GROUP_NETWORK);
 	}
+	/* The desktop terminal is started by the compositor, which does not
+	 * have GROUP_NETWORK or GROUP_AUDIO. Every normal user process does
+	 * have the world group, so btctl in that terminal can open /dev/bt0
+	 * and write PCM to /dev/sound the same way this process does. */
+	fd = _KeOpenFile("/dev/bt0", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD));
+	}
+	if (_sound != -1)
+		_KeCredChangeID(_sound, 0, _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD));
 }
 
 /**

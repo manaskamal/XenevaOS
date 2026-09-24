@@ -68,3 +68,7 @@ session-*.md
 Tools/platform-tools/
 *.dll
 *.map
+
+# Commercial Doom IWADs must never be committed (copyrighted, large binaries).
+# Place doom2.wad locally under Resources/resources/ or provide via Freedoom.
+*.wad

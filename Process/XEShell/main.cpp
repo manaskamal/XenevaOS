@@ -91,7 +91,7 @@ void XEShellTimerCallback(int signo) {
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir) {
-		printf("\nXEShell %s$: ", currentDirectory ? currentDirectory : "/");
+		printf("\033[32mXEShell %s$:\033[37m", currentDirectory ? currentDirectory : "/");
 		fflush(stdout);
 		_draw_shell_curdir = false;
 	}

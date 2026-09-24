@@ -64,6 +64,17 @@
 #define HANDLE_TYPE_NORMAL_WINDOW 1
 #define HANDLE_TYPE_POPUP_WINDOW  2
 
+
+/** SPECIAL MESSAGE CODE -- are responded by
+ *  broadcast listener
+ */
+#define DEODHAI_FORCE_OPEN_LAUNCHER  400
+#define DEODHAI_FORCE_OPEN_SETTINGS  401
+#define DEODHAI_FORCE_OPEN_SEARCH    402
+#define DEODHAI_FORCE_OPEN_CALENDER  403
+#define DEODHAI_FORCE_OPEN_TERMINAL  404
+#define DEODHAI_FORCE_OPEN_NOTIFICATION 405
+
 typedef struct _rect_ {
 	int32_t x;
 	int32_t y;

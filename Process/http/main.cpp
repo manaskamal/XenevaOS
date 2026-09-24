@@ -153,6 +153,10 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "curl: (6) Could not resolve host: %s\n", host);
 		return 6;
 	}
+	if (ent->h_addrtype != AF_INET || ent->h_length != 4 || !ent->h_addr_list[0]) {
+		fprintf(stderr, "curl: (6) No IPv4 address for host: %s\n", host);
+		return 6;
+	}
 
 	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
 	in_addr in;

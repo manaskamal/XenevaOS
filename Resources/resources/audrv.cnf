@@ -1,5 +1,6 @@
-(1)[04,03]/hda.dll | 
+(1)[04,03]/virtsnd.dll |
 (2)[12,03]/xhci.dll|
 (3)[02,00]/virtnet.dll |
 (4)[3,128]/virtgpu.dll |
+(5)[6900,4185]/virtsnd.dll |
 (0)

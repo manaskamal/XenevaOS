@@ -210,7 +210,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 			}
 		}
 		parent_cluster = FatReadFAT(fsys, parent_cluster);
-		if (parent_cluster == (FAT_EOC_MARK & 0x0FFFFFFF))
+		if (FAT_IS_EOC(parent_cluster))
 			break;
 		/* actually, here we need to allocate a new
 		 * cluster and write it to root cluster
@@ -256,7 +256,10 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 				memcpy(name, dirent->filename, 11);
 				//name[11] = 0;
 
-				if (strcmp(fname, name) == 0) {
+				/* both sides are fixed 11-byte DOS names with no
+				 * terminator; strcmp past the end reads stack garbage
+				 * and matches only by luck --axiss */
+				if (memcmp(fname, name, 11) == 0) {
 					dirent->file_size += size;
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
 					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
@@ -267,10 +270,11 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 		}
 
 		dir_cluster = FatReadFAT(fsys, dir_cluster);
-		if (dir_cluster == (FAT_EOC_MARK & 0x0FFFFFFF)) {
+		if (FAT_IS_EOC(dir_cluster)) {
 			break;
 		}
 	}
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 	return;
 }
 
@@ -326,7 +330,7 @@ int FatFileUpdateFilename(AuVFSNode* fsys, AuVFSNode* file, char* newname) {
 		}
 
 		dir_cluster = FatReadFAT(fsys, dir_cluster);
-		if (dir_cluster == (FAT_EOC_MARK & 0x0FFFFFFF))
+		if (FAT_IS_EOC(dir_cluster))
 			break;
 	}
 
@@ -361,15 +365,15 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 		file->eof = 0;
 	}
 
-	/* this was || before, which can never be false, so EOC/BAD clusters
-	 * never actually got skipped here --axiss */
-	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) && (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
+	/* EOC marks span 0x0FFFFFF8-0x0FFFFFFF; equality against FAT_EOC_MARK
+	 * alone misses the 0x0FFFFFFF terminator mkfs/mtools write --axiss */
+	if (!FAT_IS_EOC(cluster) && (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
 		memcpy(buff, buffer, PAGE_SIZE);
 		AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, buff);
 		file->pos++;
 	}
 	uint32_t return_cluster = FatReadFAT(fsys, cluster);
-	if (return_cluster == (FAT_EOC_MARK & 0x0FFFFFFF)) {
+	if (FAT_IS_EOC(return_cluster)) {
 		file->eof = 1;
 	} else
 		cluster = return_cluster;
@@ -471,7 +475,7 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 		}
 
 		dir_clust = FatReadFAT(fsys, dir_clust);
-		if (dir_clust == (FAT_EOC_MARK & 0x0FFFFFFF))
+		if (FAT_IS_EOC(dir_clust))
 			break;
 	}
 	return -1;
@@ -500,7 +504,7 @@ int FatFileRemove(AuVFSNode* fsys, AuVFSNode* file) {
 	uint32_t cluster = file->current;
 	while (1) {
 		uint32_t next_cluster = FatReadFAT(fsys, cluster);
-		if (next_cluster == (FAT_EOC_MARK & 0x0fffffff)) {
+		if (FAT_IS_EOC(next_cluster)) {
 			UARTDebugOut("EOC mark found in cluster -> %x \n", cluster);
 			FatAllocCluster(fsys, cluster, 0x00);
 			break;

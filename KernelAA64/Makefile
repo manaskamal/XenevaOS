@@ -86,7 +86,7 @@ endif
 
 C_SRCS_ALL = $(shell find . -name '*.c')
 # Exclude dead allocator code (replaced by TLSF)
-C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
+C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c ./Usb/xhci.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
 S_SRCS = $(shell find . -name '*.s')
 
 C_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(C_SRCS))

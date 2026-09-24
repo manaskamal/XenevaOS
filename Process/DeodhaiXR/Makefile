@@ -29,7 +29,7 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include -I../../Libs/OpenXR
 
 CPP_SRCS = alpha.cpp animation.cpp backdirty.cpp clip.cpp compose.cpp cursor.cpp \
-           dirty.cpp main.cpp rect.cpp surface.cpp window.cpp
+           dirty.cpp main.cpp rect.cpp surface.cpp window.cpp keybind.cpp
 ifeq ($(OPENXR),1)
 CPP_SRCS += xr_qemu.cpp xr_present.cpp
 endif
@@ -65,7 +65,7 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                $(INCLUDES)
 
-    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native, -Wl,-filealign:0x1000
 else
     # GCC configuration
     CXX = $(CROSS_COMPILE)g++

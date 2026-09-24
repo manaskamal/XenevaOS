@@ -431,6 +431,23 @@ void snd_notify_queue(VirtioCommonCfg* cfg, uint16_t queueIdx) {
 }
 
 /**
+ * @brief snd_poll_resp_u32 -- poll a controlq response word directly
+ * instead of waiting on the virtio SPI: on this board/config the virtio
+ * SPIs never reach the CPU (same finding as the virtio-gpu driver, see
+ * gpu_reset_device), so every _response_ok wait burns its full spin
+ * budget and fails. The device itself completes promptly, so invalidate
+ * + poll the response buffer. Returns 0 once *word is nonzero, 1 on
+ * timeout. Caller must zero the response buffer first.
+ */
+static int snd_poll_resp_u32(volatile uint32_t* word) {
+	uint32_t spin = 2000000;
+	dc_ivac((uint64_t)word);
+	while (*word == 0 && --spin)
+		dc_ivac((uint64_t)word);
+	return (*word == 0) ? 1 : 0;
+}
+
+/**
  * @brief snd_query_pcm_info -- query pcm information
  * like number of jacks, chmaps, etc
  * @param cfg -- pointer to virtio common config
@@ -445,6 +462,8 @@ virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
 	req->count = num_streams;
 	req->size = sizeof(virtio_snd_pcm_info);
 	aa64_data_cache_clean_range(command_phys, sizeof(virtio_snd_query_info));
+	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
+	memset(resp, 0, sizeof(virtio_snd_hdr) + sizeof(virtio_snd_pcm_info) * num_streams);
 
 	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
 	controlq->buffers[index].Length = sizeof(virtio_snd_query_info);
@@ -466,17 +485,13 @@ virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
 
 	snd_notify_queue(cfg, 0);
 
-	int timeout = 5000000;
-	while (timeout) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			return (virtio_snd_pcm_info*)((uint64_t)resp_phys + sizeof(virtio_snd_hdr));
-			break;
-		}
-		timeout--;
+	if (snd_poll_resp_u32(&resp->code))
+		return NULL;
+	if (resp->code != VIRTIO_SND_S_OK) {
+		UARTDebugOut("[virtio-snd]: pcm info query returned : %x \r\n", resp->code);
+		return NULL;
 	}
-
-	return NULL;
+	return (virtio_snd_pcm_info*)((uint64_t)resp_phys + sizeof(virtio_snd_hdr));
 }
 
 /**
@@ -565,7 +580,6 @@ static int snd_pcm_set_params(VirtioCommonCfg* cfg) {
 	parm->rate = VIRTIO_SND_PCM_RATE_48000;
 	aa64_data_cache_clean_range(command_phys, sizeof(virtio_snd_pcm_set_params));
 
-
 	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
 	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_set_params);
 	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
@@ -584,17 +598,14 @@ static int snd_pcm_set_params(VirtioCommonCfg* cfg) {
 	isb_flush();
 	dsb_ish();
 
+	memset(resp, 0, sizeof(virtio_snd_hdr));
+
 	snd_notify_queue(cfg, 0);
 
-	int timeout = 5000000;
-	while (timeout) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			val = 0;
-			break;
-		}
-		timeout--;
-	}
+	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
+		val = 0;
+	else
+		UARTDebugOut("[virtio-snd]: set params returned : %x \r\n", resp->code);
 	return val;
 }
 
@@ -631,16 +642,14 @@ static int snd_pcm_prepare_output(VirtioCommonCfg* cfg) {
 	isb_flush();
 	dsb_ish();
 
+	memset(resp, 0, sizeof(virtio_snd_hdr));
+
 	snd_notify_queue(cfg, 0);
 
-	int timeout = 5000000;
-	while (timeout--) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			val = 0;
-			break;
-		}
-	}
+	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
+		val = 0;
+	else
+		UARTDebugOut("[virtio-snd]: prepare output returned : %x \r\n", resp->code);
 
 	return val;
 }
@@ -658,7 +667,6 @@ static int snd_pcm_output_start(VirtioCommonCfg* cfg) {
 
 	pcm->hdr.code = VIRTIO_SND_R_PCM_START;
 	pcm->stream_id = 0;
-
 	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
 	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_hdr);
 	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
@@ -677,16 +685,14 @@ static int snd_pcm_output_start(VirtioCommonCfg* cfg) {
 	isb_flush();
 	dsb_ish();
 
+	memset(resp, 0, sizeof(virtio_snd_hdr));
+
 	snd_notify_queue(cfg, 0);
 
-	int timeout = 5000000;
-	while (timeout--) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			val = 0;
-			break;
-		}
-	}
+	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
+		val = 0;
+	else
+		UARTDebugOut("[virtio-snd]: control request returned : %x \r\n", resp->code);
 	return val;
 }
 
@@ -723,16 +729,14 @@ static int snd_pcm_output_stop(VirtioCommonCfg* cfg) {
 	isb_flush();
 	dsb_ish();
 
+	memset(resp, 0, sizeof(virtio_snd_hdr));
+
 	snd_notify_queue(cfg, 0);
 
-	int timeout = 5000000;
-	while (timeout--) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			val = 0;
-			break;
-		}
-	}
+	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
+		val = 0;
+	else
+		UARTDebugOut("[virtio-snd]: control request returned : %x \r\n", resp->code);
 	return val;
 }
 
@@ -742,13 +746,13 @@ static int snd_pcm_output_stop(VirtioCommonCfg* cfg) {
  * handler
  */
 void virtio_snd_interrupt(int spi_id) {
+	/* Reap completions only. Never bump available.index here: that would
+	 * re-offer a stale descriptor to the device. Controlq completions are
+	 * polled directly (virtio SPIs don't reach the CPU on this board). */
 	uint16_t them = controlq->used.index;
 
-	for (; controlq_lst_idx < them; controlq_lst_idx++) {
-
+	for (; controlq_lst_idx < them; controlq_lst_idx++)
 		isb_flush();
-		controlq->available.index++;
-	}
 
 	virtio_snd_hdr* hdr = (virtio_snd_hdr*)resp_phys;
 	if (hdr->code == VIRTIO_SND_S_OK) {
@@ -773,6 +777,7 @@ int virtio_snd_write(uint8_t* buffer, size_t len) {
 	/* copy the pcm buffer */
 	memcpy(pcm_buffer, buffer, len);
 	snd_send_pcm(_config, pcm_buffer, len);
+	return 0;
 }
 
 /**

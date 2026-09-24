@@ -62,4 +62,6 @@ extern void ClipSubtractRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int r_c
 
 extern void ClipGetBehindRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* r_count);
 
+extern void ClipSubtractRectList(Rect* inputList, int* inputCount, Rect* cut_rect);
+
 #endif

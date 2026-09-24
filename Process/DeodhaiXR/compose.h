@@ -66,6 +66,14 @@ extern void _compose_entire_window(ChCanvas* canvas,
 								   bool _shadow_update);
 
 /**
+ * @brief compose_window_zoomed -- stretched-fill bilinear upscale of a
+ * window buffer to the full scanout (WinSharedInfo->zoomed)
+ */
+extern void compose_window_zoomed(ChCanvas* canvas,
+								  Window* win,
+								  WinSharedInfo* info);
+
+/**
  * @brief _compose_always_on_top_dirty -- compose always on top window's dirty rectangles
  * @param canvas -- Pointer to canvas
  * @param info -- Pointer to window's shared info

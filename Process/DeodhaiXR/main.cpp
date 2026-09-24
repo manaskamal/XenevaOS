@@ -52,9 +52,11 @@
 #include "alpha.h"
 #include "nanojpg.h"
 #include <arm_neon.h>
+#include <keycode.h>
 #include "compose.h"
 #include "unikernel.h"
 #include "xr_present.h"
+#include "keybind.h"
 #include <sys/_ketime.h>
 
 static uint32_t screen_w;
@@ -253,8 +255,8 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  * fully jpeg encoder is needed, i use synfig studio
  * for jpeg encoder
  */
-void DrawWallpaper(ChCanvas* canv, char* filename) {
-	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+void DrawWallpaper(ChCanvas* canv, const char* filename) {
+	int image = _KeOpenFile((char*)filename, FILE_OPEN_READ_ONLY);
 	if (image < 0) {
 		/* Missing wallpaper (e.g. res-specific jpg not in initrd): keep the
 		 * back surface as-is instead of hanging in the decoder --axiss */
@@ -336,6 +338,27 @@ static uint64_t profAccumTransfer = 0;
 void XRComposeFrame(ChCanvas* canvas) {
 	/* Split the frame into compose, present, and transfer stages for the overlay. --axiss */
 	uint64_t t0 = _KeGetCurrentMS();
+
+	/* Zoom transition tracking: force a full recompose on unzoom so no
+	 * stale canvas regions linger. */
+	static int wasZoomed = 0;
+	{
+		int zoomActive = 0;
+		for (Window* win = rootWin; win != NULL; win = win->next) {
+			WinSharedInfo* zinfo = (WinSharedInfo*)win->sharedInfo;
+			if (!zinfo->hide && zinfo->zoomed) {
+				zoomActive = 1;
+				break;
+			}
+		}
+		if (wasZoomed && !zoomActive) {
+			_window_update_all_ = true; // full recompose on unzoom
+			/* zoom covered the scanout: repaint the wallpaper everywhere
+			 * so no stale zoom pixels survive underneath. */
+			BackDirtyAdd(0, 0, (int)canvas->canvasWidth, (int)canvas->canvasHeight);
+		}
+		wasZoomed = zoomActive;
+	}
 	CursorDrawBack(canvas, currentCursor, currentCursor->oldXPos, currentCursor->oldYPos);
 	AddDirtyClip(currentCursor->oldXPos, currentCursor->oldYPos, 24, 24);
 
@@ -361,11 +384,36 @@ void XRComposeFrame(ChCanvas* canvas) {
 		if (info->hide)
 			continue;
 
+		if (info->zoomed)
+			continue; // handled in the zoom pass below
+
 		/** do either one -- dirty area tracking or else update all */
 		_compose_dirty_area_(canvas, win, focusedWin, info);
 
 		_compose_entire_window(
 			canvas, win, _window_update_all_, info, focusedWin, _window_moving_, _shadow_update);
+	}
+
+	/**
+	 * Zoomed (maximised) windows: stretched-fill upscale into the compose
+	 * canvas (the back surface the GPU flush presents from), above normal
+	 * windows; always-on-top and cursor still compose over them
+	 * afterwards. Fullscreen dirty is published so transfer moves it.
+	 */
+	for (Window* win = rootWin; win != NULL; win = win->next) {
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+
+		if (info->hide || !info->zoomed)
+			continue;
+
+		if (WinSharedFlagLoad(&info->dirty) || info->rect_count > 0 ||
+			WinSharedFlagLoad(&info->updateEntireWindow)) {
+			compose_window_zoomed(canvas, win, info);
+			info->rect_count = 0;
+			WinSharedFlagStore(&info->dirty, false);
+			WinSharedFlagStore(&info->updateEntireWindow, false);
+			AddDirtyClip(0, 0, (int)canvas->canvasWidth, (int)canvas->canvasHeight);
+		}
 	}
 
 	/**
@@ -598,6 +646,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->zoomed)
+			continue; // zoomed windows fill the screen; not draggable
 		//_KePrint("INFO->x %d, mx -> %d \r\n", info->x, x);
 		if (!(x >= (info->x + 10) && x < (info->x + info->width - 74) && y >= info->y &&
 			  y < (info->y + info->height)))
@@ -727,9 +777,41 @@ void DeodhaiBroadcastMouse(int mouse_x, int mouse_y, int button) {
 		}
 	}
 
+	if (!mouseWin) {
+		/* zoomed (maximised) window covers the screen: it wins whatever
+		 * is left, keeping overlays/taskbar priority from above. */
+		for (Window* win = rootWin; win != NULL; win = win->next) {
+			WinSharedInfo* zinfo = (WinSharedInfo*)win->sharedInfo;
+			if (zinfo->hide || !zinfo->zoomed)
+				continue;
+			if (focusedWin != win && button) {
+				DeodhaiWindowSetFocused(win, 1);
+				_window_update_all_ = true;
+				_shadow_update = true;
+			}
+			mouseWin = win;
+			break;
+		}
+	}
+
 broadcast:
 	if (mouseWin) {
 		WinSharedInfo* info = (WinSharedInfo*)mouseWin->sharedInfo;
+		if (info->zoomed && !info->hide && info->width > 0 && info->height > 0 && screen_w > 0 &&
+			screen_h > 0) {
+			/* map screen coords back into the window's own pixels so
+			 * client hit-testing (titlebar buttons etc.) keeps working. */
+			mouse_x = (mouse_x * info->width) / (int)screen_w;
+			mouse_y = (mouse_y * info->height) / (int)screen_h;
+			if (mouse_x < 0)
+				mouse_x = 0;
+			if (mouse_y < 0)
+				mouse_y = 0;
+			if (mouse_x >= info->width)
+				mouse_x = info->width - 1;
+			if (mouse_y >= info->height)
+				mouse_y = info->height - 1;
+		}
 		//DeodhaiResizeCursorUpdate(mouse_x, mouse_y, info);
 		int handle = mouseWin->handle;
 		uint8_t handleType = HANDLE_TYPE_NORMAL_WINDOW;
@@ -780,12 +862,18 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
-	if (currentCursor->xpos <= 0) currentCursor->xpos = 0;
-	if (currentCursor->ypos <= 0) currentCursor->ypos = 0;
-	if (currentCursor->xpos + 24 >= canv->screenWidth) currentCursor->xpos = canv->screenWidth - 24;
-	if (currentCursor->ypos + 24 >= canv->screenHeight) currentCursor->ypos = canv->screenHeight - 24;
-	if (currentCursor->xpos >= canv->screenWidth) currentCursor->xpos = 0;
-	if (currentCursor->ypos >= canv->screenHeight) currentCursor->ypos = 0;
+	if (currentCursor->xpos <= 0)
+		currentCursor->xpos = 0;
+	if (currentCursor->ypos <= 0)
+		currentCursor->ypos = 0;
+	if (currentCursor->xpos + 24 >= canv->screenWidth)
+		currentCursor->xpos = canv->screenWidth - 24;
+	if (currentCursor->ypos + 24 >= canv->screenHeight)
+		currentCursor->ypos = canv->screenHeight - 24;
+	if (currentCursor->xpos >= canv->screenWidth)
+		currentCursor->xpos = 0;
+	if (currentCursor->ypos >= canv->screenHeight)
+		currentCursor->ypos = 0;
 }
 
 /**
@@ -801,6 +889,7 @@ void DeodhaiWindowHide(Window* win) {
 		WinSharedFlagStore(&info->updateEntireWindow, true);
 		WinSharedFlagStore(&info->dirty, true);
 		focusedWin = win;
+		DeodhaiWindowMakeTop(win);
 		PostEvent shown;
 		memset(&shown, 0, sizeof(PostEvent));
 		shown.type = DEODHAI_REPLY_FOCUS_CHANGED;
@@ -876,6 +965,7 @@ void DeodhaiCloseWindow(Window* win) {
 	int height = info->height;
 	int x = info->x;
 	int y = info->y;
+	int wasZoomed = info->zoomed ? 1 : 0;
 	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
 
 	/* iterate all popup window and close them */
@@ -900,8 +990,13 @@ void DeodhaiCloseWindow(Window* win) {
 	_KeMemUnmap(win->shadowBuffers,
 				(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
 #endif
-	BackDirtyAdd(
-		x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
+	/* A zoomed window covered the whole scanout: only repainting its
+	 * normal rect would leave stale zoom pixels everywhere else. */
+	if (wasZoomed)
+		BackDirtyAdd(0, 0, (int)screen_w, (int)screen_h);
+	else
+		BackDirtyAdd(
+			x - SHADOW_SIZE, y - SHADOW_SIZE, width + SHADOW_SIZE * 2, height + SHADOW_SIZE * 2);
 	/* an always-on-top window lives in the alwaysOnTop list, not rootWin;
 	 * removing it via the rootWin-only helper corrupts both lists
 	 * (leaves alwaysOnTop/alwaysOnTopLast dangling to freed memory) --axiss */
@@ -937,6 +1032,7 @@ void DeodhaiCloseWindow(Window* win) {
 int main(int argc, char* argv[]) {
 	_KePrint("Hello DeodhaiXR \n");
 	_KePrint("DeodhaiXR - Copyright (C) Xeneva Pvt Ltd 2023-2026\n");
+	_KePrint("[deodhaiXR]: zoom compose active (stretched nearest)\n");
 
 	DeodhaiInitialiseData();
 
@@ -984,7 +1080,7 @@ int main(int argc, char* argv[]) {
 	_KePrint("Deodhai Initializaed back surface \r\n");
 	DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 	{
-		char* wall = "/XE1_2.jpg";
+		const char* wall = "/XE1_2.jpg";
 		if (screen_w == 1920 && screen_h == 1080)
 			wall = "/XEArch.jpg";
 		else if (screen_w == 480 && screen_h == 320)
@@ -996,7 +1092,7 @@ int main(int argc, char* argv[]) {
 		/* Res-specific jpgs may not ship in initrd; fall back to the one
 		 * guaranteed wallpaper instead of drawing gray --axiss */
 		{
-			int probe = _KeOpenFile(wall, FILE_OPEN_READ_ONLY);
+			int probe = _KeOpenFile((char*)wall, FILE_OPEN_READ_ONLY);
 			if (probe < 0)
 				wall = "/XE1_2.jpg";
 			else
@@ -1014,9 +1110,13 @@ int main(int argc, char* argv[]) {
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenCommit();
 
+	/** intialize key data structure */
+	ChitralekhaKeyInitialise();
+
 	_KePrint("Canvas updated \r\n");
 
-	gpu_fd = _KeOpenFile("/dev/virtiogpu", FILE_OPEN_READ_ONLY);
+	char gpu_path[] = "/dev/virtiogpu";
+	gpu_fd = _KeOpenFile(gpu_path, FILE_OPEN_READ_ONLY);
 
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;
@@ -1064,6 +1164,7 @@ int main(int argc, char* argv[]) {
 
 	BackDirtyInitialise();
 	InitialiseDirtyClipList();
+	_DeodhaiKeyBindInitialize();
 
 	postbox_fd = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 	_KePrint("Postbox fd created : %d \n", postbox_fd);
@@ -1086,7 +1187,9 @@ int main(int argc, char* argv[]) {
 	 * ring open is invisible on serial. Say it here instead. --axiss */
 	if (input_ring_fd >= 0)
 		_KePrint("[deodhaiXR]: input-ring live, fd=%d (mice=%d kybrd=%d)\r\n",
-				 input_ring_fd, mouse_fd, kybrd_fd);
+				 input_ring_fd,
+				 mouse_fd,
+				 kybrd_fd);
 	else
 		_KePrint("[deodhaiXR]: input-ring open failed, falling back to mice/kybrd\r\n");
 	PostEvent event;
@@ -1130,11 +1233,30 @@ int main(int argc, char* argv[]) {
 			const int input_events_per_frame = 128;
 			AuInputMessage queued;
 			for (int i = 0; i < input_events_per_frame &&
-				 _KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0; i++) {
+							_KeReadFile(input_ring_fd, &queued, sizeof(AuInputMessage)) > 0;
+				 i++) {
 				if (queued.type == AU_INPUT_MOUSE)
 					DeodhaiHandleMouseInput(canv, &queued);
-				else if (queued.type == AU_INPUT_KEYBOARD)
-					DeodhaiBroadcastKey(queued.code);
+				else if (queued.type == AU_INPUT_KEYBOARD) {
+					ChitralekhaProcessKey(queued.code);
+					char key = ChitralekhaGetKeyPress(queued.code);
+					bool _key_brodcast_to_focus_win = true;
+					if (ChitralekhaKeyGetCTRL()) {
+						int spcode = _DeodhaiGetSpecialCode(key, 1);
+						/** Special codes are beyond 400, so do check */
+						if (spcode >= 400) {
+							_key_brodcast_to_focus_win = false;
+							PostEvent spe;
+							memset(&spe, 0, sizeof(PostEvent));
+							spe.type = DEODHAI_REPLY_KEY_EVENT;
+							spe.dword = spcode;
+							DeodhaiBroadcastMessage(&spe, NULL);
+						}
+					}
+					if (_key_brodcast_to_focus_win)
+						DeodhaiBroadcastKey(queued.code);
+					memset(&queued, 0, sizeof(AuInputMessage));
+				}
 			}
 		} else {
 			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
@@ -1152,6 +1274,8 @@ int main(int argc, char* argv[]) {
 		fpsComposeMsAccum += (_KeGetCurrentMS() - composeStart);
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
+			_KePrint("Key input is ongoing \r\n");
+
 			DeodhaiBroadcastKey(kybrd_input.code);
 			memset(&kybrd_input, 0, sizeof(AuInputMessage));
 		}
@@ -1350,33 +1474,39 @@ int main(int argc, char* argv[]) {
 			uint64_t nowMs = _KeGetCurrentMS();
 			uint64_t windowMs = nowMs - fpsWindowStart;
 			if (windowMs >= 1000) {
-			uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
-			uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
-			uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
-			uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
-			uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
-			_KePrint("[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
-					 (int)fps,
-					 (int)avgComposeMs,
-					 (int)fpsFrameCount,
-					 (int)windowMs,
-					 (int)frameTime);
-			if (input_ring_fd >= 0) {
-				AuInputRingStats stats;
-				memset(&stats, 0, sizeof(stats));
-				if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
-					_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d pending_keyboard=%d\r\n",
-							 (int)stats.mouse_dropped, (int)stats.keyboard_dropped,
-							 (int)stats.mouse_pending, (int)stats.keyboard_pending);
-			}
-			_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n", (int)avgC,
-					 (int)avgP, (int)avgT);
-			fpsFrameCount = 0;
-			fpsComposeMsAccum = 0;
-			profAccumCompose = 0;
-			profAccumPresent = 0;
-			profAccumTransfer = 0;
-			fpsWindowStart = nowMs;
+				uint64_t fps = (fpsFrameCount * 1000) / (windowMs ? windowMs : 1);
+				uint64_t avgComposeMs = fpsFrameCount ? (fpsComposeMsAccum / fpsFrameCount) : 0;
+				uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
+				uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
+				uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+				_KePrint(
+					"[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
+					(int)fps,
+					(int)avgComposeMs,
+					(int)fpsFrameCount,
+					(int)windowMs,
+					(int)frameTime);
+				if (input_ring_fd >= 0) {
+					AuInputRingStats stats;
+					memset(&stats, 0, sizeof(stats));
+					if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
+						_KePrint("[deodhaiXR]: input drops mouse=%d keyboard=%d pending_mouse=%d "
+								 "pending_keyboard=%d\r\n",
+								 (int)stats.mouse_dropped,
+								 (int)stats.keyboard_dropped,
+								 (int)stats.mouse_pending,
+								 (int)stats.keyboard_pending);
+				}
+				_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n",
+						 (int)avgC,
+						 (int)avgP,
+						 (int)avgT);
+				fpsFrameCount = 0;
+				fpsComposeMsAccum = 0;
+				profAccumCompose = 0;
+				profAccumPresent = 0;
+				profAccumTransfer = 0;
+				fpsWindowStart = nowMs;
 			}
 		}
 

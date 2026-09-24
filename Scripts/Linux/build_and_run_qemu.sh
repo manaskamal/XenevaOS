@@ -46,6 +46,10 @@ set -e
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
+#   --no-doom               Drop the Doom addon (doom.exe + doom2.wad) from
+#                           the image.
+#   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
+#                           the image.
 #   --no-boot-menu          Skip the EFI resolution menu and boot the default
 #                           mode (NOMENU marker on the ESP). The menu stays on
 #                           by default; headless, egl-headless and xr-demo
@@ -111,6 +115,10 @@ TUI=0
 NO_NETWORK=0
 NO_AUDIO=0
 NO_BOOT_MENU=0
+NO_DOOM=0
+BT_SERIAL="${XENEVA_BT_SERIAL:-/tmp/bt-server-bredr}"
+NO_BT=0
+NO_NETSURF=0
 
 print_help(){
     printf "${STY_CYAN}"
@@ -148,7 +156,7 @@ run_build_tui() {
     [ "$NO_BOOT_MENU" -eq 1 ] && bootmenu_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu doom netsurf memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -191,6 +199,8 @@ run_build_tui() {
         network_on=1
         audio_on=1
         bootmenu_on=1
+        NO_DOOM=0
+        NO_NETSURF=0
         memory_choice="default"
     }
 
@@ -244,6 +254,8 @@ run_build_tui() {
             soak) soak_choice=$((1 - soak_choice)) ;;
             network) network_on=$((1 - network_on)) ;;
             audio) audio_on=$((1 - audio_on)) ;;
+            doom) NO_DOOM=$((1 - NO_DOOM)) ;;
+            netsurf) NO_NETSURF=$((1 - NO_NETSURF)) ;;
             bootmenu) bootmenu_on=$((1 - bootmenu_on)) ;;
             memory) tui_cycle_memory ;;
             launch) tui_apply_and_launch ;;
@@ -287,9 +299,11 @@ run_build_tui() {
         tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
         tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
         tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
-        tui_row 10 "Guest memory" "$memory_choice"
-        tui_row 11 "Launch" "build + run"
-        tui_row 12 "Quit" ""
+        tui_row 10 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
+        tui_row 11 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
+        tui_row 12 "Guest memory" "$memory_choice"
+        tui_row 13 "Launch" "build + run"
+        tui_row 14 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
@@ -371,8 +385,13 @@ while [ $# -gt 0 ]; do
         --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
         --tui) TUI=1 ;;
         --no-network) NO_NETWORK=1 ;;
+        --no-doom) NO_DOOM=1 ;;
+        --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
+        --bt-serial) BT_SERIAL="/tmp/bt-server-bredr" ;;
+        --bt-serial=*) BT_SERIAL="${1#--bt-serial=}" ;;
+        --no-bt) NO_BT=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -534,8 +553,8 @@ if [ "$OPENXR" -eq 1 ]; then
 	BUILD_USER_APPS=1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
-	printf "${STY_RED}[$0]: --no-network/--no-audio need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
 
@@ -686,7 +705,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO
+	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -702,6 +721,8 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
+        cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
         echo "[+] External drivers built and deployed."
     fi
 
@@ -760,8 +781,12 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         case "$1" in
             MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
-            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe)
+            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
+            doom.exe|doom2.wad)
+                [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;
+            netsurf.exe)
+                [ "$NO_NETSURF" -eq 1 ] && return 0 || return 1 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
         esac
@@ -892,9 +917,38 @@ QEMU_ARGS=(
     -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
+    # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
+    # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
+    # and the virtsnd driver's AuPCIEScanClass probe. pa backend talks
+    # to the host PulseAudio/PipeWire server. --axiss
+    -audiodev pa,id=snd0
+    -device virtio-sound-pci,audiodev=snd0,disable-legacy=on
     -serial stdio
 )
+bt_power_off_for_proxy() {
+    local i prop
+    command -v busctl >/dev/null 2>&1 || return 0
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        busctl call org.bluez /org/bluez/hci0 org.freedesktop.DBus.Properties \
+            Set ssv org.bluez.Adapter1 Powered b false >/dev/null 2>&1 || true
+        prop=$(busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered 2>/dev/null || true)
+        case "$prop" in
+            "b false") return 0 ;;
+        esac
+        sleep 0.2
+    done
+    echo "[+] Bluetooth: adapter still powered; btproxy may report 'Device or resource busy'"
+}
 
+if [ "$NO_BT" -eq 1 ]; then
+    echo "[+] Bluetooth: disabled (--no-bt), guest uses mock controller"
+elif [ -S "$BT_SERIAL" ]; then
+    bt_power_off_for_proxy
+    QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
+    echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
+else
+    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0), guest uses mock"
+fi
 if [ "$XR_DEMO" -eq 1 ]; then
 	# Core XR transport: D-Bus exports Console_1 to the viewer, using either
 	# CPU scanout with VNC or EGL DMA-BUF scanout. The Unix monitor handles

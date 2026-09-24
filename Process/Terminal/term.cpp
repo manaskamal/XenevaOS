@@ -66,7 +66,12 @@ char oscBuf[64];
 int oscLen;
 int shell_id;
 
-#define TERMINAL_BLACK 0xFF373434
+/* Glassmorphic palette: the alpha byte makes the compositor's
+ * WINDOW_FLAG_GLASS blend show the blurred desktop backdrop through the
+ * surface. _SOLID keeps the block cursor legible. --axiss */
+#define TERMINAL_BLACK		 0xCC373434
+#define TERMINAL_BLACK_SOLID 0xFF373434
+#define TERMINAL_GLASS_ALPHA 0xC8
 
 static inline int _terminal_cell_to_pixelX(Terminal* t, int col) {
 	return t->originX + col * t->cellW;
@@ -120,7 +125,7 @@ static void _terminal_redraw_cursor(Terminal* t) {
 		clip.y = py;
 		clip.w = t->cellW;
 		clip.h = t->cellH;
-		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK, &clip);
+		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
 	}
 	// draw the character here
 	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
@@ -288,19 +293,42 @@ void TerminalScroll(Terminal* t, int lines) {
 	}
 
 	uint32_t* pixels = win->canv->buffer;
-	int canvasW = win->canv->canvasWidth;
+	int canvasW = (int)win->canv->canvasWidth;
+	int canvasH = (int)win->canv->canvasHeight;
 
 	int regionPx = _terminal_cell_to_pixelX(t, 0);
 	int regionPy = _terminal_cell_to_pixelY(t, t->scrollTop);
 	int regionW = t->cols * t->cellW;
 	int regionH = regionRows * t->cellH;
 
+	if (regionPx < 0)
+		regionPx = 0;
+	if (regionPy < 0)
+		regionPy = 0;
+	if (regionPx >= canvasW || regionPy >= canvasH)
+		regionW = 0;
+	if (regionPx + regionW > canvasW)
+		regionW = canvasW - regionPx;
+	if (regionPy + regionH > canvasH)
+		regionH = canvasH - regionPy;
+	if (regionW < 0)
+		regionW = 0;
+	if (regionH < 0)
+		regionH = 0;
+
 	int shiftRows = regionRows - lines;
 	int shiftH = shiftRows * t->cellH;
+	int srcOff = lines * t->cellH;
 
-	for (int y = 0; y < shiftH; y++) {
-		uint32_t* dst = pixels + (regionPy + y) * canvasW + regionPx;
-		uint32_t* src = pixels + (regionPy + y + lines * t->cellH) * canvasW + regionPx;
+	for (int y = 0; y < shiftH && regionW > 0; y++) {
+		int dy = regionPy + y;
+		int sy = dy + srcOff;
+		uint32_t* dst;
+		uint32_t* src;
+		if (dy < 0 || sy < 0 || dy >= canvasH || sy >= canvasH)
+			continue;
+		dst = pixels + dy * canvasW + regionPx;
+		src = pixels + sy * canvasW + regionPx;
 		memmove(dst, src, regionW * sizeof(uint32_t));
 	}
 
@@ -308,9 +336,14 @@ void TerminalScroll(Terminal* t, int lines) {
 	int exposedPy = _terminal_cell_to_pixelY(t, exposedRow);
 	int exposedH = lines * t->cellH;
 
-	for (int y = 0; y < exposedH; y++) {
-		uint32_t* row = pixels + (exposedPy + y) * canvasW + regionPx;
-		for (int x = 0; x < regionW; x++)
+	for (int y = 0; y < exposedH && regionW > 0; y++) {
+		int py = exposedPy + y;
+		uint32_t* row;
+		int x;
+		if (py < 0 || py >= canvasH)
+			continue;
+		row = pixels + py * canvasW + regionPx;
+		for (x = 0; x < regionW; x++)
 			row[x] = t->defaultBG;
 	}
 
@@ -1031,9 +1064,15 @@ void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
 	TerminalFlush(t);
 }
 
-/* custom key mappings, it's a bug */
-#define TERMINAL_KEY_RIGHT 0x2E
-#define TERMINAL_KEY_LEFT  0x33
+/* Special keys must match on scancode: ChitralekhaGetKeyPress returns ASCII
+ * values that collide with printable keys (KEY_KP_8=='8', and the arrow map
+ * yields '3'/'.') , so rawkey matching hijacked '8', '3' and '.' while
+ * typing addresses and commands. --axiss */
+#define TERMINAL_SCANCODE_RELEASE 0x80
+#define TERMINAL_SCANCODE_MASK	   0x7f
+#define TERMINAL_SCANCODE_UP	   0x48
+#define TERMINAL_SCANCODE_LEFT	   0x4b
+#define TERMINAL_SCANCODE_RIGHT	   0x4d
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -1072,8 +1111,9 @@ void TerminalHandleMessage(PostEvent* e) {
 			}
 		}
 
-		/** check from extended key code map **/
-		if (rawkey == KEY_KP_8) {
+		/** check from extended key code map (scancode 0x48: Up / keypad 8) **/
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_UP) {
 			TerminalHistoryUp(&term);
 			memset(e, 0, sizeof(PostEvent));
 			return;
@@ -1086,7 +1126,8 @@ void TerminalHandleMessage(PostEvent* e) {
 			return;
 		}**/
 
-		if (rawkey == TERMINAL_KEY_LEFT) {
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_LEFT) {
 			if (term.cursorX > term.inputStartX) {
 				_terminal_erase_cursor(&term);
 				term.cursorX--;
@@ -1095,7 +1136,8 @@ void TerminalHandleMessage(PostEvent* e) {
 			memset(e, 0, sizeof(PostEvent));
 		}
 
-		if (rawkey == TERMINAL_KEY_RIGHT) {
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_RIGHT) {
 			if (term.cursorX < term.inputStartX + term.intputLen) {
 				_terminal_erase_cursor(&term);
 				term.cursorX++;
@@ -1212,14 +1254,18 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(app, (WINDOW_FLAG_MOVABLE), "Xeneva Terminal", 300, 100, 680, 450);
+	win = ChCreateWindow(
+		app, (WINDOW_FLAG_MOVABLE | WINDOW_FLAG_GLASS), "Xeneva Terminal", 300, 100, 680, 450);
 	if (!win || !win->info) {
 		_KePrint("term: failed to create window \r\n");
 		return 1;
 	}
 	win->info->alpha = false;
 	win->info->alphaValue = 0.7;
-	win->color = 0xFF373434;
+	win->color = TERMINAL_BLACK;
+	/* Chitralekha glass option: translucent chrome over the compositor's
+	 * blurred desktop backdrop. Cells keep their own translucent fills. */
+	ChWindowSetGlassMorphism(win, TERMINAL_GLASS_ALPHA);
 
 	consolas = ChInitialiseFont(CONSOLAS);
 	if (!consolas) {
@@ -1240,13 +1286,20 @@ int main(int argc, char* arv[]) {
 	int f_h = ChFontGetHeightChar(consolas, 'A');
 	term.baseine = f_h - 4;
 #endif
+	/* Cell needs a few px below the 'A'-height metric: descenders
+	 * (g, j, p, q, y) sink ~4px past the baseline and the per-cell
+	 * clip would shave them off. */
+#ifdef _USE_FREETYPE
+	term.cellH = f_h;
+#else
+	term.cellH = f_h + 4;
+#endif
 
 	if (f_w <= 0)
 		f_w = 8;
 	if (f_h <= 0)
 		f_h = 12;
 	term.cellW = f_w;
-	term.cellH = f_h;
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height
@@ -1260,7 +1313,7 @@ int main(int argc, char* arv[]) {
 	_cursor_blink = 0;
 	escBuf = (char*)malloc(256);
 	memset(escBuf, 0, 256);
-	term.defaultBG = 0xFF373434; // 0xFF000000;// BLACK;
+	term.defaultBG = TERMINAL_BLACK; // 0xFF000000;// BLACK;
 	term.defaultFg = WHITE;
 	term.scrollTop = 0;
 	term.scrollBot = term.rows - 1;

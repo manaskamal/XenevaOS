@@ -289,7 +289,7 @@ size_t FatRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buf) {
 		return NULL;
 	}
 
-	if (file->current == (FAT_EOC_MARK & 0x0FFFFFFF))
+	if (FAT_IS_EOC(file->current))
 		return 0;
 
 	uint32 lba = FatClusterToSector32(fs, file->current);
@@ -578,7 +578,7 @@ size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 	uint32_t cluster = file->first_block;
 	for (int i = 0; i < index; i++)
 		cluster = FatReadFAT(fs, cluster);
-	if ((cluster != (FAT_EOC_MARK & 0x0FFFFFFF)) && file->eof == 1)
+	if (!FAT_IS_EOC(cluster) && file->eof == 1)
 		file->eof = 0;
 	file->pos = offset;
 	return cluster;

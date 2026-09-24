@@ -26,4 +26,9 @@
 {[Title]Calender|
 [Icon]/icons/calndrl.bmp|
 [Param]|
-[App]/calendr.exe>
+[App]/calendr.exe}
+
+{[Title]XENotes|
+[Icon]/icons/filel.bmp|
+[Param]|
+[App]/xenotes.exe>

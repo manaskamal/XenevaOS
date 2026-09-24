@@ -184,10 +184,114 @@ typedef struct _post_event_ {
 
 Using _``_KeFileIoControl(postboxfd, POSTBOX_GET_EVENT, &event)``_, the application can receive the event message directly into the pointed memory structure.
 
+## Prerequisites & Compilation
 
+XenevaOS applications are typically compiled using `clang++` targeting `aarch64-unknown-windows` (or similar custom targets, depending on your build system). You must link against `libChitralekha.a` and `libXEClib.a`.
 
+A typical `Makefile` will include paths to the XenevaOS SDK headers:
+- `-I../XenevaOS/Libs/XEClib/includes`
+- `-I../XenevaOS/BaseHdr`
+- `-I../XenevaOS/Libs/Chitralekha`
 
+## Advanced Event Handling (Deodhai)
 
+XenevaOS uses a display server called **Deodhai**. When interacting with the OS, your app receives events from Deodhai via the Postbox. A comprehensive event handler routes events based on the window handle:
 
+```cpp
+void WindowHandleMessage(PostEvent* e) {
+    switch (e->type) {
+        case DEODHAI_REPLY_MOUSE_EVENT: {
+            int handle = e->dword4; // Window handle from Deodhai
+            // Check which window received the mouse event
+            if (mainWin && mainWin->handle == handle) {
+                ChWindowHandleMouse(mainWin, e->dword, e->dword2, e->dword3);
+            }
+            break;
+        }
+        case DEODHAI_REPLY_KEY_EVENT: {
+            int keycode = e->dword;
+            // Handle global or focused key events
+            // e.g., if (keycode == KEY_ESCAPE) CloseApp();
+            break;
+        }
+        case DEODHAI_REPLY_FOCUS_CHANGED: {
+            int focus_val = e->dword;
+            int handle = e->dword2;
+            if (mainWin && mainWin->handle == handle) {
+                ChWindowHandleFocus(mainWin, focus_val, handle);
+            }
+            break;
+        }
+    }
+    // Always clear the event after processing
+    memset(e, 0, sizeof(PostEvent));
+}
+```
 
+## Game Loops and High-Performance Apps
 
+If you are writing a game or an application that requires constant redrawing (e.g., 60 FPS), you should **not** block the thread indefinitely. Instead, drain the event queue and run your game logic every cycle.
+
+**Important:** Do **not** use `_KePauseThread()` in game loops. It will freeze your thread until a new hardware event (like a mouse movement) occurs. Use `_KeProcessSleep(ms)` to yield the CPU between frames:
+
+```cpp
+    while (1) {
+        // 1. Drain ALL pending events first
+        while (1) {
+            int err = _KeFileIoControl(app->postboxfd, POSTBOX_GET_EVENT, &e);
+            if (err == POSTBOX_NO_EVENT) break;
+            WindowHandleMessage(&e);
+        }
+        
+        // 2. Run your game physics/logic
+        GamePhysicsUpdate();
+        
+        // 3. Render the frame
+        RenderGame();
+        
+        // 4. Sleep to maintain ~60 FPS (16ms) and prevent 100% CPU lockup
+        _KeProcessSleep(16);
+    }
+```
+
+## Custom Graphics (Canvas)
+For custom drawing (like rendering game entities), you use the Canvas API (`draw.h`).
+
+```cpp
+#include <draw.h>
+
+void RenderGame() {
+    // Draw a filled circle (e.g., Pacman or a ball)
+    ChDrawFilledCircle(mainWin->canv, x_pos, y_pos, radius, 0xFFFFFF00);
+    
+    // Draw a rectangle
+    ChDrawRect(mainWin->canv, x, y, width, height, 0xFFFF0000);
+    
+    // Render text directly to the canvas
+    ChFontDrawText(mainWin->canv, app->baseFont, (char*)"Score: 100", 10, 20, 14, 0xFFFFFFFF);
+    
+    // Update the window to reflect changes
+    // Parameters: window, x, y, width, height, force_update, is_transparent
+    ChWindowUpdate(mainWin, 0, 0, 600, 400, true, false);
+}
+```
+
+## Managing Multiple Windows
+If your app has multiple screens or popups, you can dynamically hide and show windows instead of destroying and recreating them.
+
+```cpp
+void ShowDashboard() {
+    if (gameWin) gameWin->info->hide = 1; // Hide the game window
+    if (dashWin) {
+        dashWin->info->hide = 0; // Show dashboard
+        ChWindowUpdate(dashWin, 0, 0, 600, 450, true, true);
+    }
+}
+```
+*Note: After modifying `win->info->hide`, always call `ChWindowUpdate` to force Deodhai to redraw the screen with the updated window visibility.*
+
+## System Calls & OS Interaction
+For deeper OS interactions, XenevaOS uses standard POSIX-like headers available in `XEClib` (e.g., `<stdio.h>`, `<stdlib.h>`, `<string.h>`). For custom kernel syscalls, include `<sys/...>`.
+- **Printing to Kernel Log:** Use `_KePrint("Log message\r\n");` (viewable via serial console).
+- **Process Management:** Use `<sys/_keproc.h>` (includes `_KeProcessSleep()`).
+- **Filesystem IO:** Use `<sys/_kefile.h>`.

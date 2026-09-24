@@ -92,9 +92,11 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 		tb->textCursorPosX++;
 	}
 
-	//ChFontDrawTextClipped(canv, tb->font, buf, tb->wid.x + (tb->textCursorPosX * 2),
-	//	tb->wid.y + (tb->textCursorPosY * 22),
-	//	tb->textColor, &clipRect);
+	// Draw the text cursor
+	int cursorHeight = 14;
+	int cursorY = peny - cursorHeight + 2;
+	ChDrawRect(canv, penx, cursorY, 2, cursorHeight, tb->textColor);
+	
 	tb->textCursorPosX = 2;
 	tb->textCursorPosY = 2;
 }
@@ -108,8 +110,7 @@ void ChDefaultTextboxPrint(ChCanvas* canv, ChTextBox* tb, char* text) {
 void ChDefaultTextbox(ChWidget* wid, ChWindow* win) {
 	ChTextBox* tb = (ChTextBox*)wid;
 	ChDrawRect(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, tb->textBackgroundColor);
-	//ChDrawRectUnfilled(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, GRAY);
-	//ChFontSetSize(tb->font, 13);
+	ChFontSetSize(tb->font, 14);
 	ChRect clipRect;
 	clipRect.x = tb->wid.x;
 	clipRect.y = tb->wid.y;

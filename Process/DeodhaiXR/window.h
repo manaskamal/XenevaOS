@@ -79,6 +79,7 @@ typedef struct _win_info_ {
 	bool hide;
 	double alphaValue;
 	bool windowReady;
+	bool zoomed;
 } WinSharedInfo;
 
 static inline bool WinSharedFlagLoad(const bool* flag) {
