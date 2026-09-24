@@ -1,34 +1,66 @@
 {[Title]Xeneva Terminal|
 [Icon]/icons/terml.bmp|
-[Param]|
+[Param]Null|
 [App]/term.exe}
 
 {[Title]Calculator|
 [Icon]/icons/calcl.bmp|
-[Param]|
+[Param]Null|
 [App]/calc.exe}
 
 {[Title]Files|
 [Icon]/icons/filel.bmp|
-[Param]|
+[Param]Null|
 [App]/file.exe}
 
 {[Title]Accent Player|
 [Icon]/icons/medial.bmp|
-[Param]|
+[Param]Null|
 [App]/audplr.exe}
 
 {[Title]Controls|
 [Icon]/icons/gearl.bmp|
-[Param]|
+[Param]default|
 [App]/ctrl.exe}
 
-{[Title]Calender|
+{[Title]Calendar|
 [Icon]/icons/calndrl.bmp|
-[Param]|
+[Param]Null|
 [App]/calendr.exe}
 
+{[Title]Store|
+[Icon]/icons/plystrl.bmp|
+[Param]android|
+[App]/ctrl.exe}
+
+{[Title]Xeneva|
+[Icon]/icons/xeabtl.bmp|
+[Param]about|
+[App]/ctrl.exe}
+
+{[Title]Glimpse|
+[Icon]/icons/gliml.bmp|
+[Param]Null|
+[App]/glimpse.exe}
+
+{[Title]Doom|
+[Icon]/icons/dooml.bmp|
+[Param]Null|
+[App]/doom.exe}
+
+{[Title]PlayVerse|
+[Icon]/icons/knplayl.bmp|
+[Param]Null|
+[App]/knplay.exe}
+
 {[Title]XENotes|
-[Icon]/icons/filel.bmp|
-[Param]|
-[App]/xenotes.exe>
+[Icon]/icons/notel.bmp|
+[Param]Null|
+[App]/xenotes.exe}
+
+
+{[Title]NetSurf|
+[Icon]/icons/netsrfl.bmp|
+[Param]Null|
+[App]/netsurf.exe>
+
