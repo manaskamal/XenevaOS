@@ -1249,13 +1249,20 @@ int main(int argc, char* arv[]) {
 	int f_h = ChFontGetHeightChar(consolas, 'A');
 	term.baseine = f_h - 4;
 #endif
+	/* Cell needs a few px below the 'A'-height metric: descenders
+	 * (g, j, p, q, y) sink ~4px past the baseline and the per-cell
+	 * clip would shave them off. */
+#ifdef _USE_FREETYPE
+	term.cellH = f_h;
+#else
+	term.cellH = f_h + 4;
+#endif
 
 	if (f_w <= 0)
 		f_w = 8;
 	if (f_h <= 0)
 		f_h = 12;
 	term.cellW = f_w;
-	term.cellH = f_h;
 
 	int term_w = win->info->width;
 	int term_h = win->info->height - 16; // -26 for titlebar height

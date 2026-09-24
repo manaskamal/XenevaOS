@@ -253,8 +253,8 @@ void CursorDrawBack(ChCanvas* canv, Cursor* cur, unsigned x, unsigned y) {
  * fully jpeg encoder is needed, i use synfig studio
  * for jpeg encoder
  */
-void DrawWallpaper(ChCanvas* canv, char* filename) {
-	int image = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
+void DrawWallpaper(ChCanvas* canv, const char* filename) {
+	int image = _KeOpenFile((char*)filename, FILE_OPEN_READ_ONLY);
 	if (image < 0) {
 		/* Missing wallpaper (e.g. res-specific jpg not in initrd): keep the
 		 * back surface as-is instead of hanging in the decoder --axiss */
@@ -1083,7 +1083,7 @@ int main(int argc, char* argv[]) {
 		/* Res-specific jpgs may not ship in initrd; fall back to the one
 		 * guaranteed wallpaper instead of drawing gray --axiss */
 		{
-			int probe = _KeOpenFile(wall, FILE_OPEN_READ_ONLY);
+			int probe = _KeOpenFile((char*)wall, FILE_OPEN_READ_ONLY);
 			if (probe < 0)
 				wall = "/XE1_2.jpg";
 			else

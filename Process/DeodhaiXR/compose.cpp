@@ -159,8 +159,10 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 
 	if (WinSharedFlagLoad(&info->dirty) && info->rect_count > 0) {
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
-			info->rect_count = 0;
-			WinSharedFlagStore(&info->dirty, false);
+			/* Defer, don't drop: clearing here loses the update forever
+			 * if the occlusion ends (e.g. launcher grid closes). The client
+			 * caps at 256 rects, so a persistently occluded window still
+			 * bounds memory; transient occlusion replays correctly. */
 			return;
 		}
 
@@ -374,8 +376,10 @@ void _compose_entire_window(ChCanvas* canvas,
 	if ((win != NULL && _window_update_all_) ||
 		(info->rect_count == 0 && WinSharedFlagLoad(&info->updateEntireWindow))) {
 		if (is_window_fully_overlapped(info, alwaysOnTop)) {
-			if (WinSharedFlagLoad(&info->updateEntireWindow))
-				WinSharedFlagStore(&info->updateEntireWindow, false);
+			/* Same deferral: a dropped entire-window update (e.g. a new
+			 * window opening under the open launcher grid) must survive
+			 * until the occlusion ends, or the window stays blank until
+			 * some later hover happens to repaint it. */
 			return;
 		}
 		int winx = info->x;

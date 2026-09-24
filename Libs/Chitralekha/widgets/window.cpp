@@ -287,6 +287,21 @@ ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, 
 		h = win->info->height;
 	}
 
+	/* Clip the dirty rect to the window. Widgets that extend past the
+	 * canvas (e.g. a textbox taller than its window) otherwise make the
+	 * row copy below read past the canvas mapping and fault the app
+	 * with an EL0 data abort. */
+	if (x + w > win->info->width) {
+		_KePrint("Clipping w -> %d \r\n", w);
+		w = win->info->width - x;
+	}
+	if (y + h > win->info->height) {
+		_KePrint("Clipping h -> %d \r\n", h);
+		h = win->info->height - y;
+	}
+	if (w <= 0 || h <= 0)
+		return;
+
 	if (lfb != canvaddr) {
 		for (int i = 0; i < h; i++)
 			_fastcpy(lfb + (static_cast<int64_t>(y) + i) * win->info->width + x,
