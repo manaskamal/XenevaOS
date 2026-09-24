@@ -1,0 +1,70 @@
+# XENotes Makefile (GCC / LLVM Build)
+
+# Default toolchain is GCC
+TOOLCHAIN ?= gcc
+
+TARGET = xenotes.exe
+CROSS_COMPILE ?= aarch64-linux-gnu-
+
+INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include
+
+CPP_SRCS = main.cpp notes_ui.cpp notes_fs.cpp notes_editor.cpp custom_btn.cpp
+S_SRCS = crt_arm64.s
+
+OBJDIR = obj
+CPP_OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPP_SRCS))
+S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
+OBJS = $(CPP_OBJS) $(S_OBJS)
+
+ifeq ($(TOOLCHAIN), llvm)
+    # LLVM / Clang configuration
+    CXX = clang++
+    CC  = clang
+    LD  = clang++
+
+    LLVM_TARGET = -target aarch64-unknown-windows
+
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+               -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT \
+               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+               -Wno-implicit-function-declaration -Wno-c++11-narrowing \
+               $(INCLUDES)
+
+    LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native \
+    -Wl,-filealign:0x1000
+else
+    # GCC configuration
+    CXX = $(CROSS_COMPILE)g++
+    CC = $(CROSS_COMPILE)gcc
+    LD = $(CROSS_COMPILE)ld
+
+    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-strict-aliasing \
+               -O2 -fno-exceptions -fno-rtti \
+               -DARCH_ARM64 -D__TARGET_BOARD_QEMU_VIRT__ -D_USE_DLMALLOC -D__STDC_LIMIT_MACROS -DTHEME_DEFAULT \
+               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
+               -Wno-implicit-function-declaration -Wno-narrowing \
+               $(INCLUDES)
+
+    LDFLAGS = -nostdlib -T link.ld
+endif
+
+.PHONY: all clean llvm
+llvm:
+	@$(MAKE) TOOLCHAIN=llvm all
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ ../../Libs/Chitralekha/libChitralekha.a ../../Libs/XEClib/libXEClib.a
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CXXFLAGS) -Wno-unused-command-line-argument -c $< -o $@
+
+clean:
+	rm -rf $(OBJDIR) $(TARGET)

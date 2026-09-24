@@ -27,11 +27,8 @@
 [Icon]/icons/calndrl.bmp|
 [Param]|
 [App]/calendr.exe}
-{[Title]Doom II|
-[Icon]/icons/snake.bmp|
+
+{[Title]XENotes|
+[Icon]/icons/filel.bmp|
 [Param]|
-[App]/doom.exe}
-{[Title]NetSurf|
-[Icon]/icons/doc.bmp|
-[Param]|
-[App]/netsurf.exe>
+[App]/xenotes.exe>
