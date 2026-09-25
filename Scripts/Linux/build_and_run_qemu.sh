@@ -100,6 +100,8 @@ XR_DEMO_MENU=0
 EGL_HEADLESS=0
 XR_HANDS=1
 XR_CONTROLLERS=1
+# The viewer is pinned to WiVRn's GPU, so its hand swapchains share the same
+# Mesa device and can be enabled with the default hand input path. --axiss
 XR_HAND_MESH=1
 XR_RESOLUTION="1024x768"
 XR_GAIN=20000
@@ -906,15 +908,12 @@ QEMU_ARGS=(
     -device virtio-net-pci,netdev=net0
     -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
     -monitor unix:/tmp/xeneva-mon.sock,server,nowait
+    # Register virtio-gpu first so QEMU's VNC server follows the display the
+    # Xeneva compositor drives after boot. ramfb remains as a fallback GOP.
+    -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device ramfb,id=ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
-    # ramfb stays the boot/GOP display (listed first); virtio-gpu-pci is
-    # additional and only gets driven once our own virtio-gpu driver runs
-    # its SET_SCANOUT, same disable-legacy=on reasoning as virtio-blk above
-    # so it lands at the class/subclass our driver (and audrv.cnf) expect
-    # --axiss
-    -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
     # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
@@ -947,10 +946,15 @@ elif [ -S "$BT_SERIAL" ]; then
     QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
     echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
 else
-    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0), guest uses mock"
+    # The QEMU-virt guest probes its second PL011 at 0x09040000 before
+    # falling back to the mock controller.  Keep that UART instantiated
+    # even without btproxy; omitting it makes the probe touch an absent
+    # MMIO device and raises a synchronous external abort. --axiss
+    QEMU_ARGS+=(-serial null)
+    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0); UART1 sink enables guest mock fallback"
 fi
 if [ "$XR_DEMO" -eq 1 ]; then
-	# Core XR transport: D-Bus exports Console_1 to the viewer, using either
+	# Core XR transport: D-Bus exports Console_0 (gpu0) to the viewer, using either
 	# CPU scanout with VNC or EGL DMA-BUF scanout. The Unix monitor handles
 	# boot/menu control. Optional services are independent. --axiss
     echo "[+] Building host XR tools..."
@@ -966,11 +970,11 @@ if [ "$XR_DEMO" -eq 1 ]; then
         # consume the same console concurrently. --axiss
         QEMU_ARGS+=(-display dbus,gl=off -vnc :0)
         XR_DISPLAY_DESC="D-Bus CPU scanout + VNC localhost:0"
-        XR_QEMU_CONSOLE=1
+        XR_QEMU_CONSOLE=0
     else
         QEMU_ARGS+=(-display egl-headless -display dbus,gl=on)
         XR_DISPLAY_DESC="egl-headless + D-Bus DMA-BUF"
-        XR_QEMU_CONSOLE=1
+        XR_QEMU_CONSOLE=0
     fi
     QEMU_ARGS+=(-monitor "unix:$XR_MON_SOCK,server,nowait")
     if [ "$XR_TELNET" -eq 1 ]; then
@@ -1065,7 +1069,12 @@ if [ "$XR_DEMO" -eq 1 ]; then
     elif [ "$XR_HANDS" -eq 1 ]; then
         XR_VIEW_ARGS+=(--no-hand-mesh)
     fi
-    XR_RUNTIME_JSON="$XR_RT_JSON" XENEVA_QEMU_CONSOLE="$XR_QEMU_CONSOLE" \
+    # WiVRn owns swapchains on the discrete GPU on this host. Keep the viewer
+    # on that same Mesa device; cross-GPU GL texture names are invalid. Allow
+    # both selections to be overridden for other hosts. --axiss
+    DRI_PRIME="${XENEVA_XR_DRI_PRIME:-1}" \
+    LIBGL_ALWAYS_SOFTWARE="${XENEVA_XR_SOFTWARE_GL:-false}" \
+        XR_RUNTIME_JSON="$XR_RT_JSON" XENEVA_QEMU_CONSOLE="$XR_QEMU_CONSOLE" \
         "$REPO_ROOT/Tools/xeneva-xr-view/xeneva-xr-view" "${XR_VIEW_ARGS[@]}" \
         >"$XR_VIEW_LOG" 2>&1 &
     XR_VIEW_PID=$!
