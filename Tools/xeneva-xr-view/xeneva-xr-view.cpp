@@ -1014,8 +1014,8 @@ struct Hands {
 	float ctl_lx = 0.f, ctl_ly = 0.f;
 	float ctl_rx = 0.f, ctl_ry = 0.f;
 	bool ctl_have = false;
-	PointerFilter hand_filter;
-	PointerFilter ctl_filter;
+	PointerFilter hand_filter{1.7f, 2.f};
+	PointerFilter ctl_filter{1.7f, 2.f};
 	int pinch_hold = 0;
 	int ctl_hold = 0; /* frames to keep preferring controllers after loss */
 	enum Src { SRC_NONE, SRC_HAND, SRC_CTL };
@@ -1386,9 +1386,9 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 		have = true;
 		return;
 	}
-	/* Hand aim is noisier than a physical controller. Keep the configured
-	 * controller gain while making bare-hand movement half as sensitive. */
-	float input_gain = use_ctl ? cap.hands_gain : cap.hands_gain * 0.5f;
+	/* Pinching shifts hand aim enough to need the lower gain; controller
+	 * motion needs more range while retaining the same jitter filtering. */
+	float input_gain = cap.hands_gain * (use_ctl ? 0.5f : 0.25f);
 	float raw_dx = (px - raw_x) * input_gain;
 	float raw_dy = -(py - raw_y) * input_gain;
 	raw_x = px;
@@ -1396,16 +1396,22 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	float raw_step = std::sqrt(raw_dx * raw_dx + raw_dy * raw_dy);
 	float dx = (filtered.x - last_x) * input_gain;
 	float dy = -(filtered.y - last_y) * input_gain; /* XR y up, pixels y down */
-	float step = std::sqrt(dx * dx + dy * dy);
-	if (step < 2.5f)
-		return; /* sub-pixel noise + hand tremor */
 	if (raw_step > 300.f) {
 		filter.reset();
 		have = false;
 		return; /* flick = clutch, reposition silently */
 	}
-	last_x = filtered.x;
-	last_y = filtered.y;
+	float step = std::sqrt(dx * dx + dy * dy);
+	constexpr float deadzone_px = 10.f;
+	if (step <= deadzone_px)
+		return; /* hold the cursor through small tracking fluctuations */
+	/* Keep the deadzone as an elastic offset: a slow deliberate movement
+	 * crosses it once, then advances smoothly instead of jumping 10 pixels. */
+	float fraction = (step - deadzone_px) / step;
+	dx *= fraction;
+	dy *= fraction;
+	last_x += (filtered.x - last_x) * fraction;
+	last_y += (filtered.y - last_y) * fraction;
 	h->cur_x += dx;
 	h->cur_y += dy;
 	if (h->cur_x < 0.f)
