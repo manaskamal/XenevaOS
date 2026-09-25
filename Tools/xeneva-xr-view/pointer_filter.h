@@ -8,6 +8,9 @@
  * rejection; deliberate fast motion raises the cutoff and stays responsive. */
 class PointerFilter {
 public:
+	PointerFilter(float minimum_cutoff_hz = 4.f, float speed_gain = 6.f)
+		: minimum_cutoff_hz_(minimum_cutoff_hz), speed_gain_(speed_gain) {}
+
 	struct Point {
 		float x;
 		float y;
@@ -37,8 +40,8 @@ public:
 		raw_x_ = x;
 		raw_y_ = y;
 
-		float cutoff_x = kMinimumCutoffHz + kSpeedGain * std::fabs(dx_);
-		float cutoff_y = kMinimumCutoffHz + kSpeedGain * std::fabs(dy_);
+		float cutoff_x = minimum_cutoff_hz_ + speed_gain_ * std::fabs(dx_);
+		float cutoff_y = minimum_cutoff_hz_ + speed_gain_ * std::fabs(dy_);
 		filtered_x_ += alpha(cutoff_x, dt) * (x - filtered_x_);
 		filtered_y_ += alpha(cutoff_y, dt) * (y - filtered_y_);
 		return {filtered_x_, filtered_y_};
@@ -51,11 +54,11 @@ private:
 		return dt / (dt + tau);
 	}
 
-	/* Balanced preset: about 40 ms of damping at rest and progressively less
-	 * lag as hand/controller speed rises. */
-	static constexpr float kMinimumCutoffHz = 4.f;
-	static constexpr float kSpeedGain = 6.f;
+	/* The defaults keep the original joint smoothing. Cursor filters can use
+	 * a lower cutoff without slowing down the rendered hand mesh. */
 	static constexpr float kDerivativeCutoffHz = 1.f;
+	float minimum_cutoff_hz_;
+	float speed_gain_;
 
 	bool ready_ = false;
 	int64_t last_time_ns_ = 0;
