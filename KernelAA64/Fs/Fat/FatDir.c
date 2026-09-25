@@ -323,71 +323,69 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 	uint64_t* buf = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buf, 0, PAGE_SIZE);
 
-	if ((index / 16) > fatfs->__SectorPerCluster) {
-		dirent->index = -1;
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		return -1;
-	}
-
 	uint8_t* aligned_buf = (uint8_t*)buf;
-	AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + index / 16, 1, buf);
-	FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
+	int last_sector = -1;
 
-	if (dir_->filename[0] == 0x00) {
-		dirent->index = -1;
+	while (1) {
+		if ((index / 16) >= fatfs->__SectorPerCluster) {
+			dirent->index = -1;
+			AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
+			return -1;
+		}
+
+		int cur_sector = index / 16;
+		if (cur_sector != last_sector) {
+			AuVDiskRead(vdisk, FatClusterToSector32(fatfs, dir->first_block) + cur_sector, 1, buf);
+			last_sector = cur_sector;
+		}
+
+		FatDir* dir_ = (FatDir*)(aligned_buf + ((index % 16) * sizeof(FatDir)));
+
+		if (dir_->filename[0] == 0x00) {
+			dirent->index = -1;
+			AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
+			return -1;
+		}
+
+		if (dir_->filename[0] == 0xE5 || dir_->filename[0] == 0x05 || (unsigned char)dir_->filename[0] == 0xFF) {
+			index++;
+			continue;
+		}
+
+		/* Skip volume ID */
+		if (dir_->attrib & 0x08) {
+			index++;
+			continue;
+		}
+
+		/* Skip LFN entries */
+		if ((dir_->attrib & 0x0F) == 0x0F) {
+			index++;
+			continue;
+		}
+
+		/* Skip hidden / system files */
+		if ((dir_->attrib & 0x02) || (dir_->attrib & 0x04)) {
+			index++;
+			continue;
+		}
+
+		char filename[32];
+		memset(filename, 0, sizeof(filename));
+		FatFromDosToFilename(filename, (char*)dir_->filename);
+		strncpy(dirent->filename, filename, 31);
+		dirent->filename[31] = '\0';
+		dirent->size = dir_->file_size;
+		dirent->time = dir_->time_created;
+		dirent->date = dir_->date_created;
+
+		if (dir_->attrib & 0x10)
+			dirent->flags = FS_FLAG_DIRECTORY;
+		else
+			dirent->flags = FS_FLAG_GENERAL;
+
+		dirent->index = index + 1;
 		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		return -1;
+		return 0;
 	}
-
-	if (dir_->filename[0] == 0xE5 || dir_->filename[0] == 0x05 || dir_->filename[0] == 0xFF) {
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		dirent->index += 1;
-		return -1;
-	}
-
-	if (dir_->attrib & 0x02) {
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		dirent->index += 1;
-		return -1;
-	}
-
-	if (dir_->attrib & 0x04) {
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		dirent->index += 1;
-		return -1;
-	}
-
-	if (dir_->attrib & 0x08) {
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		dirent->index += 1;
-		return -1;
-	}
-
-	if (dir_->attrib & 0x01) {
-		AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-		dirent->index += 1;
-		return -1;
-	}
-
-	char filename[11];
-	char name[11];
-	memset(name, 0, 11);
-	memcpy(name, dir_->filename, 11);
-	FatFromDosToFilename(filename, (char*)dir_->filename);
-	strcpy(dirent->filename, filename);
-	dirent->size = dir_->file_size;
-	dirent->time = dir_->time_created;
-	dirent->date = dir_->date_created;
-
-	if ((dir_->attrib & FAT_ATTRIBUTE_MASK) == FAT_ATTRIBUTE_LONG_NAME)
-		UARTDebugOut(
-			"[aurora-fat]: DIRName -> %s attrib -> %x, LFN -> yes \r\n", filename, dir_->attrib);
-
-	if (dir_->attrib & 0x10)
-		dirent->flags = FS_FLAG_DIRECTORY;
-	if (dir_->attrib & 0x20)
-		dirent->flags = FS_FLAG_GENERAL;
-	AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
-	dirent->index += 1;
-	return 0;
 }

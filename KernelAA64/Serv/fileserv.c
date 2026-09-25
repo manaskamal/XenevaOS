@@ -81,18 +81,6 @@ int OpenFile(char* filename, int mode) {
 	int fd = AuProcessGetFileDesc(current_proc);
 	AuVFSNode* file = AuVFSOpen(fname);
 
-	/** check permissions before procedding **/
-	if (AuCredCheckPermissions(file, &current_proc->creds)) {
-		if (!file)
-			return -1;
-		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
-				  file->filename,
-				  current_proc->creds.uid);
-		if (!(file->flags & FS_FLAG_CACHED) || !(file->flags & FS_FLAG_DEVICE) ||
-			!(file->flags & FS_FLAG_FILE_SYSTEM))
-			kfree(file);
-		return -1;
-	}
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
@@ -104,6 +92,17 @@ int OpenFile(char* filename, int mode) {
 	/* check for last time, if any error occured */
 	if (!file)
 		return -1;
+
+	/** check permissions before proceeding **/
+	if (!created && AuCredCheckPermissions(file, &current_proc->creds)) {
+		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
+				  file->filename,
+				  current_proc->creds.uid);
+		if (!(file->flags & FS_FLAG_CACHED) && !(file->flags & FS_FLAG_DEVICE) &&
+			!(file->flags & FS_FLAG_FILE_SYSTEM))
+			kfree(file);
+		return -1;
+	}
 
 	if (fd == -1)
 		return -1;
@@ -563,4 +562,70 @@ int ProcessGetFileDesc(const char* filename) {
 	}
 
 	return -1;
+}
+
+/**
+ * @brief CreateDir -- creates a directory
+ * @param filename -- name of the directory
+ */
+int CreateDir(char* filename) {
+	mask_irqs();
+	AA64Thread* current_thr = AuGetCurrentThread();
+	if (!current_thr)
+		return -1;
+	AuProcess* current_proc = AuProcessFindThread(current_thr);
+	if (!current_proc) {
+		current_proc = AuProcessFindSubThread(current_thr);
+		if (!current_proc)
+			return -1;
+	}
+	if (!filename || strlen(filename) >= 128)
+		return -1;
+
+	char fname[128];
+	memset(fname, 0, sizeof(fname));
+	strncpy(fname, filename, 127);
+
+	AuVFSNode* fsys = AuVFSFind(fname);
+	if (!fsys)
+		return -1;
+
+	AuVFSNode* dirfile = AuVFSCreateDir(fsys, fname);
+	if (dirfile) {
+		kfree(dirfile);
+		return 0;
+	}
+	return -1;
+}
+
+/**
+ * @brief RemoveFile -- remove a directory or file
+ * @param pathname -- path of directory or file
+ */
+int RemoveFile(char* pathname) {
+	mask_irqs();
+	if (!pathname || strlen(pathname) >= 128)
+		return -1;
+	char pname[128];
+	memset(pname, 0, sizeof(pname));
+	strncpy(pname, pathname, 127);
+
+	AuVFSNode* node = AuVFSOpen(pname);
+	if (!node)
+		return -1;
+	AuVFSNode* fsys = (AuVFSNode*)node->device;
+	if (!fsys)
+		fsys = AuVFSFind(pname);
+	if (!fsys) {
+		kfree(node);
+		return -1;
+	}
+
+	int ret = -1;
+	if (node->flags & FS_FLAG_DIRECTORY)
+		ret = AuVFSRemoveDir(fsys, node);
+	else
+		ret = AuVFSRemoveFile(fsys, node);
+	kfree(node);
+	return ret;
 }

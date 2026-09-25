@@ -6,9 +6,18 @@
 void _custom_btn_paint(ChWidget* wid, ChWindow* win) {
     CustomBtn* btn = (CustomBtn*)wid;
     
-    // Draw background (toolbar theme colors)
-    uint32_t bg = btn->base.clicked ? 0xFF1A1A1A : (btn->base.hover ? 0xFF3D3D3D : 0xFF2D2D2D);
+    uint32_t bg;
+    if (btn->normalBg != 0) {
+        bg = btn->base.clicked ? btn->clickedBg : (btn->base.hover ? btn->hoverBg : btn->normalBg);
+    } else {
+        // Default toolbar dark theme
+        bg = btn->base.clicked ? 0xFF1A1A1A : (btn->base.hover ? 0xFF3D3D3D : 0xFF2D2D2D);
+    }
     ChDrawRect(win->canv, wid->x, wid->y, wid->w, wid->h, bg);
+    
+    if (btn->borderColor != 0) {
+        ChDrawRectUnfilled(win->canv, wid->x, wid->y, wid->w, wid->h, btn->borderColor);
+    }
     
     if (btn->isColorBtn) {
         // Draw the color square with a white outline
@@ -18,13 +27,14 @@ void _custom_btn_paint(ChWidget* wid, ChWindow* win) {
         ChRect clip = { wid->x, wid->y, wid->w, wid->h };
         int textW = ChFontGetWidth(win->app->baseFont, (char*)btn->text);
         int tx = wid->x + (wid->w - textW) / 2;
-        int ty = wid->y + 16;
-        ChFontSetSize(win->app->baseFont, 14);
-        // Draw text in White for visibility on dark toolbar
-        ChFontDrawTextClipped(win->canv, win->app->baseFont, (char*)btn->text, tx, ty, 0xFFFFFFFF, &clip);
+        int fontSize = (btn->normalBg != 0) ? 12 : 14;
+        ChFontSetSize(win->app->baseFont, fontSize);
+        int ty = wid->y + (wid->h / 2) + (fontSize / 2) - 1;
+        uint32_t tColor = (btn->normalBg != 0) ? btn->textColor : 0xFFFFFFFF;
+        ChFontDrawTextClipped(win->canv, win->app->baseFont, (char*)btn->text, tx, ty, tColor, &clip);
         if (strcmp(btn->text, "B") == 0) {
             // Fake bold by drawing again offset by 1 pixel
-            ChFontDrawTextClipped(win->canv, win->app->baseFont, (char*)btn->text, tx + 1, ty, 0xFFFFFFFF, &clip);
+            ChFontDrawTextClipped(win->canv, win->app->baseFont, (char*)btn->text, tx + 1, ty, tColor, &clip);
         }
     }
 }
@@ -57,5 +67,23 @@ CustomBtn* CreateCustomBtn(int x, int y, int w, int h, const char* text, uint32_
     btn->text = text;
     btn->colorSquare = colorSq;
     btn->isColorBtn = isCol;
+    return btn;
+}
+
+CustomBtn* CreateStyledBtn(int x, int y, int w, int h, const char* text, uint32_t normalBg, uint32_t hoverBg, uint32_t clickedBg, uint32_t textColor, uint32_t borderColor) {
+    CustomBtn* btn = (CustomBtn*)malloc(sizeof(CustomBtn));
+    memset(btn, 0, sizeof(CustomBtn));
+    btn->base.x = x;
+    btn->base.y = y;
+    btn->base.w = w;
+    btn->base.h = h;
+    btn->base.ChPaintHandler = _custom_btn_paint;
+    btn->base.ChMouseEvent = _custom_btn_mouse;
+    btn->text = text;
+    btn->normalBg = normalBg;
+    btn->hoverBg = hoverBg;
+    btn->clickedBg = clickedBg;
+    btn->textColor = textColor;
+    btn->borderColor = borderColor;
     return btn;
 }

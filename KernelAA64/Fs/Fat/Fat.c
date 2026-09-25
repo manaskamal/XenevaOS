@@ -134,26 +134,26 @@ uint8_t FatCheckDotCount(char* filename) {
  * to human readable filename
  */
 void FatFromDosToFilename(char* filename, char* dirfname) {
-	memset(filename, 0, 11);
+	if (!filename || !dirfname)
+		return;
+	memset(filename, 0, 16);
 	int index = 0;
 	for (int i = 0; i < 8; i++) {
-		if (dirfname[i] != 0x20 && dirfname[i] > 0x20) {
-			filename[i] = dirfname[i];
-			index++;
+		if (dirfname[i] != 0x20 && (unsigned char)dirfname[i] > 0x20) {
+			filename[index++] = dirfname[i];
 		}
 	}
-	int extension = index;
-	filename[index] = '.';
-	index++;
-	bool _contain_ext = false;
+	bool contain_ext = false;
 	for (int i = 0; i < 3; i++) {
-		if (dirfname[8 + i] != 0x20) {
-			_contain_ext = true;
-			filename[index + i] = dirfname[8 + i];
+		if (dirfname[8 + i] != 0x20 && (unsigned char)dirfname[8 + i] > 0x20) {
+			if (!contain_ext) {
+				filename[index++] = '.';
+				contain_ext = true;
+			}
+			filename[index++] = dirfname[8 + i];
 		}
 	}
-	if (!_contain_ext)
-		filename[extension] = '\0';
+	filename[index] = '\0';
 }
 
 /*
@@ -693,8 +693,8 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fsys->device = fs;
 	fsys->read = FatReadFile;
 	fsys->read_block = FatRead;
-	fsys->remove_dir = 0;  //FatRemoveDir;
-	fsys->remove_file = 0; // FatFileRemove;
+	fsys->remove_dir = FatRemoveDir;
+	fsys->remove_file = FatFileRemove;
 	fsys->write = FatWrite;
 	fsys->create_dir = FatCreateDir;
 	fsys->create_file = FatCreateFile;

@@ -339,6 +339,7 @@ int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
 	int ret = -1;
 	if (fsys->remove_file)
 		ret = fsys->remove_file(fsys, file);
+	return ret;
 }
 
 /**
