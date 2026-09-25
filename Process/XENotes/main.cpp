@@ -18,7 +18,7 @@ ChitralekhaApp* app;
 ChWindow* mainWin;
 
 void NotesClose(ChWindow* win, ChWinGlobalControl* ctl) {
-	// Add save logic here if needed before exit
+	OnSaveNoteClicked(NULL, win);
 	ChWindowCloseWindow(win);
 }
 
@@ -27,35 +27,11 @@ void NotesHandleKey(int ascii_code) {
 	
 	_KePrint("XENotes received key: %d\r\n", ascii_code);
 	
-	int len = notesEditor->textLength;
-	if (ascii_code == KEY_RETURN) {
-		char* currentText = ChNotesEditorGetText(notesEditor);
-		if (strncmp(currentText, "Title: ", 7) == 0) {
-			char* title = currentText + 7;
-			while (*title == ' ') title++;
-			char noteTitle[SIDEBAR_MAX_LABEL];
-			if (strlen(title) == 0) {
-				strcpy(noteTitle, "Untitled Note");
-			} else {
-				strncpy(noteTitle, title, SIDEBAR_MAX_LABEL - 1);
-				noteTitle[SIDEBAR_MAX_LABEL - 1] = '\0';
-				int tlen = strlen(noteTitle);
-				while (tlen > 0 && (noteTitle[tlen - 1] == '\n' || noteTitle[tlen - 1] == '\r' || noteTitle[tlen - 1] == ' ')) {
-					noteTitle[tlen - 1] = '\0';
-					tlen--;
-				}
-				if (tlen == 0) {
-					strcpy(noteTitle, "Untitled Note");
-				}
-			}
-			NotesCreateNew(noteTitle, mainWin);
-			ChNotesEditorSetText(notesEditor, (char*)"");
-			free(currentText);
-			return;
-		}
-		free(currentText);
+	if (NotesTitleBarHandleKey(ascii_code, mainWin)) {
+		return;
 	}
 	
+	int len = notesEditor->textLength;
 	if (len < 32760) {
 		ChNotesEditorHandleKey(notesEditor, ascii_code);
 	}

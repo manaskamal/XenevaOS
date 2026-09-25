@@ -1,4 +1,5 @@
 #include "notes_editor.h"
+#include "notes_ui.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -105,7 +106,8 @@ static void _editor_paint(ChWidget* wid, ChWindow* win) {
         if (i == ed->textLength) break;
         
         RichChar rc = ed->textBuffer[i];
-        if (rc.size + 6 > maxLineHeight) maxLineHeight = rc.size + 6;
+        uint8_t chSize = rc.size ? rc.size : 14;
+        if (chSize + 6 > maxLineHeight) maxLineHeight = chSize + 6;
         
         if (isFirstOfLine && rc.is_bullet) {
             ChDrawRect(win->canv, curX + 6, curY + (maxLineHeight / 2) - 2, 4, 4, rc.color);
@@ -123,18 +125,18 @@ static void _editor_paint(ChWidget* wid, ChWindow* win) {
             }
         }
         
-        bool styleChanged = (rc.bold != currentBold || rc.italic != currentItalic || rc.color != currentColor || rc.size != currentSize);
+        bool styleChanged = (rc.bold != currentBold || rc.italic != currentItalic || rc.color != currentColor || chSize != currentSize);
         
         if (rc.c == '\n' || tempLen == 255 || styleChanged || isSelected) {
             if (tempLen > 0) {
                 tempBuf[tempLen] = '\0';
                 ChFont* drawFont = currentItalic && ed->italicFont ? ed->italicFont : ed->baseFont;
-                ChFontSetSize(drawFont, currentSize);
+                ChFontSetSize(drawFont, currentSize ? currentSize : 14);
                 int textW = ChFontGetWidth(drawFont, tempBuf);
                 
-                ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX, curY + currentSize, currentColor, &clip);
+                ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX, curY + (currentSize ? currentSize : 14), currentColor, &clip);
                 if (currentBold) {
-                    ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX + 1, curY + currentSize, currentColor, &clip);
+                    ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX + 1, curY + (currentSize ? currentSize : 14), currentColor, &clip);
                 }
                 
                 curX += textW;
@@ -144,7 +146,7 @@ static void _editor_paint(ChWidget* wid, ChWindow* win) {
             currentBold = rc.bold;
             currentItalic = rc.italic;
             currentColor = rc.color;
-            currentSize = rc.size;
+            currentSize = chSize;
         }
         
         if (rc.c == '\n') {
@@ -156,13 +158,13 @@ static void _editor_paint(ChWidget* wid, ChWindow* win) {
             if (isSelected) {
                 char single[2] = {rc.c, 0};
                 ChFont* drawFont = currentItalic && ed->italicFont ? ed->italicFont : ed->baseFont;
-                ChFontSetSize(drawFont, rc.size);
+                ChFontSetSize(drawFont, chSize);
                 int charW = ChFontGetWidth(drawFont, single);
-                ChDrawRect(win->canv, curX, curY, charW, rc.size + 6, ed->selBgColor);
+                ChDrawRect(win->canv, curX, curY, charW, chSize + 6, ed->selBgColor);
                 
-                ChFontDrawTextClipped(win->canv, drawFont, single, curX, curY + rc.size, ed->selFgColor, &clip);
+                ChFontDrawTextClipped(win->canv, drawFont, single, curX, curY + chSize, ed->selFgColor, &clip);
                 if (currentBold) {
-                    ChFontDrawTextClipped(win->canv, drawFont, single, curX + 1, curY + rc.size, ed->selFgColor, &clip);
+                    ChFontDrawTextClipped(win->canv, drawFont, single, curX + 1, curY + chSize, ed->selFgColor, &clip);
                 }
                 curX += charW;
             } else {
@@ -174,24 +176,24 @@ static void _editor_paint(ChWidget* wid, ChWindow* win) {
     if (tempLen > 0) {
         tempBuf[tempLen] = '\0';
         ChFont* drawFont = currentItalic && ed->italicFont ? ed->italicFont : ed->baseFont;
-        ChFontSetSize(drawFont, currentSize);
+        ChFontSetSize(drawFont, currentSize ? currentSize : 14);
         int textW = ChFontGetWidth(drawFont, tempBuf);
         
-        ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX, curY + currentSize, currentColor, &clip);
+        ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX, curY + (currentSize ? currentSize : 14), currentColor, &clip);
         if (currentBold) {
-        ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX + 1, curY + currentSize, currentColor, &clip);
+            ChFontDrawTextClipped(win->canv, drawFont, tempBuf, curX + 1, curY + (currentSize ? currentSize : 14), currentColor, &clip);
+        }
+        curX += textW;
     }
-    curX += textW;
-}
 
-if (ed->cursorIndex == ed->textLength) {
-    cursorScreenX = curX;
-    cursorScreenY = curY;
-}
+    if (ed->cursorIndex == ed->textLength) {
+        cursorScreenX = curX;
+        cursorScreenY = curY;
+    }
 
-if (ed->focused) {
-    ChDrawRect(win->canv, cursorScreenX, cursorScreenY + 2, 2, maxLineHeight - 4, ed->fgColor);
-}
+    if (ed->focused) {
+        ChDrawRect(win->canv, cursorScreenX, cursorScreenY + 2, 2, maxLineHeight - 4, ed->fgColor);
+    }
 }
 
 static int _editor_get_index_from_pos(ChNotesEditor* ed, int mx, int my) {
@@ -201,7 +203,8 @@ static int _editor_get_index_from_pos(ChNotesEditor* ed, int mx, int my) {
     int maxLineHeight = 20;
     for (int j = 0; j < ed->textLength; j++) {
         if (ed->textBuffer[j].c == '\n') break;
-        if (ed->textBuffer[j].size + 6 > maxLineHeight) maxLineHeight = ed->textBuffer[j].size + 6;
+        uint8_t sz = ed->textBuffer[j].size ? ed->textBuffer[j].size : 14;
+        if (sz + 6 > maxLineHeight) maxLineHeight = sz + 6;
     }
     
     bool isFirstOfLine = true;
@@ -219,7 +222,8 @@ static int _editor_get_index_from_pos(ChNotesEditor* ed, int mx, int my) {
             
             char single[2] = {rc.c, 0};
             ChFont* drawFont = rc.italic && ed->italicFont ? ed->italicFont : ed->baseFont;
-            ChFontSetSize(drawFont, rc.size);
+            uint8_t sz = rc.size ? rc.size : 14;
+            ChFontSetSize(drawFont, sz);
             int charW = ChFontGetWidth(drawFont, single);
             
             if (mx < curX) return i;
@@ -236,7 +240,8 @@ static int _editor_get_index_from_pos(ChNotesEditor* ed, int mx, int my) {
                 maxLineHeight = 20;
                 for (int j = i + 1; j < ed->textLength; j++) {
                     if (ed->textBuffer[j].c == '\n') break;
-                    if (ed->textBuffer[j].size + 6 > maxLineHeight) maxLineHeight = ed->textBuffer[j].size + 6;
+                    uint8_t sz = ed->textBuffer[j].size ? ed->textBuffer[j].size : 14;
+                    if (sz + 6 > maxLineHeight) maxLineHeight = sz + 6;
                 }
             }
         }
@@ -251,6 +256,14 @@ static void _editor_mouse_event(ChWidget* wid, ChWindow* win, int x, int y, int 
         ed->mouseDown = true;
         ed->focused = true;
         win->focusedWidget = wid;
+        
+        if (notesTitleBar && notesTitleBar->focused) {
+            notesTitleBar->focused = false;
+            if (notesTitleBar->base.ChPaintHandler) {
+                notesTitleBar->base.ChPaintHandler(&notesTitleBar->base, win);
+                ChWindowUpdate(win, notesTitleBar->base.x, notesTitleBar->base.y, notesTitleBar->base.w, notesTitleBar->base.h, 0, 1);
+            }
+        }
         
         int localX = x - win->info->x;
         int localY = y - win->info->y;
@@ -404,18 +417,22 @@ ChNotesEditor* ChCreateNotesEditor(ChWindow* win, int x, int y, int w, int h) {
 }
 
 void ChNotesEditorSetText(ChNotesEditor* editor, const char* text) {
-    int len = strlen(text);
+    if (!editor) return;
+    int len = text ? strlen(text) : 0;
     if (len >= editor->bufferCapacity) {
         editor->bufferCapacity = len + 1024;
         editor->textBuffer = (RichChar*)realloc(editor->textBuffer, editor->bufferCapacity * sizeof(RichChar));
     }
     editor->textLength = len;
     editor->cursorIndex = len;
+    uint8_t defSize = editor->currentSize ? editor->currentSize : 14;
     for (int i = 0; i < len; i++) {
         editor->textBuffer[i].c = text[i];
         editor->textBuffer[i].bold = 0;
         editor->textBuffer[i].italic = 0;
         editor->textBuffer[i].underline = 0;
+        editor->textBuffer[i].is_bullet = 0;
+        editor->textBuffer[i].size = defSize;
         editor->textBuffer[i].color = editor->fgColor;
     }
     
