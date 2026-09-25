@@ -23,14 +23,13 @@ void NotesClose(ChWindow* win, ChWinGlobalControl* ctl) {
 }
 
 void NotesHandleKey(int ascii_code) {
-	if (!notesEditor) return;
-	
-	_KePrint("XENotes received key: %d\r\n", ascii_code);
-	
+	if (!notesEditor)
+		return;
+
 	if (NotesTitleBarHandleKey(ascii_code, mainWin)) {
 		return;
 	}
-	
+
 	int len = notesEditor->textLength;
 	if (len < 32760) {
 		ChNotesEditorHandleKey(notesEditor, ascii_code);
@@ -72,11 +71,11 @@ void WindowHandleMessage(PostEvent* e) {
 
 int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	
+
 	// Create a large, premium window
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, (char*)"XENotes", 800, 100, 600, 480);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, (char*)"XENotes", 100, 100, 600, 480);
 	mainWin->color = 0xFFF0F0F0; // Light grey/white background
-	
+
 	// Bind close button
 	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* ctl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
@@ -85,6 +84,9 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 	}
+
+	/* broadcast the note icon to broadcast listeners */
+	ChWindowBroadcastIcon(app, "/icons/notes.bmp");
 
 	// Initialize the custom UI (Sidebar and TextBox)
 	NotesInitializeUI(mainWin);
@@ -105,6 +107,6 @@ int main(int argc, char* argv[]) {
 			_KePauseThread();
 		}
 	}
-	
+
 	return 0;
 }

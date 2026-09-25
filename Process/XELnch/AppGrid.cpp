@@ -100,8 +100,7 @@ void AppGridAddButtonToPage(AppGrid* grid, LaunchButton* button) {
 		button->y = grid->page[button->page_number].start_y;
 	}
 
-	if ((button->y + button->h) >= (grid->x + grid->h)) {
-		_KePrint("Button %s striked app grid \r\n", button->title);
+	if ((button->y + button->h) >= (grid->y + grid->h)) {
 		button->page_number += 1;
 		AppGridAddButtonToPage(grid, button);
 	}
@@ -127,8 +126,7 @@ void AppGridAddButton(AppGrid* grid, LaunchButton* button) {
 		button->y = grid->start_pos_y;
 	}
 
-	if ((button->y + button->h) >= (grid->x + grid->h)) {
-		_KePrint("Button %s striked app grid \r\n", button->title);
+	if ((button->y + button->h) >= (grid->y + grid->h)) {
 		button->page_number += 1;
 		AppGridAddButtonToPage(grid, button);
 	}
