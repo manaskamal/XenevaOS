@@ -555,6 +555,16 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 	xr_check(xrReleaseSwapchainImage(sc.handle, &rel), "release");
 }
 
+struct PointerVisual {
+	XrPosef pose{};
+	bool valid = false;
+};
+
+struct VisualInputs {
+	PointerVisual handAim;
+	PointerVisual controllerAim[2];
+};
+
 #ifdef XR_EXT_HAND_TRACKING_EXTENSION_NAME
 struct FilteredJoint {
 	PointerFilter xy;
@@ -593,6 +603,38 @@ static Vec3 normalized(Vec3 v) {
 }
 static Vec3 joint_pos(const XrHandJointLocationEXT& joint) {
 	return {joint.pose.position.x, joint.pose.position.y, joint.pose.position.z};
+}
+
+static void draw_sphere(Vec3 center, float radius);
+static void draw_bone(Vec3 a, Vec3 b, float ra, float rb);
+
+static Vec3 pose_point(const XrPosef& pose, Vec3 point) {
+	const auto& q = pose.orientation;
+	Vec3 u{q.x, q.y, q.z};
+	Vec3 rotated = point + cross(u, point) * (2.f * q.w) +
+		cross(u, cross(u, point)) * 2.f;
+	return rotated + Vec3{pose.position.x, pose.position.y, pose.position.z};
+}
+
+static void draw_pointer(const PointerVisual& pointer, bool controller, int side) {
+	if (!pointer.valid)
+		return;
+	/* OpenXR aim points along the action space's negative Z axis. Keep every
+	 * vertex in the same LOCAL space as the projection layer and eye views. */
+	Vec3 origin = pose_point(pointer.pose, {0.f, 0.f, 0.f});
+	Vec3 tip = pose_point(pointer.pose, {0.f, 0.f, -1.5f});
+	if (controller) {
+		glColor4f(side == 0 ? 0.12f : 0.93f, 0.66f, 0.85f, 1.f);
+		Vec3 base = pose_point(pointer.pose, {0.f, -0.025f, 0.11f});
+		Vec3 front = pose_point(pointer.pose, {0.f, 0.012f, -0.055f});
+		draw_bone(base, front, 0.028f, 0.038f);
+		draw_sphere(front, 0.038f);
+		origin = pose_point(pointer.pose, {0.f, 0.012f, -0.09f});
+	} else {
+		glColor4f(0.95f, 0.75f, 0.19f, 1.f);
+	}
+	draw_bone(origin, tip, 0.004f, 0.0015f);
+	draw_sphere(tip, 0.012f);
 }
 
 static void draw_sphere(Vec3 center, float radius) {
@@ -779,6 +821,7 @@ static bool hand_visual_setup(HandVisual* h, XrInstance instance, XrSystemId sys
 }
 
 static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, XrTime time,
+						   const VisualInputs& pointers,
 						   XrCompositionLayerProjection* layer,
 						   std::array<XrCompositionLayerProjectionView, 2>* projection_views) {
 	if (!h || !h->ready || !layer || !projection_views)
@@ -825,7 +868,8 @@ static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, 
 			joint.pose.position.z = z.x;
 		}
 	}
-	if (!any)
+	if (!any && !pointers.handAim.valid && !pointers.controllerAim[0].valid &&
+		!pointers.controllerAim[1].valid)
 		return false;
 
 	std::array<XrView, 2> views = {XrView{XR_TYPE_VIEW}, XrView{XR_TYPE_VIEW}};
@@ -885,6 +929,9 @@ static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, 
 			if (h->active[hand])
 				draw_hand(h->joints[hand], hand);
 		}
+		draw_pointer(pointers.handAim, false, 1);
+		for (int side = 0; side < 2; ++side)
+			draw_pointer(pointers.controllerAim[side], true, side);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
 		xr_check(xrReleaseSwapchainImage(h->eye[eye].handle, &release), "release hand image");
@@ -929,6 +976,7 @@ static bool hand_visual_setup(HandVisual*, XrInstance, XrSystemId, XrSession, in
 	return false;
 }
 static bool hand_visual_render(HandVisual*, XrSession, XrSpace, XrTime,
+						   const VisualInputs&,
 						   XrCompositionLayerProjection*,
 						   std::array<XrCompositionLayerProjectionView, 2>*) {
 	return false;
@@ -949,8 +997,11 @@ struct Hands {
 	XrSpace aimSpace = XR_NULL_HANDLE;
 	XrPath handPath = XR_NULL_PATH;
 	XrAction ctlAim = XR_NULL_HANDLE;
+	XrAction leftCtlAim = XR_NULL_HANDLE;
 	XrAction ctlTrigger = XR_NULL_HANDLE;
 	XrSpace ctlSpace = XR_NULL_HANDLE;
+	XrSpace leftCtlSpace = XR_NULL_HANDLE;
+	XrPath leftHandPath = XR_NULL_PATH;
 	bool handOn = false;
 	bool ctlOn = false;
 	bool ready = false;
@@ -985,6 +1036,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 		std::fprintf(stderr, "xeneva-xr-view: hand path unknown\n");
 		return false;
 	}
+	xrStringToPath(instance, "/user/hand/left", &h->leftHandPath);
 	XrActionSetCreateInfo sci{XR_TYPE_ACTION_SET_CREATE_INFO};
 	std::strcpy(sci.actionSetName, "pointer");
 	std::strcpy(sci.localizedActionSetName, "guest pointer");
@@ -1035,7 +1087,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			"/interaction_profiles/oculus/touch_controller",
 			"/interaction_profiles/khr/simple_controller",
 		};
-		XrPath aimIn = XR_NULL_PATH, trigIn = XR_NULL_PATH;
+		XrPath aimIn = XR_NULL_PATH, trigIn = XR_NULL_PATH, leftAimIn = XR_NULL_PATH;
 		bool paths = !XR_FAILED(xrStringToPath(instance, "/user/hand/right/input/aim/pose",
 											   &aimIn)) &&
 					 !XR_FAILED(xrStringToPath(instance, "/user/hand/right/input/trigger/value",
@@ -1049,8 +1101,20 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			std::strcpy(aci.localizedActionName, "controller trigger");
 			aci.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
 			ok = ok && !XR_FAILED(xrCreateAction(h->set, &aci, &h->ctlTrigger));
-			XrActionSuggestedBinding bindings[2] = {{h->ctlAim, aimIn},
-													{h->ctlTrigger, trigIn}};
+			if (h->leftHandPath != XR_NULL_PATH &&
+				XR_SUCCEEDED(xrStringToPath(instance, "/user/hand/left/input/aim/pose",
+											&leftAimIn))) {
+				aci.subactionPaths = &h->leftHandPath;
+				std::strcpy(aci.actionName, "left_ctl_aim");
+				std::strcpy(aci.localizedActionName, "left controller aim");
+				aci.actionType = XR_ACTION_TYPE_POSE_INPUT;
+				if (XR_FAILED(xrCreateAction(h->set, &aci, &h->leftCtlAim)))
+					h->leftCtlAim = XR_NULL_HANDLE;
+				aci.subactionPaths = &h->handPath;
+			}
+			XrActionSuggestedBinding bindings[3] = {{h->ctlAim, aimIn},
+											{h->ctlTrigger, trigIn},
+											{h->leftCtlAim, leftAimIn}};
 			bool bound = false;
 			for (const char* p : profiles) {
 				XrPath prof = XR_NULL_PATH;
@@ -1059,7 +1123,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 				XrInteractionProfileSuggestedBinding sug{
 					XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
 				sug.interactionProfile = prof;
-				sug.countSuggestedBindings = 2;
+				sug.countSuggestedBindings = h->leftCtlAim != XR_NULL_HANDLE ? 3 : 2;
 				sug.suggestedBindings = bindings;
 				if (!XR_FAILED(xrSuggestInteractionProfileBindings(instance, &sug))) {
 					bound = true;
@@ -1097,6 +1161,12 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			std::fprintf(stderr, "xeneva-xr-view: controller aim space failed\n");
 			h->ctlOn = false;
 		}
+		if (h->leftCtlAim != XR_NULL_HANDLE) {
+			sci2.action = h->leftCtlAim;
+			sci2.subactionPath = h->leftHandPath;
+			if (XR_FAILED(xrCreateActionSpace(session, &sci2, &h->leftCtlSpace)))
+				h->leftCtlSpace = XR_NULL_HANDLE;
+		}
 	}
 	if (!h->handOn && !h->ctlOn)
 		return false;
@@ -1112,11 +1182,42 @@ static void hands_shutdown(Hands* h) {
 			xrDestroySpace(h->aimSpace);
 		if (h->ctlSpace != XR_NULL_HANDLE)
 			xrDestroySpace(h->ctlSpace);
+		if (h->leftCtlSpace != XR_NULL_HANDLE)
+			xrDestroySpace(h->leftCtlSpace);
 		h->aimSpace = XR_NULL_HANDLE;
 		h->ctlSpace = XR_NULL_HANDLE;
 		h->ready = false;
 		h->pressed = false;
 	}
+}
+
+static PointerVisual locate_pointer(XrSpace action_space, XrSpace render_space, XrTime time) {
+	PointerVisual result;
+	if (action_space == XR_NULL_HANDLE)
+		return result;
+	XrSpaceLocation location{XR_TYPE_SPACE_LOCATION};
+	if (XR_FAILED(xrLocateSpace(action_space, render_space, time, &location)))
+		return result;
+	constexpr XrSpaceLocationFlags required = XR_SPACE_LOCATION_POSITION_VALID_BIT |
+		XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+	if ((location.locationFlags & required) != required)
+		return result;
+	result.pose = location.pose;
+	result.valid = true;
+	return result;
+}
+
+static VisualInputs hands_visual_inputs(const Hands* h, XrSpace render_space, XrTime time) {
+	VisualInputs visuals;
+	if (!h || !h->ready)
+		return visuals;
+	if (h->handOn)
+		visuals.handAim = locate_pointer(h->aimSpace, render_space, time);
+	if (h->ctlOn) {
+		visuals.controllerAim[0] = locate_pointer(h->leftCtlSpace, render_space, time);
+		visuals.controllerAim[1] = locate_pointer(h->ctlSpace, render_space, time);
+	}
+	return visuals;
 }
 
 /* One frame of hand input. eye_w/img_h describe the per-eye texture region
@@ -1801,9 +1902,10 @@ int main(int argc, char** argv) {
 
 		XrCompositionLayerProjection hand_layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
 		std::array<XrCompositionLayerProjectionView, 2> hand_views;
+		VisualInputs visuals = hands_visual_inputs(&hands, hand_space, fs.predictedDisplayTime);
 		bool show_hands = fs.shouldRender && cap.hand_mesh &&
 			hand_visual_render(&hand_visual, session, hand_space, fs.predictedDisplayTime,
-							   &hand_layer, &hand_views);
+							   visuals, &hand_layer, &hand_views);
 		const XrCompositionLayerBaseHeader* layers[] = {
 			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[0]),
 			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[1]),
