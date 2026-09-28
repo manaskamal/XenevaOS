@@ -96,18 +96,16 @@ AuVFSNode* AuVFSFind(char* path) {
 
 	char pathname[16];
 	int i;
-	UARTDebugOut("pathname : %x , next : %x \r\n", &pathname, next);
 	for (i = 0; i < 16; i++) {
 		if (next[i] == '/' || next[i] == '\0')
 			break;
 		pathname[i] = next[i];
 	}
 	pathname[i] = 0;
-	//aa64_data_cache_clean_range(&pathname, 16);
-    UARTDebugOut("Root child : %x \r\n", __RootContainer);
+	aa64_data_cache_clean_range(&pathname, 16);
+
 	for (int j = 0; j < __RootContainer->childs->pointer; j++) {
 		AuVFSNode* node = (AuVFSNode*)list_get_at(__RootContainer->childs, j);
-		UARTDebugOut("Node : %x \r\n", node);
 		if ((strcmp(node->filename, pathname) == 0) && (node->flags & FS_FLAG_FILE_SYSTEM)) {
 			Returnable = node;
 			break;
@@ -117,7 +115,6 @@ AuVFSNode* AuVFSFind(char* path) {
 	if (!Returnable)
 		Returnable = __RootFS;
 
-	UARTDebugOut("Returnable : %x \r\n", Returnable);
 	return Returnable;
 }
 
@@ -342,7 +339,6 @@ int AuVFSRemoveFile(AuVFSNode* fsys, AuVFSNode* file) {
 	int ret = -1;
 	if (fsys->remove_file)
 		ret = fsys->remove_file(fsys, file);
-	return ret;
 }
 
 /**
