@@ -234,7 +234,7 @@ void DG_Init() {
 			}
 		}
 		_KePrint("[doom] MARK before ChWindowPaint\n");
-		//ChWindowBroadcastIcon(g_app, "/icons/doom.bmp");
+		ChWindowBroadcastIcon(g_app, "/icons/doom.bmp");
 		ChWindowPaint(s_window);
 		_KePrint("[doom] MARK after ChWindowPaint\n");
 	}
