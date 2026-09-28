@@ -30,6 +30,7 @@
 #include <time.h>
 #include <utility>
 #include <vector>
+#include <unistd.h>
 
 static void die(const char* msg) {
 	std::fprintf(stderr, "xeneva-xr-view: %s\n", msg);
@@ -363,6 +364,8 @@ struct GlxHeadless {
 	Display* dpy = nullptr;
 	Window win = 0;
 	GLXContext ctx = nullptr;
+	GLXFBConfig fb_config = nullptr;
+	uint32_t visual_id = 0;
 };
 
 static GlxHeadless make_glx() {
@@ -370,23 +373,33 @@ static GlxHeadless make_glx() {
 	g.dpy = XOpenDisplay(nullptr);
 	if (!g.dpy)
 		die("XOpenDisplay failed (need a display for GLX + OpenXR)");
-	static int vis_attr[] = {GLX_RGBA, GLX_DOUBLEBUFFER, GLX_RED_SIZE, 8, GLX_GREEN_SIZE, 8,
-							 GLX_BLUE_SIZE, 8, GLX_DEPTH_SIZE, 16, None};
-	XVisualInfo* vis = glXChooseVisual(g.dpy, DefaultScreen(g.dpy), vis_attr);
+	static int fb_attr[] = {GLX_X_RENDERABLE, True, GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+							GLX_RENDER_TYPE, GLX_RGBA_BIT, GLX_DOUBLEBUFFER, True,
+							GLX_RED_SIZE, 8, GLX_GREEN_SIZE, 8, GLX_BLUE_SIZE, 8,
+							GLX_DEPTH_SIZE, 16, None};
+	int ncfg = 0;
+	GLXFBConfig* configs =
+		glXChooseFBConfig(g.dpy, DefaultScreen(g.dpy), fb_attr, &ncfg);
+	if (!configs || ncfg < 1)
+		die("glXChooseFBConfig failed");
+	g.fb_config = configs[0];
+	XVisualInfo* vis = glXGetVisualFromFBConfig(g.dpy, g.fb_config);
 	if (!vis)
-		die("glXChooseVisual failed");
+		die("glXGetVisualFromFBConfig failed");
+	g.visual_id = (uint32_t)vis->visualid;
 	Colormap cmap = XCreateColormap(g.dpy, RootWindow(g.dpy, vis->screen), vis->visual, AllocNone);
 	XSetWindowAttributes swa;
 	swa.colormap = cmap;
 	swa.event_mask = 0;
 	g.win = XCreateWindow(g.dpy, RootWindow(g.dpy, vis->screen), 0, 0, 64, 64, 0, vis->depth,
 						  InputOutput, vis->visual, CWColormap | CWEventMask, &swa);
-	g.ctx = glXCreateContext(g.dpy, vis, nullptr, True);
+	g.ctx = glXCreateNewContext(g.dpy, g.fb_config, GLX_RGBA_TYPE, nullptr, True);
 	if (!g.ctx)
-		die("glXCreateContext failed");
+		die("glXCreateNewContext failed");
 	if (!glXMakeCurrent(g.dpy, g.win, g.ctx))
 		die("glXMakeCurrent failed");
 	XFree(vis);
+	XFree(configs);
 	return g;
 }
 
@@ -424,7 +437,8 @@ static Swapchain make_swapchain(XrSession session, int32_t w, int32_t h) {
 	int64_t format = have_rgba ? GL_RGBA8 : have_srgb ? GL_SRGB8_ALPHA8 : fmts[0];
 	sc.format = format;
 	XrSwapchainCreateInfo ci{XR_TYPE_SWAPCHAIN_CREATE_INFO};
-	ci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_SAMPLED_BIT;
+	ci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT |
+		XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 	ci.format = format;
 	ci.sampleCount = 1;
 	ci.width = (uint32_t)w;
@@ -453,6 +467,7 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 	wait.timeout = XR_INFINITE_DURATION;
 	xr_check(xrWaitSwapchainImage(sc.handle, &wait), "wait");
 	GLuint tex = sc.images[idx].image;
+	while (glGetError() != GL_NO_ERROR) {}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	if (!cap.rgba.empty()) {
 		/* Capture buffers are top-row-first; GL/OpenXR swapchain textures
@@ -462,11 +477,9 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 		 * the placed region is uploaded. Reuse one scratch buffer. */
 		static std::vector<uint8_t> scratch;
 		if (cap.w <= sc.w && cap.h <= sc.h) {
-			/* Render through a staging texture so a side-by-side capture fills a
-			 * 2x-recommended-width swapchain on the GPU. Each OpenXR sub-image is
-			 * then exactly the runtime's native per-eye recommendation. */
-			static GLuint source_tex = 0, scale_fbo = 0;
-			static int source_w = 0, source_h = 0;
+			/* Preserve the guest pixels and submit only their centered rectangle.
+			 * A second FBO used for scaling crashes Mesa's WiVRn OpenGL path when
+			 * QEMU capture is active, and is unnecessary for a smaller guest. */
 			size_t need = (size_t)cap.w * (size_t)cap.h * 4;
 			if (scratch.size() != need)
 				scratch.resize(need);
@@ -474,63 +487,18 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 				std::memcpy(&scratch[(size_t)y * cap.w * 4],
 							&cap.rgba[(size_t)(cap.h - 1 - y) * cap.w * 4],
 							(size_t)cap.w * 4);
-			if (!source_tex) {
-				glGenTextures(1, &source_tex);
-				glGenFramebuffers(1, &scale_fbo);
-			}
-			glBindTexture(GL_TEXTURE_2D, source_tex);
+			sc.up_x = (sc.w - cap.w) / 2;
+			sc.up_y = (sc.h - cap.h) / 2;
+			sc.up_w = cap.w;
+			sc.up_h = cap.h;
+			glBindTexture(GL_TEXTURE_2D, tex);
 			GLint filter = cap.linear_filter ? GL_LINEAR : GL_NEAREST;
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			if (source_w != cap.w || source_h != cap.h) {
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cap.w, cap.h, 0, GL_RGBA,
-							 GL_UNSIGNED_BYTE, scratch.data());
-				source_w = cap.w;
-				source_h = cap.h;
-			} else {
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cap.w, cap.h, GL_RGBA,
-								GL_UNSIGNED_BYTE, scratch.data());
-			}
-			glBindFramebuffer(GL_FRAMEBUFFER, scale_fbo);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-			glViewport(0, 0, sc.w, sc.h);
-			glDisable(GL_DEPTH_TEST);
-			glDisable(GL_BLEND);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_FOG);
-			glColor4f(1.f, 1.f, 1.f, 1.f);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-#ifdef GL_FRAMEBUFFER_SRGB
-			glDisable(GL_FRAMEBUFFER_SRGB);
-#endif
-			glMatrixMode(GL_PROJECTION);
-			glPushMatrix();
-			glLoadIdentity();
-			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			glLoadIdentity();
-			glEnable(GL_TEXTURE_2D);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, -1.f);
-			glTexCoord2f(1.f, 0.f); glVertex2f( 1.f, -1.f);
-			glTexCoord2f(1.f, 1.f); glVertex2f( 1.f,  1.f);
-			glTexCoord2f(0.f, 1.f); glVertex2f(-1.f,  1.f);
-			glEnd();
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glDisable(GL_TEXTURE_2D);
-#ifdef GL_FRAMEBUFFER_SRGB
-			glDisable(GL_FRAMEBUFFER_SRGB);
-#endif
-			glPopMatrix();
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			sc.up_x = sc.up_y = 0;
-			sc.up_w = sc.w;
-			sc.up_h = sc.h;
+			glTexSubImage2D(GL_TEXTURE_2D, 0, sc.up_x, sc.up_y, cap.w, cap.h,
+							GL_RGBA, GL_UNSIGNED_BYTE, scratch.data());
 		} else {
 			/* Guest bigger than the swapchain (shouldn't happen): scale
 			 * down with plain assignments, no per-pixel memcpy calls. */
@@ -555,10 +523,47 @@ static void upload_rgba(Swapchain& sc, const Capture& cap) {
 							scratch.data());
 		}
 	}
+	/* xrReleaseSwapchainImage hands the texture back to WiVRn. Submit all GL
+	 * writes first; llvmpipe otherwise leaves the CPU upload queued and the
+	 * compositor samples the untouched black swapchain image. */
+	glFinish();
+	static int verified_w = 0, verified_h = 0;
+	if (verified_w != sc.up_w || verified_h != sc.up_h) {
+		GLint bound = 0, tex_w = 0, tex_h = 0;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_w);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_h);
+		GLenum upload_error = glGetError();
+		std::vector<uint8_t> check((size_t)sc.w * sc.h * 4);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, check.data());
+		size_t nonblack = 0;
+		uint64_t checksum = 1469598103934665603ull;
+		for (size_t i = 0; i < check.size(); i += 388) {
+			nonblack += check[i] || check[i + 1] || check[i + 2];
+			checksum = (checksum ^ check[i]) * 1099511628211ull;
+		}
+		std::fprintf(stderr,
+				"xeneva-xr-view: swapchain upload verified %dx%d tex=%u bound=%d storage=%dx%d "
+				"gl_error=0x%x samples_nonblack=%zu checksum=0x%llx\n",
+				sc.up_w, sc.up_h, tex, bound, tex_w, tex_h, upload_error,
+				nonblack, (unsigned long long)checksum);
+		verified_w = sc.up_w;
+		verified_h = sc.up_h;
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	XrSwapchainImageReleaseInfo rel{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
 	xr_check(xrReleaseSwapchainImage(sc.handle, &rel), "release");
 }
+
+struct PointerVisual {
+	XrPosef pose{};
+	bool valid = false;
+};
+
+struct VisualInputs {
+	PointerVisual handAim;
+	PointerVisual controllerAim[2];
+};
 
 #ifdef XR_EXT_HAND_TRACKING_EXTENSION_NAME
 struct FilteredJoint {
@@ -598,6 +603,38 @@ static Vec3 normalized(Vec3 v) {
 }
 static Vec3 joint_pos(const XrHandJointLocationEXT& joint) {
 	return {joint.pose.position.x, joint.pose.position.y, joint.pose.position.z};
+}
+
+static void draw_sphere(Vec3 center, float radius);
+static void draw_bone(Vec3 a, Vec3 b, float ra, float rb);
+
+static Vec3 pose_point(const XrPosef& pose, Vec3 point) {
+	const auto& q = pose.orientation;
+	Vec3 u{q.x, q.y, q.z};
+	Vec3 rotated = point + cross(u, point) * (2.f * q.w) +
+		cross(u, cross(u, point)) * 2.f;
+	return rotated + Vec3{pose.position.x, pose.position.y, pose.position.z};
+}
+
+static void draw_pointer(const PointerVisual& pointer, bool controller, int side) {
+	if (!pointer.valid)
+		return;
+	/* OpenXR aim points along the action space's negative Z axis. Keep every
+	 * vertex in the same LOCAL space as the projection layer and eye views. */
+	Vec3 origin = pose_point(pointer.pose, {0.f, 0.f, 0.f});
+	Vec3 tip = pose_point(pointer.pose, {0.f, 0.f, -1.5f});
+	if (controller) {
+		glColor4f(side == 0 ? 0.12f : 0.93f, 0.66f, 0.85f, 1.f);
+		Vec3 base = pose_point(pointer.pose, {0.f, -0.025f, 0.11f});
+		Vec3 front = pose_point(pointer.pose, {0.f, 0.012f, -0.055f});
+		draw_bone(base, front, 0.028f, 0.038f);
+		draw_sphere(front, 0.038f);
+		origin = pose_point(pointer.pose, {0.f, 0.012f, -0.09f});
+	} else {
+		glColor4f(0.95f, 0.75f, 0.19f, 1.f);
+	}
+	draw_bone(origin, tip, 0.004f, 0.0015f);
+	draw_sphere(tip, 0.012f);
 }
 
 static void draw_sphere(Vec3 center, float radius) {
@@ -764,12 +801,18 @@ static bool hand_visual_setup(HandVisual* h, XrInstance instance, XrSystemId sys
 	}
 	if (h->tracker[0] == XR_NULL_HANDLE && h->tracker[1] == XR_NULL_HANDLE)
 		return false;
+	/* The joint mesh is simple geometry and does not need a pair of native
+	 * HMD-resolution render targets.  On WiVRn/Mesa, allocating two more
+	 * 2198x2418 swapchains after the desktop swapchain can exhaust the GL
+	 * path and crash inside xrCreateSwapchain. */
+	int32_t render_w = std::min(w, 1024);
+	int32_t render_h = std::min(height, 1024);
 	for (int eye = 0; eye < 2; ++eye) {
-		h->eye[eye] = make_swapchain(session, w, height);
+		h->eye[eye] = make_swapchain(session, render_w, render_h);
 		glGenFramebuffers(1, &h->fbo[eye]);
 		glGenRenderbuffers(1, &h->depth[eye]);
 		glBindRenderbuffer(GL_RENDERBUFFER, h->depth[eye]);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, height);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, render_w, render_h);
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	h->ready = true;
@@ -778,6 +821,7 @@ static bool hand_visual_setup(HandVisual* h, XrInstance instance, XrSystemId sys
 }
 
 static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, XrTime time,
+						   const VisualInputs& pointers,
 						   XrCompositionLayerProjection* layer,
 						   std::array<XrCompositionLayerProjectionView, 2>* projection_views) {
 	if (!h || !h->ready || !layer || !projection_views)
@@ -824,7 +868,8 @@ static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, 
 			joint.pose.position.z = z.x;
 		}
 	}
-	if (!any)
+	if (!any && !pointers.handAim.valid && !pointers.controllerAim[0].valid &&
+		!pointers.controllerAim[1].valid)
 		return false;
 
 	std::array<XrView, 2> views = {XrView{XR_TYPE_VIEW}, XrView{XR_TYPE_VIEW}};
@@ -884,6 +929,9 @@ static bool hand_visual_render(HandVisual* h, XrSession session, XrSpace space, 
 			if (h->active[hand])
 				draw_hand(h->joints[hand], hand);
 		}
+		draw_pointer(pointers.handAim, false, 1);
+		for (int side = 0; side < 2; ++side)
+			draw_pointer(pointers.controllerAim[side], true, side);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
 		xr_check(xrReleaseSwapchainImage(h->eye[eye].handle, &release), "release hand image");
@@ -928,6 +976,7 @@ static bool hand_visual_setup(HandVisual*, XrInstance, XrSystemId, XrSession, in
 	return false;
 }
 static bool hand_visual_render(HandVisual*, XrSession, XrSpace, XrTime,
+						   const VisualInputs&,
 						   XrCompositionLayerProjection*,
 						   std::array<XrCompositionLayerProjectionView, 2>*) {
 	return false;
@@ -948,8 +997,11 @@ struct Hands {
 	XrSpace aimSpace = XR_NULL_HANDLE;
 	XrPath handPath = XR_NULL_PATH;
 	XrAction ctlAim = XR_NULL_HANDLE;
+	XrAction leftCtlAim = XR_NULL_HANDLE;
 	XrAction ctlTrigger = XR_NULL_HANDLE;
 	XrSpace ctlSpace = XR_NULL_HANDLE;
+	XrSpace leftCtlSpace = XR_NULL_HANDLE;
+	XrPath leftHandPath = XR_NULL_PATH;
 	bool handOn = false;
 	bool ctlOn = false;
 	bool ready = false;
@@ -962,8 +1014,8 @@ struct Hands {
 	float ctl_lx = 0.f, ctl_ly = 0.f;
 	float ctl_rx = 0.f, ctl_ry = 0.f;
 	bool ctl_have = false;
-	PointerFilter hand_filter;
-	PointerFilter ctl_filter;
+	PointerFilter hand_filter{1.7f, 2.f};
+	PointerFilter ctl_filter{1.7f, 2.f};
 	int pinch_hold = 0;
 	int ctl_hold = 0; /* frames to keep preferring controllers after loss */
 	enum Src { SRC_NONE, SRC_HAND, SRC_CTL };
@@ -971,6 +1023,8 @@ struct Hands {
 	Src active_src = SRC_NONE;
 	bool pressed = false;
 };
+
+static constexpr uint32_t QEMU_MOUSE_LEFT = 0;
 
 static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool want_hands,
 						bool want_ctl) {
@@ -982,6 +1036,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 		std::fprintf(stderr, "xeneva-xr-view: hand path unknown\n");
 		return false;
 	}
+	xrStringToPath(instance, "/user/hand/left", &h->leftHandPath);
 	XrActionSetCreateInfo sci{XR_TYPE_ACTION_SET_CREATE_INFO};
 	std::strcpy(sci.actionSetName, "pointer");
 	std::strcpy(sci.localizedActionSetName, "guest pointer");
@@ -1032,7 +1087,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			"/interaction_profiles/oculus/touch_controller",
 			"/interaction_profiles/khr/simple_controller",
 		};
-		XrPath aimIn = XR_NULL_PATH, trigIn = XR_NULL_PATH;
+		XrPath aimIn = XR_NULL_PATH, trigIn = XR_NULL_PATH, leftAimIn = XR_NULL_PATH;
 		bool paths = !XR_FAILED(xrStringToPath(instance, "/user/hand/right/input/aim/pose",
 											   &aimIn)) &&
 					 !XR_FAILED(xrStringToPath(instance, "/user/hand/right/input/trigger/value",
@@ -1046,8 +1101,20 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			std::strcpy(aci.localizedActionName, "controller trigger");
 			aci.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
 			ok = ok && !XR_FAILED(xrCreateAction(h->set, &aci, &h->ctlTrigger));
-			XrActionSuggestedBinding bindings[2] = {{h->ctlAim, aimIn},
-													{h->ctlTrigger, trigIn}};
+			if (h->leftHandPath != XR_NULL_PATH &&
+				XR_SUCCEEDED(xrStringToPath(instance, "/user/hand/left/input/aim/pose",
+											&leftAimIn))) {
+				aci.subactionPaths = &h->leftHandPath;
+				std::strcpy(aci.actionName, "left_ctl_aim");
+				std::strcpy(aci.localizedActionName, "left controller aim");
+				aci.actionType = XR_ACTION_TYPE_POSE_INPUT;
+				if (XR_FAILED(xrCreateAction(h->set, &aci, &h->leftCtlAim)))
+					h->leftCtlAim = XR_NULL_HANDLE;
+				aci.subactionPaths = &h->handPath;
+			}
+			XrActionSuggestedBinding bindings[3] = {{h->ctlAim, aimIn},
+											{h->ctlTrigger, trigIn},
+											{h->leftCtlAim, leftAimIn}};
 			bool bound = false;
 			for (const char* p : profiles) {
 				XrPath prof = XR_NULL_PATH;
@@ -1056,7 +1123,7 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 				XrInteractionProfileSuggestedBinding sug{
 					XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
 				sug.interactionProfile = prof;
-				sug.countSuggestedBindings = 2;
+				sug.countSuggestedBindings = h->leftCtlAim != XR_NULL_HANDLE ? 3 : 2;
 				sug.suggestedBindings = bindings;
 				if (!XR_FAILED(xrSuggestInteractionProfileBindings(instance, &sug))) {
 					bound = true;
@@ -1094,6 +1161,12 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 			std::fprintf(stderr, "xeneva-xr-view: controller aim space failed\n");
 			h->ctlOn = false;
 		}
+		if (h->leftCtlAim != XR_NULL_HANDLE) {
+			sci2.action = h->leftCtlAim;
+			sci2.subactionPath = h->leftHandPath;
+			if (XR_FAILED(xrCreateActionSpace(session, &sci2, &h->leftCtlSpace)))
+				h->leftCtlSpace = XR_NULL_HANDLE;
+		}
 	}
 	if (!h->handOn && !h->ctlOn)
 		return false;
@@ -1104,16 +1177,47 @@ static bool hands_setup(XrInstance instance, XrSession session, Hands* h, bool w
 static void hands_shutdown(Hands* h) {
 	if (h && h->ready) {
 		if (h->pressed)
-			qemu_mouse_button(1, false);
+			qemu_mouse_button(QEMU_MOUSE_LEFT, false);
 		if (h->aimSpace != XR_NULL_HANDLE)
 			xrDestroySpace(h->aimSpace);
 		if (h->ctlSpace != XR_NULL_HANDLE)
 			xrDestroySpace(h->ctlSpace);
+		if (h->leftCtlSpace != XR_NULL_HANDLE)
+			xrDestroySpace(h->leftCtlSpace);
 		h->aimSpace = XR_NULL_HANDLE;
 		h->ctlSpace = XR_NULL_HANDLE;
 		h->ready = false;
 		h->pressed = false;
 	}
+}
+
+static PointerVisual locate_pointer(XrSpace action_space, XrSpace render_space, XrTime time) {
+	PointerVisual result;
+	if (action_space == XR_NULL_HANDLE)
+		return result;
+	XrSpaceLocation location{XR_TYPE_SPACE_LOCATION};
+	if (XR_FAILED(xrLocateSpace(action_space, render_space, time, &location)))
+		return result;
+	constexpr XrSpaceLocationFlags required = XR_SPACE_LOCATION_POSITION_VALID_BIT |
+		XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+	if ((location.locationFlags & required) != required)
+		return result;
+	result.pose = location.pose;
+	result.valid = true;
+	return result;
+}
+
+static VisualInputs hands_visual_inputs(const Hands* h, XrSpace render_space, XrTime time) {
+	VisualInputs visuals;
+	if (!h || !h->ready)
+		return visuals;
+	if (h->handOn)
+		visuals.handAim = locate_pointer(h->aimSpace, render_space, time);
+	if (h->ctlOn) {
+		visuals.controllerAim[0] = locate_pointer(h->leftCtlSpace, render_space, time);
+		visuals.controllerAim[1] = locate_pointer(h->ctlSpace, render_space, time);
+	}
+	return visuals;
 }
 
 /* One frame of hand input. eye_w/img_h describe the per-eye texture region
@@ -1213,7 +1317,7 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	bool use_hand = !use_ctl && h->handOn && hand_ok;
 	if (!use_ctl && !use_hand) {
 		if (h->pressed) {
-			qemu_mouse_button(1, false);
+			qemu_mouse_button(QEMU_MOUSE_LEFT, false);
 			h->pressed = false;
 			h->pressed_by = Hands::SRC_NONE;
 		}
@@ -1235,16 +1339,16 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 		h->active_src = want_src;
 	}
 	if (want_click && h->pressed && h->pressed_by != want_src) {
-		qemu_mouse_button(1, false);
+		qemu_mouse_button(QEMU_MOUSE_LEFT, false);
 		h->pressed = false;
 		h->pressed_by = Hands::SRC_NONE;
 	}
 	if (want_click && !h->pressed) {
-		qemu_mouse_button(1, true);
+		qemu_mouse_button(QEMU_MOUSE_LEFT, true);
 		h->pressed = true;
 		h->pressed_by = want_src;
 	} else if (!want_click && h->pressed) {
-		qemu_mouse_button(1, false);
+		qemu_mouse_button(QEMU_MOUSE_LEFT, false);
 		h->pressed = false;
 		h->pressed_by = Hands::SRC_NONE;
 	}
@@ -1282,9 +1386,9 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 		have = true;
 		return;
 	}
-	/* Hand aim is noisier than a physical controller. Keep the configured
-	 * controller gain while making bare-hand movement half as sensitive. */
-	float input_gain = use_ctl ? cap.hands_gain : cap.hands_gain * 0.5f;
+	/* Pinching shifts hand aim enough to need the lower gain; controller
+	 * motion needs more range while retaining the same jitter filtering. */
+	float input_gain = cap.hands_gain * (use_ctl ? 0.5f : 0.25f);
 	float raw_dx = (px - raw_x) * input_gain;
 	float raw_dy = -(py - raw_y) * input_gain;
 	raw_x = px;
@@ -1292,16 +1396,22 @@ static void hands_update(Hands* h, const Capture& cap, XrSession session, XrSpac
 	float raw_step = std::sqrt(raw_dx * raw_dx + raw_dy * raw_dy);
 	float dx = (filtered.x - last_x) * input_gain;
 	float dy = -(filtered.y - last_y) * input_gain; /* XR y up, pixels y down */
-	float step = std::sqrt(dx * dx + dy * dy);
-	if (step < 2.5f)
-		return; /* sub-pixel noise + hand tremor */
 	if (raw_step > 300.f) {
 		filter.reset();
 		have = false;
 		return; /* flick = clutch, reposition silently */
 	}
-	last_x = filtered.x;
-	last_y = filtered.y;
+	float step = std::sqrt(dx * dx + dy * dy);
+	constexpr float deadzone_px = 10.f;
+	if (step <= deadzone_px)
+		return; /* hold the cursor through small tracking fluctuations */
+	/* Keep the deadzone as an elastic offset: a slow deliberate movement
+	 * crosses it once, then advances smoothly instead of jumping 10 pixels. */
+	float fraction = (step - deadzone_px) / step;
+	dx *= fraction;
+	dy *= fraction;
+	last_x += (filtered.x - last_x) * fraction;
+	last_y += (filtered.y - last_y) * fraction;
 	h->cur_x += dx;
 	h->cur_y += dy;
 	if (h->cur_x < 0.f)
@@ -1636,35 +1746,12 @@ int main(int argc, char** argv) {
 	xr_check(pfnReq(instance, sys, &req), "gl requirements");
 
 	GlxHeadless glx = make_glx();
-	int ncfg = 0;
-	int fb_attr[] = {GLX_X_RENDERABLE,
-					 True,
-					 GLX_DRAWABLE_TYPE,
-					 GLX_WINDOW_BIT,
-					 GLX_RENDER_TYPE,
-					 GLX_RGBA_BIT,
-					 GLX_DOUBLEBUFFER,
-					 True,
-					 GLX_RED_SIZE,
-					 8,
-					 GLX_GREEN_SIZE,
-					 8,
-					 GLX_BLUE_SIZE,
-					 8,
-					 None};
-	GLXFBConfig* fbc = glXChooseFBConfig(glx.dpy, DefaultScreen(glx.dpy), fb_attr, &ncfg);
-	if (!fbc || ncfg < 1)
-		die("glXChooseFBConfig failed");
 	XrGraphicsBindingOpenGLXlibKHR bind{XR_TYPE_GRAPHICS_BINDING_OPENGL_XLIB_KHR};
 	bind.xDisplay = glx.dpy;
-	bind.glxFBConfig = fbc[0];
+	bind.glxFBConfig = glx.fb_config;
 	bind.glxContext = glx.ctx;
 	bind.glxDrawable = glx.win;
-	XVisualInfo* bvis = glXGetVisualFromFBConfig(glx.dpy, fbc[0]);
-	bind.visualid = bvis ? (uint32_t)bvis->visualid : 0;
-	if (bvis)
-		XFree(bvis);
-	XFree(fbc);
+	bind.visualid = glx.visual_id;
 
 	XrSessionCreateInfo sci{XR_TYPE_SESSION_CREATE_INFO};
 	sci.next = &bind;
@@ -1690,12 +1777,31 @@ int main(int argc, char** argv) {
 		!hands_setup(instance, session, &hands, cap.hands, cap.controllers))
 		cap.hands = cap.controllers = false;
 
-	capture_frame(&cap);
-	/* Swapchain stays at the HMD recommended size; the guest is scaled on
-	 * upload so every guest mode arrives undistorted at full eye res. */
-	int32_t eyeW = recW > 0 ? recW : std::max(cap.stereo ? cap.w / 2 : cap.w, 256);
-	int32_t scW = cap.stereo ? eyeW * 2 : eyeW;
-	int32_t scH = recH > 0 ? recH : std::max(cap.h, 256);
+	/* Do not size the swapchain from the temporary test chart shown while
+	 * gpu0 is still booting. Wait for the first real D-Bus scanout so the
+	 * OpenXR image and submitted rectangle exactly match the guest. WiVRn's
+	 * current OpenGL path presents an offset sub-rectangle as black. */
+	if (cap.mode == Capture::Egl) {
+		uint32_t* pixels = nullptr;
+		int capture_w = 0, capture_h = 0;
+		for (int attempt = 0; attempt < 500; ++attempt) {
+			if (qemu_egl_poll(&pixels, &capture_w, &capture_h) && pixels &&
+				capture_w > 0 && capture_h > 0) {
+				cap.w = capture_w;
+				cap.h = capture_h;
+				cap.rgba.assign(reinterpret_cast<uint8_t*>(pixels),
+								reinterpret_cast<uint8_t*>(pixels) +
+									(size_t)capture_w * capture_h * 4);
+				break;
+			}
+			usleep(10000);
+		}
+	}
+	if (cap.rgba.empty())
+		capture_frame(&cap);
+	int32_t eyeW = std::max(cap.stereo ? cap.w / 2 : cap.w, 256);
+	int32_t scW = std::max(cap.w, 256);
+	int32_t scH = std::max(cap.h, 256);
 	Swapchain sc = make_swapchain(session, scW, scH);
 	std::fprintf(stderr, "xeneva-xr-view: swapchain %dx%d format=0x%llx filter=%s capture=%s\n",
 				 sc.w, sc.h, (unsigned long long)sc.format,
@@ -1744,10 +1850,22 @@ int main(int argc, char** argv) {
 		xr_check(xrBeginFrame(session, &bi), "begin frame");
 
 		capture_frame(&cap);
-		/* Swapchain stays at the HMD recommended size; any guest mode is
-		 * scaled on upload so every mode arrives undistorted. */
-		if (fs.shouldRender)
+		/* Firmware starts on ramfb at 1280x800, then the guest switches to
+		 * gpu0 at 1024x768. Recreate on that transition so WiVRn receives a
+		 * full swapchain image with no offset sub-rectangle. */
+		if (cap.mode == Capture::Egl && cap.w > 0 && cap.h > 0 &&
+			(cap.w != sc.w || cap.h != sc.h)) {
+			glXMakeCurrent(glx.dpy, glx.win, glx.ctx);
+			xrDestroySwapchain(sc.handle);
+			sc = make_swapchain(session, cap.w, cap.h);
+			std::fprintf(stderr, "xeneva-xr-view: scanout changed; swapchain recreated %dx%d\n",
+					sc.w, sc.h);
+		}
+		if (fs.shouldRender) {
+			if (!glXMakeCurrent(glx.dpy, glx.win, glx.ctx))
+				die("glXMakeCurrent before swapchain upload failed");
 			upload_rgba(sc, cap);
+		}
 		uint64_t upload_done_ns = host_monotonic_ns();
 
 		XrCompositionLayerQuad quads[2] = {
@@ -1790,9 +1908,10 @@ int main(int argc, char** argv) {
 
 		XrCompositionLayerProjection hand_layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
 		std::array<XrCompositionLayerProjectionView, 2> hand_views;
+		VisualInputs visuals = hands_visual_inputs(&hands, hand_space, fs.predictedDisplayTime);
 		bool show_hands = fs.shouldRender && cap.hand_mesh &&
 			hand_visual_render(&hand_visual, session, hand_space, fs.predictedDisplayTime,
-							   &hand_layer, &hand_views);
+							   visuals, &hand_layer, &hand_views);
 		const XrCompositionLayerBaseHeader* layers[] = {
 			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[0]),
 			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quads[1]),

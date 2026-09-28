@@ -168,6 +168,21 @@ static void store_bgra(const uint8_t* src, int w, int h, int stride) {
 		}
 	}
 	g_have = true;
+	static uint64_t scanout_count = 0;
+	if ((scanout_count++ % 120) == 0) {
+		size_t nonblack = 0;
+		uint64_t checksum = 0;
+		for (size_t i = 0; i < (size_t)w * h; i += 97) {
+			const uint8_t* p = g_rgba.data() + i * 4;
+			nonblack += (p[0] | p[1] | p[2]) != 0;
+			checksum = checksum * 131 + p[0] + ((uint64_t)p[1] << 8) +
+					   ((uint64_t)p[2] << 16);
+		}
+		std::fprintf(stderr,
+					 "qemu-egl: CPU scanout %dx%d stride=%d samples_nonblack=%zu checksum=0x%llx\n",
+					 w, h, stride, nonblack, (unsigned long long)checksum);
+		std::fflush(stderr);
+	}
 	struct timespec ts{};
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 	g_last_capture_ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
@@ -488,13 +503,12 @@ bool qemu_egl_connect(const char* dbus_addr) {
 
 	/* Hand QEMU the peer fd first, then connect to it as a D-Bus CLIENT.
 	 * QEMU serves the reverse connection (it answers our AUTH with OK). */
-	/* --axiss: Console_0 carries the serial text console; the graphical
-	 * guest scanout (virtio-gpu) is Console_1. Try the graphical console
-	 * first: QEMU only completes the reverse p2p handshake on the console
-	 * that actually receives scanouts, and blocks the caller forever
-	 * otherwise. */
-	const char* consoles[] = {"/org/qemu/Display1/Console_1",
-							 "/org/qemu/Display1/Console"};
+	/* gpu0 is registered first so VNC and XR consume the same console. Allow
+	 * older launch layouts to select Console_1 explicitly. */
+	const char* selected = std::getenv("XENEVA_QEMU_CONSOLE");
+	std::string selected_path = "/org/qemu/Display1/Console_";
+	selected_path += selected && *selected ? selected : "0";
+	const char* consoles[] = {selected_path.c_str(), "/org/qemu/Display1/Console"};
 	GUnixFDList* fds = g_unix_fd_list_new_from_array(&sv[1], 1);
 	GVariant* ret = nullptr;
 	const char* reg_console = nullptr;
@@ -631,8 +645,14 @@ bool qemu_egl_poll(uint32_t** rgba, int* w, int* h) {
 	std::lock_guard<std::mutex> lock(g_mu);
 	if (!g_have || g_rgba.empty())
 		return false;
+	/* The D-Bus scanout thread may replace/resize g_rgba as soon as this
+	 * mutex is released.  Return a per-calling-thread snapshot so the viewer
+	 * can copy pixels without holding a dangling pointer. */
+	static thread_local std::vector<uint32_t> snapshot;
+	snapshot.resize(g_rgba.size() / sizeof(uint32_t));
+	std::memcpy(snapshot.data(), g_rgba.data(), g_rgba.size());
 	*w = g_w;
 	*h = g_h;
-	*rgba = (uint32_t*)g_rgba.data();
+	*rgba = snapshot.data();
 	return true;
 }
