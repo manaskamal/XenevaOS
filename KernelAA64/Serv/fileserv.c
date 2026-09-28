@@ -260,6 +260,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	uint8_t* aligned_buffer = (uint8_t*)buffer;
 	if (!file)
 		return 0;
+	
 
 	if (!BordoisilaCapCheckRights(current_proc, fd, CAP_WRITE)) {
 		return 0;
@@ -299,8 +300,9 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	}
 
 	if (file->flags & FS_FLAG_TTY) {
-		if (file->write)
-			return file->write(file, file, (uint64_t*)buffer, length);
+		if (file->write){
+			file->write(file, file, (uint64_t*)buffer, length);
+		}
 	}
 
 	if (file->flags & FS_FLAG_DEVICE) {
