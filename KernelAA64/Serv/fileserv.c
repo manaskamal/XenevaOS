@@ -65,6 +65,7 @@ int OpenFile(char* filename, int mode) {
 	char fname[128];
 	memset(fname, 0, 128);
 	fname[127] = '\0';
+	
 	/* filename is a raw user pointer with no length guarantee, strcpy into
 	 * this fixed 128 byte kernel stack buffer with no bound check is a
 	 * straight up stack smash for anything >= 128 bytes, and any
@@ -83,8 +84,11 @@ int OpenFile(char* filename, int mode) {
 
 	/** check permissions before procedding **/
 	if (AuCredCheckPermissions(file, &current_proc->creds)) {
-		if (!file)
+		if (!file && !(mode & FILE_OPEN_CREAT) && !(mode & FILE_OPEN_WRITE))
 			return -1;
+		else if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE){
+            goto _file_create;
+		}
 		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
 				  file->filename,
 				  current_proc->creds.uid);
@@ -93,9 +97,11 @@ int OpenFile(char* filename, int mode) {
 			kfree(file);
 		return -1;
 	}
+_file_create:
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
+			UARTDebugOut("Creating file for fsys: %s \r\n", fsys->filename);
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
 		} else
