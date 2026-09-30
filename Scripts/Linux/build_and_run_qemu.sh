@@ -50,6 +50,15 @@ set -e
 #                           the image.
 #   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
 #                           the image.
+#   --bt                    Attach Bluetooth on the second serial. The socket
+#                           is /tmp/bt-server-bredr (btproxy), or
+#                           /tmp/xeneva-bt-virt when XENEVA_BT_VIRT=1.
+#                           XENEVA_BT_SERIAL overrides that path. If the
+#                           socket is missing, QEMU still starts.
+#                           Without --bt the guest has no Bluetooth socket.
+#   XENEVA_BT_VIRT=1        With --bt, the second serial is a virtual headset
+#                           (tests/bt/virt_headset), not BlueZ btproxy.
+#                           hci0 stays up.
 #   --no-boot-menu          Skip the EFI resolution menu and boot the default
 #                           mode (NOMENU marker on the ESP). The menu stays on
 #                           by default; headless, egl-headless and xr-demo
@@ -118,8 +127,8 @@ NO_NETWORK=0
 NO_AUDIO=0
 NO_BOOT_MENU=0
 NO_DOOM=0
-BT_SERIAL="${XENEVA_BT_SERIAL:-/tmp/bt-server-bredr}"
-NO_BT=0
+BT_SERIAL="${XENEVA_BT_SERIAL:-}"
+NO_BT=1
 NO_NETSURF=0
 
 print_help(){
@@ -391,8 +400,9 @@ while [ $# -gt 0 ]; do
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
-        --bt-serial) BT_SERIAL="/tmp/bt-server-bredr" ;;
-        --bt-serial=*) BT_SERIAL="${1#--bt-serial=}" ;;
+        --bt) NO_BT=0 ;;
+        --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
+        --bt-serial=*) NO_BT=0; BT_SERIAL="${1#--bt-serial=}" ;;
         --no-bt) NO_BT=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
@@ -939,19 +949,30 @@ bt_power_off_for_proxy() {
     echo "[+] Bluetooth: adapter still powered; btproxy may report 'Device or resource busy'"
 }
 
+if [ "$NO_BT" -eq 0 ] && [ -z "$BT_SERIAL" ]; then
+    if [ "${XENEVA_BT_VIRT:-0}" = "1" ]; then
+        BT_SERIAL="/tmp/xeneva-bt-virt"
+    else
+        BT_SERIAL="/tmp/bt-server-bredr"
+    fi
+fi
 if [ "$NO_BT" -eq 1 ]; then
-    echo "[+] Bluetooth: disabled (--no-bt), guest uses mock controller"
-elif [ -S "$BT_SERIAL" ]; then
-    bt_power_off_for_proxy
-    QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
-    echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
-else
-    # The QEMU-virt guest probes its second PL011 at 0x09040000 before
-    # falling back to the mock controller.  Keep that UART instantiated
-    # even without btproxy; omitting it makes the probe touch an absent
-    # MMIO device and raises a synchronous external abort. --axiss
+    # UART1 stays present so a guest probe of 0x09040000 does not fault.
+    # Nothing is connected to it.
     QEMU_ARGS+=(-serial null)
-    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0); UART1 sink enables guest mock fallback"
+    echo "[+] Bluetooth: off (pass --bt for /tmp/bt-server-bredr)"
+elif [ -S "$BT_SERIAL" ]; then
+    QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
+    if [ "${XENEVA_BT_VIRT:-0}" = "1" ]; then
+        echo "[+] Bluetooth: virtual headset at $BT_SERIAL (hci0 left up)"
+    else
+        bt_power_off_for_proxy
+        echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
+    fi
+else
+    # Missing socket must not stop the VM. Same UART sink as --no-bt.
+    QEMU_ARGS+=(-serial null)
+    echo "[+] Bluetooth: no $BT_SERIAL, continuing without it"
 fi
 if [ "$XR_DEMO" -eq 1 ]; then
 	# Core XR transport: D-Bus exports Console_0 (gpu0) to the viewer, using either

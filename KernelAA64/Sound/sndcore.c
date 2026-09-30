@@ -245,11 +245,11 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 			if (snd_is_bredr(_cards[i]) && _cards[i]->_force_write)
 				bredr = 1;
 		}
-		/* Deodhai binds virtio at boot and never rebinds. btctl registers
-		 * bredr0 itself, so its write still goes to the headset first and
-		 * then to the speaker. A mixer that is still on virtio must not
-		 * also block there, or play runs at a fraction of real time. */
-		if (bredr && snd_is_virtio(card)) {
+		/* The headset write already waits out the 21 ms period. virtio
+		 * waits that same period again, so the first seconds run slow
+		 * and then rush to catch the sample clock. btctl and the mixer
+		 * both skip the speaker while bredr0 is up. */
+		if (bredr) {
 			for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
 				AuSound* other = _cards[i];
 				if (!other || !other->_force_write || !other->write)
