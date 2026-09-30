@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/_keipcpostbox.h>
+#include <sys/_kecred.h>
 #include <widgets/list.h>
 
 /*
@@ -225,13 +226,19 @@ void DeodhaiAudioHandleMessage(DeodhaiAudioMessage* message) {
 	}
 }
 
-void DeodhaiAudioComposeFrame() {
+/* Returns 1 when a client posted a full buffer and it was written
+ * to the sound device. Idle loops must not push silence: that never
+ * opens a PulseAudio stream, and a paused thread never sees play's
+ * next buffer. */
+int DeodhaiAudioComposeFrame() {
+	int played = 0;
 	memset(mainOutput, 0, 4096);
 	int16_t* output = (int16_t*)mainOutput;
 	for (int i = 0; i < audioBoxList->pointer; i++) {
 		DeodhaiAudioBox* box = (DeodhaiAudioBox*)list_get_at(audioBoxList, i);
-		if (!box->ctlPanel->ready)
+		if (!box->ctlPanel->ready || !box->ctlPanel->Samplefull)
 			continue;
+		played = 1;
 
 		int16_t* sample = (int16_t*)box->sampleBuffer;
 		float rightSpeakerScale = box->ctlPanel->rightSpeakerScale;
@@ -297,7 +304,9 @@ void DeodhaiAudioComposeFrame() {
 			output[j] *= globalBox->ctlPanel->gain;
 		}
 	}
-	_KeWriteFile(sound, mainOutput, 4096);
+	if (played)
+		_KeWriteFile(sound, mainOutput, 4096);
+	return played;
 }
 /*
 * main -- main entry
@@ -313,6 +322,11 @@ int main(int argc, char* argv[]) {
 		printf("Pipe creation successful %d\n", pipe);
 	else
 		return 1;
+
+	/* publish the pipe world-open like init does for /pipe/init --
+	 * without this the node keeps the daemon's UAC_DEAMONS ids and
+	 * AuCredCheckPermissions denies every normal-user client at open */
+	_KeCredChangeID(pipe, 0, _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD));
 
 	postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
 
@@ -338,11 +352,13 @@ int main(int argc, char* argv[]) {
 
 	_KePrint("[deodhai-audio]: total sound cards : %d \r\n", num_card_count);
 
+	if (num_card_count < 0)
+		num_card_count = 0;
 	ioctl.uint_1 = num_card_count;
 	aurora_snd_card_list* list =
-		(aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * num_card_count);
+		(aurora_snd_card_list*)malloc(sizeof(aurora_snd_card_list) * (num_card_count + 1));
 	ioctl.ulong_1 = (uint64_t)list;
-	memset(list, 0, sizeof(aurora_snd_card_list) * num_card_count);
+	memset(list, 0, sizeof(aurora_snd_card_list) * (num_card_count + 1));
 	if (_KeFileIoControl(sound, SOUND_GET_CARD_LIST, &ioctl)) {
 		_KePrint("[deodhai-audio]: failed to get sound card list \r\n");
 		_KePauseThread();
@@ -355,7 +371,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/** let's use default first sound card here **/
-	ioctl.uint_2 = list->cardID;
+	ioctl.uint_2 = (num_card_count > 0) ? list->cardID : -1;
 
 	_KeFileIoControl(sound, SOUND_REGISTER_SNDPLR, &ioctl);
 
@@ -376,17 +392,17 @@ int main(int argc, char* argv[]) {
 	uint64_t sleep_duration = (uint64_t)(sample_div * 1000);
 	_KePrint("** deodhai audio sleep duration : %d \r\n", sleep_duration);
 	while (1) {
-		DeodhaiAudioComposeFrame();
+		int played = DeodhaiAudioComposeFrame();
 		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage) + 1);
 		if (sz > 0) {
 			DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)buff;
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		//_KeProcessSleep(sleep_duration);
-		/** actually, hardware should generate interrupt
-		 * and unblock this thread, we'll fix that in future
-		 */
-		_KePauseThread();
+		/* virtio-sound has no playback IRQ on this board. A pause here
+		 * never wakes, so play's shared buffer is never mixed. Sleep
+		 * one period when idle; a short yield when a period was just
+		 * handed to the card (the write itself waits out the period). */
+		_KeProcessSleep(played ? 1 : sleep_duration);
 	}
 }

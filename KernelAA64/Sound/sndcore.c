@@ -226,11 +226,22 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 	 */
 	if (dsp->_cardID != -1) {
 		AuSound* card = _cards[dsp->_cardID];
-		if (card)
-			if (card->_force_write) {
-				card->write((uint8_t*)buffer, length);
-				return length;
-			}
+		int i;
+		if (card && card->_force_write && card->write)
+			card->write((uint8_t*)buffer, length);
+		/* Deodhai binds the first card (virtio) at boot and never looks
+		 * again. bredr0 appears only after pairing. Copy each period onto
+		 * every other direct-write card so the headset hears the mix. */
+		for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+			AuSound* other;
+			if (i == (int)dsp->_cardID)
+				continue;
+			other = _cards[i];
+			if (other && other->_force_write && other->write)
+				other->write((uint8_t*)buffer, length);
+		}
+		if (card && card->_force_write)
+			return length;
 	}
 
 	if (CircBufFull(dsp->buffer)) {
