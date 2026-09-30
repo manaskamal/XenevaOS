@@ -217,6 +217,19 @@ size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	return 0;
 }
 
+/* virtio-sound completes a TX buffer only after the host has played
+ * that period. bredr0's write already waits the same 21 ms on the
+ * sample clock. Doing both turns one chunk into two. */
+static int snd_is_virtio(AuSound* card) {
+	return card && card->name[0] == 'v' && card->name[1] == 'i' &&
+		   card->name[2] == 'r';
+}
+
+static int snd_is_bredr(AuSound* card) {
+	return card && card->name[0] == 'b' && card->name[1] == 'r' &&
+		   card->name[2] == 'e' && card->name[3] == 'd' && card->name[4] == 'r';
+}
+
 size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	AA64Thread* t = AuGetCurrentThread();
 	AuDSP* dsp = AuSoundGetDSP(t->thread_id);
@@ -226,11 +239,39 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 	 */
 	if (dsp->_cardID != -1) {
 		AuSound* card = _cards[dsp->_cardID];
-		if (card)
-			if (card->_force_write) {
-				card->write((uint8_t*)buffer, length);
-				return length;
+		int i;
+		int bredr = 0;
+		for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+			if (snd_is_bredr(_cards[i]) && _cards[i]->_force_write)
+				bredr = 1;
+		}
+		/* The headset write already waits out the 21 ms period. virtio
+		 * waits that same period again, so the first seconds run slow
+		 * and then rush to catch the sample clock. btctl and the mixer
+		 * both skip the speaker while bredr0 is up. */
+		if (bredr) {
+			for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+				AuSound* other = _cards[i];
+				if (!other || !other->_force_write || !other->write)
+					continue;
+				if (snd_is_virtio(other))
+					continue;
+				other->write((uint8_t*)buffer, length);
 			}
+			return length;
+		}
+		if (card && card->_force_write && card->write)
+			card->write((uint8_t*)buffer, length);
+		for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+			AuSound* other;
+			if (i == (int)dsp->_cardID)
+				continue;
+			other = _cards[i];
+			if (other && other->_force_write && other->write)
+				other->write((uint8_t*)buffer, length);
+		}
+		if (card && card->_force_write)
+			return length;
 	}
 
 	if (CircBufFull(dsp->buffer)) {

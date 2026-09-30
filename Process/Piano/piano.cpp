@@ -75,6 +75,10 @@ int main(int argc, char* arv[]) {
 
 	DeodhaiAudioBox* audioBox =
 		DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
+	if (!audioBox) {
+		printf("piano : audio daemon unavailable \n");
+		return -1;
+	}
 	printf("piano : audio connection initiated successfully \n");
 
 	int sampleCount = (int)(1.0f * SAMPLE_RATE);

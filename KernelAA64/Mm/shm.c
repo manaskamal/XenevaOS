@@ -314,7 +314,12 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 					size_t phys = mem->frames[j];
 					if (!AuPmmngrRetainPage(phys))
 						return NULL;
-					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
+					/* Same attributes as the first mapping. AttrIndx 0 is
+					 * device memory, and the audio panel stores a float at
+					 * offset 1. Device memory faults that unaligned store
+					 * the second time a client connects. */
+					AuMapPage(phys, last_addr + j * PAGE_SIZE,
+							  PTE_NORMAL_MEM | PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
 				}

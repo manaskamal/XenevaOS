@@ -118,15 +118,55 @@ static void play_demo_pcm(int card_id) {
 		return;
 	}
 	memset(songbuf, 0, 4096);
-	_KeReadFile(song, songbuf, 4096);
+	/* First chunk may hold the RIFF header: skip to the data samples
+	 * the way play.exe does, so the card never hears the header. */
+	{
+		size_t n = _KeReadFile(song, songbuf, 4096);
+		uint8_t* b = (uint8_t*)songbuf;
+		if (n >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F') {
+			int off = 12;
+			while (off + 8 <= (int)n) {
+				int csz = b[off + 4] | (b[off + 5] << 8) | (b[off + 6] << 16) |
+						  (b[off + 7] << 24);
+				if (b[off] == 'd' && b[off + 1] == 'a' && b[off + 2] == 't' &&
+					b[off + 3] == 'a') {
+					off += 8;
+					break;
+				}
+				off += 8 + csz;
+				if (csz & 1)
+					off++;
+			}
+			if (off > 0 && off < (int)n) {
+				size_t keep = n - (size_t)off;
+				memmove(b, b + off, keep);
+				memset(b + keep, 0, (size_t)off);
+			}
+		}
+		_KeWriteFile(sound, songbuf, 4096);
+	}
 	for (;;) {
+		size_t n;
+		int tries;
 		memset(&fs, 0, sizeof fs);
 		_KeFileStat(song, &fs);
 		if (fs.eof)
 			break;
-		_KeReadFile(song, songbuf, 4096);
-		_KeWriteFile(sound, songbuf, 4096);
-		_KeProcessSleep(4);
+		n = _KeReadFile(song, songbuf, 4096);
+		if (!n)
+			break;
+		/* 4096 bytes of stereo 16-bit is ~21 ms at 48 kHz. bredr0's
+		 * write blocks until the SBC packet is queued, and an extra
+		 * sleep on top of that fed the headset at about two thirds
+		 * of real time (256 frames/s, 375 required). Retry only when
+		 * the DSP reports a full buffer. */
+		for (tries = 0; tries < 50; tries++) {
+			n = _KeWriteFile(sound, songbuf, n > 4096 ? 4096 : n);
+			if (n <= 4096)
+				break;
+			_KeProcessSleep(20);
+			n = 4096;
+		}
 	}
 	free(songbuf);
 	free(list);
@@ -139,7 +179,7 @@ static int parse_addr(const char* s, uint8_t* addr, uint8_t* type);
 static int run(int fd, int code, BtInfo* info);
 
 static void usage(void) {
-	printf("usage: btctl info|scan|connect <addr|index>|disconnect|name|pair [addr|index]|passkey <6 digits>|confirm|audio\n");
+	printf("usage: btctl info|scan|connect <addr|index>|disconnect|name|pair [addr|index]|passkey <6 digits>|confirm|audio|a2dp|forget <addr|index>\n");
 }
 
 static int ends_le_only(const char* n) {
@@ -154,6 +194,49 @@ static int ends_le_only(const char* n) {
 	if (b >= 'a' && b <= 'z')
 		b = (char)(b - 32);
 	return a == 'L' && (b == 'E' || b == 'I');
+}
+
+/* Only named adverts are shown. Unnamed (flags-only) reports still
+ * exist in info->scan but are hidden from the list, so display numbers
+ * are mapped to kernel indices below. */
+static int scan_visible(const BtScanEnt* e) {
+	return e->name[0] != '\0';
+}
+
+static int scan_visible_count(BtInfo* info) {
+	int c = 0;
+	int i;
+	for (i = 0; i < info->nscan; i++)
+		if (scan_visible(&info->scan[i]))
+			c++;
+	return c;
+}
+
+/* 1-based display number -> kernel index, or -1. */
+static int scan_display_to_kernel(BtInfo* info, int disp) {
+	int c = 0;
+	int i;
+	for (i = 0; i < info->nscan; i++) {
+		if (!scan_visible(&info->scan[i]))
+			continue;
+		if (++c == disp)
+			return i;
+	}
+	return -1;
+}
+
+/* kernel index -> 1-based display number, or -1 if hidden. */
+static int scan_kernel_to_display(BtInfo* info, int kidx) {
+	int c = 0;
+	int i;
+	for (i = 0; i < info->nscan; i++) {
+		if (!scan_visible(&info->scan[i]))
+			continue;
+		c++;
+		if (i == kidx)
+			return c;
+	}
+	return -1;
 }
 
 /* The "-LE" advert is the assistant side. Prefer a classic result whose
@@ -185,6 +268,8 @@ static int pick_audio_entry(BtInfo* info, int idx) {
 static int load_scan_target(int fd, BtInfo* info, const char* a) {
 	int want = 0;
 	int idx;
+	int kidx;
+	int disp;
 	const char* s;
 	if (!strchr(a, ':')) {
 		s = a;
@@ -203,14 +288,18 @@ static int load_scan_target(int fd, BtInfo* info, const char* a) {
 			info->nscan = 0;
 		if (info->nscan > BT_MAX_SCAN)
 			info->nscan = BT_MAX_SCAN;
-		if (want > info->nscan) {
-			printf("no scan entry %d (%d found); run btctl scan\n", want, info->nscan);
+		kidx = scan_display_to_kernel(info, want);
+		if (kidx < 0) {
+			printf("no scan entry %d (%d found); run btctl scan\n", want,
+				   scan_visible_count(info));
 			return -1;
 		}
-		idx = pick_audio_entry(info, want - 1);
-		if (idx != want - 1)
-			printf("using %d %s instead of %s\n", idx + 1, info->scan[idx].name,
-				   info->scan[want - 1].name);
+		idx = pick_audio_entry(info, kidx);
+		if (idx != kidx) {
+			disp = scan_kernel_to_display(info, idx);
+			printf("using %d %s instead of %s\n", disp > 0 ? disp : idx + 1,
+				   info->scan[idx].name, info->scan[kidx].name);
+		}
 		memcpy(info->peer, info->scan[idx].addr, 6);
 		info->peer_type = info->scan[idx].addr_type;
 		return 0;
@@ -318,13 +407,16 @@ int main(int argc, char* argv[]) {
 		printf("\n");
 	} else if (!strcmp(cmd, "scan")) {
 		int i;
+		int disp = 0;
 		run(fd, BT_SCAN, &info);
 		if (info.nscan < 0)
 			info.nscan = 0;
 		if (info.nscan > BT_MAX_SCAN)
 			info.nscan = BT_MAX_SCAN;
 		for (i = 0; i < info.nscan; i++) {
-			printf("%d: ", i + 1);
+			if (!scan_visible(&info.scan[i]))
+				continue;
+			printf("%d: ", ++disp);
 			print_addr(info.scan[i].addr);
 			if (info.scan[i].addr_type == BT_ADDR_BREDR)
 				printf(" bredr");
@@ -366,12 +458,26 @@ int main(int argc, char* argv[]) {
 				printf("btctl confirm\n");
 		}
 		if (chained) {
-			st = run(fd, BT_AUDIO, &info);
-			if (st == BT_NO_AUDIO || info.status == BT_NO_AUDIO)
-				printf("no LE Audio\n");
-			else if (info.card_id >= 0)
-				printf("card %d\n", info.card_id);
-			play_demo_pcm(info.card_id);
+			int ok = 0;
+			if (info.peer_type == BT_ADDR_BREDR) {
+				st = run(fd, BT_A2DP, &info);
+				if (st == BT_NO_AUDIO || info.status == BT_NO_AUDIO)
+					printf("no A2DP\n");
+				else if (info.card_id >= 0) {
+					printf("card %d\n", info.card_id);
+					ok = 1;
+				}
+			} else {
+				st = run(fd, BT_AUDIO, &info);
+				if (st == BT_NO_AUDIO || info.status == BT_NO_AUDIO)
+					printf("no LE Audio\n");
+				else if (info.card_id >= 0) {
+					printf("card %d\n", info.card_id);
+					ok = 1;
+				}
+			}
+			if (ok)
+				play_demo_pcm(info.card_id);
 		}
 	} else if (!strcmp(cmd, "passkey") && argi < argc) {
 		unsigned v = 0;
@@ -390,11 +496,26 @@ int main(int argc, char* argv[]) {
 		int st = run(fd, BT_AUDIO, &info);
 		if (st == BT_NO_AUDIO || info.status == BT_NO_AUDIO)
 			printf("no LE Audio\n");
-		else if (info.card_id >= 0)
+		else if (info.card_id >= 0) {
 			printf("card %d\n", info.card_id);
-		/* LE Audio may be refused. Still write the demo the way init
-		 * plays its startup sound, straight into the sound device. */
-		play_demo_pcm(info.card_id);
+			/* Only stream the demo when the transport is actually up.
+			 * The old code always played locally, hiding failures. */
+			play_demo_pcm(info.card_id);
+		}
+	} else if (!strcmp(cmd, "a2dp")) {
+		int st = run(fd, BT_A2DP, &info);
+		if (st == BT_NO_AUDIO || info.status == BT_NO_AUDIO)
+			printf("no A2DP\n");
+		else if (info.card_id >= 0) {
+			printf("card %d\n", info.card_id);
+			/* Classic SBC audio for BREDR headsets (ULT WEAR). Only
+			 * push PCM when bredr0 is streaming. */
+			play_demo_pcm(info.card_id);
+		}
+	} else if (!strcmp(cmd, "forget") && argi < argc) {
+		if (load_scan_target(fd, &info, argv[argi]))
+			return 1;
+		run(fd, BT_FORGET, &info);
 	} else {
 		usage();
 		return 1;

@@ -52,29 +52,25 @@ void drawAnim() {
 * main -- terminal emulator
 */
 int main(int argc, char* arv[]) {
-	//char* filename = "/Ss.wav"; //NULL;
-	/*if (argc > 1){
-		if (strcmp(arv[1], "-help") == 0){
+	/* demo track shipped in the image root */
+	char* filename = "/snd.wav";
+	if (argc > 1) {
+		if (strcmp(arv[1], "-help") == 0) {
 			printf("\n Play v1.0 -- A simple wave file player \n");
 			printf("Copyright (C) Manas Kamal Choudhury 2024 \n");
 			printf("Available commands : '-help', '-file' \n");
 			printf("To play a file: \n");
-			printf("      play -file /<yourfilename>.wav ");
+			printf("      play -file /<yourfilename>.wav \n");
+			return 0;
 		}
-
-		if (strcmp(arv[1], "-file") == 0){
-			if (!arv[1]){
+		if (strcmp(arv[1], "-file") == 0) {
+			if (argc < 3 || !arv[2]) {
 				printf("No file specified to play \n");
 				return -1;
 			}
 			filename = arv[2];
 		}
-	}*/
-
-	/*if (filename == NULL){
-		printf("\n No filename specified \n");		
-		return -1;
-	}*/
+	}
 	int thrID = _KeGetThreadID();
 
 	int postbox = _KeOpenFile("/dev/postbox", FILE_OPEN_READ_ONLY);
@@ -83,13 +79,17 @@ int main(int argc, char* arv[]) {
 
 	DeodhaiAudioBox* audioBox =
 		DeodhaiAudioOpenConnection(postbox, DEODHAI_AUDIO_STEREO, DEODHAI_CONNECTION_TYPE_NORMAL);
+	if (!audioBox) {
+		printf("play: audio daemon unavailable \n");
+		return -1;
+	}
 	printf("play: audio connection initiated successfully \n");
 
 	/* now open your sound file, note that here demo is playing
 	* a raw wave file with 48kHZ-16bit format, to play mp3 or
 	* other format, one needs another conversion layer of samples */
 
-	int song = _KeOpenFile("/Ss.wav", FILE_OPEN_READ_ONLY);
+	int song = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);
 	if (song == -1) {
 		printf("No file found \n");
 		return -1;
@@ -97,19 +97,16 @@ int main(int argc, char* arv[]) {
 
 	void* songbuf = malloc(4096);
 	memset(songbuf, 0, 4096);
-	_KeReadFile(song, songbuf, 4096);
 	uint8_t* alignedSongBuf = (uint8_t*)songbuf;
 
 	XEFileStatus fs;
 	_KeFileStat(song, &fs);
 	bool finished = 0;
+	bool primed = 0;
 
 	while (1) {
-		/* with each frame read the sound, write it
-		* to sound device, the sound device will automatically
-		* put the app to sleep for smooth playback for some
-		* milli-seconds
-		*/
+		/* 4096 bytes is one mixer period (~21 ms at 48 kHz).
+		 * Deodhai's card write is what waits that period out. */
 		_KeFileStat(song, &fs);
 
 		if (fs.eof) {
@@ -120,14 +117,44 @@ int main(int argc, char* arv[]) {
 		}
 
 		if (!finished) {
-			//_KeWriteFile(snd, songbuf, 4096);
 			if (!audioBox->ctlPanel->Samplefull) {
-				_KeReadFile(song, songbuf, 4096);
+				size_t n = _KeReadFile(song, songbuf, 4096);
+				if (n == 0 || n > 4096)
+					n = 4096;
+				if (!primed && n >= 12 &&
+					alignedSongBuf[0] == 'R' && alignedSongBuf[1] == 'I' &&
+					alignedSongBuf[2] == 'F' && alignedSongBuf[3] == 'F') {
+					/* Standard PCM wav: skip the header so the card
+					 * receives samples, not the RIFF chunk. */
+					int off = 12;
+					while (off + 8 <= (int)n) {
+						int csz = alignedSongBuf[off + 4] |
+								  (alignedSongBuf[off + 5] << 8) |
+								  (alignedSongBuf[off + 6] << 16) |
+								  (alignedSongBuf[off + 7] << 24);
+						if (alignedSongBuf[off] == 'd' && alignedSongBuf[off + 1] == 'a' &&
+							alignedSongBuf[off + 2] == 't' && alignedSongBuf[off + 3] == 'a') {
+							off += 8;
+							break;
+						}
+						off += 8 + csz;
+						if (csz & 1)
+							off++;
+					}
+					if (off < (int)n && off > 0) {
+						memmove(alignedSongBuf, alignedSongBuf + off, n - (size_t)off);
+						memset(alignedSongBuf + (n - (size_t)off), 0, (size_t)off);
+					}
+				}
+				primed = 1;
 				DeodhaiAudioWrite(audioBox, songbuf);
 			} else {
-				_KeProcessSleep(120);
+				/* One shared slot. The mixer clears Samplefull before
+				 * its card write, and that write already blocks for the
+				 * ~21 ms this chunk lasts. A long sleep here leaves the
+				 * headset idle between periods; btctl has no such wait. */
+				_KeProcessSleep(2);
 			}
 		}
-		_KeProcessSleep(10);
 	}
 }
