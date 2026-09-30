@@ -393,16 +393,23 @@ int main(int argc, char* argv[]) {
 	_KePrint("** deodhai audio sleep duration : %d \r\n", sleep_duration);
 	while (1) {
 		int played = DeodhaiAudioComposeFrame();
+		int client = 0;
+		int bi;
 		sz = _KeReadFile(pipe, buff, sizeof(DeodhaiAudioMessage) + 1);
 		if (sz > 0) {
 			DeodhaiAudioMessage* msg = (DeodhaiAudioMessage*)buff;
 			DeodhaiAudioHandleMessage(msg);
 			memset(buff, 0, sizeof(DeodhaiAudioMessage));
 		}
-		/* virtio-sound has no playback IRQ on this board. A pause here
-		 * never wakes, so play's shared buffer is never mixed. Sleep
-		 * one period when idle; a short yield when a period was just
-		 * handed to the card (the write itself waits out the period). */
-		_KeProcessSleep(played ? 1 : sleep_duration);
+		for (bi = 0; bi < audioBoxList->pointer; bi++) {
+			DeodhaiAudioBox* box = (DeodhaiAudioBox*)list_get_at(audioBoxList, bi);
+			if (box && box->ctlPanel && box->ctlPanel->ready && !box->ctlPanel->close)
+				client = 1;
+		}
+		/* The card write is the clock (~21 ms). A client with an empty
+		 * slot is between chunks; sleeping a whole period there is a
+		 * gap on the headset. Sleep a full period only when nobody is
+		 * connected. */
+		_KeProcessSleep(played ? 1 : (client ? 2 : sleep_duration));
 	}
 }

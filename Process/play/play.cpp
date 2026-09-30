@@ -105,11 +105,8 @@ int main(int argc, char* arv[]) {
 	bool primed = 0;
 
 	while (1) {
-		/* with each frame read the sound, write it
-		* to sound device, the sound device will automatically
-		* put the app to sleep for smooth playback for some
-		* milli-seconds
-		*/
+		/* 4096 bytes is one mixer period (~21 ms at 48 kHz).
+		 * Deodhai's card write is what waits that period out. */
 		_KeFileStat(song, &fs);
 
 		if (fs.eof) {
@@ -152,9 +149,12 @@ int main(int argc, char* arv[]) {
 				primed = 1;
 				DeodhaiAudioWrite(audioBox, songbuf);
 			} else {
-				_KeProcessSleep(120);
+				/* One shared slot. The mixer clears Samplefull before
+				 * its card write, and that write already blocks for the
+				 * ~21 ms this chunk lasts. A long sleep here leaves the
+				 * headset idle between periods; btctl has no such wait. */
+				_KeProcessSleep(2);
 			}
 		}
-		_KeProcessSleep(10);
 	}
 }

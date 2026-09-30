@@ -2391,6 +2391,13 @@ static int a2dp_send_pkt(void) {
 		else if (now >= a2dp_t0) {
 			uint64_t audio_us = (uint64_t)a2dp_frames * 128ull * 1000000ull / hz;
 			uint64_t wall = now - a2dp_t0;
+			/* btctl already stopped. Sending the idle gap as fast as
+			 * the controller will take it overruns the 200 ms flush
+			 * and the next track starts late. Rebase to this packet. */
+			if (audio_us + 100000ull < wall) {
+				a2dp_t0 = now - audio_us;
+				wall = audio_us;
+			}
 			if (audio_us > wall + 2000ull) {
 				uint32_t ms = (uint32_t)((audio_us - wall) / 1000ull);
 				if (ms > 40)

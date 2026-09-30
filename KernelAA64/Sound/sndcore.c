@@ -217,6 +217,19 @@ size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
 	return 0;
 }
 
+/* virtio-sound completes a TX buffer only after the host has played
+ * that period. bredr0's write already waits the same 21 ms on the
+ * sample clock. Doing both turns one chunk into two. */
+static int snd_is_virtio(AuSound* card) {
+	return card && card->name[0] == 'v' && card->name[1] == 'i' &&
+		   card->name[2] == 'r';
+}
+
+static int snd_is_bredr(AuSound* card) {
+	return card && card->name[0] == 'b' && card->name[1] == 'r' &&
+		   card->name[2] == 'e' && card->name[3] == 'd' && card->name[4] == 'r';
+}
+
 size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	AA64Thread* t = AuGetCurrentThread();
 	AuDSP* dsp = AuSoundGetDSP(t->thread_id);
@@ -227,11 +240,28 @@ size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t
 	if (dsp->_cardID != -1) {
 		AuSound* card = _cards[dsp->_cardID];
 		int i;
+		int bredr = 0;
+		for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+			if (snd_is_bredr(_cards[i]) && _cards[i]->_force_write)
+				bredr = 1;
+		}
+		/* Deodhai binds virtio at boot and never rebinds. btctl registers
+		 * bredr0 itself, so its write still goes to the headset first and
+		 * then to the speaker. A mixer that is still on virtio must not
+		 * also block there, or play runs at a fraction of real time. */
+		if (bredr && snd_is_virtio(card)) {
+			for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+				AuSound* other = _cards[i];
+				if (!other || !other->_force_write || !other->write)
+					continue;
+				if (snd_is_virtio(other))
+					continue;
+				other->write((uint8_t*)buffer, length);
+			}
+			return length;
+		}
 		if (card && card->_force_write && card->write)
 			card->write((uint8_t*)buffer, length);
-		/* Deodhai binds the first card (virtio) at boot and never looks
-		 * again. bredr0 appears only after pairing. Copy each period onto
-		 * every other direct-write card so the headset hears the mix. */
 		for (i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
 			AuSound* other;
 			if (i == (int)dsp->_cardID)
