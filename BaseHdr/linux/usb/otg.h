@@ -1,5 +1,7 @@
+#ifndef __LINUX_USB_OTG_H__
+#define __LINUX_USB_OTG_H__
 
-#include <linux/kernel.h>
+#include <linux/usb/ch9.h>
 
 #define OTG_VERSION_1_3 0x0130
 #define OTG_VERSION_2_0 0x0200
@@ -45,3 +47,5 @@ struct usb_otg {
 	int (*set_host)(struct usb_otg* otg, struct usb_bus* host);
 
 };
+
+#endif

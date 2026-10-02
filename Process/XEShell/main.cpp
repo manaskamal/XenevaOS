@@ -481,6 +481,9 @@ void XEShellPrintHelp() {
 	printf("║ help        Show this help message                        ║\n");
 	printf("║ systeminfo  Display system information                    ║\n");
 	printf("║ time        Display current time                           ║\n");
+	printf("║ modinfo     Display DCL module status (/dev/dcl)           ║\n");
+	printf("║ rngtest     Read entropy from /dev/hwrng                   ║\n");
+	printf("║ rngguess    Guess the number virtio-rng picked             ║\n");
 	printf("║ exit        Exit the shell                                 ║\n");
 	printf("╚════════════════════════════════════════════════════════════╝\n");
 	printf("\n");
@@ -571,6 +574,159 @@ void XEShellEcho(char* msg) {
 }
 
 /*
+ * XEShellRngReadLine -- read one input line straight from the console
+ * for the rngguess game. Same key handling as XEShellReadLine (echo,
+ * backspace, enter) but with a private buffer, so the main command
+ * buffer and index state are untouched while the game is prompting.
+ * The kernel blocks in _KeReadFile until a key arrives.
+ */
+void XEShellRngReadLine(char* buf, int max) {
+	int len = 0;
+	buf[0] = '\0';
+	while (1) {
+		char b[2];
+		memset(b, 0, 2);
+		int n = (int)_KeReadFile(g_console_fd, b, 1);
+		if (n <= 0)
+			continue;
+		char c = b[0];
+		if (c == '\n' || c == '\r') {
+			printf("\n");
+			fflush(stdout);
+			return;
+		}
+		if (c == KEY_BACKSPACE) {
+			if (len > 0) {
+				printf("%c", c);
+				fflush(stdout);
+				buf[--len] = '\0';
+			}
+			continue;
+		}
+		if (c >= 32 && c <= 126 && len < max - 1) {
+			printf("%c", c);
+			fflush(stdout);
+			buf[len++] = c;
+			buf[len] = '\0';
+		}
+	}
+}
+
+/*
+ * XEShellModInfo -- print the DCL module loader status read from
+ * the /dev/dcl device node
+ */
+void XEShellModInfo() {
+	int dclfd = _KeOpenFile("/dev/dcl", FILE_OPEN_READ_ONLY);
+	if (dclfd < 0) {
+		printf("[xeshell]: /dev/dcl not available\r\n");
+		return;
+	}
+	char dclbuf[512];
+	memset(dclbuf, 0, sizeof(dclbuf));
+	size_t dclread = _KeReadFile(dclfd, dclbuf, sizeof(dclbuf) - 1);
+	_KeCloseFile(dclfd);
+	if (dclread > 0)
+		printf("%s", dclbuf);
+	else
+		printf("[xeshell]: empty DCL status\r\n");
+}
+
+/*
+ * XEShellRngTest -- pull two 16-byte samples from virtio-rng via
+ * /dev/hwrng and check the RNG actually varies between reads
+ */
+void XEShellRngTest() {
+	int rngfd = _KeOpenFile("/dev/hwrng", FILE_OPEN_READ_ONLY);
+	if (rngfd < 0) {
+		printf("[xeshell]: /dev/hwrng not available\r\n");
+		return;
+	}
+	static const char hexd[] = "0123456789abcdef";
+	unsigned char s1[16], s2[16];
+	memset(s1, 0, sizeof(s1));
+	memset(s2, 0, sizeof(s2));
+	size_t r1 = _KeReadFile(rngfd, s1, sizeof(s1));
+	size_t r2 = _KeReadFile(rngfd, s2, sizeof(s2));
+	_KeCloseFile(rngfd);
+	printf("[xeshell]: rng sample 1 (%d bytes):", (int)r1);
+	for (size_t i = 0; i < r1 && i < sizeof(s1); i++)
+		printf(" %c%c", hexd[s1[i] >> 4], hexd[s1[i] & 0xF]);
+	printf("\r\n[xeshell]: rng sample 2 (%d bytes):", (int)r2);
+	for (size_t i = 0; i < r2 && i < sizeof(s2); i++)
+		printf(" %c%c", hexd[s2[i] >> 4], hexd[s2[i] & 0xF]);
+	printf("\r\n");
+	if (r1 == 0 || r2 == 0)
+		printf("[xeshell]: rngtest FAILED - no entropy returned\r\n");
+	else if (memcmp(s1, s2, sizeof(s1)) == 0)
+		printf("[xeshell]: rngtest FAILED - both samples identical\r\n");
+	else
+		printf("[xeshell]: rngtest OK - samples differ, entropy is live\r\n");
+}
+
+/*
+ * XEShellRngGuess -- number guessing game (rngguess): the secret is
+ * drawn from the hardware RNG (/dev/hwrng -> virtio-rng loaded via
+ * the DCL module loader), so every play uses fresh device entropy.
+ */
+void XEShellRngGuess() {
+	int rngfd = _KeOpenFile("/dev/hwrng", FILE_OPEN_READ_ONLY);
+	if (rngfd < 0) {
+		printf("[xeshell]: /dev/hwrng not available\r\n");
+		return;
+	}
+	unsigned char entropy = 0;
+	size_t got = _KeReadFile(rngfd, &entropy, 1);
+	_KeCloseFile(rngfd);
+	if (got != 1) {
+		printf("[xeshell]: no entropy from the device\r\n");
+		return;
+	}
+	int secret = (entropy % 100) + 1;
+	printf("\r\n[xeshell]: virtio-rng drew a number from 1 to 100\r\n");
+	printf("[xeshell]: type 'quit' to give up\r\n");
+	int attempts = 0;
+	while (1) {
+		printf("Guess (%d): ", attempts + 1);
+		fflush(stdout);
+		char line[32];
+		XEShellRngReadLine(line, sizeof(line));
+		if (line[0] == '\0')
+			continue;
+		if (strcmp(line, "quit") == 0) {
+			printf("[xeshell]: gave up -- the number was %d\r\n", secret);
+			return;
+		}
+		int val = 0, valid = 1;
+		for (char* p = line; *p; p++) {
+			if (*p < '0' || *p > '9') {
+				valid = 0;
+				break;
+			}
+			val = val * 10 + (*p - '0');
+			if (val > 100) {
+				valid = 0;
+				break;
+			}
+		}
+		if (!valid || val < 1) {
+			printf("[xeshell]: enter a whole number from 1 to 100\r\n");
+			continue;
+		}
+		attempts++;
+		if (val == secret) {
+			printf("[xeshell]: correct! guessed in %d %s\r\n",
+			       attempts, attempts == 1 ? "try" : "tries");
+			return;
+		}
+		if (val > secret)
+			printf("[xeshell]: too high\r\n");
+		else
+			printf("[xeshell]: too low\r\n");
+	}
+}
+
+/*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
  */
@@ -654,6 +810,15 @@ void XEShellProcessLine() {
 		} else if (strcmp(cmdBuf, "exit") == 0) {
 			printf("[xeshell]: Exiting shell...\r\n");
 			_KeProcessExit();
+		} else if (strcmp(cmdBuf, "modinfo") == 0) {
+			XEShellModInfo();
+			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "rngtest") == 0) {
+			XEShellRngTest();
+			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "rngguess") == 0) {
+			XEShellRngGuess();
+			_spawnable_process = false;
 		} else if (_spawnable_process) {
 			XEShellSpawn(cmdBuf);
 		}

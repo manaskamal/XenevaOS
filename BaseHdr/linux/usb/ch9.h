@@ -1,4 +1,6 @@
-﻿#include <linux/kernel.h>
+﻿#ifndef __LINUX_USB_CH9_H__
+#define __LINUX_USB_CH9_H__
+
 #include <linux/list.h>
 
 /* ─── USB speed ─── */
@@ -171,3 +173,5 @@ struct usb_bus {
     int             devnum_next;
     struct usb_device* root_hub;
 };
+
+#endif
