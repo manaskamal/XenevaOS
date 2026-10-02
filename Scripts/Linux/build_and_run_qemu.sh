@@ -130,6 +130,7 @@ NO_DOOM=0
 BT_SERIAL="${XENEVA_BT_SERIAL:-}"
 NO_BT=1
 NO_NETSURF=0
+VIRTIO_RNG=1
 
 print_help(){
     printf "${STY_CYAN}"
@@ -404,6 +405,8 @@ while [ $# -gt 0 ]; do
         --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
         --bt-serial=*) NO_BT=0; BT_SERIAL="${1#--bt-serial=}" ;;
         --no-bt) NO_BT=1 ;;
+        --virtio-rng) VIRTIO_RNG=1 ;;
+        --no-virtio-rng) VIRTIO_RNG=0 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -903,6 +906,17 @@ fi
 echo "[+] Image ready! Booting QEMU..."
 echo "[+] Guest memory: $qemu_memory"
 
+# A QEMU built without PulseAudio only exposes 'none'/'wav'. Asking it for
+# 'pa' aborts the emulator before the guest ever boots, so ask the binary
+# which backends it actually has and fall back to a silent one. The
+# virtio-sound-pci device itself is still added, so the guest sees the same
+# audio hardware either way. --axiss
+QEMU_AUDIO_BACKEND="pa"
+if ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
+    QEMU_AUDIO_BACKEND="none"
+    echo "[+] Audio: this QEMU has no 'pa' backend, using 'none' (silent guest sound)."
+fi
+
 QEMU_ARGS=(
     -machine virt,gic-version=2,highmem=off
     -cpu cortex-a72
@@ -926,14 +940,25 @@ QEMU_ARGS=(
     -device virtio-tablet-pci
     -device usb-ehci
     -device usb-kbd
-    # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
-    # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
-    # and the virtsnd driver's AuPCIEScanClass probe. pa backend talks
-    # to the host PulseAudio/PipeWire server. --axiss
-    -audiodev pa,id=snd0
-    -device virtio-sound-pci,audiodev=snd0,disable-legacy=on
     -serial stdio
 )
+
+# virtio-rng-pci gives the DCL virtio bus a real entropy device to match
+# against the virtio_rng driver registered by the loaded .ko. --axiss
+if [ "$VIRTIO_RNG" -eq 1 ]; then
+    QEMU_ARGS+=(-device virtio-rng-pci,disable-legacy=on,id=rng0)
+fi
+
+# virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
+# [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
+# and the virtsnd driver's AuPCIEScanClass probe. Skipped under --no-audio
+# so the guest never enumerates a sound card it was told not to have. --axiss
+if [ "$NO_AUDIO" -eq 1 ]; then
+    echo "[+] Audio: virtio-sound-pci omitted (--no-audio)"
+else
+    QEMU_ARGS+=(-audiodev "$QEMU_AUDIO_BACKEND",id=snd0)
+    QEMU_ARGS+=(-device virtio-sound-pci,audiodev=snd0,disable-legacy=on)
+fi
 bt_power_off_for_proxy() {
     local i prop
     command -v busctl >/dev/null 2>&1 || return 0

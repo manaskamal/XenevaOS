@@ -65,7 +65,6 @@ int OpenFile(char* filename, int mode) {
 	char fname[128];
 	memset(fname, 0, 128);
 	fname[127] = '\0';
-	
 	/* filename is a raw user pointer with no length guarantee, strcpy into
 	 * this fixed 128 byte kernel stack buffer with no bound check is a
 	 * straight up stack smash for anything >= 128 bytes, and any
@@ -84,35 +83,44 @@ int OpenFile(char* filename, int mode) {
 
 	/** check permissions before procedding **/
 	if (AuCredCheckPermissions(file, &current_proc->creds)) {
-		if (!file && !(mode & FILE_OPEN_CREAT) && !(mode & FILE_OPEN_WRITE))
+		if (!file) {
+			UARTDebugOut("[fserv]: open '%s' denied: no node\r\n", fname);
 			return -1;
-		else if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE){
-            goto _file_create;
 		}
+		UARTDebugOut("[fserv]: open '%s' denied: creds uid=%d gid=%d nsgid=%d vs node uid=%d "
+					 "gid=%d flags=%x\r\n",
+					 fname,
+					 current_proc->creds.uid,
+					 current_proc->creds.gid,
+					 current_proc->creds.num_sgid,
+					 file->uid,
+					 file->gid,
+					 file->flags);
 		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
 				  file->filename,
 				  current_proc->creds.uid);
-		if (!(file->flags & FS_FLAG_CACHED) || !(file->flags & FS_FLAG_DEVICE) ||
-			!(file->flags & FS_FLAG_FILE_SYSTEM))
-			kfree(file);
 		return -1;
 	}
-_file_create:
 	bool created = false;
 	if (!file) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
-			UARTDebugOut("Creating file for fsys: %s \r\n", fsys->filename);
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
-		} else
+		} else {
+			UARTDebugOut("[fserv]: open '%s' failed: no node, mode=%x\r\n", fname, mode);
 			return -1;
+		}
 	}
 	/* check for last time, if any error occured */
-	if (!file)
+	if (!file) {
+		UARTDebugOut("[fserv]: open '%s' failed: create returned NULL\r\n", fname);
 		return -1;
+	}
 
-	if (fd == -1)
+	if (fd == -1) {
+		UARTDebugOut("[fserv]: open '%s' failed: no free fd\r\n", fname);
 		return -1;
+	}
 
 	/* just to increase the reference count */
 	if (file->open)
