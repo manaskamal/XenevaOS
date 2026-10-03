@@ -17,7 +17,8 @@ TARGET = netsurf.exe
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
 INCLUDES = -I. -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include \
-           -I../../Ports/CssLibs/libcss/include -I../../Ports/CssLibs/libparserutils/include -I../../Ports/CssLibs/libwapcaplet/include
+           -I../../Ports/CssLibs/libcss/include -I../../Ports/CssLibs/libparserutils/include -I../../Ports/CssLibs/libwapcaplet/include \
+           -I../../Ports/mbedtls/port
 
 CPP_SRCS = main.cpp
 C_SRCS = css.c
@@ -73,7 +74,7 @@ $(CRT_OBJ): ../../Process/Init/crt0arm64.s
 
 $(TARGET): $(OBJS) $(CSSLIB)
 	@echo "Linking $@ (LLVM)..."
-	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) ../../Libs/Chitralekha/libChitralekha.a ../../Libs/XEClib/libXEClib.a -o $@
+	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) ../../Libs/Chitralekha/libChitralekha.a ../../Ports/mbedtls/libmbedtls.a ../../Libs/XEClib/libXEClib.a -o $@
 
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
