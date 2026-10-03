@@ -56,6 +56,8 @@
 #include "compose.h"
 #include "unikernel.h"
 #include "xr_present.h"
+#include <draw.h>
+
 #include "keybind.h"
 #include <sys/_ketime.h>
 
@@ -689,6 +691,162 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 	lastMouseButton = button;
 }
 
+#define RESIZE_EDGE_NONE   0
+#define RESIZE_EDGE_LEFT   (1 << 0)
+#define RESIZE_EDGE_RIGHT  (1 << 1)
+#define RESIZE_EDGE_TOP	   (1 << 2)
+#define RESIZE_EDGE_BOTTOM (1 << 3)
+#define RESIZE_BORDER_LR   8
+#define RESIZE_BORDER_TD   4
+static int reszStartX = 0;
+static int reszStartY = 0;
+static int reszOLDW = 0;
+static int reszOLDH = 0;
+static int edge = 0;
+static bool _window_commit = 0;
+
+/**
+ * @brief DeodhaiWindowResizeCommit -- commit the new update
+ * to client event to the server side
+ */
+void DeodhaiWindowResizeCommit(Window* win) {
+	if (!win)
+		return;
+	/* two way: first send the destroy command to client and wait for old 
+ * buffers to be destroyed, 
+ * send new buffer key and repaint everything
+ */
+	WinSharedInfo* shinfo = (WinSharedInfo*)win->sharedInfo;
+	PostEvent e;
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_REPLY_DESTROY_BUFFER;
+	e.dword = 0;
+	e.dword2 = 0;
+	e.dword3 = 0;
+	e.dword4 = win->handle; //window handle
+	if (win->flags & WINDOW_FLAG_POPUP)
+		e.dword5 = HANDLE_TYPE_POPUP_WINDOW;
+	else
+		e.dword5 = HANDLE_TYPE_NORMAL_WINDOW;
+	e.to_id = win->ownerId;
+	e.from_id = POSTBOX_ROOT_ID;
+	//_KePrint("MouseEvent to : %d , type : %d \r\n", e.to_id, e.type);
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+	memset(&e, 0, sizeof(PostEvent));
+	while (1) {
+		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &e);
+		if (e.type == DEODHAI_MESSAGE_BUFFER_DESTROYED) {
+			_KePrint("WindowCommitSize: buffer destroyed at client side \r\n");
+			_KeUnmapSharedMem(win->backBufferKey);
+			memset(&e, 0, sizeof(PostEvent));
+			break;
+		}
+		_KeProcessSleep(10);
+	}
+
+	uint16_t backBufferKey = 0;
+	win->backBuffer = (uint32_t*)CreateNewBackBuffer(
+		win->ownerId, ((shinfo->width * shinfo->height * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
+	memset(&e, 0, sizeof(PostEvent));
+	e.type = DEODHAI_REPLY_REINIT_BUFFER;
+	e.dword = backBufferKey;
+	e.to_id = win->ownerId;
+	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
+	while (1) {
+		if (shinfo->windowReady) {
+			shinfo->windowReady = 0;
+			_KePrint("WindowCommitSize: windowReady received \r\n");
+			break;
+		}
+	}
+}
+/**
+ * @brief DeodhaiWindowCheckResizable -- checks and resize
+ * focused Window 
+ * @param x -- Mouse x location
+ * @param y -- Mouse y location
+ * @param button -- Mouse button state
+ */
+void DeodhaiWindowCheckResizable(int x, int y, int button) {
+	//int edge = RESIZE_EDGE_NONE;
+	if (!focusedWin)
+		return;
+
+	Window* win = focusedWin;
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+
+	if (info->hide)
+		return;
+	if (info->zoomed)
+		return;
+
+	/* we got one window, apply hit test and get its edge*/
+
+	int wx = info->x;
+	int wy = info->y;
+	int ww = info->width;
+	int wh = info->height;
+	bool hit = false;
+	//bool commit = false;
+	/** hit test here  */
+	if (x >= wx && x < (wx + RESIZE_BORDER_LR)) {
+		edge |= RESIZE_EDGE_LEFT;
+		hit = 1;
+	} else if (x > wx + ww - RESIZE_BORDER_LR && x < (wx + ww)) {
+		edge |= RESIZE_EDGE_RIGHT;
+		hit = 1;
+	}
+
+	if (y >= wy && y < (wy + RESIZE_BORDER_TD)) {
+		edge |= RESIZE_EDGE_TOP;
+		hit = 1;
+	} else if (y >= wy + wh - RESIZE_BORDER_TD && y < (wy + wh)) {
+		edge |= RESIZE_EDGE_BOTTOM;
+		hit = 1;
+	}
+
+	if (hit) {
+		reszStartX = wx;
+		reszStartY = wy;
+		reszOLDW = ww;
+		reszOLDH = wh;
+		reszWin = win;
+	}
+
+	if (reszWin && button) {
+		int dx = x - reszStartX;
+		int dy = y - reszStartY;
+		int nx = reszStartX + dx;
+		int nw = reszOLDW - dx;
+		_KePrint("But DX : %d \r\n", dx);
+		if (edge & RESIZE_EDGE_LEFT) {
+			//BackDirtyAdd(info->x, info->y, info->width, info->height);
+			ChDrawRectUnfilled(canvas, nx, wy, nw, wh, GREEN);
+			AddDirtyClip(nx, wy, nw, wh);
+			_window_commit = true;
+			_KePrint("New resize x val : %d , dx : %d , commit = %d\r\n", nx, dx, _window_commit);
+			info->x = nx;
+			info->width = nw;
+		}
+	}
+
+	/* apply resize commit here*/
+	if (!button) {
+		if (reszWin && _window_commit) {
+			_KePrint("Committing resize \r\n");
+			DeodhaiWindowResizeCommit(reszWin);
+		}
+		reszWin = NULL;
+		reszStartX = 0;
+		reszStartY = 0;
+		reszOLDW = 0;
+		reszOLDH = 0;
+		edge = 0;
+		_window_commit = 0;
+		_KePrint("Window commited %d\r\n", _window_commit);
+	}
+}
+
 /**
  * @brief DeodhaiSendMouseEvent -- send mouse event to desired window
  * @param win -- Pointer to window
@@ -860,6 +1018,7 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	currentCursor->ypos = input->ypos;
 	int button = input->button_state;
 	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+	DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
 	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
 	if (currentCursor->xpos <= 0)

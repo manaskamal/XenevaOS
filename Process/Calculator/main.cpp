@@ -47,6 +47,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "calculator.h"
+#include <sys/mman.h>
 
 ChitralekhaApp* app;
 ChWindow* mainWin;
@@ -184,8 +185,8 @@ CalculatorDisplay* CalcCreateDisplay(int x, int y, int w, int h) {
  * @param calc -- Pointer to calculator display
  */
 void CalculatorProcess(CalculatorDisplay* calc) {
-        if(calc->operator_ == 0){
-        return;
+	if (calc->operator_ == 0) {
+		return;
 	}
 	int num2 = atoi(calc->inputnum);
 	calc->num2 = num2;
@@ -411,6 +412,33 @@ void WindowHandleMessage(PostEvent* e) {
 	case DEODHAI_REPLY_MOUSE_LEAVE: {
 		memset(e, 0, sizeof(PostEvent));
 		break;
+	}
+
+	case DEODHAI_REPLY_DESTROY_BUFFER: {
+		_KeUnmapSharedMem(mainWin->app->backbufkey);
+		PostEvent e1;
+		e1.type = DEODHAI_MESSAGE_BUFFER_DESTROYED;
+		e1.to_id = POSTBOX_ROOT_ID;
+		_KeFileIoControl(mainWin->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
+		memset(e, 0, sizeof(PostEvent));
+	}
+
+	case DEODHAI_REPLY_REINIT_BUFFER: {
+		int backbufkey = e->dword;
+		int id = _KeCreateSharedMem(backbufkey, 0, 0);
+
+		void* buffer = _KeObtainSharedMem(id, 0, 0);
+		mainWin->app->backbufkey = backbufkey;
+		mainWin->app->fb = buffer;
+		mainWin->info->windowReady = 1;
+
+		_KeProcessSleep(100);
+		ChDeAllocateBuffer(mainWin->canv);
+		mainWin->canv->canvasWidth = mainWin->info->width;
+		mainWin->canv->canvasHeight = mainWin->info->height;
+		ChAllocateBuffer(mainWin->canv);
+		ChWindowPaint(mainWin);
+		memset(e, 0, sizeof(PostEvent));
 	}
 	default:
 		memset(e, 0, sizeof(PostEvent));
