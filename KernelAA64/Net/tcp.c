@@ -127,6 +127,10 @@ static uint16_t TCPWindowOf(AuSocket* sock) {
 	used = AuCircBufSize((CircBuffer*)pcb->rxbuf);
 	if (used >= TCP_RX_BUF_SZ)
 		return 0;
+	/* TCP window is a 16-bit field (RFC 9293). A 64 KiB buffer must not
+	 * advertise 65536, which truncates to zero. */
+	if ((TCP_RX_BUF_SZ - used) > 65535)
+		return 65535;
 	return (uint16_t)(TCP_RX_BUF_SZ - used);
 }
 
@@ -385,7 +389,7 @@ static TCPControlBlock* TCPAllocPCB(void) {
 	pcb->state = TCP_STATE_CLOSED;
 	pcb->mss = TCP_MSS;
 	pcb->snd_wnd = TCP_DEFAULT_WIN_SZ;
-	pcb->rcv_wnd = TCP_RX_BUF_SZ;
+	pcb->rcv_wnd = 65535;
 	pcb->rxmem = (uint8_t*)kmalloc(TCP_RX_BUF_SZ);
 	if (!pcb->rxmem) {
 		kfree(pcb);

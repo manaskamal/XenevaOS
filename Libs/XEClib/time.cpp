@@ -30,6 +30,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/_keproc.h>
+#include <sys/_ketime.h>
 #include <unistd.h>
 
 int dayOfWeek(unsigned day, unsigned month, unsigned year) {
@@ -45,11 +46,15 @@ char* asctime(const struct tm* timeptr) {
 	memset(&timeStr, 0, 26);
 	return (timeStr);
 }
-tm* gmtime(time_t timeSimple) {
+struct tm* gmtime(const time_t *timer) {
 	int year = 0;
 	int count;
+	time_t timeSimple;
+	static struct tm timeStruc;
 
-	tm timeStruc;
+	if (!timer)
+		return NULL;
+	timeSimple = *timer;
 	static int monthDays[12] = {31, 00, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	memset(&timeStruc, 0, sizeof(tm));
 
@@ -112,7 +117,7 @@ clock_t clock(void) {
 char* ctime(const time_t timeSimple) {
 	struct tm* timeStruc = NULL;
 	char* timeString = NULL;
-	timeStruc = gmtime(timeSimple);
+	timeStruc = gmtime(&timeSimple);
 	if (timeStruc)
 		timeString = asctime(timeStruc);
 	return (timeString);
@@ -157,7 +162,12 @@ time_t mktime(tm* timestruc) {
 	return timeSimple;
 }
 time_t time(time_t* t) {
-	return 0;
+	int64_t sec = 0;
+	int64_t nsec = 0;
+	_KeGetWalltime(&sec, &nsec);
+	if (t)
+		*t = (time_t)sec;
+	return (time_t)sec;
 }
 
 /**
