@@ -421,24 +421,30 @@ void WindowHandleMessage(PostEvent* e) {
 		e1.to_id = POSTBOX_ROOT_ID;
 		_KeFileIoControl(mainWin->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
 		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 
 	case DEODHAI_REPLY_REINIT_BUFFER: {
 		int backbufkey = e->dword;
+		_KePrint("Calculator backbufkey : %x \r\n", backbufkey);
 		int id = _KeCreateSharedMem(backbufkey, 0, 0);
 
 		void* buffer = _KeObtainSharedMem(id, 0, 0);
+		_KePrint("calculator reinit shm : %x \r\n", buffer);
 		mainWin->app->backbufkey = backbufkey;
 		mainWin->app->fb = buffer;
+		mainWin->buffer = (uint32_t*)buffer;
 		mainWin->info->windowReady = 1;
 
 		_KeProcessSleep(100);
 		ChDeAllocateBuffer(mainWin->canv);
 		mainWin->canv->canvasWidth = mainWin->info->width;
 		mainWin->canv->canvasHeight = mainWin->info->height;
+		_KePrint("calc w : %d, h: %d \r\n", mainWin->info->width, mainWin->info->height);
 		ChAllocateBuffer(mainWin->canv);
 		ChWindowPaint(mainWin);
 		memset(e, 0, sizeof(PostEvent));
+		break;
 	}
 	default:
 		memset(e, 0, sizeof(PostEvent));

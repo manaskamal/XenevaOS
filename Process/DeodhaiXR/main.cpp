@@ -745,12 +745,18 @@ void DeodhaiWindowResizeCommit(Window* win) {
 	}
 
 	uint16_t backBufferKey = 0;
+	_KePrint("Commiting buffer %s sz width : %d, height : %d \r\n",
+			 win->title,
+			 shinfo->width,
+			 shinfo->height);
 	win->backBuffer = (uint32_t*)CreateNewBackBuffer(
 		win->ownerId, ((shinfo->width * shinfo->height * 4 + 0x1F) & (~0x1FULL)), &backBufferKey);
 	memset(&e, 0, sizeof(PostEvent));
 	e.type = DEODHAI_REPLY_REINIT_BUFFER;
 	e.dword = backBufferKey;
 	e.to_id = win->ownerId;
+	win->originalW = shinfo->width;
+	win->originalH = shinfo->height;
 	_KeFileIoControl(postbox_fd, POSTBOX_PUT_EVENT, &e);
 	while (1) {
 		if (shinfo->windowReady) {
@@ -768,11 +774,15 @@ void DeodhaiWindowResizeCommit(Window* win) {
  * @param button -- Mouse button state
  */
 void DeodhaiWindowCheckResizable(int x, int y, int button) {
-	//int edge = RESIZE_EDGE_NONE;
 	if (!focusedWin)
 		return;
 
 	Window* win = focusedWin;
+
+	if ((win->flags & WINDOW_FLAG_MESSAGEBOX) || (win->flags & WINDOW_FLAG_BLOCKED) ||
+		(win->flags & WINDOW_FLAG_NON_RESIZABLE))
+		return;
+
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 
 	if (info->hide)
@@ -787,7 +797,7 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 	int ww = info->width;
 	int wh = info->height;
 	bool hit = false;
-	//bool commit = false;
+
 	/** hit test here  */
 	if (x >= wx && x < (wx + RESIZE_BORDER_LR)) {
 		edge |= RESIZE_EDGE_LEFT;
@@ -805,9 +815,11 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 		hit = 1;
 	}
 
+	/** maybe we can also add corner hit test  */
+
 	if (hit) {
-		reszStartX = wx;
-		reszStartY = wy;
+		reszStartX = x;
+		reszStartY = y;
 		reszOLDW = ww;
 		reszOLDH = wh;
 		reszWin = win;
@@ -817,25 +829,50 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 		int dx = x - reszStartX;
 		int dy = y - reszStartY;
 		int nx = reszStartX + dx;
+		int ny = reszStartY + dy;
 		int nw = reszOLDW - dx;
-		_KePrint("But DX : %d \r\n", dx);
+		int nh = reszOLDH - dy;
+
 		if (edge & RESIZE_EDGE_LEFT) {
-			//BackDirtyAdd(info->x, info->y, info->width, info->height);
-			ChDrawRectUnfilled(canvas, nx, wy, nw, wh, GREEN);
+			DeodhaiBackSurfaceUpdate(
+				canvas, info->x - 10, info->y - 10, info->width + 20, info->height + 20);
+			compose_window_scaled_to(canvas, win, win->originalW, win->originalH, nx, wy, nw, wh);
 			AddDirtyClip(nx, wy, nw, wh);
 			_window_commit = true;
-			_KePrint("New resize x val : %d , dx : %d , commit = %d\r\n", nx, dx, _window_commit);
 			info->x = nx;
 			info->width = nw;
+		} else if (edge & RESIZE_EDGE_RIGHT) {
+			nw = reszOLDW + dx;
+			DeodhaiBackSurfaceUpdate(
+				canvas, info->x - 10, info->y - 10, info->width + 20, info->height + 20);
+			compose_window_scaled_to(canvas, win, win->originalW, win->originalH, wx, wy, nw, wh);
+			AddDirtyClip(wx, wy, nw, wh);
+			info->width = nw;
+			_window_commit = true;
+		} else if (edge & RESIZE_EDGE_TOP) {
+			DeodhaiBackSurfaceUpdate(
+				canvas, info->x - 10, info->y - 10, info->width + 20, info->height + 20);
+			compose_window_scaled_to(canvas, win, win->originalW, win->originalH, wx, ny, ww, nh);
+			AddDirtyClip(wx, ny, ww, nh);
+			info->y = ny;
+			info->height = nh;
+			_window_commit = true;
+		} else if (edge & RESIZE_EDGE_BOTTOM) {
+			nh = reszOLDH + dy;
+			DeodhaiBackSurfaceUpdate(
+				canvas, info->x - 10, info->y - 10, info->width + 20, info->height + 20);
+			compose_window_scaled_to(canvas, win, win->originalW, win->originalH, wx, wy, ww, nh);
+			AddDirtyClip(wx, wy, ww, nh);
+			info->height = nh;
+			_window_commit = true;
 		}
 	}
 
 	/* apply resize commit here*/
 	if (!button) {
-		if (reszWin && _window_commit) {
-			_KePrint("Committing resize \r\n");
+		if (reszWin && _window_commit)
 			DeodhaiWindowResizeCommit(reszWin);
-		}
+
 		reszWin = NULL;
 		reszStartX = 0;
 		reszStartY = 0;
@@ -843,7 +880,6 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 		reszOLDH = 0;
 		edge = 0;
 		_window_commit = 0;
-		_KePrint("Window commited %d\r\n", _window_commit);
 	}
 }
 

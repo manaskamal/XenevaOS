@@ -112,6 +112,8 @@ typedef struct _win_ {
 	int dragY;
 	int resz_h;
 	int resz_b;
+	int originalW;
+	int originalH;
 	bool markForClose;
 	uint8_t animFrameCount;
 	int animAlphaVal;
