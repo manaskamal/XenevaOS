@@ -179,6 +179,10 @@ void _AuroraTimerCallback(void* p) {
 
 extern void modload_test_run(void);
 
+/* DCL initcalls (linux/init.h: fs_initcall()) + the drivers/char proof */
+extern void DclRunInitcalls(void);
+extern void DclMemTestRun(void);
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -256,10 +260,20 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	FontManagerInitialise();
 
+	/* DCL initcalls first: chr_dev_init() publishes the mainline memory
+	 * devices (/dev/null, /dev/zero, /dev/full, /dev/random, /dev/urandom,
+	 * /dev/kmsg, /dev/mem) through the cdev bridge, so the .ko test below
+	 * and every later user see them. */
+	DclRunInitcalls();
+
 	/* Test DCL Layer: load embedded .ko module. This also detects a
 	 * virtio-rng device and binds it, while the module's driver is still
 	 * registered (see modload_test.c). */
 	modload_test_run();
+
+	/* /dev/urandom reads the hardware RNG, so this runs after the .ko test
+	 * has bound virtio_rng.ko. */
+	DclMemTestRun();
 
 	/* from here, be carefull with AuPmmngrAllocBlocks,
 	 * sometime it doesn't allocate blocks contiguously,

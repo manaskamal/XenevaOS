@@ -298,7 +298,7 @@ static void ep_init(uint8_t* ctx, Ring* ring, uint32_t type, uint16_t mps, uint3
 	uint32_t* e = (uint32_t*)ctx;
 	memset(ctx, 0, ctx_sz);
 	e[0] = (interval & 0xff) << 16;
-	e[1] = (3u << 1) | (type << 3) | ((uint32_t)mps << 16);
+	e[1] = (type << 3) | (3u << 8) | ((uint32_t)mps << 16);
 	e[2] = (uint32_t)(ring->phys | ring->cycle);
 	e[3] = (uint32_t)(ring->phys >> 32);
 	e[4] = avg;
@@ -369,6 +369,11 @@ static int port_reset(int port) {
 	uint32_t sc, w;
 	int i;
 	sc = rd(base);
+	/* An unattached port still burns the whole 200 ms reset poll below, and
+	 * the BT scan calls us for every port on every pass. CCS stays clear
+	 * until something connects, so bail before touching the port at all. */
+	if ((sc & 1u) == 0)
+		return 0;
 	w = sc & ~((1u << 1) | (1u << 4));
 	w &= ~((1u << 17) | (1u << 18) | (1u << 19) | (1u << 20) | (1u << 21) | (1u << 22) | (1u << 23));
 	w |= (1u << 9) | (1u << 4);
@@ -586,6 +591,14 @@ static int claim_bt(const uint8_t* desc, int len, int speed) {
 	return 0;
 }
 
+/* enum_port() verdicts. The scan must tell "nothing attached" (keep polling
+ * cheaply) apart from "a device answered" — re-enumerating a port that already
+ * answered is what used to stall boot. */
+#define XCT_NONE 0  /* nothing connected on this port */
+#define XCT_BT 1    /* bluetooth adapter claimed */
+#define XCT_NOTBT 2 /* a device answered, but it is not a BT adapter */
+#define XCT_FAIL -1 /* enumeration error, worth one retry */
+
 static int enum_port(int port) {
 	uint8_t devdesc[18];
 	uint8_t cfg[512];
@@ -593,7 +606,7 @@ static int enum_port(int port) {
 	int speed;
 	int code = 0;
 	if (!port_reset(port))
-		return 0;
+		return XCT_NONE;
 	speed = speed_of(port);
 	if (speed == 0)
 		speed = 1;
@@ -601,33 +614,33 @@ static int enum_port(int port) {
 	door(0, 0);
 	if (wait_cmd(&slot_id, &code) || code != 1 || slot_id == 0) {
 		UARTDebugOut("[xhci]: enable slot completion %d\r\n", code);
-		return -1;
+		return XCT_FAIL;
 	}
 	if (address_at(port, speed))
-		return -1;
+		return XCT_FAIL;
 	memset(devdesc, 0, sizeof devdesc);
 	if (ctrl(0x80, 6, 0x0100, 0, devdesc, 8, 1))
-		return -1;
+		return XCT_FAIL;
 	if (ctrl(0x80, 6, 0x0100, 0, devdesc, 18, 1))
-		return -1;
+		return XCT_FAIL;
 	if (ctrl(0x80, 6, 0x0200, 0, cfg, 9, 1))
-		return -1;
+		return XCT_FAIL;
 	total = (uint16_t)(cfg[2] | (cfg[3] << 8));
 	if (total > sizeof cfg)
 		total = sizeof cfg;
 	if (total < 9)
-		return 0;
+		return XCT_NOTBT;
 	if (ctrl(0x80, 6, 0x0200, 0, cfg, total, 1))
-		return -1;
+		return XCT_FAIL;
 	UARTDebugOut("[xhci]: device class %x subclass %x\r\n", devdesc[4], devdesc[5]);
 	UARTDebugOut("[xhci]: devdesc %x %x %x %x %x %x %x %x\r\n", devdesc[0], devdesc[1],
 				 devdesc[2], devdesc[3], devdesc[4], devdesc[5], devdesc[6], devdesc[7]);
 	UARTDebugOut("[xhci]: cfg %x %x %x %x %x\r\n", cfg[0], cfg[1], cfg[2], cfg[3], cfg[4]);
 	if (claim_bt(cfg, total, speed)) {
 		UARTDebugOut("[xhci]: port %d is not a bluetooth adapter\r\n", port);
-		return 0;
+		return XCT_NOTBT;
 	}
-	return 1;
+	return XCT_BT;
 }
 
 static void xhci_irq(int spi) {
@@ -762,21 +775,49 @@ void AuXhciInitialize(void) {
 		uint32_t base = caplen + 0x400 + (uint32_t)(p - 1) * 16;
 		UARTDebugOut("[xhci]: port %d sc=%x\r\n", p, rd(base));
 	}
-	/* QEMU usb-host connects asynchronously — poll for up to 5 s. */
+	/* QEMU usb-host connects asynchronously — poll for up to 5 s when nothing
+	 * has shown up yet. A port that has already answered is never enumerated
+	 * again: re-running port_reset + Enable Slot + Address Device on it
+	 * leaked a slot and cost 0.5 s command timeouts per pass, which stalled
+	 * boot for ~90 s and left the display dark. Once a device has been seen
+	 * and a full pass adds nothing new, the topology has settled. */
 	{
 		int attempt;
+		int attached = 0;
+		uint8_t mark[33];
+		uint8_t tried[33];
+		memset(mark, 0, sizeof mark);
+		memset(tried, 0, sizeof tried);
 		for (attempt = 0; attempt < 50 && !found; attempt++) {
+			int fresh = 0;
 			for (p = 1; p <= (int)nports && !found; p++) {
-				if (enum_port(p) == 1)
+				int r;
+				if (tried[p])
+					continue;
+				r = enum_port(p);
+				if (r == XCT_BT) {
 					found = 1;
-			}
-			if (!found) {
-				if (attempt % 10 == 0) {
-					uint32_t base = caplen + 0x400 + (uint32_t)(5 - 1) * 16;
-					UARTDebugOut("[xhci]: retry %d port 5 sc=%x\r\n", attempt, rd(base));
+					break;
 				}
-				spin_ms(100);
+				if (r == XCT_NONE)
+					continue;
+				if (!mark[p]) {
+					mark[p] = 1;
+					attached = 1;
+					fresh = 1;
+				}
+				if (r == XCT_NOTBT)
+					tried[p] = 1;
 			}
+			if (found)
+				break;
+			if (attached && !fresh)
+				break;
+			if (attempt % 10 == 0) {
+				uint32_t base = caplen + 0x400 + (uint32_t)(5 - 1) * 16;
+				UARTDebugOut("[xhci]: retry %d port 5 sc=%x\r\n", attempt, rd(base));
+			}
+			spin_ms(100);
 		}
 	}
 	if (!found)

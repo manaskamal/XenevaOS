@@ -938,7 +938,7 @@ QEMU_ARGS=(
     -device ramfb,id=ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
-    -device usb-ehci
+    -device qemu-xhci
     -device usb-kbd
     -serial stdio
 )

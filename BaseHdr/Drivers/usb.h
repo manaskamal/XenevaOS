@@ -178,24 +178,24 @@ typedef struct _au_endpoint_desc_ {
 
 struct _au_usb_dev_;
 
-typedef int(*au_usb_drv_entry)(_au_usb_dev_* dev);
-typedef int(*au_usb_drv_unload)(_au_usb_dev_* dev);
+typedef int(*au_usb_drv_entry)(struct _au_usb_dev_* dev);
+typedef int(*au_usb_drv_unload)(struct _au_usb_dev_* dev);
 
 
-typedef void (*schedule_interrupt_callback)(_au_usb_dev_* controller, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
-typedef void (*control_transfer)(_au_usb_dev_* usbdev, const AuUSBRequestPacket* request, uint64_t buffer_addr, const size_t len);
-typedef void (*bulk_transfer)(_au_usb_dev_* usbdev, uint64_t buffer_addr, uint16_t len, void* ep);
-typedef void (*get_device_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len);
-typedef void (*get_string_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t id);
-typedef void (*get_config_desc_callback)(_au_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
-typedef void* (*get_endpoint)(_au_usb_dev_* dev, uint8_t ep_type);
-typedef void* (*get_bulk_ep)(_au_usb_dev_* dev, uint8_t dir);
-typedef int (*get_max_pack_sz)(_au_usb_dev_* dev, void* ep);
-typedef uint8_t(*get_endpoint_address)(_au_usb_dev_* dev, void* ep);
-typedef uint8_t(*get_endpoint_attrib)(_au_usb_dev_* dev, void* ep);
-typedef AuUSBDescriptor* (*get_descriptor_callback)(_au_usb_dev_* dev, uint8_t type);
-typedef void (*set_config_val_callback)(_au_usb_dev_* dev, uint8_t config_val);
-typedef int (*poll_wait_callback)(_au_usb_dev_* dev, int poll_wait);
+typedef void (*schedule_interrupt_callback)(struct _au_usb_dev_* controller, void* ep, uint64_t buffer, void (*callback)(void* dev, void* slot, void* Endp));
+typedef void (*control_transfer)(struct _au_usb_dev_* usbdev, const AuUSBRequestPacket* request, uint64_t buffer_addr, const size_t len);
+typedef void (*bulk_transfer)(struct _au_usb_dev_* usbdev, uint64_t buffer_addr, uint16_t len, void* ep);
+typedef void (*get_device_desc_callback)(struct _au_usb_dev_* dev, uint64_t buffer, uint16_t len);
+typedef void (*get_string_desc_callback)(struct _au_usb_dev_* dev, uint64_t buffer, uint16_t id);
+typedef void (*get_config_desc_callback)(struct _au_usb_dev_* dev, uint64_t buffer, uint16_t len, uint8_t id);
+typedef void* (*get_endpoint)(struct _au_usb_dev_* dev, uint8_t ep_type);
+typedef void* (*get_bulk_ep)(struct _au_usb_dev_* dev, uint8_t dir);
+typedef int (*get_max_pack_sz)(struct _au_usb_dev_* dev, void* ep);
+typedef uint8_t(*get_endpoint_address)(struct _au_usb_dev_* dev, void* ep);
+typedef uint8_t(*get_endpoint_attrib)(struct _au_usb_dev_* dev, void* ep);
+typedef AuUSBDescriptor* (*get_descriptor_callback)(struct _au_usb_dev_* dev, uint8_t type);
+typedef void (*set_config_val_callback)(struct _au_usb_dev_* dev, uint8_t config_val);
+typedef int (*poll_wait_callback)(struct _au_usb_dev_* dev, int poll_wait);
 
 #pragma pack(push,1)
 typedef struct _au_usb_dev_ {
@@ -237,6 +237,13 @@ typedef struct _au_usb_dev_ {
  * aurora usb system
  */
 extern void AuUSBSubsystemInit();
+
+/*
+ * AuXhciInitialize -- initialize the xHCI host controller
+ * Scans PCI for xHCI (class 0x0c/0x03/0x30), brings it up, and
+ * begins polling for Bluetooth HID adapters.
+ */
+extern void AuXhciInitialize(void);
 
 
 /*

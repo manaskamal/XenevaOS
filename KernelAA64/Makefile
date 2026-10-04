@@ -86,13 +86,20 @@ endif
 
 C_SRCS_ALL = $(shell find . -name '*.c')
 # Exclude dead allocator code (replaced by TLSF)
-C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c ./Usb/xhci.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
+C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
 S_SRCS = $(shell find . -name '*.s')
+
+# DCL (Driver Compatibility Layer) sources live outside KernelAA64, in ../DCL.
+# Their objects are rewritten into $(OBJDIR)/DCL/ so nothing escapes obj/.
+DCL_C_SRCS := $(patsubst ../DCL/%,%,$(shell find ../DCL -name '*.c' 2>/dev/null))
+DCL_S_SRCS := $(patsubst ../DCL/%,%,$(shell find ../DCL -name '*.s' 2>/dev/null))
 
 C_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(C_SRCS))
 S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
+DCL_C_OBJS = $(patsubst %.c,$(OBJDIR)/DCL/%.o,$(DCL_C_SRCS))
+DCL_S_OBJS = $(patsubst %.s,$(OBJDIR)/DCL/%.o,$(DCL_S_SRCS))
 
-OBJS = $(C_OBJS) $(S_OBJS)
+OBJS = $(C_OBJS) $(S_OBJS) $(DCL_C_OBJS) $(DCL_S_OBJS)
 
 
 all: $(TARGET)
@@ -117,8 +124,18 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile DCL (Driver Compatibility Layer) sources from ../DCL
+$(OBJDIR)/DCL/%.o: ../DCL/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Assemble ASM source files
 $(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Assemble DCL ASM source files from ../DCL
+$(OBJDIR)/DCL/%.o: ../DCL/%.s
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 

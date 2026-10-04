@@ -7,10 +7,10 @@
 #include <list.h>
 #include <string.h>
 
-#include "test_module_bin.h"
+#include <linux/test_module_bin.h>
 static const size_t test_module_size = sizeof(test_module_o);
 
-#include "virtio_rng_bin.h"
+#include <linux/virtio_rng_bin.h>
 
 extern void virtio_rng_detect(void);
 extern int hwrng_selftest(void);
