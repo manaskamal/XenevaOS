@@ -31,6 +31,7 @@
 
 #include "compose.h"
 #include "_fastcpy.h"
+#include "backdirty.h"
 #include <color.h>
 #if defined(ARCH_ARM64)
 #include <arm_neon.h>
@@ -390,6 +391,142 @@ void compose_window_scaled_to(
 		y1 = ch;
 	if (x0 >= x1 || y0 >= y1)
 		return;
+
+	/* source pixels advanced per destination pixel, 16.16 fixed point */
+	xstep = (uint32_t)(((uint64_t)(uint32_t)src_w << 16) / (uint32_t)dw);
+	ystep = (uint32_t)(((uint64_t)(uint32_t)src_h << 16) / (uint32_t)dh);
+
+	for (y = y0; y < y1; y++) {
+		int sy = (int)(((uint64_t)(uint32_t)(y - dst_y) * ystep) >> 16);
+		uint32_t* srow;
+		uint32_t* drow;
+		uint32_t xpos;
+		int x;
+		if (sy < 0)
+			sy = 0;
+		else if (sy >= src_h)
+			sy = src_h - 1;
+		srow = srcBase + (size_t)sy * (size_t)src_w;
+		drow = dstBase + (size_t)y * (size_t)cw;
+
+		/* start at the first visible column so left clipping stays correct */
+		xpos = (uint32_t)((uint64_t)(uint32_t)(x0 - dst_x) * xstep);
+		x = x0;
+#if defined(ARCH_ARM64)
+		for (; x <= x1 - 4; x += 4) {
+			int sx0 = (int)(xpos >> 16);
+			int sx1, sx2, sx3;
+			uint32_t tmp[4];
+			uint32x4_t src4;
+			uint32x4_t alpha;
+			uint64x2_t opaque_pairs;
+			xpos += xstep;
+			sx1 = (int)(xpos >> 16);
+			xpos += xstep;
+			sx2 = (int)(xpos >> 16);
+			xpos += xstep;
+			sx3 = (int)(xpos >> 16);
+			xpos += xstep;
+			tmp[0] = srow[sx0];
+			tmp[1] = srow[sx1];
+			tmp[2] = srow[sx2];
+			tmp[3] = srow[sx3];
+			src4 = vld1q_u32(tmp);
+			alpha = vshrq_n_u32(src4, 24);
+			opaque_pairs = vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(255)));
+			if (vgetq_lane_u64(opaque_pairs, 0) == UINT64_MAX &&
+				vgetq_lane_u64(opaque_pairs, 1) == UINT64_MAX) {
+				vst1q_u32(drow + x, src4);
+				continue;
+			}
+			{
+				uint64x2_t transparent_pairs =
+					vreinterpretq_u64_u32(vceqq_u32(alpha, vdupq_n_u32(0)));
+				if (vgetq_lane_u64(transparent_pairs, 0) == UINT64_MAX &&
+					vgetq_lane_u64(transparent_pairs, 1) == UINT64_MAX)
+					continue;
+			}
+			for (int i = 0; i < 4; i++)
+				drow[x + i] = ChColorAlphaBlend2(drow[x + i], tmp[i]);
+		}
+#endif
+		for (; x < x1; x++) {
+			int sx = (int)(xpos >> 16);
+			uint32_t f;
+			xpos += xstep;
+			if (sx < 0)
+				sx = 0;
+			else if (sx >= src_w)
+				sx = src_w - 1;
+			f = srow[sx];
+			if ((f & 0xFF000000) == 0xFF000000)
+				drow[x] = f;
+			else
+				drow[x] = ChColorAlphaBlend2(drow[x], f);
+		}
+	}
+}
+
+/**
+ * @brief compose_window_scaled_to_clip -- scales the window's own buffer
+ * (src_w x src_h) to (dw x dh) and alpha-blends it onto the canvas at
+ * (dst_x, dst_y). Clipped to the canvas, NEON fast path kept.
+ * @param src_w, src_h -- ORIGINAL size of win->backBuffer (not info->width/height,
+ *                        those change while resizing)
+ * @param dst_x, dst_y -- top-left of the scaled window on the canvas
+ * @param dw, dh -- size to scale to
+ */
+void compose_window_scaled_to_clip(ChCanvas* canvas,
+								   Window* win,
+								   int src_w,
+								   int src_h,
+								   int dst_x,
+								   int dst_y,
+								   int dw,
+								   int dh,
+								   int clip_x,
+								   int clip_y,
+								   int clip_w,
+								   int clip_h) {
+	uint32_t* dstBase;
+	uint32_t* srcBase;
+	uint32_t xstep;
+	uint32_t ystep;
+	int cw, ch;
+	int x0, y0, x1, y1;
+	int y;
+
+	if (dw <= 0 || dh <= 0 || src_w <= 0 || src_h <= 0)
+		return;
+	dstBase = canvas->buffer;
+	srcBase = (uint32_t*)win->backBuffer;
+	if (!dstBase || !srcBase)
+		return;
+
+	cw = (int)canvas->canvasWidth; /* row stride of the canvas */
+	ch = (int)canvas->canvasHeight;
+
+	/* clip the destination rectangle to the canvas */
+	x0 = dst_x;
+	if (x0 < clip_x)
+		x0 = clip_x;
+	if (x0 < 0)
+		x0 = 0;
+	y0 = dst_y;
+	if (y0 < clip_y)
+		y0 = clip_y;
+	if (y0 < 0)
+		y0 = 0;
+	x1 = dst_x + dw;
+	if (x1 > clip_x + clip_w)
+		x1 = clip_x + clip_w;
+	if (x1 > cw)
+		x1 = cw;
+	y1 = dst_y + dh;
+	if (y1 > clip_y + clip_h)
+		y1 = clip_y + clip_h;
+	if (y1 > ch)
+		y1 = ch;
 
 	/* source pixels advanced per destination pixel, 16.16 fixed point */
 	xstep = (uint32_t)(((uint64_t)(uint32_t)src_w << 16) / (uint32_t)dw);

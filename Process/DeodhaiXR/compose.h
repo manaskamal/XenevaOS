@@ -84,6 +84,28 @@ void compose_window_scaled_to(
 	ChCanvas* canvas, Window* win, int src_w, int src_h, int dst_x, int dst_y, int dw, int dh);
 
 /**
+ * @brief compose_window_scaled_to_clip -- scales the window's own buffer
+ * (src_w x src_h) to (dw x dh) and alpha-blends it onto the canvas at
+ * (dst_x, dst_y). Clipped to the canvas, NEON fast path kept.
+ * @param src_w, src_h -- ORIGINAL size of win->backBuffer (not info->width/height,
+ *                        those change while resizing)
+ * @param dst_x, dst_y -- top-left of the scaled window on the canvas
+ * @param dw, dh -- size to scale to
+ */
+void compose_window_scaled_to_clip(ChCanvas* canvas,
+								   Window* win,
+								   int src_w,
+								   int src_h,
+								   int dst_x,
+								   int dst_y,
+								   int dw,
+								   int dh,
+								   int clip_x,
+								   int clip_y,
+								   int clip_w,
+								   int clip_h);
+
+/**
  * @brief _compose_always_on_top_dirty -- compose always on top window's dirty rectangles
  * @param canvas -- Pointer to canvas
  * @param info -- Pointer to window's shared info
