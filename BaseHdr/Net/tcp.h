@@ -49,7 +49,10 @@
 
 #define TCP_DEFAULT_WIN_SZ 65535
 #define TCP_MSS 1460
-#define TCP_RX_BUF_SZ 16384
+/* One TLS record is at most 16384 bytes plus a 5-byte header (RFC 8446).
+ * The buffer has to hold that while the reader is still pulling the
+ * previous record. The advertised window itself stays 16 bits (RFC 9293). */
+#define TCP_RX_BUF_SZ 65536
 
 #define TCP_STATE_CLOSED       0
 #define TCP_STATE_LISTEN       1

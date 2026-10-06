@@ -2,11 +2,8 @@
  * NetSurf bootstrap browser for XenevaOS.
  *
  * Staging frontend, not upstream NetSurf core yet: a Chitralekha window with
- * a URL bar + Go button, HTTP/1.0 fetch over XEClib sockets (same path as
- * Process/http/curl.exe), and crude HTML-to-text rendering into a textbox.
- *
- * Real NetSurf (libcss/libdom/libparserutils) + HTTPS still need the musl
- * shim and an mbedTLS port first -- https:// URLs get an honest message.
+ * a URL bar + Go button, HTTP/1.1 fetch (TLS on https://), and crude
+ * HTML-to-text rendering into a textbox.
  */
 
 #include <stdint.h>
@@ -30,9 +27,10 @@
 #include <ctype.h>
 
 #include "css.h"
+#include <https.h>
 
 #define NS_URL_MAX	256
-#define NS_BODY_MAX (16 * 1024)
+#define NS_BODY_MAX (256 * 1024)
 /* Visible page lines: 420px box at the painter's 19px line stride. */
 #define NS_PAGE_LINES 22
 
@@ -52,7 +50,7 @@ static ChWindow* s_mainWin = NULL;
 static ChTextBox* s_urlBox = NULL;
 static ChTextBox* s_pageBox = NULL;
 
-static char s_url[NS_URL_MAX] = "example.com";
+static char s_url[NS_URL_MAX] = "https://example.com/";
 static size_t s_urlCursor = 0;
 static char s_body[NS_BODY_MAX + 1];
 static char s_text[NS_BODY_MAX + 1];
@@ -209,51 +207,6 @@ static void NsShowUrl(void) {
 		return;
 	ChTextBoxSetText(s_urlBox, s_url);
 	ChTextBoxUpdate(s_urlBox, s_mainWin);
-}
-
-/* Split "http://host[:port]/path" into parts. Returns 0 ok, -1 malformed,
- * -2 https (no TLS on Xeneva yet). Mirrors Process/http/main.cpp. */
-static int
-NsParseUrl(const char* url, char* host, size_t hostsz, char* path, size_t pathsz, uint16_t* port) {
-	const char* p = url;
-	*port = 80;
-	strcpy(path, "/");
-
-	if (!strncmp(p, "https://", 8))
-		return -2;
-	if (!strncmp(p, "http://", 7))
-		p += 7;
-
-	const char* slash = strchr(p, '/');
-	const char* colon = strchr(p, ':');
-	size_t hlen;
-
-	if (colon && (!slash || colon < slash)) {
-		hlen = (size_t)(colon - p);
-		int prt = 0;
-		const char* d = colon + 1;
-		while (*d >= '0' && *d <= '9') {
-			prt = prt * 10 + (*d - '0');
-			d++;
-		}
-		if (prt > 0 && prt < 65536)
-			*port = (uint16_t)prt;
-		slash = (*d == '/') ? d : NULL;
-	} else {
-		hlen = slash ? (size_t)(slash - p) : strlen(p);
-	}
-
-	if (hlen == 0 || hlen >= hostsz)
-		return -1;
-	memcpy(host, (void*)p, hlen);
-	host[hlen] = 0;
-
-	if (slash && slash[0]) {
-		if (strlen(slash) >= pathsz)
-			return -1;
-		strcpy(path, slash);
-	}
-	return 0;
 }
 
 /* Readability-mode HTML to text (NOT a layout engine): block tags become
@@ -702,130 +655,82 @@ static void NsHtmlToText(const char* src, size_t srclen, char* dst, size_t dstsz
 	dst[di] = 0;
 }
 
-static int NsFetch(const char* url) {
-	char host[128];
-	char path[256];
-	uint16_t port = 80;
-	memset(host, 0, sizeof(host));
-	memset(path, 0, sizeof(path));
+/* A host with no scheme is fetched as https://. http:// stays plain HTTP. */
+static void NsEnsureHttps(char* url, size_t n) {
+	char tmp[NS_URL_MAX];
+	if (!url || !url[0] || n < 10)
+		return;
+	if (!strncmp(url, "https://", 8) || !strncmp(url, "http://", 7))
+		return;
+	snprintf(tmp, sizeof(tmp), "https://%s", url);
+	snprintf(url, n, "%s", tmp);
+}
 
-	int pu = NsParseUrl(url, host, sizeof(host), path, sizeof(path), &port);
-	if (pu == -2) {
-		NsShowStatus("HTTPS is not supported yet.\n\nXeneva has no TLS stack; "
-					 "the mbedTLS port lands before encrypted fetch.\nTry an http:// URL.");
-		return -1;
-	}
-	if (pu < 0 || !host[0]) {
-		NsShowStatus("Bad URL.\n\nTry: example.com or http://example.com/");
-		return -1;
-	}
+static int NsFetch(char* url) {
+	char status[NS_URL_MAX + 64];
+	xe_http_response resp;
+	const char* body;
+	size_t blen;
+	int left_tls = 0;
+	int used_tls = 0;
 
-	char status[NS_URL_MAX + 32];
-	snprintf(status, sizeof(status), "Fetching http://%s%s ...", host, path);
+	NsEnsureHttps(url, NS_URL_MAX);
+	NsShowUrl();
+	snprintf(status, sizeof(status), "Fetching %s ...", url);
 	NsShowStatus(status);
 
-	hostent* ent = gethostbyname(host);
-	if (!ent) {
-		snprintf(status, sizeof(status), "DNS failed for %s.\n\nIs netmngr running?", host);
-		NsShowStatus(status);
+	memset(&resp, 0, sizeof(resp));
+	int rc = xe_http_get(url, "GET", "netsurf/xeneva", &resp, NS_BODY_MAX);
+	if (rc != 0 && (!resp.body || !resp.body_len)) {
+		NsShowStatus(resp.error[0] ? resp.error : "Fetch failed.");
+		xe_http_response_free(&resp);
 		return -1;
 	}
-	/* gethostbyname falls back to IPv6 (16-byte h_addr) when no A record
-     * exists. Our socket path is IPv4-only: refuse cleanly instead of
-     * connecting to the first 4 bytes of an IPv6 address. */
-	if (ent->h_addrtype != AF_INET || ent->h_length != 4 || !ent->h_addr_list[0]) {
-		snprintf(status,
-				 sizeof(status),
-				 "No IPv4 address for %s.\n\nIPv6-only hosts are not reachable yet.",
-				 host);
-		NsShowStatus(status);
+	if (!resp.body) {
+		NsShowStatus(resp.error[0] ? resp.error : "Empty response.");
+		xe_http_response_free(&resp);
 		return -1;
 	}
-	uint32_t ipaddr = *(uint32_t*)ent->h_addr_list[0];
+	_KePrint("[css] fetched %d bytes tls=%d status=%d\n", (int)resp.body_len, resp.tls, resp.status);
 
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0) {
-		NsShowStatus("socket() failed.");
-		return -1;
-	}
+	blen = resp.body_len;
+	if (blen > NS_BODY_MAX)
+		blen = NS_BODY_MAX;
+	memcpy(s_body, resp.body, blen);
+	s_body[blen] = 0;
+	body = s_body;
+	left_tls = resp.https_to_http;
+	used_tls = resp.tls && !left_tls;
+	xe_http_response_free(&resp);
 
-	sockaddr_in dest;
-	memset(&dest, 0, sizeof(dest));
-	dest.sin_family = AF_INET;
-	dest.sin_port = htons(port);
-	memcpy(&dest.sin_addr, &ipaddr, sizeof(uint32_t));
-
-	if (connect(sock, (sockaddr_*)&dest, sizeof(dest)) < 0) {
-		snprintf(status, sizeof(status), "Connect to %s:%u failed.", host, port);
-		NsShowStatus(status);
-		_KeCloseFile(sock);
-		return -1;
-	}
-	_KePrint("[css] connected\n");
-
-	char req[512];
-	memset(req, 0, sizeof(req));
-	snprintf(req,
-			 sizeof(req),
-			 "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: netsurf/xeneva\r\n"
-			 "Accept: */*\r\nConnection: close\r\n\r\n",
-			 path,
-			 host);
-
-	if (sendto(sock, req, strlen(req), 0, (sockaddr*)&dest, sizeof(dest)) < 0) {
-		NsShowStatus("Send failed.");
-		_KeCloseFile(sock);
-		return -1;
-	}
-
-	memset(s_body, 0, sizeof(s_body));
-	size_t got = 0;
-	int idle = 0;
-	int got_any = 0;
-	char chunk[2048];
-	while (idle < 80 && got < NS_BODY_MAX) {
-		memset(chunk, 0, sizeof(chunk));
-		size_t want = sizeof(chunk) - 1;
-		if (want > NS_BODY_MAX - got)
-			want = NS_BODY_MAX - got;
-		int n = recvfrom(sock, chunk, want, 0, NULL, NULL);
-		if (n > 0) {
-			got_any = 1;
-			idle = 0;
-			memcpy(s_body + got, chunk, (size_t)n);
-			got += (size_t)n;
-			continue;
-		}
-		if (n == 0 && got_any)
-			break;
-		_KeProcessSleep(100);
-		idle++;
-	}
-	_KeCloseFile(sock);
-
-	if (!got_any) {
-		NsShowStatus("No data (timeout).");
-		return -1;
-	}
-	s_body[got] = 0;
-
-	/* Skip HTTP headers. */
-	const char* body = s_body;
-	const char* hdr_end = strstr(s_body, "\r\n\r\n");
-	if (hdr_end)
-		body = hdr_end + 4;
-
-	NsCollectCss(body, got - (size_t)(body - s_body));
+	NsCollectCss(body, blen);
 	_KePrint("[css] author sheet %d bytes\n", (int)strlen(s_cssBuf));
 	NsCssBegin();
 	_KePrint("[css] begin ok\n");
 	NsCssAddSheet(s_cssBuf, strlen(s_cssBuf));
 	_KePrint("[css] sheet added\n");
-	NsHtmlToText(body, got - (size_t)(body - s_body), s_text, sizeof(s_text));
+	NsHtmlToText(body, blen, s_text, sizeof(s_text));
 	_KePrint("[css] rendered %d bytes\n", (int)strlen(s_text));
 	NsCssEnd();
 	if (!s_text[0])
 		strcpy(s_text, "(empty page)");
+	if (left_tls || used_tls) {
+		const char* note = left_tls ? "Note: this page redirected from HTTPS to HTTP.\n"
+									: "HTTPS\n";
+		uint32_t note_col = left_tls ? 0xffcc8844u : 0xff44cc88u;
+		size_t nlen = strlen(note);
+		size_t tlen = strlen(s_text);
+		if (nlen + tlen < sizeof(s_text)) {
+			memmove(s_text + nlen, s_text, tlen + 1);
+			memcpy(s_text, (void*)note, nlen);
+			memmove(s_col + nlen, s_col, (tlen + 1) * sizeof(s_col[0]));
+			memmove(s_sz + nlen, s_sz, tlen + 1);
+			for (size_t n = 0; n < nlen; n++) {
+				s_col[n] = note_col;
+				s_sz[n] = 14;
+			}
+		}
+	}
 	NsShowStatus(s_text);
 	return 0;
 }
@@ -945,8 +850,9 @@ int main(int argc, char* argv[]) {
      * user args, so scan everything (argv[0] is already "--selftest"
      * under init's TERM runner). */
 	for (int a = 0; a < argc; a++) {
-		if (argv[a] && !strcmp(argv[a], "--selftest") && a + 1 < argc && argv[a + 1] &&
-			argv[a + 1][0]) {
+		if (argv[a] &&
+			(!strcmp(argv[a], "--selftest") || !strcmp(argv[a], "selftest")) &&
+			a + 1 < argc && argv[a + 1] && argv[a + 1][0]) {
 			char turl[NS_URL_MAX];
 			strncpy(turl, argv[a + 1], sizeof(turl) - 1);
 			turl[sizeof(turl) - 1] = 0;

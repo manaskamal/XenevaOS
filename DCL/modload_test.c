@@ -273,9 +273,9 @@ void modload_test_run(void) {
 	hwrng_node_register();
 	dcl_puts("DCL module loader status\r\n");
 
-	if (!modload_embedded_test())
-		return;
-	if (!modload_virtio_rng_test())
-		return;
+	/* The toy module is a loader check. virtio-rng still has to come up
+	 * so userspace HTTPS can read /dev/hwrng. */
+	modload_embedded_test();
+	modload_virtio_rng_test();
 	UARTDebugOut("[modtest]: done\r\n");
 }
