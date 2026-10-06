@@ -124,6 +124,12 @@ void AuHeapInitialize() {
 			(heap_probe && heap_during > heap_before && heap_after == heap_before) ?
 				"PASS" : "FAIL");
 	}
+#ifdef __XENEVA_DEBUG_ALLOC__
+	/* Stage 2 deliberate-bug tests: overflow, underflow, use-after-free,
+	 * double-free, leak grouping. Runs on a scratch pool, so the live
+	 * heap is untouched no matter what the tests corrupt. */
+	AuAllocDebugTest();
+#endif
 }
 
 /* ---- Public kernel allocator API ---- */
@@ -132,6 +138,11 @@ void* kmalloc(unsigned int size) {
 	if (!g_kheap || !size)
 		return NULL;
 
+#ifdef __XENEVA_DEBUG_ALLOC__
+	/* Stash our return address for the backend's caller tracking.
+	 * kcalloc delegates here, so its blocks group under kcalloc. */
+	tlsf_dbg_hint_set(__builtin_return_address(0));
+#endif
 	/* The heap spinlock does not mask IRQs. A timer tick in the middle of
 	 * tlsf_malloc/free can schedule another thread that also kmallocs, or
 	 * an IRQ path can re-enter TLSF, and the free-list walks off into
@@ -173,6 +184,9 @@ void kfree(void* ptr) {
 	if (!ptr || !g_kheap)
 		return;
 
+#ifdef __XENEVA_DEBUG_ALLOC__
+	tlsf_dbg_hint_set(__builtin_return_address(0));
+#endif
 	uint64_t daif = read_daif();
 	mask_irqs();
 	AuAcquireSpinlock(g_heap_lock);
@@ -185,6 +199,9 @@ void* krealloc(void* ptr, unsigned int new_size) {
 	if (!g_kheap)
 		return NULL;
 
+#ifdef __XENEVA_DEBUG_ALLOC__
+	tlsf_dbg_hint_set(__builtin_return_address(0));
+#endif
 	uint64_t daif = read_daif();
 	mask_irqs();
 	AuAcquireSpinlock(g_heap_lock);
@@ -227,6 +244,19 @@ void kheap_debug() {
 		return;
 	AuTextOut("[kmalloc]: pool=%zu, used=%zu\r\n", tlsf_total(g_kheap), tlsf_used(g_kheap));
 }
+
+#ifdef __XENEVA_DEBUG_ALLOC__
+void kheap_leak_dump() {
+	if (!g_kheap)
+		return;
+	uint64_t daif = read_daif();
+	mask_irqs();
+	AuAcquireSpinlock(g_heap_lock);
+	tlsf_leak_dump(g_kheap);
+	AuReleaseSpinlock(g_heap_lock);
+	restore_daif(daif);
+}
+#endif
 
 void kmalloc_debug_on(bool bit) {
 	(void)bit;
