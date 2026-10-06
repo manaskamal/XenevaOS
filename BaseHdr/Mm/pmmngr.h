@@ -53,6 +53,12 @@ AU_EXTERN AU_EXPORT uint64_t AuPmmngrAllocPagesForOwner(uint32_t pages,
 	int32_t owner);
 AU_EXTERN AU_EXPORT uint64_t AuPmmOwnerPages(int32_t owner);
 extern void AuPmmOwnerTeardownCheck(int32_t owner, const char* tag);
+#ifdef __XENEVA_DEBUG_ALLOC__
+/* Stage 3 (debug-only): walk the frame table and print every block
+ * still tagged to the owner. Called from AuPmmOwnerTeardownCheck on
+ * failure; also usable from the debugger. */
+extern void AuPmmOwnerScan(int32_t owner);
+#endif
 extern void AuPmmngrInitialize(KERNEL_BOOT_INFO *info);
 
 #define PMM_INVALID_PHYS UINT64_MAX

@@ -459,6 +459,42 @@ static void owner_self_test(void) {
 }
 #endif
 
+#ifdef __XENEVA_DEBUG_ALLOC__
+#ifndef __XENEVA_BLEED__
+/* Stage 3 deliberate-bug test: leak two blocks for a scratch owner,
+ * watch the teardown check fire AND the frame-table scan name them,
+ * then release everything so the boot state restores exactly. */
+static void owner_scan_self_test(void) {
+	const int32_t test_owner = -9870;
+	AuPmmStats before, after;
+	AuPmmngrGetStats(&before);
+
+	/* One single page plus one 5-page run (order 3 = 8 counted pages):
+	 * 9 pages the scan must find. */
+	uint64_t single = AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, test_owner);
+	uint64_t run = AuPmmngrAllocPagesForOwner(5, 1, 0, AURORA_PAGE_NORMAL, test_owner);
+	if (single == PMM_INVALID_PHYS || run == PMM_INVALID_PHYS)
+		fatal("owner scan self-test alloc", PMM_NO_PAGE, 0);
+	if (AuPmmOwnerPages(test_owner) != 9)
+		fatal("owner scan self-test count", run >> PAGE_SHIFT,
+			AuPmmOwnerPages(test_owner));
+
+	AuTextOut("[pmm]: owner scan self-test: 2 leaked blocks, teardown check + scan:\r\n");
+	AuPmmOwnerTeardownCheck(test_owner, "scanself");
+
+	if (!AuPmmngrReleasePage(single) || !AuPmmngrReleasePages(run))
+		fatal("owner scan self-test release", single >> PAGE_SHIFT, run >> PAGE_SHIFT);
+	AuPmmOwnerTeardownCheck(test_owner, "scanself");
+
+	AuPmmngrGetStats(&after);
+	if (memcmp(&before, &after, sizeof(before)))
+		fatal("owner scan self-test restore", PMM_NO_PAGE, after.allocated_pages);
+
+	AuTextOut("[pmm]: owner scan self-test passed\r\n");
+}
+#endif
+#endif /* __XENEVA_DEBUG_ALLOC__ */
+
 #ifndef __XENEVA_BLEED__
 static void boot_self_test(void) {
 	AuPmmStats before, after; 
@@ -583,6 +619,9 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 #ifndef __XENEVA_BLEED__
 	boot_self_test();
 	owner_self_test();
+#ifdef __XENEVA_DEBUG_ALLOC__
+	owner_scan_self_test();
+#endif
 #endif
 }
 
@@ -640,13 +679,62 @@ void AuPmmOwnerTeardownCheck(int32_t owner, const char* tag) {
 	 * echoed literally *without consuming the arg*, which misaligns
 	 * every specifier after it). Owner id prints in hex so negative
 	 * subsystem ids stay exact. */
-	if (pages)
+	if (pages) {
 		AuTextOut("[pmm]: LEAK owner=%s id=%x still owns %d pages at teardown\r\n",
 			tag ? tag : "?", (size_t)owner, pages);
-	else
+#ifdef __XENEVA_DEBUG_ALLOC__
+		/* Stage 3: say exactly which frames are still tagged. */
+		AuPmmOwnerScan(owner);
+#endif
+	} else
 		AuTextOut("[pmm]: owner=%s id=%x teardown clean (0 pages)\r\n",
 			tag ? tag : "?", (size_t)owner);
 }
+
+#ifdef __XENEVA_DEBUG_ALLOC__
+/* Stage 3: frame-table owner scan. Heads only (one line per block;
+ * tails are implied by the order). Output capped so a big leak can't
+ * flood the serial console. pmm_lock is held for the whole walk, same
+ * as recount()/Validate(). */
+#define PMM_OWNER_SCAN_MAXLINES 16
+void AuPmmOwnerScan(int32_t owner) {
+	uint64_t found_blocks = 0, found_pages = 0, hidden = 0;
+	uint16_t slot = PMM_NO_OWNER_SLOT;
+	lock();
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (pmm_owner_table[i].in_use && pmm_owner_table[i].id == owner) {
+			slot = i;
+			break;
+		}
+	if (slot == PMM_NO_OWNER_SLOT) {
+		unlock();
+		AuTextOut("[pmm]: scan owner id=%x: no frames (untracked owner)\r\n",
+			(size_t)owner);
+		return;
+	}
+	for (uint64_t p = 0; p < total_pages; ++p) {
+		PmmPageDesc* d = &page_desc[p];
+		if (d->state != PMM_PAGE_ALLOC_HEAD || d->owner != p || d->owner_slot != slot)
+			continue;
+		/* Casts: AuTextOut's %d/%x read size_t-wide; narrow C
+		 * promotions must not leak stack garbage into the print. */
+		uint64_t block_pages = 1ULL << d->order;
+		if (found_blocks < PMM_OWNER_SCAN_MAXLINES)
+			AuTextOut("[pmm]: scan frame=%x order=%d req=%d type=%x refs=%d\r\n",
+				p << PAGE_SHIFT, (size_t)d->order,
+				(size_t)d->requested_pages, (size_t)d->page_type,
+				(size_t)d->refcount);
+		else
+			++hidden;
+		++found_blocks;
+		found_pages += block_pages;
+	}
+	unlock();
+	AuTextOut("[pmm]: scan done: %d blocks %d pages owned by id=%x%s\r\n",
+		found_blocks, found_pages, (size_t)owner,
+		hidden ? " (truncated)" : "");
+}
+#endif /* __XENEVA_DEBUG_ALLOC__ */
 
 bool AuPmmngrReleasePage(uint64_t phys) {
 	if ((phys & (PAGE_SIZE - 1)) || !valid_page(phys >> PAGE_SHIFT))
