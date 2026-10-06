@@ -105,6 +105,25 @@ void AuHeapInitialize() {
 		AuTextOut("[kmalloc]: failed to create spinlock, using no lock\r\n");
 	}
 	AuTextOut("[kmalloc]: TLSF heap initialized, %u pages\r\n", initial_pages);
+
+	/* Stage 1 self-test: the global heap-bytes counter (pool->used_size,
+	 * exposed via tlsf_used) must rise on alloc and return to baseline
+	 * on free. Always-on accounting, verified every boot. */
+	{
+		size_t heap_before = tlsf_used(g_kheap);
+		void* heap_probe = kmalloc(64);
+		size_t heap_during = tlsf_used(g_kheap);
+		kfree(heap_probe);
+		size_t heap_after = tlsf_used(g_kheap);
+		/* NOTE: AuTextOut implements %d (size_t-wide) but not %llu/%zu;
+		 * unknown specifiers don't consume args and misalign the rest. */
+		AuTextOut("[kmalloc]: counter self-test before=%d during=%d after=%d %s\r\n",
+			heap_before,
+			heap_during,
+			heap_after,
+			(heap_probe && heap_during > heap_before && heap_after == heap_before) ?
+				"PASS" : "FAIL");
+	}
 }
 
 /* ---- Public kernel allocator API ---- */

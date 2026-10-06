@@ -39,6 +39,20 @@
 #define AURORA_PAGE_SHM     (1ULL<<1)
 #define AURORA_PAGE_DMA     (1ULL<<2)
 #define AURORA_PAGE_NORMAL (1ULL << 3)
+
+/* ---- Stage 1: per-owner page accounting ----
+ * Owner id space: 0 = kernel / untracked, >0 = proc_id, <0 = reserved
+ * for subsystem tags. Query with AuPmmOwnerPages(); check at teardown
+ * with AuPmmOwnerTeardownCheck(). Allocation passes the owner through
+ * the ForOwner variants; the classic entry points always use
+ * PMM_OWNER_KERNEL and are otherwise unchanged. */
+#define PMM_OWNER_KERNEL 0
+AU_EXTERN AU_EXPORT uint64_t AuPmmngrAllocPageForOwner(uint8_t page_type, int32_t owner);
+AU_EXTERN AU_EXPORT uint64_t AuPmmngrAllocPagesForOwner(uint32_t pages,
+	uint32_t alignment_pages, uint64_t max_phys_inclusive, uint8_t page_type,
+	int32_t owner);
+AU_EXTERN AU_EXPORT uint64_t AuPmmOwnerPages(int32_t owner);
+extern void AuPmmOwnerTeardownCheck(int32_t owner, const char* tag);
 extern void AuPmmngrInitialize(KERNEL_BOOT_INFO *info);
 
 #define PMM_INVALID_PHYS UINT64_MAX

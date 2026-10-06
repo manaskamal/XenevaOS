@@ -196,7 +196,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	location += proc->_user_stack_index_;
 
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
-		uint64_t blk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		uint64_t blk = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 		if (!AuMapPageEx(
 				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
@@ -224,7 +224,7 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 	 * address space. Device-mapped stacks fault on unaligned STP/STUR
 	 * (term.exe asyncth: stur d0, [sp,#0x14] -> FAR A0000FFF34) --axiss */
 	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
-		uint64_t blk = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		uint64_t blk = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 		if (!AuMapPageEx(
 				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
 			UARTDebugOut("CreateSubUserStack: already mapped %x \r\n", (location + i * PAGE_SIZE));
@@ -262,7 +262,7 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->_main_stack_ = main_thr_stack;
 	proc->prev_sample_time_us = AuGetCurrentUS();
 	proc->prev_sample_runtime_us = 0;
-	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id));
 	memset(envpBlock, 0, PAGE_SIZE);
 
 	/** confusing code :hehehehe **/

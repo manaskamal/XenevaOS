@@ -35,6 +35,7 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
+#include <Mm/tlsf.h>
 #include <Hal/AA64/sched.h>
 #include <_null.h>
 /**
@@ -219,6 +220,17 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 
 	/** clear up the process data structure **/
 	AuRemoveProcess(parent, killable);
+
+	/* Stage 1 teardown accounting: every user page above was released
+	 * through the PMM, which debits the owner's counter by the slot
+	 * stored in the block head -- exact no matter who frees. A nonzero
+	 * remainder is a genuine leak (log-only: page tables, for example,
+	 * are deliberately left mapped here). The kernel heap is global, so
+	 * it is reported, not asserted. */
+	AuPmmOwnerTeardownCheck(killable->proc_id, killable->name);
+	tlsf_pool_t* heap = tlsf_get_pool();
+	UARTDebugOut("[aurora-clean]: kernel heap in use: %d bytes\r\n",
+		tlsf_used(heap));
 
 	AuPmmStats pmm_stats;
 	AuPmmngrGetStats(&pmm_stats);

@@ -16,6 +16,8 @@ set -e
 #                           network and audio stay alive, memory stays small.
 #   --soak                  Build the kernel with the scheduler soak test
 #                           (KernelAA64/Hal/sched_soak.c) started at boot.
+#   --debug-alloc           Build the kernel with allocator debug detectors
+#                           (redzones, poisoning, caller tracking, leak dump).
 #   --direct-scanout        Rebuild userspace with the compositor drawing into
 #                           the GOP framebuffer when its pitch permits it.
 #   --unikernel             One-process XR shell: DeodhaiXR links XELnch and
@@ -105,6 +107,7 @@ FORCE_LEGACY_BUILD=0
 INSTALL_DEPS=0
 HEADLESS=0
 BLEED=0
+DEBUG_ALLOC=0
 SOAK=0
 DIRECT_SCANOUT=0
 UNIKERNEL=0
@@ -363,6 +366,7 @@ while [ $# -gt 0 ]; do
         --skip-build) SKIP_BUILD=1 ;;
         --force-user-apps) BUILD_USER_APPS=1 ;;
 		--bleed) BLEED=1 ;;
+		--debug-alloc) DEBUG_ALLOC=1 ;;
 		--soak) SOAK=1 ;;
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
 		--unikernel) UNIKERNEL=1 ;;
@@ -762,7 +766,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+	export BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
