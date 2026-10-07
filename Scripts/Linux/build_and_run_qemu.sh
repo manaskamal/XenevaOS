@@ -173,6 +173,7 @@ run_build_tui() {
     local scanout_choice="$DIRECT_SCANOUT"
     local unikernel_choice="$UNIKERNEL"
     local soak_choice="$SOAK"
+    local debugalloc_choice="$DEBUG_ALLOC"
     local network_on=1 audio_on=1 bootmenu_on=1 datadisk_on=1
     [ "$NO_NETWORK" -eq 1 ] && network_on=0
     [ "$NO_AUDIO" -eq 1 ] && audio_on=0
@@ -180,7 +181,7 @@ run_build_tui() {
     [ "$NO_DATA_DISK" -eq 1 ] && datadisk_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu doom netsurf datadisk memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak debugalloc network audio bootmenu doom netsurf datadisk memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -220,6 +221,7 @@ run_build_tui() {
         scanout_choice=0
         unikernel_choice=0
         soak_choice=0
+        debugalloc_choice=0
         network_on=1
         audio_on=1
         bootmenu_on=1
@@ -252,6 +254,7 @@ run_build_tui() {
         DIRECT_SCANOUT="$scanout_choice"
         UNIKERNEL="$unikernel_choice"
         SOAK="$soak_choice"
+        DEBUG_ALLOC="$debugalloc_choice"
         NO_NETWORK=$((1 - network_on))
         NO_AUDIO=$((1 - audio_on))
         NO_BOOT_MENU=$((1 - bootmenu_on))
@@ -278,6 +281,7 @@ run_build_tui() {
             scanout) scanout_choice=$((1 - scanout_choice)) ;;
             unikernel) unikernel_choice=$((1 - unikernel_choice)) ;;
             soak) soak_choice=$((1 - soak_choice)) ;;
+            debugalloc) debugalloc_choice=$((1 - debugalloc_choice)) ;;
             network) network_on=$((1 - network_on)) ;;
             audio) audio_on=$((1 - audio_on)) ;;
             doom) NO_DOOM=$((1 - NO_DOOM)) ;;
@@ -323,15 +327,16 @@ run_build_tui() {
         tui_row 4 "Direct scanout" "$(tui_on_off "$scanout_choice")"
         tui_row 5 "Unikernel shell" "$(tui_on_off "$unikernel_choice")"
         tui_row 6 "Scheduler soak" "$(tui_on_off "$soak_choice")"
-        tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
-        tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
-        tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
-        tui_row 10 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
-        tui_row 11 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
-        tui_row 12 "Data disk (/data)" "$(tui_on_off "$datadisk_on")"
-        tui_row 13 "Guest memory" "$memory_choice"
-        tui_row 14 "Launch" "build + run"
-        tui_row 15 "Quit" ""
+        tui_row 7 "Allocator debug" "$(tui_on_off "$debugalloc_choice")"
+        tui_row 8 "Network stack" "$(tui_on_off "$network_on")"
+        tui_row 9 "Audio daemon" "$(tui_on_off "$audio_on")"
+        tui_row 10 "Boot menu" "$(tui_on_off "$bootmenu_on")"
+        tui_row 11 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
+        tui_row 12 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
+        tui_row 13 "Data disk (/data)" "$(tui_on_off "$datadisk_on")"
+        tui_row 14 "Guest memory" "$memory_choice"
+        tui_row 15 "Launch" "build + run"
+        tui_row 16 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
