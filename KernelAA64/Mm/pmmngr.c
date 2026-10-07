@@ -669,10 +669,8 @@ uint64_t AuPmmOwnerPages(int32_t owner) {
 	return pages;
 }
 
-/* Stage 1 teardown assertion helper. Log-only by design: the allocator
- * cannot know whether a still-owned page is a genuine leak or lives in
- * a structure AuProcessClean deliberately leaves (e.g. page tables).
- * clean.c calls this after freeing everything it owns. */
+/* Stage 1 teardown assertion helper. clean.c calls this after releasing
+ * private mappings and page tables, while the process tag is still live. */
 void AuPmmOwnerTeardownCheck(int32_t owner, const char* tag) {
 	uint64_t pages = AuPmmOwnerPages(owner);
 	/* NOTE: AuTextOut only implements %d/%x/%s/%c (anything else is

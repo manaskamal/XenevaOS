@@ -29,16 +29,10 @@
 *
 **/
 
-#if defined(__GNUC__)
-#ifndef __cplusplus
-#include <stdbool.h>
-#endif
-#endif
 #include <process.h>
 #include <aucon.h>
 #include <Mm/vmmngr.h>
 #include <Mm/kmalloc.h>
-#include <pe.h>
 #include <clean.h>
 #include <Mm/pmmngr.h>
 #include <string.h>
@@ -48,12 +42,9 @@
 #include <Mm/shm.h>
 #include <loader.h>
 #include <Ipc/postbox.h>
-#include <Mm/mmap.h>
 #include <Drivers/uart.h>
 #include <timer.h>
-#include <clean.h>
 #include <Cap/capability.h>
-#include <timer.h>
 #include <Sound/sound.h>
 
 static int pid = 1;
@@ -66,6 +57,7 @@ AuProcess* root_proc;
  * @param proc -- process to add
  */
 void AuAddProcess(AuProcess* parent, AuProcess* proc) {
+	(void)parent;
 	proc->next = NULL;
 	proc->prev = NULL;
 
@@ -77,7 +69,6 @@ void AuAddProcess(AuProcess* parent, AuProcess* proc) {
 		proc->prev = proc_last;
 	}
 	proc_last = proc;
-	//proc->parent = parent;
 }
 
 /**
@@ -87,6 +78,7 @@ void AuAddProcess(AuProcess* parent, AuProcess* proc) {
  * @param proc -- process to remove
  */
 void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
+	(void)parent;
 	if (proc_first == NULL)
 		return;
 
@@ -112,6 +104,7 @@ void AuRemoveProcess(AuProcess* parent, AuProcess* proc) {
  * @param pid -- process id to find
  */
 AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
+	(void)proc;
 	for (AuProcess* proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
 		if (proc_->proc_id == pid)
 			return proc_;
@@ -125,6 +118,7 @@ AuProcess* AuProcessFindByPID(AuProcess* proc, int pid) {
 * @param thread -- thread to find
 */
 AuProcess* AuProcessFindByThread(AuProcess* proc, AA64Thread* thread) {
+	(void)proc;
 	for (AuProcess* proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
 		if (proc_->main_thread == thread) {
 			return proc_;
@@ -195,7 +189,7 @@ uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3) {
 	uint64_t location = USER_STACK;
 	location += proc->_user_stack_index_;
 
-	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
+	for (size_t i = 0; i < PROCESS_USER_STACK_SZ / PAGE_SIZE; ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 		if (!AuMapPageEx(
 				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
@@ -223,7 +217,7 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 	/* must match CreateUserStack: Normal memory + map into the process
 	 * address space. Device-mapped stacks fault on unaligned STP/STUR
 	 * (term.exe asyncth: stur d0, [sp,#0x14] -> FAR A0000FFF34) --axiss */
-	for (int i = 0; i < (PROCESS_USER_STACK_SZ / PAGE_SIZE); ++i) {
+	for (size_t i = 0; i < PROCESS_USER_STACK_SZ / PAGE_SIZE; ++i) {
 		uint64_t blk = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 		if (!AuMapPageEx(
 				cr3, blk, location + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER | PTE_AP_RW)) {
@@ -344,82 +338,22 @@ int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name) {
 }
 
 /**
- * @brief AuProcessHeapMemDestroy -- destroys the heap area of process
- * @param proc -- Pointer to process
- */
-void AuProcessHeapMemDestroy(AuProcess* proc) {
-	uint64_t startaddr = PROCESS_BREAK_ADDRESS;
-	if ((proc->proc_heapmem_len % PAGE_SIZE) != 0)
-		proc->proc_heapmem_len++;
-
-	for (int i = 0; i < proc->proc_heapmem_len / 4096; i++) {
-		AuVPage* page = AuVmmngrGetPage(
-			startaddr + i * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);
-		if (page) {
-			uint64_t phys = page->bits.page << PAGE_SHIFT;
-			if (phys) {
-#if 0
-				UARTDebugOut("Heap mem destroy -> %x \r\n", phys);
-#endif
-				AuPmmngrReleasePage((uint64_t)phys);
-			}
-			page->bits.page = 0;
-			isb_flush();
-			page->bits.present = 0;
-			isb_flush();
-			tlb_flush_vmalle1is();
-			dsb_ish();
-			isb_flush();
-		}
-	}
-}
-
-/**
  * @brief AuProcessFreeKeResource -- free up allocated kernel
  * resources
  * @param thr -- Pointer to thread which allocated
  * kernel resources
  */
-void AuProcessFreeKeResource(AA64Thread* thr) {
+static void AuProcessFreeKeResource(AA64Thread* thr) {
 	if (!thr)
 		return;
-	/* free-up all allocated kernel resources */
-
-	/* cleanup user related informations */
-
 	AuSoundRemoveDSP(thr->thread_id);
-
-	/* close allocated signals */
-	//AuSignalRemoveAll(thr);
-
-	/* remove allocated postbox*/
 	PostBoxDestroyByID(thr->thread_id);
-
-	/* destroy allocated timer */
 	int timer_id = AuGetTimerByThread(thr);
 	if (timer_id != -1)
 		AuroraTimerCancel(timer_id);
-
-	/* cleanup all network resources */
 }
 
-/**
- * @brief AuProcessExit -- exits a process
- * @param proc -- process to exit
- * @param schedulable -- schedule to next thread
- */
-void AuProcessExit(AuProcess* proc, bool schedulable) {
-	if (proc == root_proc) {
-		UARTDebugOut("[aurora]: cannot exit root process \r\n");
-		return;
-	}
-
-	if (proc->type_flags & PROCESS_TYPE_NON_KILLABLE) {
-		UARTDebugOut("[aurora]: process : %s cannot exit \r\n", proc->name);
-		return;
-	}
-
-	/** free up all allocated files by this process **/
+static void AuProcessCloseFiles(AuProcess* proc) {
 	BordoisilaCapCleanupProcess(proc);
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuVFSNode* file = proc->fds[i];
@@ -428,7 +362,6 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 		proc->fds[i] = NULL;
 		UARTDebugOut(
 			"[AuProcessExit]: closing file : %s flags %x\r\n", file->filename, file->flags);
-		/** conditional check for cache flag **/
 		if (file->flags & FS_FLAG_CACHED) {
 			UARTDebugOut("[AuProcessExit]: cached file skipped close : %s, flags : %x\r\n",
 						 file->filename);
@@ -436,66 +369,105 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 				file->fileCopyCount -= 1;
 			continue;
 		}
-		if (file->flags & FS_FLAG_DEVICE || file->flags & FS_FLAG_FILE_SYSTEM)
+		if (file->flags & (FS_FLAG_DEVICE | FS_FLAG_FILE_SYSTEM))
 			continue;
-		if ((file->flags & FS_FLAG_GENERAL) || (file->flags & FS_FLAG_DIRECTORY)) {
+		if (file->flags & (FS_FLAG_GENERAL | FS_FLAG_DIRECTORY)) {
 			if (file->fileCopyCount <= 0) {
 				UARTDebugOut("Freeing up file : %s \r\n", file->filename);
-				kfree(file);
-				/* same AuVFSNode* can sit in several fd slots (dup/tty
-				 * copy). after the free those slots are dangling and the
-				 * next iteration kfree's a live heap object. drop the
-				 * aliases here. --axiss */
+				/* Duplicated descriptors can refer to the same node. */
 				for (int j = i + 1; j < FILE_DESC_PER_PROCESS; j++) {
 					if (proc->fds[j] == file)
 						proc->fds[j] = NULL;
 				}
+				kfree(file);
 			} else
 				file->fileCopyCount -= 1;
+			continue; /* file may have been freed (and poisoned) above. */
 		}
-		if (file->flags & FS_FLAG_SOCKET) {
-			if (file->close)
-				file->close(file, file);
-		}
+		if ((file->flags & FS_FLAG_SOCKET) && file->close)
+			file->close(file, file);
 	}
+}
 
-	AuProcessFreeKeResource(proc->main_thread);
-
-	//UnmapMemMapping((void*)PROCESS_MMAP_ADDRESS, proc->proc_mmap_len);
-	/* we need to add this process to killable list, so that we can kill it
-	 * later on, because we can't kill here, or else system will crash
-	 */
-	proc->state = PROCESS_STATE_DIED;
-	AuSHMUnmapAll(proc);
-
-	/** unblock all waitlisted threads **/
-	for (int i = 0; i < proc->waitlist->pointer; i++) {
-		AA64Thread* thr = (AA64Thread*)list_remove(proc->waitlist, i);
+void AuProcessWakeWaiters(AuProcess* proc) {
+	if (!proc->waitlist)
+		return;
+	while (proc->waitlist->pointer) {
+		AA64Thread* thr = (AA64Thread*)list_remove(proc->waitlist, 0);
 		if (thr)
 			AuUnblockThread(thr);
 	}
 
 	kfree(proc->waitlist);
+	proc->waitlist = NULL;
+}
 
-	/* threads[0] is the first sub-thread (term.exe asyncth). starting at
-	 * i=1 left it on the ready/block/sleep list, then AuProcessClean
-	 * kfree'd it and the scheduler wrote into a TLSF free block. --axiss */
+/**
+ * @brief AuProcessExit -- release resources and queue a process for reaping
+ * @param proc -- process to exit
+ * @param schedulable -- retained for the shared process API; the caller schedules
+ */
+void AuProcessExit(AuProcess* proc, bool schedulable) {
+	(void)schedulable;
+	if (!proc || (proc->state & PROCESS_STATE_DIED))
+		return;
+	if (proc == root_proc) {
+		UARTDebugOut("[aurora]: cannot exit root process \r\n");
+		return;
+	}
+	if (proc->type_flags & PROCESS_TYPE_NON_KILLABLE) {
+		UARTDebugOut("[aurora]: process : %s cannot exit \r\n", proc->name);
+		return;
+	}
+
+	/* Stop other threads before releasing their process-wide resources. */
+	AA64Thread* current = AuGetCurrentThread();
+	if (proc->main_thread && proc->main_thread != current)
+		AuThreadMoveToTrash(proc->main_thread);
+	for (int i = 0; i < proc->num_thread; ++i) {
+		AA64Thread* thr = proc->threads[i];
+		if (thr && thr != current && thr != proc->main_thread)
+			AuThreadMoveToTrash(thr);
+	}
+
+	AuProcessCloseFiles(proc);
+	AuProcessFreeKeResource(proc->main_thread);
+	AuSHMUnmapAll(proc);
+	AuProcessWakeWaiters(proc);
 	for (int i = 0; i < proc->num_thread; i++) {
 		AA64Thread* killable = proc->threads[i];
 		if (!killable || killable == proc->main_thread)
 			continue;
 		AuProcessFreeKeResource(killable);
-		AuThreadMoveToTrash(killable);
+		if (killable == current)
+			AuThreadMoveToTrash(killable);
 	}
+	/* The main thread completes its handoff in the syscall/abort handler.
+	 * Publish death only after exit cleanup is complete. */
+	proc->state = PROCESS_STATE_DIED;
+}
+
+bool AuProcessCanReap(AuProcess* proc) {
+	if (!proc || !(proc->state & PROCESS_STATE_DIED) || AuIsVirtualAddressSpaceActive(proc->cr3))
+		return false;
+	AA64Thread* current = AuGetCurrentThread();
+	AA64Thread* main_thr = proc->main_thread;
+	if (main_thr && (main_thr == current || main_thr->state != THREAD_STATE_KILLABLE))
+		return false;
+	for (int i = 0; i < proc->num_thread; ++i) {
+		AA64Thread* thr = proc->threads[i];
+		if (thr && (thr == current || thr->state != THREAD_STATE_KILLABLE))
+			return false;
+	}
+	return true;
 }
 
 /**
- * @brief AuGetKillableProcess -- returns a killable process
- * @param proc -- process to kill
+ * @brief AuGetKillableProcess -- return the first process safe to reap
  */
-AuProcess* AuGetKillableProcess() {
+AuProcess* AuGetKillableProcess(void) {
 	for (AuProcess* proc_ = proc_first; proc_ != NULL; proc_ = proc_->next) {
-		if (proc_->state & PROCESS_STATE_DIED)
+		if (AuProcessCanReap(proc_))
 			return proc_;
 	}
 
@@ -512,30 +484,19 @@ AuProcess* AuGetKillableProcess() {
  */
 int AuProcessWaitForTermination(AuProcess* proc, int pid) {
 	if (pid == -1) {
-		do {
-			AuProcess* killable = AuGetKillableProcess();
-
-			if (killable) {
-				AuProcessClean(0, killable);
-				killable = NULL;
-			}
-
-			if (!killable) {
-				proc->state = PROCESS_STATE_SUSPENDED;
-				//AuScheduleNext();
-				return -1;
-			}
-		} while (1);
-	} else {
-		AuProcess* child = AuProcessFindByPID(0, pid);
-		if (!child || (child->state & PROCESS_STATE_DIED) || !child->waitlist)
-			return 0;
-		AA64Thread* thr = AuGetCurrentThread();
-		AuBlockThread(thr);
-		list_add(child->waitlist, thr);
-		return 1;
+		AuProcess* killable;
+		while ((killable = AuGetKillableProcess()) != NULL)
+			AuProcessClean(0, killable);
+		proc->state = PROCESS_STATE_SUSPENDED;
+		return -1;
 	}
-	return 0;
+	AuProcess* child = AuProcessFindByPID(0, pid);
+	if (!child || (child->state & PROCESS_STATE_DIED) || !child->waitlist)
+		return 0;
+	AA64Thread* thr = AuGetCurrentThread();
+	AuBlockThread(thr);
+	list_add(child->waitlist, thr);
+	return 1;
 }
 
 /**
