@@ -232,6 +232,15 @@ void seq_printf(const void* m, const char* fmt, ...) {
 	/* seq users sit behind debugfs, which never materialises DCL-side */
 }
 
+void seq_puts(const void* m, const char* s) {
+	(void)m;
+	(void)s;
+	/* same sink as seq_printf(): declared by <linux/seq_file.h>, which
+	 * serial_core.c's uart_proc_show() writes through. DCL has no procfs
+	 * to receive it -- CONFIG_PROC_FS is off -- so nothing reaches here
+	 * today; the symbol exists so that path links if it ever is built. */
+}
+
 /* ── device_create: the devfs bridge pivot ─────────────────────────────── */
 
 #define DCL_MAX_DEVICES 16

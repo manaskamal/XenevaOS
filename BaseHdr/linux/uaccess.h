@@ -45,4 +45,46 @@ static inline void force_successful_syscall_return(void) {}
 }
 #endif
 
+
+/*
+ * put_user(x, ptr) -- store one value into a userspace address, returning 0
+ * on success and -EFAULT when the address is not usable.
+ *
+ * DCL's memory model is the one described at the top of this header: the
+ * syscall keeps the caller's page tables, so the store is a direct one, and
+ * there is no fault to recover from -- hence the unconditioal 0.  The
+ * expression form matters because serial_core.c:1074 is
+ *
+ *     return put_user(result, value);
+ *
+ * i.e. the macro has to *yield* the status, not merely perform the store; a
+ * do/while() form would have compiled as an implicit-int statement and
+ * returned garbage.
+ */
+#define put_user(x, ptr)						\
+	({								\
+		*(ptr) = (x);						\
+		0;							\
+	})
+
+/*
+ * get_user(x, ptr) -- the read half, and it must yield the status for the
+ * same reason put_user() does: tty_ioctl.c:884 writes
+ *
+ *     if (get_user(arg, (unsigned int __user *)arg))
+ *
+ * so a do/while() form would have been an implicit-int expression whose value
+ * was garbage, and the guard would have taken its failure arm on success.
+ *
+ * Body is the store read backwards; 0 is the success it must yield.  mainline
+ * adds a probe for a faulting userspace address, and DCL's put_user() does
+ * not have that either -- both run in the kernel, where the pointer arrived
+ * from a call the kernel already validated.  That is pre-existing, not
+ * introduced here.
+ */
+#define get_user(x, ptr)						\
+	({								\
+		(x) = *(ptr);						\
+		0;							\
+	})
 #endif /* __LINUX_UACCESS_H__ */

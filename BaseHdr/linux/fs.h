@@ -154,12 +154,50 @@ struct cdev {
  * link-state members live there in mainline and are never dereferenced
  * from the module.
  */
+/* Owned by <linux/of.h>; declared here only so the of_node member below has a
+ * type to point at without this header having to know what a device tree is. */
+struct device_node;
+
+/*
+ * Two DCL-only members are carved out of the padding this struct declares
+ * above, rather than appended after it, and the three things that make this
+ * struct an ABI pin all still hold afterwards: kobj_name at 0, devt at 708,
+ * sizeof 800.  Appending would have kept the first two and silently broken
+ * the third -- the module embeds `struct device` inside its own objects and
+ * was compiled with a 800-byte one, so an 816-byte DCL would have DCL's
+ * writes landing past the end of the module's allocation.
+ *
+ * The offsets are mainline's, not chosen: `struct device` opens with `struct
+ * kobject kobj`, which the struct cdev above measures at 64 bytes, so
+ * `parent` is the next member at 64 -- the same slot the module would read
+ * if it ever read one.  `of_node` sits at 696, the last 8-byte-aligned hole
+ * before the devt pin, with 704..707 left as `_pad` so devt does not move.
+ * Both are read-only at their two call sites (serial_core.c:3093 and :3236),
+ * and DCL's own devices come out of device_create()'s memset, so they read
+ * zero rather than whatever the module left in those bytes.
+ *
+ * The three _Static_asserts below exist so that none of this has to be
+ * re-argued: if a future edit moves devt or grows the struct, the build says
+ * so at this line instead of at boot, when the failure would be a corrupt
+ * device table and no message to explain it.
+ */
 struct device {
 	const char* kobj_name;                  /* 0 (kobject.name) */
-	unsigned char _head[700];               /* 8..707 */
+	unsigned char _head0[56];               /* 8..63 */
+	struct device* parent;                  /* 64 (after kobj, as in mainline) */
+	unsigned char _mid[624];                /* 72..695 */
+	struct device_node* of_node;            /* 696 */
+	unsigned char _pad[4];                  /* 700..707 */
 	unsigned int devt;                      /* 708 */
 	unsigned char _tail[88];                /* 712..799 */
 };
+
+_Static_assert(sizeof(struct device) == 800,
+               "fs.h: struct device is pinned to 800B (linux-7.2.6 arm64)");
+_Static_assert(__builtin_offsetof(struct device, kobj_name) == 0,
+               "fs.h: kobj_name is pinned at 0 (device_create writes it)");
+_Static_assert(__builtin_offsetof(struct device, devt) == 708,
+               "fs.h: devt is pinned at 708 (the module's device_destroy reads it)");
 
 struct class;
 

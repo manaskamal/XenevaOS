@@ -183,6 +183,20 @@ extern void modload_test_run(void);
 extern void DclRunInitcalls(void);
 extern void DclMemTestRun(void);
 
+/* Stage 1 of the 8250/serial milestone: interrupt registration, port I/O,
+ * windowing, jiffies, wait queues. Runs after DclMemTestRun so the log keeps
+ * the same order as the milestones. */
+extern void DclPrimTestRun(void);
+
+/* Stage 2: the flip buffer -- tty_buffer.c's allocation, the used/commit/read
+ * protocol, the flag byte stride, and delivery through queue_work(). */
+extern void DclTtyBufferTestRun(void);
+
+/* Stage 3: the serial core -- uart_get_divisor(), uart_get_baud_rate(),
+ * uart_update_timeout(), and 8250's set_termios()/tx_chars() driven against
+ * a register file that lives in ordinary RAM. */
+extern void DclSerialTestRun(void);
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -266,14 +280,34 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	 * and every later user see them. */
 	DclRunInitcalls();
 
-	/* Test DCL Layer: load embedded .ko module. This also detects a
-	 * virtio-rng device and binds it, while the module's driver is still
-	 * registered (see modload_test.c). */
+	/* Test DCL Layer: load an embedded ELF object through
+	 * DCL/module_loader.c, then bind the virtio-rng device. The driver is
+	 * compiled from source into the image now (Vendored/, registered by
+	 * DclRunInitcalls() above); what runs here is the scan for the device
+	 * and the hwrng self-test (see modload_test.c). */
 	modload_test_run();
 
-	/* /dev/urandom reads the hardware RNG, so this runs after the .ko test
-	 * has bound virtio_rng.ko. */
+	/* /dev/urandom reads the hardware RNG, so this runs after
+	 * modload_test_run() has bound virtio_rng. */
 	DclMemTestRun();
+
+	/* Stage 1 (primitives) for tty/serial: proves jiffies advances, an SPI
+	 * irq registers and an SGI is refused, ioremap is the linear map, a
+	 * window claim is refused on overlap, and a wake reaches a waiter. */
+	DclPrimTestRun();
+
+	/* Stage 2 (flip buffer) for tty/serial: proves tty_buffer.c allocates
+	 * and accounts correctly, that bytes stay invisible until
+	 * tty_flip_buffer_push(), that the flag byte survives the round trip
+	 * through data + size, and that queue_work() delivers inline. */
+	DclTtyBufferTestRun();
+
+	/* Stage 3 (serial core) for tty/serial: proves the baud rate helpers
+	 * decode and round the way mainline says they do, that a full
+	 * serial8250_do_set_termios() lands the divisor in the latch and the
+	 * frame time in the port, and that serial8250_tx_chars() drains the
+	 * tty's transmit ring byte by byte. */
+	DclSerialTestRun();
 
 	/* from here, be carefull with AuPmmngrAllocBlocks,
 	 * sometime it doesn't allocate blocks contiguously,

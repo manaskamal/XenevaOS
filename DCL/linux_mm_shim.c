@@ -165,8 +165,16 @@ unsigned long shmem_get_unmapped_area(struct file* file, unsigned long addr,
 /* ── tty_init(): mem.c's last statement ────────────────────────────────── */
 
 int tty_init(void) {
-	/* Real body lands with the serial milestone (drivers/tty/serial/8250). */
-	UARTDebugOut("[dcl]: tty_init placeholder (serial core not yet ported)\r\n");
+	/*
+	 * The serial core and the line discipline table are compiled in now
+	 * (8250_port, serial_core, tty_ldisc, tty_ldsem -- stage 3), but the
+	 * body of this function is tty_io.c's: it creates /dev/console,
+	 * /dev/tty and /dev/ptmx and brings up their cdevs, which is the
+	 * file layer that lands at stage 5.  Until then there is no tty to
+	 * open, so there is nothing to register either -- n_tty.c (stage 6)
+	 * would be the first line discipline to put in the table.
+	 */
+	UARTDebugOut("[dcl]: tty_init placeholder (tty file layer lands with tty_io.c)\r\n");
 	return 0;
 }
 
@@ -314,6 +322,22 @@ ssize_t copy_splice_read(struct file* in, loff_t* ppos,
  * matters: chr_dev_init() publishes the /dev nodes the rest of boot expects.
  */
 extern int (*const __dcl_initcall_chr_dev_init)(void);
+extern int (*const __dcl_initcall_virtio_rng_driver_init)(void);
+
+/*
+ * init_user_ns -- the object tty_ioctl.c:843 takes the address of
+ * (`checkpoint_restore_ns_capable(&init_user_ns)`).  Its type is declared in
+ * <linux/capability.h> beside the predicate that consumes it; it is defined
+ * here because it is a kernel object rather than a tty one, and this file is
+ * where DCL keeps the rest of them.
+ *
+ * It is never dereferenced -- see the note in capability.h -- so what is
+ * defined is an address and a placeholder member, not mainline's sixty fields
+ * of uid/gid mapping.  It exists so that the expression at that call site has
+ * something to name: without it the file would compile and the link would fail
+ * on a symbol nobody would think to look for in a tty port.
+ */
+struct user_namespace init_user_ns = { 0 };
 
 void DclRunInitcalls(void) {
 	if (__dcl_initcall_chr_dev_init) {
@@ -322,5 +346,31 @@ void DclRunInitcalls(void) {
 			UARTDebugOut("[dcl]: chr_dev_init failed: %d\r\n", rc);
 		else
 			UARTDebugOut("[dcl]: chr_dev_init ok (mem devices registered)\r\n");
+	}
+
+	/*
+	 * The vendored drivers. module_virtio_driver() in <linux/virtio.h>
+	 * expands to an init function plus a DCL_INITCALL() pointer, and this
+	 * function is where those pointers get named -- nothing discovers
+	 * them, which is the whole reason the list is explicit.
+	 *
+	 * Order against chr_dev_init is arbitrary (the two are independent),
+	 * but both must run before modload_test_run() calls
+	 * virtio_rng_detect(), since detect() matches against the registered
+	 * driver list and would otherwise find nothing to bind.
+	 *
+	 * This line is the half of bringing up a driver that does not show up
+	 * in the build: omit it and virtio-rng.c compiles, links, and then
+	 * silently never registers -- no error, no warning, and
+	 * virtio_rng_detect() quietly reports no match. It is exactly the
+	 * symptom the prebuilt .ko used to produce when its init_module()
+	 * was not called, so it is worth having written down once.
+	 */
+	if (__dcl_initcall_virtio_rng_driver_init) {
+		int rc = __dcl_initcall_virtio_rng_driver_init();
+		if (rc)
+			UARTDebugOut("[dcl]: virtio_rng register failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: virtio_rng driver registered\r\n");
 	}
 }

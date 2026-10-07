@@ -1,4 +1,5 @@
 #include <linux/virtio.h>
+#include <linux/err.h>	/* ERR_PTR -- virtio_find_single_vq reports find_vqs failures */
 #include <Drivers/virtio.h>
 #include <pcie.h>
 #include <Mm/kmalloc.h>
@@ -199,6 +200,69 @@ static int shim_find_vqs(struct virtio_device* vdev,
 static void shim_del_vqs(struct virtio_device* vdev) {
 	/* TODO: tear down individual vqs and free memory */
 	(void)vdev;
+}
+
+/*
+ * virtio_find_vqs / virtio_find_single_vq / virtio_device_ready -- the
+ * mainline wrappers a ported driver calls, declared in <linux/virtio.h> and
+ * defined here.
+ *
+ * virtio_find_vqs had a declaration in virtio.h and no definition anywhere:
+ * nothing in the tree referenced it, because the prebuilt virtio_rng.ko
+ * carried its own inline copy of the whole helper family. It is the dispatch
+ * point -- mainline's vp_find_vqs() is what walks the config ops -- so the
+ * body is the config-op call and nothing more. The NULL guards are not
+ * defensive padding: probe runs before anyone has validated that a device
+ * advertises find_vqs, and a NULL call there would be a fault with no
+ * register to point at.
+ *
+ * virtio_find_single_vq is what virtio-rng.c:177 actually uses. It reports
+ * failure as an error pointer rather than NULL, which is why the driver can
+ * write `if (IS_ERR(vi->vq)) { err = PTR_ERR(vi->vq);` and unwind -- returning
+ * NULL would sail past IS_ERR() and then fault on the first
+ * virtqueue_add_inbuf(). ERR_PTR/PTR_ERR stay 32-bit-clean on this target
+ * because ERR_PTR sign-extends through `(long)` before widening to a pointer,
+ * so the top 12 bits are all ones and IS_ERR's range check still holds.
+ *
+ * virtio_device_ready sets DRIVER_OK, which is the transition that lets the
+ * device start filling the ring. It is called between find_vqs and the first
+ * add_inbuf, and doing it out of order (or not at all) leaves the device in
+ * DRIVER state with an enabled ring nobody is allowed to use -- the symptom
+ * is a virtqueue that never produces a completion, which reads exactly like a
+ * broken interrupt.
+ */
+int virtio_find_vqs(struct virtio_device* vdev,
+					unsigned nvqs,
+					struct virtqueue** vqs,
+					struct virtqueue_info* vqs_info,
+					void* desc) {
+	if (!vdev || !vdev->config || !vdev->config->find_vqs)
+		return -1;
+	return vdev->config->find_vqs(vdev, nvqs, vqs, vqs_info, desc);
+}
+
+struct virtqueue* virtio_find_single_vq(struct virtio_device* vdev,
+					void (*cb)(struct virtqueue* vq),
+					const char* name) {
+	struct virtqueue* vq = NULL;
+	struct virtqueue_info info = {
+		.name = name,
+		.callback = cb,
+		.ctx = false,
+	};
+	int err = virtio_find_vqs(vdev, 1, &vq, &info, NULL);
+	if (err)
+		return (struct virtqueue*)ERR_PTR(err);
+	return vq;
+}
+
+void virtio_device_ready(struct virtio_device* vdev) {
+	u8 status;
+	if (!vdev || !vdev->config || !vdev->config->get_status ||
+	    !vdev->config->set_status)
+		return;
+	status = vdev->config->get_status(vdev);
+	vdev->config->set_status(vdev, status | VIRTIO_CONFIG_S_DRIVER_OK);
 }
 
 /* ─── Virtqueue operations ─── */
