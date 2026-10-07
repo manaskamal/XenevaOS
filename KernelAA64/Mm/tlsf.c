@@ -189,8 +189,14 @@ static bool tlsf_ptr_sane(const void* p) {
 		return true;
 	if (a & (uintptr_t)TLSF_ALIGN_MASK)
 		return false;
+#ifndef TLSF_HOST_TEST
+	/* Kernel-only: heap pointers are TTBR1 VAs. The host unit test
+	 * (Tests/alloc_debug_stress.c) defines TLSF_HOST_TEST, where user
+	 * addresses live below this range and the check would reject every
+	 * block. Kernel builds never define it: flag-off codegen identical. */
 	if (a < 0xFFFF000000000000ULL)
 		return false;
+#endif
 	return true;
 }
 
@@ -215,6 +221,22 @@ static void tlsf_mapping(size_t size, int* fl, int* sl) {
 		*fl = f;
 		*sl = (int)((size ^ ((size_t)1 << f)) >> (f - SL_INDEX_COUNT_LOG2));
 	}
+}
+
+/* Search mapping (reference TLSF behavior): round the request UP to
+ * second-level granularity before bucketing, so the starting bucket can
+ * only hold blocks >= size. Without this, a same-first-level bucket may
+ * yield a SMALLER block and the whole-block fallback hands it out short
+ * -- a silent heap overflow in the caller (caught by the Stage-2 stress
+ * battery as a 6-byte neighbor-header smash). Insert/remove keep using
+ * tlsf_mapping with the block's exact size; using the search mapping
+ * there would mis-file blocks and reintroduce aliasing. */
+static void tlsf_mapping_search(size_t size, int* fl, int* sl) {
+	if (size >= SL_INDEX_COUNT) {
+		int f = tlsf_fls(size);
+		size += ((size_t)1 << (f - SL_INDEX_COUNT_LOG2)) - 1;
+	}
+	tlsf_mapping(size, fl, sl);
 }
 
 /* ---- Free-list management ---- */
@@ -287,7 +309,7 @@ static void tlsf_insert_free_block(tlsf_pool_t* pool, free_block_t* blk, int fl,
 
 static free_block_t* tlsf_find_free_block(tlsf_pool_t* pool, size_t size) {
 	int fl, sl;
-	tlsf_mapping(size, &fl, &sl);
+	tlsf_mapping_search(size, &fl, &sl);
 
 	uint32_t sl_masked = pool->sl_bitmap[fl] & ~((1U << sl) - 1);
 	if (sl_masked) {
