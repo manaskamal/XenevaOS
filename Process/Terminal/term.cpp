@@ -1254,8 +1254,14 @@ void TerminalThread() {
 */
 int main(int argc, char* arv[]) {
 	app = ChitralekhaStartApp(argc, arv);
-	win = ChCreateWindow(
-		app, (WINDOW_FLAG_MOVABLE | WINDOW_FLAG_GLASS), "Xeneva Terminal", 300, 100, 680, 450);
+	/* The fixed cell grid and reader thread do not handle buffer replacement. */
+	win = ChCreateWindow(app,
+						 WINDOW_FLAG_MOVABLE | WINDOW_FLAG_GLASS | WINDOW_FLAG_NON_RESIZABLE,
+						 "Xeneva Terminal",
+						 300,
+						 100,
+						 680,
+						 450);
 	if (!win || !win->info) {
 		_KePrint("term: failed to create window \r\n");
 		return 1;

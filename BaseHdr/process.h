@@ -293,6 +293,15 @@ extern AuProcess* AuProcessFork(AuProcess* parent);
 */
 extern void AuProcessExit(AuProcess* proc, bool schedulable);
 
+#ifdef ARCH_ARM64
+/* Reaping requires an inactive address space and stopped threads. */
+extern bool AuProcessCanReap(AuProcess* proc);
+extern AuProcess* AuGetKillableProcess(void);
+
+/* Wake borrowed waiter threads, then release the list and its entries. */
+extern void AuProcessWakeWaiters(AuProcess* proc);
+#endif
+
 /*
 * AuProcessGetFileDesc -- returns a empty file descriptor
 * from process slot

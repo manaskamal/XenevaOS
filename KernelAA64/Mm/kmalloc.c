@@ -40,8 +40,6 @@
 #include <aucon.h>
 #include <Hal/AA64/aa64lowlevel.h>
 
-
-
 /* ---- Brk pointer for the TLSF pool ---- */
 static uint64_t _brk_current = KERNEL_BASE_ADDRESS;
 
@@ -58,14 +56,13 @@ void* au_request_page(int pages) {
 
 	for (int i = 0; i < pages; i++) {
 		void* p = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-		AuMapPage((uint64_t)(size_t)p, page_addr + (size_t)(i * 4096), PTE_NORMAL_MEM);
+		AuMapPage((uint64_t)(size_t)p, page_addr + (size_t)i * PAGE_SIZE, PTE_NORMAL_MEM);
 	}
 
-	_brk_current += (uint64_t)(pages * 4096);
+	_brk_current += (uint64_t)pages * PAGE_SIZE;
 
 	return (void*)page_addr;
 }
-// This shit is not good, mainly cause fixed size alloc. look into better way to do this. cant have a second buddy alloc... --axiss
 /*
  * au_free_page frees up contiguous pages
  * @ptr starting virtual address
@@ -75,7 +72,7 @@ int au_free_page(void* ptr, int pages) {
 	if (!ptr || pages <= 0)
 		return -1;
 
-	AuFreePages((uint64_t)(size_t)ptr, true, pages);
+	AuFreePages((uint64_t)(size_t)ptr, true, (size_t)pages * PAGE_SIZE);
 	return 0;
 }
 
@@ -94,7 +91,7 @@ void AuHeapInitialize() {
 	}
 
 	/* Register the region with TLSF */
-	if (tlsf_add_memory(pool, heap_mem, initial_pages * 4096) != 0) {
+	if (tlsf_add_memory(pool, heap_mem, initial_pages * PAGE_SIZE) != 0) {
 		AuTextOut("[kmalloc]: tlsf_add_memory failed\r\n");
 		return;
 	}
@@ -104,7 +101,7 @@ void AuHeapInitialize() {
 	if (!g_heap_lock) {
 		AuTextOut("[kmalloc]: failed to create spinlock, using no lock\r\n");
 	}
-	AuTextOut("[kmalloc]: TLSF heap initialized, %u pages\r\n", initial_pages);
+	AuTextOut("[kmalloc]: TLSF heap initialized, %d pages\r\n", initial_pages);
 
 	/* Stage 1 self-test: the global heap-bytes counter (pool->used_size,
 	 * exposed via tlsf_used) must rise on alloc and return to baseline
@@ -170,7 +167,7 @@ void* kmalloc(unsigned int size) {
 			uint64_t daif2 = read_daif();
 			mask_irqs();
 			AuAcquireSpinlock(g_heap_lock);
-			tlsf_add_memory(g_kheap, more_mem, more_pages * 4096);
+			tlsf_add_memory(g_kheap, more_mem, more_pages * PAGE_SIZE);
 			ptr = tlsf_malloc(g_kheap, size);
 			AuReleaseSpinlock(g_heap_lock);
 			restore_daif(daif2);
@@ -218,7 +215,7 @@ void* krealloc(void* ptr, unsigned int new_size) {
 			uint64_t daif2 = read_daif();
 			mask_irqs();
 			AuAcquireSpinlock(g_heap_lock);
-			tlsf_add_memory(g_kheap, more_mem, more_pages * 4096);
+			tlsf_add_memory(g_kheap, more_mem, more_pages * PAGE_SIZE);
 			result = tlsf_realloc(g_kheap, ptr, new_size);
 			AuReleaseSpinlock(g_heap_lock);
 			restore_daif(daif2);
@@ -242,7 +239,7 @@ void* kcalloc(size_t n_item, size_t size) {
 void kheap_debug() {
 	if (!g_kheap)
 		return;
-	AuTextOut("[kmalloc]: pool=%zu, used=%zu\r\n", tlsf_total(g_kheap), tlsf_used(g_kheap));
+	AuTextOut("[kmalloc]: pool=%d, used=%d\r\n", tlsf_total(g_kheap), tlsf_used(g_kheap));
 }
 
 #ifdef __XENEVA_DEBUG_ALLOC__
