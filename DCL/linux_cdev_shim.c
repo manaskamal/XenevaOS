@@ -6,6 +6,12 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <linux/fs.h>
+#include <linux/file.h>	/* nonseekable_open(): mainline's home for it is
+				 * <linux/fs.h>, which this tree may not edit. */
+#include <linux/poll.h>		/* fasync_helper()/kill_fasync() and POLL_IN/POLL_OUT;
+				 * poll.h includes nothing, so this cannot pull
+				 * <linux/kobject.h> and turn kobject_uevent() below
+				 * into the no-op macro it is everywhere else. */
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
 #include <Cred/group.h>
@@ -487,7 +493,7 @@ void device_destroy(const void* class, unsigned int devt) {
 	}
 }
 
-/* ── boot-time round-trip probe: /dev/vport0p1 ────────────────────────── *
+/* ── boot-time round-trip probe: the /dev/vport* node ──────────────────── *
  * Drives the full file_operations bridge (open -> write -> read through
  * the module's transport queues) against QEMU's virtserialport chardev
  * socket (Scripts/Linux/build_and_run_qemu.sh, 127.0.0.1:43211).
@@ -518,14 +524,106 @@ static uint64_t dcl_now_us(void) {
 	return get_cntpct_el0() / (freq / 1000000ull);
 }
 
+/*
+ * The /dev/vport* node the driver created, or NULL while it does not exist.
+ *
+ * Not a hardcoded name, because nothing here can know one:
+ * register_virtio_port() names the node "vport%up%u" from virtio_device.index
+ * and the port id the *host* assigns (virtio_console.c:1371). index is the
+ * slot DCL gave the device in its own list -- 1, not 0, because virtio_rng
+ * registered first -- and the port id comes out of QEMU's control message.
+ * Asking for "/vport0p1" is how this test reported "driver missing" for a
+ * driver that had just registered its char devices two lines earlier;
+ * walking the container is the form that keeps working when a second virtio
+ * device or a second port shows up.
+ *
+ * The returned path is left in dcl_vport_path for the caller to pass back to
+ * ->open(), which the caller does instead of re-deriving it from the node.
+ */
+static char dcl_vport_path[40];
+
+static AuVFSNode* dcl_vport_find(AuVFSNode* fs) {
+	AuVFSContainer* entries = fs ? (AuVFSContainer*)fs->device : 0;
+
+	if (!entries || !entries->childs)
+		return NULL;
+
+	for (unsigned int i = 0; i < entries->childs->pointer; i++) {
+		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, i);
+		size_t len;
+
+		if (!node_ || strncmp(node_->filename, "vport", 5) != 0)
+			continue;
+
+		/* "/" + filename[32] + NUL cannot overrun 40 */
+		len = strlen(node_->filename);
+		if (len > sizeof(dcl_vport_path) - 2)
+			len = sizeof(dcl_vport_path) - 2;
+		dcl_vport_path[0] = '/';
+		memcpy(dcl_vport_path + 1, node_->filename, len);
+		dcl_vport_path[len + 1] = '\0';
+		return AuDevFSOpen(fs, dcl_vport_path);
+	}
+	return NULL;
+}
+
+/*
+ * Wait bounds. Both are needed and neither is redundant: the time bound is
+ * the one that means anything when the timer runs (it does -- dcl_now_us()
+ * falls back to 0 only below 1 MHz, and QEMU's CNTFRQ is well above that),
+ * and the iteration bound is what keeps the loop finite if it ever does not,
+ * because `dcl_now_us() - t_wait` would then be a constant 0 and never exceed
+ * anything. 400k iterations of walking a ~20-entry container is about the
+ * same 2 s as the time bound is, so whichever trips first is a coin flip and
+ * neither is a surprise.
+ */
+#define DCL_VPORT_WAIT_US    2000000ULL
+#define DCL_VPORT_WAIT_ITERS 400000u
+
 int dcl_vport_selftest(void) {
 	AuVFSNode* fs = AuVFSFind("/dev");
-	AuVFSNode* n = fs ? AuDevFSOpen(fs, "/vport0p1") : 0;
+	AuVFSNode* n = NULL;
+	unsigned int polls = 0;
+	uint64_t t_wait = dcl_now_us();
+
+	/*
+	 * Wait for the host's PORT_ADD, pumping the queues while we do.
+	 *
+	 * The node does not exist yet at the moment probe returns, even
+	 * though the char devices do: ports in multiport mode arrive from a
+	 * control message the host puts on the control queue, and DCL only
+	 * reads that queue when something calls virtio_poll_vqs() -- which
+	 * runs the control vq's callback (config_intr) and therefore, inline,
+	 * control_work_handler(). Nothing before this point has called it,
+	 * so a single lookup here would fail against a driver that is
+	 * entirely correct and merely not finished. Pumping is the wait,
+	 * not a workaround: it is the same call the write/read loop below
+	 * uses to make progress.
+	 */
+	while (!n && polls < DCL_VPORT_WAIT_ITERS) {
+		n = dcl_vport_find(fs);
+		if (n)
+			break;
+		if (dcl_now_us() - t_wait > DCL_VPORT_WAIT_US)
+			break;
+		virtio_poll_vqs();
+		polls++;
+	}
+
 	if (!n || !n->open || !n->write || !n->read) {
-		UARTDebugOut("[dcl]: vport selftest: no /dev/vport0p1 node\r\n");
+		/* %d, not %u: UARTDebugOut's formatter has no unsigned
+		 * conversion, and one that does not is worse than no number
+		 * at all -- it prints the literal "%u" and reads as a broken
+		 * format rather than as a missing count. */
+		UARTDebugOut(
+			"[dcl]: vport selftest: no /dev/vport* node "
+			"(%d polls, %d ms)\r\n",
+			(int)polls, (int)((dcl_now_us() - t_wait) / 1000));
 		return -1;
 	}
-	if (!n->open(n, "/vport0p1"))
+	UARTDebugOut("[dcl]: vport selftest: node %s after %d polls\r\n",
+		     dcl_vport_path, (int)polls);
+	if (!n->open(n, dcl_vport_path))
 		return -2; /* DclVportOpen already logged the reason */
 
 	struct dcl_dev_slot* s = dcl_slot_by_node(n);
@@ -607,4 +705,64 @@ int dcl_vport_selftest(void) {
 	AuFreePages((uint64_t)slot, false, 4096); /* unmap only: silent */
 	AuPmmngrReleasePage(phys);
 	return rc;
+}
+
+/* ── file helpers the pinned <linux/fs.h> cannot carry ──────────────────── */
+
+/*
+ * nonseekable_open() -- mainline fs/open.c:1560, two lines and a 0. It sits
+ * here rather than in the tty or the module shim because this is where the
+ * rest of the fs-layer fops helpers already are (single_open, seq_read,
+ * seq_printf), and because the only thing it touches is struct file, which
+ * this file already includes and already writes.
+ *
+ * struct file::f_mode is at offset 4 in fs.h's pinned layout, so this masks
+ * three bits of a word Xeneva's own devfs also ORs into (mem.c:724). The two
+ * do not collide: mem.c sets no bit below 0x00000010 by name, and the effect
+ * is one-directional -- this only ever clears.
+ */
+int nonseekable_open(struct inode* inode, struct file* filp)
+{
+	(void)inode;
+	filp->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	return 0;
+}
+
+/*
+ * fasync_helper(fd, filp, on, fapp) -- the insertion half of the fasync
+ * protocol, mainline fs/fcntl.c. DCL has no struct fasync_struct to allocate
+ * and no signal queue to put it on (see <linux/poll.h>: SIGIO is ABI shape,
+ * and signal_pending() is a constant 0), so the honest state of `*fapp` is
+ * always NULL: `on` has nothing to insert, `!on` has the one thing there
+ * could be to clear.
+ *
+ * Returns 0 -- mainline's answer for a clean insert or delete, and the only
+ * value the caller can see: port_fops_open()'s .fasync fops returns it
+ * straight out as the fops result.
+ */
+int fasync_helper(int fd, struct file* filp, int on,
+			struct fasync_struct** fapp)
+{
+	(void)fd;
+	(void)filp;
+
+	if (fapp && !on)
+		*fapp = NULL;
+	return 0;
+}
+
+/*
+ * kill_fasync(fp, sig, band) -- raise SIGIO on a file's fasync list.
+ * A no-op, and necessarily so rather than conveniently: with no signal
+ * delivery, "raise SIGIO" has no destination, and a kill_fasync() that
+ * pretended to succeed would be the only step in the chain that could ever
+ * be observed as having worked. <linux/poll.h> documents the same
+ * conclusion from the other side, where the band and the signal number it
+ * is called with come from.
+ */
+void kill_fasync(struct fasync_struct** fp, int sig, int band)
+{
+	(void)fp;
+	(void)sig;
+	(void)band;
 }

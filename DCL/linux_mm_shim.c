@@ -38,7 +38,9 @@
 #include <linux/random.h>
 #include <linux/io.h>
 #include <linux/shmem_fs.h>
+#include <linux/pagemap.h>	/* struct page and the page_* decls below */
 #include <Mm/pmmngr.h>
+#include <Mm/kmalloc.h>	/* kmalloc/kfree -- alloc_page()'s block */
 #include <Drivers/uart.h>
 
 /* hwrng bridge, provided by DCL/linux_kmod_shim.c */
@@ -314,6 +316,76 @@ ssize_t copy_splice_read(struct file* in, loff_t* ppos,
 	return -EOPNOTSUPP;
 }
 
+/* ── struct page: one block that is both descriptor and storage ─────────── */
+
+/*
+ * DCL has no buddy array of struct page and no direct-map window, which is
+ * what <linux/pagemap.h> says when it models a page as a single kmalloc'd
+ * block whose ->data is the address page_address() hands out. Everything
+ * below follows from that one choice: allocation is one malloc, a reference
+ * is an int in the block's first four bytes, and free is the matching free.
+ */
+
+/*
+ * alloc_page() -- a struct page, initialised, refcount 1.
+ *
+ * Zeroed rather than handed over raw: DCL's kmalloc returns whatever the
+ * TLSF free list last held, and this block's ->data becomes the destination
+ * of a memcpy out of a pipe buffer (virtio_console.c:888) and then the
+ * payload of a virtio buffer. Stale bytes there would be sent to the host.
+ *
+ * The gfp is accepted and dropped for the reason slab.h drops its own -- a
+ * plain allocation with no watermark to honour -- and NULL is returned on
+ * failure, which is the arm the caller tests (`if (!page) goto`) rather
+ * than a degraded path that would have to be invented.
+ */
+void* alloc_page(gfp_t gfp) {
+	struct page* page;
+
+	(void)gfp;
+	page = (struct page*)kmalloc(sizeof(struct page));
+	if (!page)
+		return NULL;
+
+	page->refcount = 1;
+	memset(page->data, 0, sizeof(page->data));
+	return (void*)page;
+}
+
+/*
+ * get_page / put_page -- the pair free_buf() walks (virtio_console.c:350-357),
+ * releasing each page exactly once on the way out. put_page frees at zero
+ * because nothing else will: there is no shrinker and no cache to return the
+ * block to, and a block that reaches 0 and stays allocated is a leak with no
+ * other owner to blame.
+ */
+void get_page(struct page* page) {
+	if (page)
+		page->refcount++;
+}
+
+void put_page(struct page* page) {
+	if (!page)
+		return;
+	if (page->refcount > 0 && --page->refcount == 0)
+		kfree(page);
+}
+
+/*
+ * lock_page / unlock_page -- no-ops, and <linux/pagemap.h> is where the
+ * reason already lives: the one pair in the driver sits inside pipe_to_sg(),
+ * a path no devfs splice call reaches, and making them real would mean a
+ * per-page waitqueue for code that cannot run. They are functions here
+ * rather than macros so that a later implementation changes only this file.
+ */
+void lock_page(struct page* page) {
+	(void)page;
+}
+
+void unlock_page(struct page* page) {
+	(void)page;
+}
+
 /* ── initcall runner ───────────────────────────────────────────────────── */
 
 /*
@@ -323,6 +395,7 @@ ssize_t copy_splice_read(struct file* in, loff_t* ppos,
  */
 extern int (*const __dcl_initcall_chr_dev_init)(void);
 extern int (*const __dcl_initcall_virtio_rng_driver_init)(void);
+extern int (*const __dcl_initcall_virtio_console_init)(void);
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -372,5 +445,31 @@ void DclRunInitcalls(void) {
 			UARTDebugOut("[dcl]: virtio_rng register failed: %d\r\n", rc);
 		else
 			UARTDebugOut("[dcl]: virtio_rng driver registered\r\n");
+	}
+
+	/*
+	 * Same for virtio_console, and for the same reason stated once above:
+	 * compiled, linked, and never registered is indistinguishable from
+	 * compiled, linked, and registered-but-unbound, and both look like
+	 * "probe never called" from outside. This one runs last because it is
+	 * the only one of the three whose probe makes device nodes of its own
+	 * (/dev/vport*), and it must be on the driver list before
+	 * virtio_console_detect() scans the bus in modload_test_run().
+	 *
+	 * A failure here is not cosmetic: virtio_console_init() registers a
+	 * class and two drivers, and an error means the console port QEMU was
+	 * told to create has nobody to bind it -- the vport self-test below
+	 * would report "host not attached", which is also what it says when
+	 * the device was never there, so the two cases are indistinguishable
+	 * from the test's output alone.
+	 */
+	if (__dcl_initcall_virtio_console_init) {
+		int rc = __dcl_initcall_virtio_console_init();
+		if (rc)
+			UARTDebugOut("[dcl]: virtio_console register failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: virtio_console driver registered\r\n");
+	} else {
+		UARTDebugOut("[dcl]: virtio_console initcall not linked\r\n");
 	}
 }

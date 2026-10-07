@@ -82,6 +82,34 @@
 #define raw_spin_unlock_irq(l)			do {} while (0)
 #define raw_spin_lock_init(l)			do {} while (0)
 #define DEFINE_RAW_SPINLOCK(name) spinlock_t name = 0
+/*
+ * DEFINE_SPINLOCK(name) -- a file-scope `spinlock_t name = 0`, which is what
+ * DEFINE_RAW_SPINLOCK above already spells. virtio_console.c:60 and :361
+ * declare two of them (`static DEFINE_SPINLOCK(pdrvdata_lock);`); without a
+ * macro the line parses as a function *declaration* with an untyped parameter
+ * list and reports "type specifier missing, defaults to int" plus "a parameter
+ * list without types is only allowed in a function definition" -- two errors
+ * for one missing name, neither of which mentions the name that is missing.
+ *
+ * spinlock_t is an int here (kernel.h:43) and every lock operation is a
+ * no-op, so the initial value is not read by anything; it is written as 0
+ * rather than left uninitialised only because a file-scope object with no
+ * initialiser is already zero and spelling it out says so.
+ */
+#define DEFINE_SPINLOCK(name) spinlock_t name = 0
+
+/*
+ * cpu_relax() -- the "I am spinning, back off" hint. virtio_console.c:563 and
+ * :638 sit in loops that poll a virtqueue for a reply.
+ *
+ * mainline puts it in <asm/processor.h> as a `yield`/`wfe`; DCL has no
+ * sleeping scheduler to yield to (schedule() is mdelay(1), kernel.h) and no
+ * WFE to issue against a hypervisor that may never signal, so there is no
+ * instruction for the hint to map onto. The macro discards its (absent)
+ * argument the way spin_lock() discards its lock above: the loop still reads
+ * as a spin, and the busy-wait is unchanged from what the code does today.
+ */
+#define cpu_relax() ((void)0)
 #define raw_spin_lock_irqsave(l, f) do { (f) = 0; } while (0)
 #define raw_spin_unlock_irqrestore(l, f) do {} while (0)
 

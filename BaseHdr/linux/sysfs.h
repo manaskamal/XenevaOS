@@ -99,4 +99,46 @@ struct attribute_group {
 	.attr = { .name = #_name, .mode = 0200 }, \
 	.store = _name##_store, \
 }
+
+/*
+ * S_IRUGO -- 0444, "world-readable". mainline defines the whole S_I* family
+ * in <uapi/linux/stat.h>, which this tree has no copy of: nothing needed a
+ * permission *name*, because DEVICE_ATTR_RW()/__ATTR_RO() spell their modes
+ * as literals (0644, 0444). virtio_console.c:1250 is the first caller that
+ * names one -- `static DEVICE_ATTR(name, S_IRUGO, show_port_name, NULL);` --
+ * so the constant is defined here, next to the __ATTR that consumes it, with
+ * mainline's value. S_IWUSR (0200) is spelled out by __ATTR_WO already.
+ */
+#define S_IRUGO 0444
+
+/*
+ * sysfs_create_group() / sysfs_remove_group() -- macros, not functions, and
+ * the reason is worth the whole block.
+ *
+ * DCL/linux_cdev_shim.c used to define these as ordinary functions taking
+ * `const void*`. That works until a mainline caller writes
+ *
+ *     err = sysfs_create_group(&port->dev->kobj, &port_attribute_group);
+ *                                                    (virtio_console.c:1642)
+ *
+ * because the *argument* still has to parse, and `port->dev->kobj` is a member
+ * that does not exist: <linux/fs.h>'s struct device (the one file this tree
+ * must not edit) carries `kobj_name` at offset 0 -- the slot mainline's
+ * kobj.name occupies -- and no `kobj`. Making struct device grow one is not
+ * available, and rewriting the vendored source is what this tree avoids.
+ *
+ * A macro whose parameters never appear in its replacement list never parses
+ * them. The preprocessor substitutes the whole invocation with `0` and
+ * `&port->dev->kobj` never reaches the parser at all -- which is exactly how
+ * this header's spinlock sibling already handles a lock it does not take
+ * (`#define spin_lock(l) do {} while (0)`, spinlock.h:36).
+ *
+ * The behaviour is unchanged, because the function being replaced was itself
+ * a no-op: "no sysfs tree; success keeps add_port() on the happy path". A
+ * caller that branches on the result still sees 0 (success), and
+ * sysfs_remove_group() still does nothing -- there is no group to remove.
+ */
+#define sysfs_create_group(dev, grp)  (0)
+#define sysfs_remove_group(dev, grp)  ((void)0)
+
 #endif /* __LINUX_SYSFS_H__ */

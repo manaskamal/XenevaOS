@@ -344,4 +344,45 @@ static inline void finish_wait(struct wait_queue_head* wq_head,
 		remove_wait_queue(wq_head, wq_entry);
 	__set_current_state(TASK_RUNNING);
 }
+
+/*
+ * wait_event_freezable(wq_head, condition) -- the freezer-aware wait.
+ *
+ * virtio_console.c:752 and :784 both write it, inside wait_port_readable()
+ * and wait_port_writable(), where mainline's version additionally lets a
+ * suspend in progress abort the wait with -ERESTARTSYS.
+ *
+ * DCL has no refrigerator: nothing freezes a task, so the half of mainline's
+ * contract that responds to freezing has nothing to respond *to*. The other
+ * half -- poll the condition, give up after a bounded budget -- is what
+ * wait_event() above already does, and this is that loop and nothing else,
+ * deliberately: two waits in one header that gave up at different times would
+ * be a difference a caller could not see until a port stopped draining.
+ *
+ * The shape (one millisecond per pass, DCL_WAIT_EVENT_MS of them,
+ * dcl_wait_event_timeout() on the way out) is wait_event()'s, so a reader who
+ * knows one of them knows both.
+ *
+ * It returns an int, which is the part the previous note here got wrong when
+ * it said "returns nothing, because mainline's does not either" -- mainline's
+ * __wait_event_freezable() does return one, and both call sites treat the
+ * value as the whole contract:
+ *
+ *     ret = wait_event_freezable(port->waitqueue, !will_read_block(port));
+ *     if (ret < 0)
+ *         return ret;
+ *
+ * A `do {} while (0)` there is not a value to assign, so the call would not
+ * compile at all, which is how the mistake surfaced. The two arms are the
+ * ones wait_event_interruptible() above already chose and for the same
+ * reason: 0 when the condition came true, -ERESTARTSYS when the bounded
+ * budget expired first. A 0 on the second arm would walk past the wait with
+ * the port still empty and hand read() a success with nothing in it; the
+ * callers' `ret < 0` branch is written for exactly the case that produces.
+ */
+#define wait_event_freezable(wq_head, condition)				\
+	({									\
+		_dcl_wait_core(wq_head, condition)				\
+			? 0 : -ERESTARTSYS;					\
+	})
 #endif /* __LINUX_WAIT_H__ */

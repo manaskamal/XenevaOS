@@ -108,8 +108,37 @@ static inline void dev_set_drvdata(struct device* dev, void* data)
 #define DEVICE_ATTR_RO(_name) \
 	struct device_attribute dev_attr_##_name = __ATTR_RO(_name)
 
+/*
+ * DEVICE_ATTR(_name, _mode, _show, _store) -- the four-argument spelling
+ * mainline defines in <linux/device.h>. The three one-argument spellings
+ * above cover everything else in this tree (8250 and serial_core use only
+ * _RW/_RO); virtio_console.c:1250 is the first caller that names its own
+ * mode -- `static DEVICE_ATTR(name, S_IRUGO, show_port_name, NULL);` -- so
+ * this exists for it.
+ *
+ * It is a *declaration* macro exactly like DEVICE_ATTR_RW above: the
+ * expansion has to carry the struct keyword, because the call site writes
+ * `static` and expects the expansion to start at the type. The mode comes
+ * from <linux/sysfs.h>, which this header already includes, and `store` is
+ * allowed to be NULL (it is, at that one call site) because __ATTR puts it
+ * straight into a struct member.
+ */
+#define DEVICE_ATTR(_name, _mode, _show, _store) \
+	struct device_attribute dev_attr_##_name = __ATTR(_name, _mode, \
+							   _show, _store)
+
 #define DEVICE_ATTR_WO(_name) \
 	struct device_attribute dev_attr_##_name = __ATTR_WO(_name)
+
+/*
+ * get_device() -- mainline returns the pointer it was handed, as a
+ * refcount-taking trip. DCL's is in DCL/linux_cdev_shim.c:157 and does the
+ * same thing for the same reason put_device() two blocks down does nothing:
+ * devfs owns the lifetime and there is no refcount to take. Declared here
+ * because that is where mainline declares it, and because virtio_console.c:438
+ * reaches it through this header with no other one in scope.
+ */
+void* get_device(const void* dev);
 
 /*
  * `static DEVICE_ATTR_RO(uartclk);` and its fifteen siblings at

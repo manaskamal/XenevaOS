@@ -7,7 +7,8 @@
  * mainline: fs_initcall(fn) stamps fn into .initcallN.init so do_initcalls()
  * runs it after the core is up. Xeneva has no initcall sections in its PE
  * image, so the macro instead stores fn in a named global pointer and
- * DCL/dcl_init.c calls the ones DCL wants, in order. Keeping the pointer
+ * DclRunInitcalls() -- DCL/linux_mm_shim.c, which names the initcalls it
+ * wants in the order it wants them -- calls them. Keeping the pointer
  * (rather than an empty macro) also keeps the static __init function
  * referenced, so it neither warns nor gets dropped.
  *

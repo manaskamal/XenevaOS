@@ -34,6 +34,35 @@ typedef struct {
 
 #define ATOMIC_INIT(i) { (i) }
 
+/*
+ * atomic64_t -- 64-bit counter.  kobject.h declares `extern atomic64_t
+ * uevent_seqnum;`, so the *type* has to exist even though nothing here
+ * increments it; laid out as long long to be 8 bytes under LLP64 (aarch64
+ * windows: long is 4).  Same turn-taking rationale as atomic_t above: single
+ * owner, no lock needed, so the accessors go straight to the compiler's
+ * atomic builtins rather than to a lock.
+ */
+typedef struct {
+	long long counter;
+} atomic64_t;
+
+#define ATOMIC64_INIT(i) { (i) }
+
+static inline long long atomic64_read(const atomic64_t* v)
+{
+	return __atomic_load_n(&v->counter, __ATOMIC_SEQ_CST);
+}
+
+static inline void atomic64_set(atomic64_t* v, long long i)
+{
+	__atomic_store_n(&v->counter, i, __ATOMIC_SEQ_CST);
+}
+
+static inline void atomic64_inc(atomic64_t* v)
+{
+	__atomic_add_fetch(&v->counter, 1LL, __ATOMIC_SEQ_CST);
+}
+
 static inline int atomic_read(const atomic_t* v)
 {
 	return __atomic_load_n(&v->counter, __ATOMIC_SEQ_CST);

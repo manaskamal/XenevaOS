@@ -107,6 +107,32 @@
  */
 #define CONFIG_SERIAL_CORE_CONSOLE 1
 
+/*
+ * CONFIG_REMOTEPROC -- 0, deliberately, rather than left undefined.
+ *
+ * <linux/kernel.h>:139 spells IS_ENABLED(opt) as `!!(opt)`, which is a *C*
+ * expression and not a preprocessor test: an undefined CONFIG_REMOTEPROC
+ * there becomes an undeclared identifier in a function body
+ * (virtio_console.c:332, `return is_rproc_enabled && vdev->id.device == ...`)
+ * rather than a silent 0. Defining it as 0 gives !!0, which folds to false,
+ * and the `#if IS_ENABLED(CONFIG_REMOTEPROC)` at :2087 folds the same way.
+ *
+ * The value is the honest one. Nothing here has a remoteproc subsystem: the
+ * rproc serial transport is the path that allocates its buffers through
+ * dma_alloc_coherent() and hangs them off vdev->dev.parent, and with this 0
+ * every use of is_rproc_serial() folds out -- including the vdev->id.device
+ * comparison beside it, which is why vdev->id can stay zeroed.
+ *
+ * Undefined rather than 0 would be the mainline spelling (mainline leaves
+ * unset options out of autoconf.h entirely), and it works everywhere except
+ * the two places above, where mainline's IS_ENABLED has its own #if wrapper
+ * and DCL's does not. The wrapper is what is missing, not the option; this
+ * line supplies its effect at the source rather than re-deriving mainline's
+ * __is_defined chain for one feature.
+ */
+
+#define CONFIG_REMOTEPROC 0
+
 /* Deliberately undefined:
  *   CONFIG_DEVPORT           no x86 I/O ports on ARM64 -> no /dev/port
  *   CONFIG_STRICT_DEVMEM     page_is_allowed() collapses to "allow all"

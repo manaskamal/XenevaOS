@@ -107,4 +107,40 @@
  * and there is no placement to control.
  */
 #define __sched
+
+/*
+ * __printf(fmt_idx, arg_idx) -- format-string checking for varargs
+ * declarations.  mainline: linux/compiler_attributes.h.  kobject.h decorates
+ * every varargs entry point with it (kobject_set_name, kobject_add,
+ * kobject_init_and_add, add_uevent_var), so it has to parse as a
+ * declaration-level annotation in front of a return type -- left undefined,
+ * "the line parses as a declaration of an object named __printf" and the
+ * function it belongs to is never declared, exactly like __sched above.
+ */
+#ifndef __printf
+#define __printf(fmt_idx, arg_idx) __attribute__((__format__(__printf__, fmt_idx, arg_idx)))
+#endif
+
+/*
+ * __same_type(a, b) -- "are these two the same type?"  mainline: compiler.h,
+ * spelled __builtin_types_compatible_p.  kobject.h:183 calls it outright
+ * (not merely as a macro argument), so undefined it is an undeclared-function
+ * error, not a quiet one.
+ */
+#ifndef __same_type
+#define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
+#endif
+
+/*
+ * __read_mostly -- "put this in the .data..read_mostly section".  mainline:
+ * compiler_attributes.h (a section attribute).  DCL links one flat image with
+ * no such section, so it is empty -- but it has to *be* something: debug_locks.h
+ * writes `extern int debug_locks __read_mostly;`, and left undefined that line
+ * parses as a declaration of an object named __read_mostly rather than as the
+ * extern int, which is how it showed up as "expected ';' after top level
+ * declarator" rather than as an unknown name.  Same reasoning as __sched above.
+ */
+#ifndef __read_mostly
+#define __read_mostly
+#endif
 #endif

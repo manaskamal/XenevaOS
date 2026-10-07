@@ -30,6 +30,42 @@
  */
 
 #include <linux/cache.h>	/* __cacheline_group_begin/end, SMP_CACHE_BYTES */
+#include <linux/kernel.h>	/* gfp_t, dma_addr_t, size_t */
+
+struct device;
+
+/*
+ * dma_alloc_coherent() / dma_free_coherent() -- the one pair the fence macros
+ * above were standing in front of.
+ *
+ * mainline's header declares a whole family (the dmam_ allocators, dma_map_sg,
+ * the direction enum, the mask checks) and this comment used to say none of it
+ * had a caller. virtio_console.c:439 is a caller:
+ *
+ *     buf->buf = dma_alloc_coherent(buf->dev, buf_size, &buf->dma, GFP_KERNEL);
+ *
+ * -- the rproc-serial arm of alloc_buf(), the arm DCL folds away (see
+ * CONFIG_REMOTEPROC in <linux/autoconf.h>). It has to *compile*, and it has to
+ * link if the compiler ever declines to fold it, so the two declarations are
+ * here and the bodies are in DCL/linux_mm_shim.c.
+ *
+ * What they do: dma_alloc_coherent() is a plain kmalloc with the address
+ * handed back as the dma_addr_t as well. That is sound rather than convenient
+ * -- Xeneva's virtio path takes a *virtual* address and translates it at kick
+ * time (see <linux/scatterlist.h> on why buf is a linear-map pointer), so the
+ * only thing this tree ever does with buf->dma is hand it straight back to
+ * dma_free_coherent() at :373, and a token that round-trips is a token that
+ * works. There is no streaming mapping here to need a bus address, and no
+ * IOMMU to need an address the CPU cannot reach.
+ *
+ * The parameter types are mainline's, so a caller written against mainline
+ * compiles without a cast: `struct device *` (incomplete is fine -- nothing
+ * here dereferences it), size_t, `dma_addr_t *`, gfp_t.
+ */
+void* dma_alloc_coherent(struct device* dev, size_t size,
+			 dma_addr_t* dma_handle, gfp_t gfp);
+void dma_free_coherent(struct device* dev, size_t size, void* vaddr,
+		       dma_addr_t handle);
 
 #ifdef ARCH_HAS_DMA_MINALIGN
 #define ____dma_from_device_aligned __aligned(ARCH_DMA_MINALIGN)

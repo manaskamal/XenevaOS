@@ -3,6 +3,10 @@
 #include <string.h>
 #include <Mm/kmalloc.h>
 #include <linux/virtio.h>
+#include <linux/pagemap.h>	/* page_address() -- sg_set_page() is the one
+				 * sg helper that has to turn a struct page* into
+				 * a virtual address, which scatterlist.h says is
+				 * why these three are calls and not inlines */
 #include <linux/hw_random.h>
 #include <Drivers/uart.h>
 
@@ -159,4 +163,61 @@ void sg_init_one(struct scatterlist* sg, const void* buf, unsigned int len) {
 		return;
 	sg->buf = (void*)buf;
 	sg->len = len;
+	/*
+	 * And no page. <linux/scatterlist.h> says this line is part of the
+	 * contract sg_page() answers: an entry built by sg_init_one() names a
+	 * buffer, not a page, so sg_page() on it must say NULL -- which is
+	 * what free_buf()'s release loop (virtio_console.c:350-357) tests
+	 * before it breaks. Leaving whatever the last user of this slot put
+	 * there would have it put_page() on a pointer that is no longer
+	 * anyone's page.
+	 */
+	sg->page = NULL;
+}
+
+/*
+ * sg_page / sg_set_page / sg_init_table -- the page-shaped half of the sg
+ * API, declared in <linux/scatterlist.h> with a note about why the bodies
+ * are here rather than in that header: sg_set_page() needs page_address(),
+ * which lives in <linux/pagemap.h>, and pulling that into scatterlist.h
+ * would pull it into <linux/virtio.h> and therefore into every driver.
+ *
+ * In DCL's struct scatterlist the page is bookkeeping (see the struct's own
+ * note) and buf is the address the queue machinery walks -- so sg_set_page()
+ * fills both at once: buf as page_address(page) + offset, mainline's own
+ * sg_virt() arithmetic done up front because there is no mapping step to do
+ * it later. A NULL page is not an error to report; sg_init_one() never has
+ * one, and a caller that reaches for sg_page() on such an entry is in the
+ * `break` arm of a release loop rather than in a path that can be fixed by
+ * returning a lie.
+ */
+struct page* sg_page(const struct scatterlist* sg) {
+	return sg ? sg->page : NULL;
+}
+
+void sg_set_page(struct scatterlist* sg, struct page* page, unsigned int len,
+				 unsigned int offset) {
+	if (!sg)
+		return;
+	sg->page = page;
+	sg->buf = page ? (char*)page_address(page) + offset : NULL;
+	sg->len = len;
+}
+
+void sg_init_table(struct scatterlist* sgl, unsigned int n) {
+	if (!sgl)
+		return;
+	/*
+	 * Clear every field across all n entries, not just the first: the
+	 * caller has asked for a table and is entitled to read any slot it
+	 * has not filled, and a stale buf from a previous use would be
+	 * handed to the queue as though someone had put it there. mainline
+	 * also terminates a chain bit DCL's struct has no room for -- a
+	 * linear array of regions walked by index does not need one.
+	 */
+	for (unsigned int i = 0; i < n; i++) {
+		sgl[i].buf = NULL;
+		sgl[i].len = 0;
+		sgl[i].page = NULL;
+	}
 }

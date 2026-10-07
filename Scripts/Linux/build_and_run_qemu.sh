@@ -46,6 +46,13 @@ set -e
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
+#   --no-virtio-serial      Skip the virtio-serial controller and its one
+#                           virtserialport, so the guest's virtio_console
+#                           driver has no device to probe. It is on by
+#                           default, like --virtio-rng: the driver under
+#                           test needs something to be there.
+#   --virtio-serial-port=N  Host TCP port for the virtserialport socket
+#                           (default 43211, or $VIRTIO_SERIAL_PORT).
 #   --no-doom               Drop the Doom addon (doom.exe + doom2.wad) from
 #                           the image.
 #   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
@@ -131,6 +138,14 @@ BT_SERIAL="${XENEVA_BT_SERIAL:-}"
 NO_BT=1
 NO_NETSURF=0
 VIRTIO_RNG=1
+# virtio-serial-pci is the controller; virtserialport is the guest-visible
+# endpoint the vendored virtio_console.c binds (1AF4:1043). The host end is
+# a TCP socket rather than a pty or a pipe so a test can connect, exchange
+# one round, and leave -- server=on/wait=off means QEMU never blocks on a
+# client that has not arrived yet. On by default for the same reason
+# VIRTIO_RNG is: the driver under test needs something to probe.
+VIRTIO_SERIAL=1
+VIRTIO_SERIAL_PORT="${VIRTIO_SERIAL_PORT:-43211}"
 
 print_help(){
     printf "${STY_CYAN}"
@@ -407,6 +422,9 @@ while [ $# -gt 0 ]; do
         --no-bt) NO_BT=1 ;;
         --virtio-rng) VIRTIO_RNG=1 ;;
         --no-virtio-rng) VIRTIO_RNG=0 ;;
+        --virtio-serial) VIRTIO_SERIAL=1 ;;
+        --no-virtio-serial) VIRTIO_SERIAL=0 ;;
+        --virtio-serial-port=*) VIRTIO_SERIAL_PORT="${1#--virtio-serial-port=}" ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -947,6 +965,28 @@ QEMU_ARGS=(
 # against the virtio_rng driver registered by the loaded .ko. --axiss
 if [ "$VIRTIO_RNG" -eq 1 ]; then
     QEMU_ARGS+=(-device virtio-rng-pci,disable-legacy=on,id=rng0)
+fi
+
+# virtio-serial-pci is the controller the vendored virtio_console.c probes
+# (Vendored/drivers/char/virtio_console.c); virtserialport is the single
+# endpoint on it, and its name= is what the host side addresses a port by.
+#
+# disable-legacy=on for the same reason virtio-blk-pci above carries it: the
+# transitional default reports PCI ID 1AF4:1003, and DCL's scan matches the
+# modern 1AF4:1043 (0x1040 + VIRTIO_ID_CONSOLE), the way virtio_rng_detect()
+# matches 1AF4:1044.
+#
+# The host end is a TCP socket with wait=off so QEMU starts whether or not a
+# client has connected; a test that wants the guest's probe to see
+# host_connected=1 connects to it first. VIRTIO_SERIAL_PORT (or
+# --virtio-serial-port=N) moves it when 43211 is taken. --axiss
+if [ "$VIRTIO_SERIAL" -eq 1 ]; then
+    QEMU_ARGS+=(-device virtio-serial-pci,disable-legacy=on,id=virtio-serial0)
+    QEMU_ARGS+=(-chardev socket,id=vsp0,host=127.0.0.1,port="$VIRTIO_SERIAL_PORT",server=on,wait=off)
+    QEMU_ARGS+=(-device virtserialport,chardev=vsp0,name=org.xeneva.test)
+    echo "[+] virtio-serial: org.xeneva.test listening on 127.0.0.1:$VIRTIO_SERIAL_PORT"
+else
+    echo "[+] virtio-serial omitted (--no-virtio-serial)"
 fi
 
 # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's

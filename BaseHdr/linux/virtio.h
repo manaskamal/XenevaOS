@@ -13,6 +13,15 @@
  */
 #include <linux/scatterlist.h>
 /*
+ * memcpy, for virtio_cread() below: a config-space read is a copy of the
+ * caller's own width out of device memory, and this header's macro is where
+ * that copy is spelled. Included here rather than left to the expansion site
+ * so a caller need not have remembered it -- a macro expands in its own
+ * context, and `virtio_cread()` reaching an undeclared memcpy() would be an
+ * error attributed to the driver that never named memcpy.
+ */
+#include <linux/string.h>
+/*
  * The next three are what mainline's <linux/virtio.h> pulls in through
  * <linux/device.h>, which DCL does not have:
  *
@@ -36,6 +45,11 @@
  * here, and kernel.h already includes module.h before it reaches this file.
  */
 #include <linux/module.h>
+#include <linux/fs.h>		/* struct device -- virtio_device carries one (mainline
+				 * does too, as `struct device dev;`), and fs.h is where
+				 * DCL's is defined. fs.h includes only <stdint.h> and
+				 * <stddef.h>, so this cannot cycle. */
+#include <linux/list.h>	/* struct list_head -- virtio_device.vqs, virtqueue.list */
 #include <Drivers/virtio.h>
 
 /* ─── Feature bits ─── */
@@ -59,12 +73,23 @@
  */
 #define VIRTIO_DEV_ANY_ID	((unsigned int)-1)
 
-/* ─── Device status ─── */
-#define VIRTIO_CONFIG_S_ACKNOWLEDGE 1
-#define VIRTIO_CONFIG_S_DRIVER		2
-#define VIRTIO_CONFIG_S_DRIVER_OK	4
-#define VIRTIO_CONFIG_S_FEATURES_OK 8
-#define VIRTIO_CONFIG_S_FAILED		128
+/*
+ * ─── Device status ───
+ *
+ * Not defined here: <uapi/linux/virtio_config.h> is the single source for
+ * the VIRTIO_CONFIG_S_* byte, and DCL's <linux/virtio_config.h> already
+ * pulls it in. This header used to carry its own copy of five of them, and
+ * the two copies were spelled differently -- `128` here against `0x80`
+ * there -- which is a -Wmacro-redefined warning the moment a TU includes
+ * both (virtio_console.c does, via virtio_console.h). Identical values do
+ * not warn and differing ones do, so "make them match" was a fix that
+ * stopped working the first time someone edited either side; taking the
+ * duplicate out is the fix that cannot stop working.
+ *
+ * Everything else this header defines -- VRING_DESC_F_*, VIRTIO_RING_F_*,
+ * VIRTIO_DEV_ANY_ID -- is not in the uapi header at all.
+ */
+#include <uapi/linux/virtio_config.h>
 
 /* ─── Descriptor flags ─── */
 #define VRING_DESC_F_NEXT	  1
@@ -110,6 +135,21 @@ struct virtio_config_ops {
 	void* device_config_base;
 };
 
+/*
+ * struct virtio_device_id -- defined *before* struct virtio_device below,
+ * which carries one by value. It used to sit underneath; moving it up is the
+ * only way a value member can be spelled, and nothing that references the type
+ * by name cared where it was.
+ *
+ * mainline's is the same two __u32 words. The driver reads `vdev->id.device`
+ * (virtio_console.c:332) to tell an rproc serial device from a virtio-console
+ * one.
+ */
+struct virtio_device_id {
+	__u32 device;
+	__u32 vendor;
+};
+
 struct virtio_device {
 	int index;
 	void* drv_data;
@@ -118,11 +158,42 @@ struct virtio_device {
 	unsigned char _mid[0x30];
 	void* priv;
 	struct VirtioPCIDevice* au_dev;
-};
 
-struct virtio_device_id {
-	__u32 device;
-	__u32 vendor;
+	/*
+	 * Appended, and appended is the point: everything above is the layout
+	 * the prebuilt modules were assembled against, `_linux_prefix` included,
+	 * so no existing offset moves and the static asserts elsewhere still
+	 * describe the same bytes. mainline carries `id` and `dev` inside the
+	 * region DCL covers with `_linux_prefix`, but a blob cannot answer a
+	 * *member* reference -- `vdev->dev.parent` (virtio_console.c:433) and
+	 * `vdev->id.device` (:332) are field accesses the preprocessor never
+	 * sees -- so the three members below exist for them, and they are the
+	 * only three a ported source names today.
+	 *
+	 *   id     mainline's device identity. Zeroed by virtio_device_register()
+	 *          and set to the device type there; safe to read as zero even
+	 *          when it is not, because the only reader
+	 *          (is_rproc_serial(), :332) sits behind `is_rproc_enabled &&
+	 *          ...` and is_rproc_enabled is IS_ENABLED(CONFIG_REMOTEPROC)
+	 *          with CONFIG_REMOTEPROC 0 -- a constant fold, so the load
+	 *          never happens at runtime.
+	 *
+	 *   dev    mainline's embedded device. Never registered with anything
+	 *          (DCL has no device model to register it with), so its
+	 *          `parent` is NULL, which is what makes the DMA path at :433
+	 *          take its `if (!buf->dev) goto free_buf` arm -- the arm it
+	 *          should take, since that arm is rproc-only and rproc is off.
+	 *
+	 *   vqs    the head of this device's virtqueue list, so mainline's
+	 *          `virtio_device_for_each_vq()` (used once, in remove_vqs())
+	 *          can walk real queues instead of a list that does not exist.
+	 *          Initialised by virtio_device_register() and populated by
+	 *          shim_find_vqs(). See the note on virtqueue.list for why the
+	 *          snapshot copy in _virtio_devices[] needs its own head.
+	 */
+	struct virtio_device_id id;
+	struct device dev;
+	struct list_head vqs;
 };
 
 /*
@@ -172,7 +243,41 @@ struct virtio_driver {
 	 */
 	struct device_driver driver;
 	const struct virtio_device_id* id_table;
-	unsigned char _gap[40];
+	/*
+	 * mainline's five members between id_table and probe, spelled out
+	 * instead of `unsigned char _gap[40]`.
+	 *
+	 * The gap was never arbitrary: mainline's layout there is
+	 *
+	 *     const unsigned int *feature_table;        8   160
+	 *     unsigned int feature_table_size;           4   168
+	 *     const unsigned int *feature_table_legacy;  8   176
+	 *     unsigned int feature_table_size_legacy;    4   184
+	 *     int (*validate)(struct virtio_device *);   8   192
+	 *
+	 * which is 8 + 4 + pad4 + 8 + 4 + pad4 + 8 = 40 bytes, and probe lands
+	 * at 200 -- exactly where the gap put it. So this replaces padding with
+	 * the fields the padding was standing in for and moves nothing: the
+	 * offsets after it are identical, which is the condition the note above
+	 * says has to hold.
+	 *
+	 * virtio_console.c:2171/:2185 initialise feature_table and
+	 * feature_table_size by name ("field designator '_gap' does not refer to
+	 * any field" is the error a designator cannot make against padding), and
+	 * feature_table_legacy/validate are here for the same reason -- leaving
+	 * two of the five as padding would mean the next mainline driver that
+	 * names them hit a wall DCL had already decided how to take down.
+	 *
+	 * Nothing in DCL *reads* feature_table: register_virtio_driver() only
+	 * ever touches ->probe, ->scan and ->id_table, and feature negotiation
+	 * does not happen here (see __virtio_test_bit() in <linux/virtio_config.h>).
+	 * The members exist so the initialiser compiles and the layout matches.
+	 */
+	const unsigned int* feature_table;
+	unsigned int feature_table_size;
+	const unsigned int* feature_table_legacy;
+	unsigned int feature_table_size_legacy;
+	int (*validate)(struct virtio_device* vdev);
 	int (*probe)(struct virtio_device* vdev);
 	void (*scan)(struct virtio_device* vdev);
 	void (*remove)(struct virtio_device* vdev);
@@ -195,6 +300,29 @@ struct virtqueue {
 	void (*callback)(struct virtqueue* vq);
 	void* cookies[256];
 	uint16_t event_idx_write;
+	/*
+	 * Whether the device behind this queue has gone away -- mainline's
+	 * own member, and the whole of virtqueue_is_broken()'s answer. It is
+	 * set by virtio_break_device(), which is what virtcons_remove() calls
+	 * first (virtio_console.c:1920) so the flush loops below it stop
+	 * waiting on a device that has already left; before that call it is
+	 * false, and the `while (!virtqueue_get_buf() && !is_broken()) cpu_relax()`
+	 * spins exit on the first condition as they are meant to.
+	 */
+	bool broken;
+	/*
+	 * This queue's node in its device's virtqueue list -- what
+	 * virtio_device_for_each_vq() walks in virtio_console.c's remove_vqs().
+	 * Appended last for the reason every append in this header is: the
+	 * `_linux_prefix` up front is the region a prebuilt module indexes by
+	 * fixed offset, and nothing before it may move.
+	 *
+	 * kmalloc(sizeof(*vq)) in shim_find_vqs() sizes the object from this
+	 * very struct, so the extra 16 bytes are allocated with the rest and
+	 * there is no fixed-size container anywhere to overrun. list_add() sets
+	 * both links, so the memset() beside it need not.
+	 */
+	struct list_head list;
 };
 
 int register_virtio_driver(struct virtio_driver* driver);
@@ -261,9 +389,35 @@ void virtio_reset_device(struct virtio_device* dev);
 
 void virtio_rng_detect(void);
 
-#define virtio_cread(vdev, type, field, ptr)                                                       \
-	do {                                                                                           \
-		*(ptr) = *((type*)((vdev)->config->device_config_base + offsetof(type, field)));           \
+/*
+ * virtio_cread(vdev, type, field, ptr) -- copy `sizeof(*ptr)` bytes of config
+ * space, starting at offsetof(type, field), into *ptr.
+ *
+ * The previous version of this macro cast the offset address to `type *` and
+ * dereferenced it:
+ *
+ *     *(ptr) = *((type *)(base + offsetof(type, field)));
+ *
+ * which yields a `type` -- the whole struct the field belongs to -- and
+ * assigns it to *ptr. virtio_console.c:1794/:1795 are exactly that shape
+ * gone wrong: `virtio_cread(vdev, struct virtio_console_config, cols, &cols)`
+ * with cols a u16, so the assignment was u16 = struct virtio_console_config
+ * and clang said so three times. Taking the caller's width instead of the
+ * container's is what mainline's `sizeof(virtio_cread_v)` does
+ * (linux/virtio_config.h:466), so this is the same read with mainline's
+ * arithmetic and DCL's copy -- the difference being that DCL has no
+ * might_sleep() to make, because nothing here can block.
+ *
+ * The `char *` cast matters: device_config_base is `void *`, and while clang
+ * permits void-pointer arithmetic as an extension it does so one element at a
+ * time, which for a one-byte element happens to be correct -- by accident.
+ */
+#define virtio_cread(vdev, type, field, ptr)				\
+	do {								\
+		memcpy((ptr),						\
+		       (char*)(vdev)->config->device_config_base +	\
+			       offsetof(type, field),			\
+		       sizeof(*(ptr)));					\
 	} while (0)
 
 /*
@@ -278,8 +432,18 @@ int virtio_find_vqs(struct virtio_device* vdev,
 					void* desc);
 void virtio_del_vqs(struct virtio_device* vdev);
 
+/*
+ * mainline's fifth argument is gfp_t, not the `void *ctx` that add_sgs()
+ * carries -- both callers pass one (virtio-rng.c:65 GFP_KERNEL,
+ * virtio_console.c:490 GFP_ATOMIC), and an integer passed where a pointer is
+ * declared is a constraint violation clang only waves through on
+ * -Wno-error=int-conversion. It is accepted and dropped for the reason
+ * slab.h drops its own flags: Xeneva's allocator has no GFP_KERNEL against
+ * GFP_ATOMIC to distinguish, and `ctx` does not exist in mainline's
+ * signature at all, so nothing is being given up to make this match.
+ */
 int virtqueue_add_inbuf(
-	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, void* ctx);
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp);
 
 int virtqueue_add_sgs(struct virtqueue* vq,
 					  struct scatterlist sg[],
@@ -292,6 +456,60 @@ bool virtqueue_kick(struct virtqueue* vq);
 bool virtqueue_kick_prepare(struct virtqueue* vq);
 void virtqueue_notify(struct virtqueue* vq);
 void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len);
+
+/*
+ * The five virtqueue/virtio entry points virtio_console.c calls that had no
+ * declaration anywhere in DCL. Bodies are in DCL/virtio_shim.c beside the
+ * ones above; the signatures are mainline's, character for character, because
+ * a mismatch here is invisible to the linker (C does not mangle) and would
+ * show up as a call that links and reads the wrong register.
+ *
+ *   add_outbuf        the transmit half of add_inbuf -- a *device*-bound
+ *                     buffer, num_out of them, and mainline's trailing gfp_t
+ *                     (not the `void *ctx` DCL's add_inbuf carries). The
+ *                     distinction matters at the two call sites, which pass
+ *                     GFP_ATOMIC == 1: an int 1 into a `void *` parameter is
+ *                     a constraint violation, and it would have been reported
+ *                     as an implicit-conversion error at every call rather
+ *                     than at the declaration.
+ *   disable_cb/enable_cb  mask and unmask used-buffer notifications. Neither
+ *                     has a call site in this driver *today* -- the four
+ *                     virtqueue_disable_cb() calls all sit inside
+ *                     virtcons_freeze(), which #ifdef CONFIG_PM_SLEEP removes
+ *                     (and DCL sets no such config) -- which is why they are
+ *                     declared and not defined: a body nothing can reach is
+ *                     one more thing to get wrong for no caller, and the
+ *                     next driver that uncomments a suspend path will find
+ *                     the declaration where mainline puts it rather than an
+ *                     implicit-int error.
+ *   detach_unused_buf returns a buffer still owned by the queue so it can be
+ *                     freed; NULL when there is none, which is the whole of
+ *                     remove_vqs()'s inner loop condition.
+ *   is_broken         a queue whose device went away. DCL's is always false:
+ *                     there is no removal path to break a queue, and a
+ *                     `while (!virtqueue_get_buf() && !is_broken()) cpu_relax()`
+ *                     spin that could never exit on the second condition is
+ *                     exactly the loop it should be -- it exits on the first.
+ */
+int virtqueue_add_outbuf(struct virtqueue* vq, struct scatterlist sg[],
+			 unsigned int num, void* data, gfp_t gfp);
+void virtqueue_disable_cb(struct virtqueue* vq);
+bool virtqueue_enable_cb(struct virtqueue* vq);
+void* virtqueue_detach_unused_buf(struct virtqueue* vq);
+bool virtqueue_is_broken(const struct virtqueue* vq);
+
+/*
+ * virtio_break_device() -- mark the device's queues broken so callers stop
+ * waiting on them. mainline: drivers/virtio/virtio.c, and it is the one
+ * virtio entry point with no DCL implementation behind it until now.
+ *
+ * DCL's body marks the device's live queues, which is what the one caller
+ * (virtio_console.c:1920, the probe-failure unwind) wants: after it runs,
+ * every `while (... && !virtqueue_is_broken(vq))` in the driver stops
+ * spinning. Declared here rather than in <linux/virtio_config.h> because
+ * mainline declares it in <linux/virtio.h>, which is this file.
+ */
+void virtio_break_device(struct virtio_device* dev);
 
 void virtio_device_register(struct virtio_device* vdev,
 							struct VirtioPCIDevice* au_dev,

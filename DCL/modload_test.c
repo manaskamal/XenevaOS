@@ -11,6 +11,8 @@
 static const size_t test_module_size = sizeof(test_module_o);
 
 extern void virtio_rng_detect(void);
+extern int virtio_console_detect(void);
+extern int dcl_vport_selftest(void);
 extern int hwrng_selftest(void);
 extern int hwrng_read_bytes(void* buf, unsigned int max);
 
@@ -260,6 +262,59 @@ static int modload_virtio_rng_test(void) {
 	return 1;
 }
 
+/*
+ * The virtio-console half of the same pair, and it is a pair for the same
+ * reason: register in DclRunInitcalls(), find the device here.
+ *
+ * virtio_console_detect() scans 1AF4:1043 the way virtio_rng_detect() scans
+ * 1AF4:1044, and dcl_vport_selftest() then opens the /dev/vport* node that
+ * probe created and pumps one write/read round through the fops. It is a
+ * self-test rather than a bare detect because the failure that matters is
+ * not "device absent" -- QEMU may simply not have been given a
+ * `-device virtio-serial-pci` -- but "device present, driver registered,
+ * probe ran, and the port still does not move a byte". The test says which
+ * of the three it is: "host not attached" is the benign no-chardev case,
+ * and any other non-zero return is a real failure.
+ *
+ * Timing is part of that: probe registers the char devices at once, but the
+ * /dev/vport* node comes from the host's PORT_ADD control message, which
+ * only lands when the control queue is pumped. Nothing has pumped it by the
+ * time this runs, so dcl_vport_selftest() waits (and pumps) rather than
+ * reporting a driver that was never given the chance to finish.
+ *
+ * All of its output goes through UARTDebugOut because it runs before
+ * userspace has anything to read a /dev node with.
+ */
+static int modload_virtio_console_test(void) {
+	int found;
+	int rc;
+
+	UARTDebugOut("[modtest]: virtio_console built-in (Vendored/, not a .ko)\r\n");
+
+	UARTDebugOut("[modtest]: calling virtio_console_detect...\r\n");
+	found = virtio_console_detect();
+
+	/*
+	 * The self-test waits for the /dev/vport* node, so it is only worth
+	 * running when a device exists to make one. With --no-virtio-serial
+	 * there is no controller, hence no PORT_ADD, hence no node ever --
+	 * and a wait that cannot end in a result is dead boot time rather
+	 * than a measurement.
+	 */
+	if (!found) {
+		UARTDebugOut("[modtest]: vport selftest skipped (no device)\r\n");
+		dcl_puts("  virtio_console: no device\r\n");
+		return 0;
+	}
+
+	rc = dcl_vport_selftest();
+	UARTDebugOut("[modtest]: vport selftest rc=%d\r\n", rc);
+
+	dcl_puts(rc ? "  virtio_console selftest FAILED\r\n"
+				: "  virtio_console selftest ok\r\n");
+	return rc < 0 ? 0 : 1;
+}
+
 void modload_test_run(void) {
 	dcl_status_register();
 	hwrng_node_register();
@@ -269,5 +324,8 @@ void modload_test_run(void) {
 	 * so userspace HTTPS can read /dev/hwrng. */
 	modload_embedded_test();
 	modload_virtio_rng_test();
+	/* After rng: both scan the same bus, and rng's scan returns on its
+	 * own device rather than walking past it. */
+	modload_virtio_console_test();
 	UARTDebugOut("[modtest]: done\r\n");
 }

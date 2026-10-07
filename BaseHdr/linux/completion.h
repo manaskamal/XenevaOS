@@ -90,4 +90,22 @@ static inline void reinit_completion(struct completion* x)
 extern void complete(struct completion* x);
 extern int wait_for_completion_killable(struct completion* x);
 
+/**
+ * DECLARE_COMPLETION - define a completion at file scope
+ * @name: the name of the completion
+ *
+ * mainline's is `struct completion name = { 0 }` (or the ONSTACK twin, which
+ * differs only in that mainline's ONSTACK runs a lockdep ctor). virtio_console.c:61
+ * writes `static DECLARE_COMPLETION(early_console_added);`, and with no macro
+ * the line parses as an untyped function declaration -- the same pair of
+ * errors DEFINE_SPINLOCK produces -- so early_console_added() has no variable
+ * behind it by the time :1571 does complete(&early_console_added).
+ *
+ * `= { 0 }` rather than `= { }` because a braceless initialiser on a struct
+ * whose first member is unsigned int is a GNU extension, and this target is
+ * built with clang.
+ */
+#define DECLARE_COMPLETION(name) struct completion name = { 0 }
+#define DECLARE_COMPLETION_ONSTACK(name) struct completion name = { 0 }
+
 #endif /* __LINUX_COMPLETION_H */

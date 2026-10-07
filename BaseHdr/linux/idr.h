@@ -77,4 +77,24 @@ static inline int ida_alloc(struct ida* ida, gfp_t gfp)
 	return ida_alloc_range(ida, 0, 0x7FFFFFFFu, gfp);
 }
 
+/**
+ * ida_alloc_min - allocate an unused ID at or above @min
+ * @ida: the IDA
+ * @min: the lowest ID to hand out
+ * @gfp: allocation flags (unused; see ida_alloc() above)
+ *
+ * mainline's is ida_alloc_range(ida, min, INT_MAX, gfp), spelled here with the
+ * same 0x7FFFFFFF ceiling ida_alloc() uses for the same reason -- it is INT_MAX
+ * on this target and pulls in no <limits.h>.
+ *
+ * One caller: virtio_console.c:1215 allocates a vtermno starting at 1 so that
+ * console port 0 keeps its traditional number. Returning the same negative
+ * errno ida_alloc_range() returns on exhaustion is the half of the contract
+ * that matters: the caller checks `< 0` and unwinds.
+ */
+static inline int ida_alloc_min(struct ida* ida, unsigned int min, gfp_t gfp)
+{
+	return ida_alloc_range(ida, min, 0x7FFFFFFFu, gfp);
+}
+
 #endif /* __LINUX_IDR_H */

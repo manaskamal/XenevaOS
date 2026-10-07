@@ -5,6 +5,7 @@
 #include <Mm/vmmngr.h>	/* PAGE_SIZE -- tty_buffer.c computes TTY_BUFFER_PAGE from it */
 #include <linux/kernel.h>	/* gfp_t, uintptr_t, E2BIG */
 #include <linux/sprintf.h>	/* _vsnprintf, for kasprintf below */
+#include <linux/string.h>	/* memcpy -- kmemdup()'s copy (added below) */
 
 #define KMALLOC_SHIFT_HIGH  22
 #define KMALLOC_MIN_SIZE    8
@@ -74,22 +75,31 @@ static inline void* dcl_kzalloc(unsigned int size) {
 #define kzalloc_obj(type) dcl_kzalloc((unsigned int)sizeof(type))
 
 /*
- * kmalloc_obj(type, flags) -- the uninitialised twin of kzalloc_obj, and the
- * two-argument shape the driver actually writes:
+ * kmalloc_obj(type, ...) -- the uninitialised twin of kzalloc_obj, and the
+ * two shapes the drivers actually write:
  *
  *     p->em485 = kmalloc_obj(struct uart_8250_em485, GFP_ATOMIC);
  *                                     (8250_port.c:560)
+ *     port = kmalloc_obj(struct port);
+ *                                  (virtio_console.c:1328, :1974)
  *
- * kzalloc_obj() takes the type alone; kmalloc_obj() has to accept flags too,
- * because ignoring a *warning* the caller chose to send is different from
- * never seeing it. GFP_ATOMIC means "must not sleep", and DCL's allocator
- * does not block on anything -- it is a bump over the TLSF heap, so the
- * guarantee GFP_ATOMIC exists to make is satisfied whether or not the flag is
- * looked at. Nothing else in gfp_t is honoured: see the flags comment above
- * kmalloc_flex for why (an unrecognised gfp bit should be a compile error
- * there rather than a silently different allocation).
+ * kzalloc_obj() takes the type alone; kmalloc_obj() historically took flags
+ * as a second parameter, which is why the trailing parameter is `...` and not
+ * a named one: mainline's spelling varies by call site, and a macro that
+ * insists on exactly two rejects the one-argument caller with "too few
+ * arguments provided to function-like macro invocation" -- an error about the
+ * macro's arity that says nothing about which side is wrong.
+ *
+ * The flags are swallowed rather than honoured for the reason the block below
+ * gives at length: GFP_ATOMIC means "must not sleep", DCL's allocator does
+ * not block on anything -- it is a bump over the TLSF heap -- so the guarantee
+ * GFP_ATOMIC exists to make is satisfied whether or not the flag is looked at.
+ * Nothing else in gfp_t is honoured either (see the flags comment above
+ * kmalloc_flex: an unrecognised gfp bit should be a compile error there
+ * rather than a silently different allocation -- and with `...` it is now
+ * silently accepted, which is the one thing this change trades away).
  */
-#define kmalloc_obj(type, flags) dcl_kmalloc((unsigned int)sizeof(type))
+#define kmalloc_obj(type, ...) dcl_kmalloc((unsigned int)sizeof(type))
 
 /*
  * kmalloc_flex(p, member, count, flags) -- allocate "struct + count of the
@@ -118,11 +128,22 @@ static inline void* dcl_kzalloc(unsigned int size) {
  * comes from the member rather than a hardcoded 1, so a change to `data[]`'s
  * type cannot silently mis-size every allocation.
  *
- * The flags argument is accepted and ignored: this is where GFP_ATOMIC |
- * __GFP_NOWARN from tty_buffer.c lands, and both are advisory here. A failed
- * allocation still returns NULL -- tty_buffer_alloc() checks for it -- so the
- * "don't warn on failure" half of __GFP_NOWARN is moot: DCL's allocator
- * does not warn.
+/*
+ * The flags argument is accepted and ignored, and it is now `...` rather than
+ * a named fourth parameter: virtio_console.c:411 writes the three-argument
+ * form -- `kmalloc_flex(*buf, sg, pages)` -- because mainline's macro dropped
+ * its gfp argument, while tty_buffer.c:187 still writes the four-argument
+ * `kmalloc_flex(*p, data, 2 * size, GFP_ATOMIC | __GFP_NOWARN)`. A macro that
+ * insists on one count of parameters rejects the other caller with "too few
+ * arguments provided to function-like macro invocation", an error about
+ * arity rather than about anything either caller did wrong. Both forms
+ * substitute the same expansion; the swalled arguments are the GFP flags,
+ * which are documentation in DCL and not policy (see the note above).
+ *
+ * This is where GFP_ATOMIC | __GFP_NOWARN from tty_buffer.c lands, and both
+ * are advisory here. A failed allocation still returns NULL -- tty_buffer_alloc()
+ * checks for it -- so the "don't warn on failure" half of __GFP_NOWARN is moot:
+ * DCL's allocator does not warn.
  *
  * __GFP_NOWARN exists as a name only so that expression parses. GFP flags are
  * all 0 (see kernel.h): they are documentation in DCL, not policy.
@@ -137,7 +158,7 @@ static inline void* dcl_kzalloc(unsigned int size) {
 #define __GFP_RETRY_MAYFAIL 0
 #endif
 
-#define kmalloc_flex(p, member, count, flags)				\
+#define kmalloc_flex(p, member, count, ...)				\
 	dcl_kmalloc((unsigned int)(sizeof(typeof(p)) +			\
 		    sizeof(*((typeof(&p))0)->member) * (size_t)(count)))
 
@@ -162,6 +183,56 @@ static inline void* dcl_kzalloc(unsigned int size) {
  */
 #define kzalloc_objs(type, count) \
 	dcl_kzalloc((unsigned int)(sizeof(type) * (unsigned int)(count)))
+
+/*
+ * kmalloc_objs(type, count) -- the uninitialised twin, same two-argument
+ * shape as kzalloc_objs() above.
+ *
+ * virtio_console.c is the first caller: :1820 `vqs = kmalloc_objs(struct
+ * virtqueue *, nr_queues);` and its three siblings at :1821-1823, each
+ * allocating an array of pointers. The first argument is a *type* here --
+ * `struct virtqueue *` -- and sizeof() of a pointer type is exactly what an
+ * array of those pointers needs, so the expansion is the same
+ * sizeof * count as kzalloc_objs without the zeroing.
+ *
+ * Named separately rather than as kzalloc_objs with a flag bolted on, for the
+ * reason that block gives: two callers of two names cannot disagree about
+ * whether the memory comes back zeroed, whereas one name with a third
+ * parameter could be read either way at the call site.
+ */
+#define kmalloc_objs(type, count) \
+	dcl_kmalloc((unsigned int)(sizeof(type) * (unsigned int)(count)))
+
+/*
+ * kmemdup(src, len, gfp) -- copy `len` bytes into a fresh allocation.
+ *
+ * mainline declares it in <linux/slab.h> too (kernel: mm/util.c), so this is
+ * its home and not an import. One caller, virtio_console.c:1118:
+ *
+ *     data = kmemdup(buf, count, GFP_ATOMIC);
+ *     if (!data)
+ *         return -ENOMEM;
+ *
+ * which needs exactly the contract mainline gives: NULL on failure, and the
+ * failure *checked for*, which is why the body must not silently fall back to
+ * anything. The gfp flag is swallowed like every other one in this header --
+ * see the note above kmalloc_obj -- and memcpy comes from <linux/string.h>,
+ * which this header now includes for it (kernel.h names memcpy but only
+ * commentates on where mainline gets it from).
+ *
+ * size_t length, unsigned int size: the cast matches what the rest of this
+ * header hands the allocator, and a length beyond 4 GB would wrap here rather
+ * than fail. The only caller's count is a virtio-console control message.
+ */
+static inline void* kmemdup(const void* src, size_t len, gfp_t gfp)
+{
+	void* p = dcl_kmalloc((unsigned int)len);
+
+	(void)gfp;
+	if (p && len)
+		memcpy(p, src, len);
+	return p;
+}
 
 /*
  * get_zeroed_page() / free_page() -- the tty xmit buffer's allocator

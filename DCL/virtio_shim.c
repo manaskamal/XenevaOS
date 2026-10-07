@@ -190,6 +190,15 @@ static int shim_find_vqs(struct virtio_device* vdev,
 		vq->desc[qsize - 1].next = 0xFFFF;
 
 		vqs[i] = vq;
+		/*
+		 * Link it into its device's queue list -- the list
+		 * virtio_device_for_each_vq() walks in remove_vqs()
+		 * (virtio_console.c:1895) before freeing every in-flight
+		 * buffer. virtio_device_register() initialises the head, and
+		 * list_add writes both links itself, so the memset() above
+		 * has nothing to do with this one.
+		 */
+		list_add(&vq->list, &vdev->vqs);
 		if (_num_live_vqs < MAX_LIVE_VQS)
 			_live_vqs[_num_live_vqs++] = vq;
 	}
@@ -343,8 +352,12 @@ int virtqueue_add_sgs(struct virtqueue* vq,
 }
 
 int virtqueue_add_inbuf(
-	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, void* ctx) {
-	return virtqueue_add_sgs(vq, sg, 0, num_in, data, ctx);
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp) {
+	/* gfp dropped -- see the note on the declaration. The ctx slot
+	 * virtqueue_add_sgs() still carries is DCL's own, and this is its
+	 * only caller that is not DCL's: mainline's add_inbuf never had one. */
+	(void)gfp;
+	return virtqueue_add_sgs(vq, sg, 0, num_in, data, NULL);
 }
 
 bool virtqueue_kick_prepare(struct virtqueue* vq) {
@@ -400,6 +413,25 @@ void virtio_device_register(struct virtio_device* vdev,
 	vdev->index = dev_index;
 	vdev->au_dev = au_dev;
 
+	/*
+	 * Two members the memset just put into a state that must not survive
+	 * it.
+	 *
+	 * id.device is mainline's device identity, filled by its virtio core
+	 * from the PCI/PV device ID; DCL has no equivalent step, and the only
+	 * reader -- is_rproc_serial() at virtio_console.c:332 -- would
+	 * otherwise compare against 0 for every device.
+	 *
+	 * vqs is the queue list head, and a zeroed list_head is not an empty
+	 * one: list_empty() is `head->next == head`, and NULL never equals the
+	 * address of the head, so a walk started on a zeroed head reads its
+	 * NULL next as though it were a struct virtqueue and faults on the
+	 * first member. INIT_LIST_HEAD makes it the empty list it is meant to
+	 * be -- the list itself costs nothing, only its being initialised.
+	 */
+	vdev->id.device = virtio_device_type(au_dev);
+	INIT_LIST_HEAD(&vdev->vqs);
+
 	static struct virtio_config_ops shim_ops = {
 		.get = shim_get,
 		.set = shim_set,
@@ -416,8 +448,21 @@ void virtio_device_register(struct virtio_device* vdev,
 
 	vdev->config->device_config_base = vdev->au_dev->deviceCfg;
 
-	if (_num_devices < MAX_VIRTIO_DEVICES)
+	if (_num_devices < MAX_VIRTIO_DEVICES) {
 		_virtio_devices[_num_devices++] = *vdev;
+		/*
+		 * The copy above is a lookup snapshot, and this line is what
+		 * keeps it safe to look at: a struct assignment copies the
+		 * list_head's *links*, which still name the original's head.
+		 * Walking the copy then reads that head as if it were a
+		 * struct virtqueue -- a type confusion, on an address that is
+		 * still valid, which is worse than a fault because nothing
+		 * says so. Re-linking the copy to itself makes it an empty
+		 * list: walking it does nothing, which is the truth for a
+		 * snapshot taken before any queue exists.
+		 */
+		INIT_LIST_HEAD(&_virtio_devices[_num_devices - 1].vqs);
+	}
 
 	for (int i = 0; i < _num_drivers; i++) {
 		struct virtio_driver* drv = _registered_drivers[i];
@@ -445,9 +490,37 @@ void virtio_device_register(struct virtio_device* vdev,
 
 #define VIRTIO_PCI_VENDOR_ID   0x1AF4
 #define VIRTIO_PCI_DEV_ENTROPY 0x1044
+#define VIRTIO_PCI_DEV_CONSOLE 0x1043
 
-void virtio_rng_detect(void) {
-	UARTDebugOut("[dcl-virtio]: scanning for virtio-rng\r\n");
+/* virtio_scan_and_register() results. */
+#define VIRTIO_SCAN_NO_DEVICE  0 /* the bus has no function with this id */
+#define VIRTIO_SCAN_INIT_FAIL  (-1) /* matched, but AuVirtioPCIInit() said no */
+#define VIRTIO_SCAN_REGISTERED 1 /* matched, registered, probe ran */
+
+/*
+ * virtio_scan_and_register() -- walk the bus for one virtio id and bring the
+ * first match up. It is a scan at all for the reason virtio_rng_detect()'s
+ * has to be one: at initcall time there is no device yet, and a driver that
+ * registers and never sees a device looks exactly like one that was never
+ * registered. The two scans skip each other's device by id, so whichever
+ * runs first leaves the other's for it -- and virtio_device_register() only
+ * probes drivers whose id_table matches, so registering a console device
+ * against a driver that is not yet on the list would fail loudly at probe
+ * rather than silently, which is why the initcall runs first.
+ *
+ * vdev and au_dev belong to the caller rather than being static here:
+ * register() keeps their addresses, so one shared pair would be memset() by
+ * the second scan while the first device is still driving it.
+ *
+ * The only things the two detect paths disagreed on were the id, the name in
+ * the two log lines, and the index handed to register(); folding those into
+ * arguments is what stops the next id -- a virtio-blk, say -- from being a
+ * 30-line copy with one hex digit changed.
+ */
+static int virtio_scan_and_register(uint16_t pci_id, const char* name, int index,
+				    struct virtio_device* vdev,
+				    struct VirtioPCIDevice* au_dev) {
+	UARTDebugOut("[dcl-virtio]: scanning for %s\r\n", name);
 	for (int b = 0; b < 256; b++) {
 		for (int d = 0; d < 32; d++) {
 			for (int f = 0; f < 8; f++) {
@@ -456,21 +529,145 @@ void virtio_rng_detect(void) {
 					continue;
 				uint16_t vend = AuPCIERead(addr, PCI_VENDOR_ID, b, d, f);
 				uint16_t did = AuPCIERead(addr, PCI_DEVICE_ID, b, d, f);
-				if (vend != VIRTIO_PCI_VENDOR_ID)
-					continue;
-				if (did != VIRTIO_PCI_DEV_ENTROPY)
+				if (vend != VIRTIO_PCI_VENDOR_ID || did != pci_id)
 					continue;
 
-				static struct virtio_device vdev;
-				static struct VirtioPCIDevice au_dev;
-				if (!AuVirtioPCIInit(addr, b, d, f, 0, &au_dev)) {
-					UARTDebugOut("[dcl-virtio]: virtio-rng init failed\r\n");
-					return;
+				if (!AuVirtioPCIInit(addr, b, d, f, 0, au_dev)) {
+					UARTDebugOut("[dcl-virtio]: %s init failed\r\n", name);
+					return VIRTIO_SCAN_INIT_FAIL;
 				}
-				virtio_device_register(&vdev, &au_dev, 0);
-				UARTDebugOut("[dcl-virtio]: virtio-rng device registered\r\n");
-				return;
+				virtio_device_register(vdev, au_dev, index);
+				UARTDebugOut("[dcl-virtio]: %s device registered\r\n", name);
+				return VIRTIO_SCAN_REGISTERED;
 			}
 		}
 	}
+	return VIRTIO_SCAN_NO_DEVICE;
+}
+
+void virtio_rng_detect(void) {
+	static struct virtio_device vdev;
+	static struct VirtioPCIDevice au_dev;
+
+	virtio_scan_and_register(VIRTIO_PCI_DEV_ENTROPY, "virtio-rng", 0, &vdev, &au_dev);
+}
+
+/*
+ * The index is _num_devices -- the slot this device takes in DCL's own list
+ * -- rather than a hardcoded 0 like the rng's. virtio_device.index is only
+ * read for the /dev/vport%up%u name (virtio_console.c:1371), and two devices
+ * both claiming 0 would name their ports identically.
+ *
+ * Returns 1 when a device was found and registered, 0 when the bus had none
+ * or init failed. The caller needs to tell those apart because only the
+ * first case will ever produce a /dev/vport* node, and waiting for one that
+ * no device can create would be a fixed dead time on every boot with
+ * --no-virtio-serial. The "absent" line is printed here rather than by the
+ * scan so an init failure reports only its own message.
+ */
+int virtio_console_detect(void) {
+	static struct virtio_device vdev;
+	static struct VirtioPCIDevice au_dev;
+	int rc = virtio_scan_and_register(VIRTIO_PCI_DEV_CONSOLE, "virtio-console",
+					  _num_devices, &vdev, &au_dev);
+
+	if (rc == VIRTIO_SCAN_NO_DEVICE)
+		UARTDebugOut("[dcl-virtio]: no virtio-console device on the bus\r\n");
+	return rc == VIRTIO_SCAN_REGISTERED;
+}
+
+/* ─── entry points virtio_console.c calls that DCL had no body for ──────── */
+
+/*
+ * The four below are the whole of the difference between a driver that
+ * compiled and one that linked. Every one is mainline's shape, taken from
+ * the declaration in <linux/virtio.h> rather than from how the call sites
+ * happen to use them -- C links by name alone, so a signature that merely
+ * "works" would call the right symbol with the wrong register contract and
+ * show up as a wrong answer somewhere else entirely.
+ */
+
+/*
+ * virtqueue_add_outbuf() -- the transmit-side add: `num` device-bound
+ * buffers, no receive ones, which is add_sgs with the counts split the other
+ * way from virtqueue_add_inbuf() directly above.
+ *
+ * mainline's last parameter is gfp_t, not the `void *ctx` DCL's add_inbuf
+ * carries, and that difference is not cosmetic at the call sites: the driver
+ * passes GFP_ATOMIC (virtio_console.c:561, :611), an integer 1, and an
+ * integer 1 into a `void *` parameter is a constraint violation that clang
+ * reports at every call. The gfp is accepted and dropped for the reason
+ * slab.h drops its own flags argument -- Xeneva's allocator makes no
+ * GFP_KERNEL/GFP_ATOMIC distinction and a queue buffer is never allocated
+ * from an interrupt context that could not have waited.
+ */
+int virtqueue_add_outbuf(struct virtqueue* vq, struct scatterlist sg[],
+			 unsigned int num, void* data, gfp_t gfp)
+{
+	(void)gfp;
+	return virtqueue_add_sgs(vq, sg, num, 0, data, NULL);
+}
+
+/*
+ * virtqueue_is_broken() -- has the device gone away? Reads the flag
+ * virtio_break_device() sets; false until then, which is what every
+ * `while (!virtqueue_get_buf(vq, &len) && !virtqueue_is_broken(vq)) cpu_relax();`
+ * spin in the driver wants before a removal has happened.
+ */
+bool virtqueue_is_broken(const struct virtqueue* vq)
+{
+	return vq ? vq->broken : false;
+}
+
+/*
+ * virtqueue_detach_unused_buf() -- take a buffer off the queue and hand it
+ * back so the caller can free it; NULL when none is left, which is what
+ * ends remove_vqs()'s `while ((buf = virtqueue_detach_unused_buf(vq)))`.
+ *
+ * The descriptor is returned to the free list along with the cookie, because
+ * the cookie is only half the slot's ownership and nothing after this
+ * allocates: del_vqs() -- the only call left in remove_vqs() -- is a TODO in
+ * this file that frees nothing, so a chain left allocated here stays
+ * allocated for good. `cookies[i]` being set means get_buf() has not run for
+ * this slot, and get_buf() is the only other thing that clears it, so the
+ * chain cannot be one the free list already holds.
+ */
+void* virtqueue_detach_unused_buf(struct virtqueue* vq)
+{
+	if (!vq)
+		return NULL;
+
+	for (uint16_t i = 0; i < vq->qsize; i++) {
+		void* cookie = vq->cookies[i];
+
+		if (!cookie)
+			continue;
+
+		vq->cookies[i] = NULL;
+		free_desc_chain(vq, i);
+		return cookie;
+	}
+	return NULL;
+}
+
+/*
+ * virtio_break_device(dev) -- mark every queue on a device broken, so the
+ * flush loops that follow stop waiting on hardware that has already left.
+ * virtcons_remove() calls it first (virtio_console.c:1920), before the
+ * reset and the flushes, and mainline's body is the same one-line walk.
+ *
+ * The walk needs `vdev->vqs` to be a real empty-or-not list, which is what
+ * the two INIT_LIST_HEAD() calls in virtio_device_register() are for; a
+ * head that was only zeroed would have this reading NULL as a struct
+ * virtqueue on its very first step.
+ */
+void virtio_break_device(struct virtio_device* dev)
+{
+	struct virtqueue* vq;
+
+	if (!dev)
+		return;
+
+	list_for_each_entry(vq, &dev->vqs, list)
+		vq->broken = true;
 }

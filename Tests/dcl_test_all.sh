@@ -27,12 +27,12 @@ cd "$(dirname "$0")/.." || exit 1
 
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=109    # BaseHdr/linux/*.h
-EXP_ASM_H=4        # BaseHdr/asm/*.h
-EXP_DCL_C=14       # DCL/*.c   (dcl_va_trampoline.s adds the 15th object)
-EXP_DCL_O=15       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=8       # KernelAA64/obj/Vendored/**/*.o  (stage 3's tty/serial)
-EXP_ALL_O=141      # everything under KernelAA64/obj
+EXP_LINUX_H=147    # BaseHdr/linux/*.h
+EXP_ASM_H=6        # BaseHdr/asm/*.h
+EXP_DCL_C=16       # DCL/*.c   (dcl_va_trampoline.s adds the 17th object)
+EXP_DCL_O=17       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=9       # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial, virtio_console)
+EXP_ALL_O=144      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
@@ -75,6 +75,23 @@ if [ -f Vendored/MANIFEST.md ]; then
 	else
 		bad "vendored virtio-rng.c" "manifest ${_manifest:-<none>}, file $_actual"
 	fi
+
+	# Stage 4's two files, checked the same way but keyed by the path in
+	# their own row rather than by position -- `head -1` above would land
+	# on whichever row was added first, which is exactly the kind of
+	# assumption a third row breaks. These two are byte-identical to
+	# v7.2, so any non-empty diff is drift rather than a recorded delta.
+	for _f in drivers/char/virtio_console.c drivers/tty/hvc/hvc_console.h; do
+		_manifest=$(grep -F "| \`$_f\` |" Vendored/MANIFEST.md | head -1 |
+			grep -oE '[0-9a-f]{32}' | tail -1)
+		_actual=$(md5sum "Vendored/$_f" | cut -d' ' -f1)
+		_name=${_f##*/}
+		if [ -n "$_manifest" ] && [ "$_manifest" = "$_actual" ]; then
+			ok "vendored $_name matches MANIFEST.md"
+		else
+			bad "vendored $_name" "manifest ${_manifest:-<none>}, file $_actual"
+		fi
+	done
 fi
 
 [ "$fails" -eq 0 ] || { echo "count assertions failed; not booting"; exit 1; }
@@ -143,13 +160,33 @@ expect "probe ran"                          "[dcl-virtio]: probe done"
 expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng.0)"
 expect "/dev/hwrng round-trip"              "[dcl]: /dev/hwrng round-trip OK (samples differ)"
 
+# Stage 4: drivers/char/virtio_console.c, vendored from source and compiled
+# into the image -- registered by DclRunInitcalls(), bound by a scan for
+# 1AF4:1043, then driven through one write/read round against QEMU's
+# virtserialport. "device 'vport" rather than the full name: the node is
+# named vport%up%u from DCL's device index and the *host's* port id
+# (virtio_console.c:1371), so pinning the digits would make this assertion
+# fail the day a second port appears instead of the day the driver breaks.
+expect "virtio_console registered"          "[dcl]: virtio_console driver registered"
+expect "virtio_console is not a .ko"        "[modtest]: virtio_console built-in"
+expect "virtio-console device found"        "[dcl-virtio]: virtio-console device registered"
+expect "vport node created"                 "[dcl]: device 'vport"
+expect "vport round-trip"                   "[modtest]: vport selftest rc=0"
+
 # The ELF loader is a separate guarantee from "the driver links" -- it still
 # loads and runs test_module.o through DCL/module_loader.c.
 expect "ELF loader still exercised"         "[modtest] init returned  0"
 
-# Nothing anywhere may be failing.
-if grep -qE '[1-9][0-9]* failed|FAILED' "$LOG"; then
-	bad "no failures anywhere" "$(grep -m1 -E '[1-9][0-9]* failed|FAILED' "$LOG" | cut -c1-100)"
+# Nothing anywhere may be failing. The bare `FAILED` in the old pattern was
+# a substring match, and a *macro name* containing it -- `VIRTIO_CONFIG_S_FAILED`,
+# quoted verbatim inside a clang -Wmacro-redefined warning -- was enough to
+# fail this line. Requiring FAILED to stand as its own word keeps the intent
+# ("something printed the word") and drops identifiers, which are names for
+# things rather than reports of them. The `[1-9][0-9]* failed` half was
+# already a count and needs no change.
+_failre='[1-9][0-9]* failed|(^|[^_[:alnum:]])FAILED([^_[:alnum:]]|$)'
+if grep -qE "$_failre" "$LOG"; then
+	bad "no failures anywhere" "$(grep -m1 -E "$_failre" "$LOG" | cut -c1-100)"
 else
 	ok "no failures anywhere"
 fi
