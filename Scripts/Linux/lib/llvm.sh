@@ -14,7 +14,7 @@ fi
 ( cd ../../BootAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" SOAK="${SOAK:-0}" llvm )
+( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" SOAK="${SOAK:-0}" DEBUG_ALLOC="${DEBUG_ALLOC:-0}" llvm )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
@@ -35,7 +35,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd http)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd)
     else
         echo "[llvm] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \

@@ -39,6 +39,7 @@ KernelAA64/*.log
 KernelAA64/obj/
 fat.img
 initrd2.img
+data.img
 fat-*.img
 *.iso
 qemu.pid

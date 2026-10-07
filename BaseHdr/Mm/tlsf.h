@@ -116,6 +116,45 @@ void *tlsf_realloc(tlsf_pool_t *pool, void *ptr, size_t size);
 static inline size_t tlsf_used(tlsf_pool_t *pool) { return pool ? pool->used_size : 0; }
 static inline size_t tlsf_total(tlsf_pool_t *pool) { return pool ? pool->pool_size : 0; }
 
+#ifdef __XENEVA_DEBUG_ALLOC__
+/* ---- Stage 2: debug-only block layout ----
+ * Live block: [tlsf hdr 16][dbg hdr 16][front RZ 16][user N][back RZ 16].
+ * The user pointer stays 16-aligned (48 = 3 x 16). Free blocks keep the
+ * stock layout; all translation happens at the API boundary, so every
+ * internal helper (coalescing, buckets, walking) is untouched.
+ * Everything in this block vanishes when the flag is off. */
+#define TLSF_RZ_SIZE           16
+#define TLSF_RZ_PATTERN        0xFCu
+#define TLSF_POISON_FREE       0x6Bu
+#define TLSF_POISON_FRESH      0xAAu
+#define TLSF_DBG_HDR_SIZE      ((size_t)sizeof(tlsf_dbg_hdr_t))
+#define TLSF_DBG_OVERHEAD      (TLSF_DBG_HDR_SIZE + 2 * TLSF_RZ_SIZE)
+
+typedef struct tlsf_dbg_hdr {
+	void    *caller;    /* __builtin_return_address(1): kmalloc's caller */
+	uint32_t seq;       /* allocation sequence number */
+	uint32_t user_size; /* requested payload bytes (RZ/poison bounds) */
+} tlsf_dbg_hdr_t;
+
+/* Walk every region grafted into the pool, group live blocks by caller,
+ * print the top offenders. Read-only; caller must hold the heap lock. */
+void tlsf_leak_dump(tlsf_pool_t *pool);
+
+/* Initialise a caller-provided pool object, independent of the global
+ * pool. Used by the debug self-tests so deliberate corruption never
+ * touches the live heap. */
+tlsf_pool_t *tlsf_create_at(tlsf_pool_t *pool);
+
+/* Cumulative detector reports (redzone / poison / double-free). Tests
+ * assert this moves; operators watch it via the debugger. */
+uint64_t tlsf_dbg_violation_count(void);
+
+/* Caller hint side-channel (see tlsf.c): the public wrappers stash
+ * their own return address (frame 0: always safe) before entering the
+ * backend, which stamps it into the block. No signature changes. */
+void tlsf_dbg_hint_set(void *caller);
+#endif /* __XENEVA_DEBUG_ALLOC__ */
+
 #ifdef __cplusplus
 }
 #endif

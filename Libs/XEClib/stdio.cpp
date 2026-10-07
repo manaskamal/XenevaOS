@@ -72,7 +72,6 @@ FILE* fopen(const char* name, const char* mode) {
 	int fd = _KeOpenFile(filename, mode_);
 	FILE* file = (FILE*)malloc(sizeof(FILE));
 	memset(file, 0, sizeof(FILE));
-	_KePrint("FOPEN opening %s %d \r\n", filename, fd);
 	if (fd == -1)
 		return NULL;
 
@@ -124,7 +123,6 @@ size_t fread(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
 * @param stream -- pointer to a FILE object
 */
 size_t fwrite(void* ptr, size_t sz, size_t nmemb, FILE* stream) {
-	_KePrint("fwrite : %x \r\n", stream);
 	if (!stream)
 		return 0;
 	char* aligned_ = (char*)ptr;
@@ -244,9 +242,7 @@ int putchar(int c) {
 }
 
 int puts(const char* s) {
-	_KePrint("Puts: %x , strlen: %d\r\n", stdout, strlen(s));
 	fwrite((void*)s, 1, strlen(s), stdout);
-	_KePrint("fwrite done \r\n");
 	fwrite((void*)"\n", 1, 1, stdout);
 	return 0;
 }

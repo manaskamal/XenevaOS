@@ -16,6 +16,8 @@ set -e
 #                           network and audio stay alive, memory stays small.
 #   --soak                  Build the kernel with the scheduler soak test
 #                           (KernelAA64/Hal/sched_soak.c) started at boot.
+#   --debug-alloc           Build the kernel with allocator debug detectors
+#                           (redzones, poisoning, caller tracking, leak dump).
 #   --direct-scanout        Rebuild userspace with the compositor drawing into
 #                           the GOP framebuffer when its pitch permits it.
 #   --unikernel             One-process XR shell: DeodhaiXR links XELnch and
@@ -66,6 +68,11 @@ set -e
 #   --force-legacy-build    Reuse an existing initrd2.img instead of rebuilding it.
 #   --install-deps          Install required host packages for this distro.
 #   --initrd-size-mb=N      Override the auto-computed initrd2.img size.
+#   --data-size-mb=N        Size of the persistent data.img virtio-blk disk
+#                           (default 256). Created once and reused, so files
+#                           written to /data survive across runs.
+#   --no-data-disk          Don't attach the persistent data disk.
+#   --force-data-disk       Recreate data.img, wiping persisted files.
 #   --headless              Run QEMU with -display none, bounded by a timeout,
 #                           instead of opening a GTK window. Ordinary builds
 #                           stop at the interactive resolution menu; bleed
@@ -100,6 +107,7 @@ FORCE_LEGACY_BUILD=0
 INSTALL_DEPS=0
 HEADLESS=0
 BLEED=0
+DEBUG_ALLOC=0
 SOAK=0
 DIRECT_SCANOUT=0
 UNIKERNEL=0
@@ -131,6 +139,9 @@ BT_SERIAL="${XENEVA_BT_SERIAL:-}"
 NO_BT=1
 NO_NETSURF=0
 VIRTIO_RNG=1
+DATA_SIZE_MB=256
+NO_DATA_DISK=0
+FORCE_DATA_DISK=0
 
 print_help(){
     printf "${STY_CYAN}"
@@ -162,13 +173,15 @@ run_build_tui() {
     local scanout_choice="$DIRECT_SCANOUT"
     local unikernel_choice="$UNIKERNEL"
     local soak_choice="$SOAK"
-    local network_on=1 audio_on=1 bootmenu_on=1
+    local debugalloc_choice="$DEBUG_ALLOC"
+    local network_on=1 audio_on=1 bootmenu_on=1 datadisk_on=1
     [ "$NO_NETWORK" -eq 1 ] && network_on=0
     [ "$NO_AUDIO" -eq 1 ] && audio_on=0
     [ "$NO_BOOT_MENU" -eq 1 ] && bootmenu_on=0
+    [ "$NO_DATA_DISK" -eq 1 ] && datadisk_on=0
     local memory_choice="default"
 
-    local items=(toolchain profile runmode userapps scanout unikernel soak network audio bootmenu doom netsurf memory launch quit)
+    local items=(toolchain profile runmode userapps scanout unikernel soak debugalloc network audio bootmenu doom netsurf datadisk memory launch quit)
     local selected=0
     local tui_done=0
 
@@ -208,9 +221,11 @@ run_build_tui() {
         scanout_choice=0
         unikernel_choice=0
         soak_choice=0
+        debugalloc_choice=0
         network_on=1
         audio_on=1
         bootmenu_on=1
+        datadisk_on=1
         NO_DOOM=0
         NO_NETSURF=0
         memory_choice="default"
@@ -239,9 +254,11 @@ run_build_tui() {
         DIRECT_SCANOUT="$scanout_choice"
         UNIKERNEL="$unikernel_choice"
         SOAK="$soak_choice"
+        DEBUG_ALLOC="$debugalloc_choice"
         NO_NETWORK=$((1 - network_on))
         NO_AUDIO=$((1 - audio_on))
         NO_BOOT_MENU=$((1 - bootmenu_on))
+        NO_DATA_DISK=$((1 - datadisk_on))
         case "$memory_choice" in
             default) unset XENEVA_QEMU_MEMORY ;;
             *) export XENEVA_QEMU_MEMORY="$memory_choice" ;;
@@ -264,10 +281,12 @@ run_build_tui() {
             scanout) scanout_choice=$((1 - scanout_choice)) ;;
             unikernel) unikernel_choice=$((1 - unikernel_choice)) ;;
             soak) soak_choice=$((1 - soak_choice)) ;;
+            debugalloc) debugalloc_choice=$((1 - debugalloc_choice)) ;;
             network) network_on=$((1 - network_on)) ;;
             audio) audio_on=$((1 - audio_on)) ;;
             doom) NO_DOOM=$((1 - NO_DOOM)) ;;
             netsurf) NO_NETSURF=$((1 - NO_NETSURF)) ;;
+            datadisk) datadisk_on=$((1 - datadisk_on)) ;;
             bootmenu) bootmenu_on=$((1 - bootmenu_on)) ;;
             memory) tui_cycle_memory ;;
             launch) tui_apply_and_launch ;;
@@ -308,14 +327,16 @@ run_build_tui() {
         tui_row 4 "Direct scanout" "$(tui_on_off "$scanout_choice")"
         tui_row 5 "Unikernel shell" "$(tui_on_off "$unikernel_choice")"
         tui_row 6 "Scheduler soak" "$(tui_on_off "$soak_choice")"
-        tui_row 7 "Network stack" "$(tui_on_off "$network_on")"
-        tui_row 8 "Audio daemon" "$(tui_on_off "$audio_on")"
-        tui_row 9 "Boot menu" "$(tui_on_off "$bootmenu_on")"
-        tui_row 10 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
-        tui_row 11 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
-        tui_row 12 "Guest memory" "$memory_choice"
-        tui_row 13 "Launch" "build + run"
-        tui_row 14 "Quit" ""
+        tui_row 7 "Allocator debug" "$(tui_on_off "$debugalloc_choice")"
+        tui_row 8 "Network stack" "$(tui_on_off "$network_on")"
+        tui_row 9 "Audio daemon" "$(tui_on_off "$audio_on")"
+        tui_row 10 "Boot menu" "$(tui_on_off "$bootmenu_on")"
+        tui_row 11 "Doom addon" "$(tui_on_off $((1 - NO_DOOM)))"
+        tui_row 12 "NetSurf browser" "$(tui_on_off $((1 - NO_NETSURF)))"
+        tui_row 13 "Data disk (/data)" "$(tui_on_off "$datadisk_on")"
+        tui_row 14 "Guest memory" "$memory_choice"
+        tui_row 15 "Launch" "build + run"
+        tui_row 16 "Quit" ""
         printf '\033[1;36m└%s┘\033[0m\n' "$(printf '%*s' "$w" | tr ' ' '─')"
         printf '\n  \033[2mIncompatible combos fail after launch with the usual errors.\033[0m\n'
         printf '  \033[1;33m↑↓\033[0m select  \033[1;33m⏎\033[0m change  \033[1;33mD\033[0m defaults  \033[1;33mQ\033[0m quit\n'
@@ -350,6 +371,7 @@ while [ $# -gt 0 ]; do
         --skip-build) SKIP_BUILD=1 ;;
         --force-user-apps) BUILD_USER_APPS=1 ;;
 		--bleed) BLEED=1 ;;
+		--debug-alloc) DEBUG_ALLOC=1 ;;
 		--soak) SOAK=1 ;;
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
 		--unikernel) UNIKERNEL=1 ;;
@@ -378,8 +400,23 @@ while [ $# -gt 0 ]; do
             shift
             # Guest argv (ping -6, iptable -A, ...) may start with '-'.
             # Stop only at the next host option (--foo, -h, -xr-demo).
+            # A lone "--" passes everything after it through verbatim,
+            # for guest flags that look like host options
+            # (e.g. --term -- netsurf --selftest http://example.com/).
             TERM_CMD=""
             while [ $# -gt 0 ]; do
+                if [ "$1" = "--" ]; then
+                    shift
+                    while [ $# -gt 0 ]; do
+                        if [ -n "$TERM_CMD" ]; then
+                            TERM_CMD="$TERM_CMD $1"
+                        else
+                            TERM_CMD="$1"
+                        fi
+                        shift
+                    done
+                    break
+                fi
                 case "$1" in
                     --*|-h|-xr-demo) break ;;
                 esac
@@ -407,6 +444,9 @@ while [ $# -gt 0 ]; do
         --no-bt) NO_BT=1 ;;
         --virtio-rng) VIRTIO_RNG=1 ;;
         --no-virtio-rng) VIRTIO_RNG=0 ;;
+        --data-size-mb=*) DATA_SIZE_MB="${1#--data-size-mb=}" ;;
+        --no-data-disk) NO_DATA_DISK=1 ;;
+        --force-data-disk) FORCE_DATA_DISK=1 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -449,7 +489,7 @@ fi
 # tree lock above plus QEMU's own lock. --axiss
 if command -v fuser >/dev/null 2>&1; then
     live_guests=""
-    for img in "$REPO_ROOT/fat.img" "$REPO_ROOT/initrd2.img"; do
+    for img in "$REPO_ROOT/fat.img" "$REPO_ROOT/initrd2.img" "$REPO_ROOT/data.img"; do
         if [ -f "$img" ]; then
             live_guests="$live_guests $(fuser "$img" 2>/dev/null | sed 's/^[^:]*://' || true)"
         fi
@@ -624,6 +664,17 @@ if [ -n "$INITRD_SIZE_MB" ]; then
     fi
 fi
 
+case "$DATA_SIZE_MB" in
+    ''|*[!0-9]*|0)
+        printf "${STY_RED}[$0]: --data-size-mb must be a positive whole number.${STY_RST}\n"
+        exit 1
+    ;;
+esac
+if [ "$DATA_SIZE_MB" -lt 64 ]; then
+    printf "${STY_RED}[$0]: --data-size-mb must be at least 64; smaller volumes fall below FAT32's minimum cluster count and the guest will not mount them.${STY_RST}\n"
+    exit 1
+fi
+
 cd "$REPO_ROOT"
 
 if [ "$INSTALL_DEPS" -eq 1 ]; then
@@ -720,7 +771,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+	export BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -739,6 +790,19 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
         cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
         echo "[+] External drivers built and deployed."
+    fi
+
+    # virtio-blk storage driver (virtblk.dll). Its Makefile is clang-only, so
+    # build it whenever clang++ exists, independent of $TOOLCHAIN: without it
+    # the persistent data disk attaches but is never mounted. --axiss
+    if command -v clang++ >/dev/null 2>&1; then
+        echo "[+] Building virtio-blk storage driver..."
+        ( cd "$REPO_ROOT/Drivers/virtioblk" && make clean && make )
+        cp -f "$REPO_ROOT/Drivers/virtioblk/virtblk.dll" "$REPO_ROOT/Resources/resources/"
+        rm -f "$REPO_ROOT/Drivers/virtioblk/virtblk.lib"
+        echo "[+] virtblk.dll deployed."
+    else
+        echo "[+] clang++ not found; skipping virtblk.dll (data disk will attach but stay unmounted)."
     fi
 
     if [ "$BUILD_USER_APPS" -eq 1 ]; then
@@ -826,6 +890,22 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
     echo "    (Omit --force-legacy-build to rebuild it.)"
+fi
+
+# --- Assemble data.img (persistent virtio-blk disk) ---
+# Unlike fat.img/initrd2.img above, this image is created once and reused:
+# files the guest writes to /data survive across runs. --axiss
+if [ "$NO_DATA_DISK" -eq 0 ]; then
+    if [ ! -f data.img ] || [ "$FORCE_DATA_DISK" -eq 1 ]; then
+        echo "[+] Creating ${DATA_SIZE_MB}MB FAT32 data.img (persistent guest disk)..."
+        dd if=/dev/zero of=data.img bs=1M count="$DATA_SIZE_MB"
+        mkfs.vfat -F 32 -n XENEVADATA data.img
+        echo "[+] data.img ready; guest mounts it at /data (label XENEVADATA)."
+    else
+        echo "[+] Reusing existing data.img (persistent). Pass --force-data-disk to wipe it."
+    fi
+else
+    echo "[+] Persistent data disk omitted (--no-data-disk)."
 fi
 
 # --- Assemble fat.img (ESP) ---
@@ -947,6 +1027,20 @@ QEMU_ARGS=(
 # against the virtio_rng driver registered by the loaded .ko. --axiss
 if [ "$VIRTIO_RNG" -eq 1 ]; then
     QEMU_ARGS+=(-device virtio-rng-pci,disable-legacy=on,id=rng0)
+fi
+
+# Second virtio-blk drive: the persistent guest data disk (mounted at /data by
+# virtblk.dll). writethrough so host-side data.img is authoritative even
+# though the guest has no block-cache flush path yet. Never recreated
+# implicitly -- only by --force-data-disk. --axiss
+if [ "$NO_DATA_DISK" -eq 0 ]; then
+    if [ ! -f data.img ]; then
+        printf "${STY_RED}[$0]: data.img missing and --no-data-disk not given; this should not happen.${STY_RST}\n"
+        exit 1
+    fi
+    QEMU_ARGS+=(-drive file=data.img,format=raw,if=none,id=blk1,cache=writethrough)
+    QEMU_ARGS+=(-device virtio-blk-pci,drive=blk1,disable-legacy=on)
+    echo "[+] Persistent data disk attached (data.img -> guest /data)."
 fi
 
 # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
