@@ -27,6 +27,90 @@ static __attribute__((noinline)) void* test_alloc(tlsf_pool_t* p, size_t n) {
 	return tlsf_malloc(p, n);
 }
 
+static void test_free(tlsf_pool_t* p, void* ptr) {
+	if (!ptr)
+		return;
+	tlsf_dbg_hint_set(__builtin_return_address(0));
+	tlsf_free(p, ptr);
+}
+
+static void* test_realloc(tlsf_pool_t* p, void* ptr, size_t n) {
+	tlsf_dbg_hint_set(__builtin_return_address(0));
+	return tlsf_realloc(p, ptr, n);
+}
+
+static uint32_t stress_rng = 0x5EED1234U;
+
+static uint32_t stress_next(void) {
+	stress_rng ^= stress_rng << 13;
+	stress_rng ^= stress_rng >> 17;
+	stress_rng ^= stress_rng << 5;
+	return stress_rng;
+}
+
+/* Bounded deterministic churn on the scratch pool: the kernel-build
+ * counterpart of the host battery (AArch64 codegen, TTBR1 addresses,
+ * sane-check active). Clean churn must produce zero violations. */
+#define STRESS_SLOTS 48
+#define STRESS_ITERS 3000
+
+static void alloc_churn_test(tlsf_pool_t* pool) {
+	static void* ptrs[STRESS_SLOTS];
+	static size_t sizes[STRESS_SLOTS];
+	static unsigned char pats[STRESS_SLOTS];
+	uint64_t v0 = tlsf_dbg_violation_count();
+	int ok = 1;
+
+	for (unsigned i = 0; i < STRESS_ITERS && ok; ++i) {
+		unsigned s = stress_next() % STRESS_SLOTS;
+		if (ptrs[s]) {
+			unsigned char* pb = (unsigned char*)ptrs[s];
+			for (size_t k = 0; k < sizes[s]; ++k)
+				if (pb[k] != pats[s]) {
+					ok = 0;
+					break;
+				}
+		}
+		unsigned op = stress_next() % 4;
+		if (!ptrs[s]) {
+			size_t n = 1 + stress_next() % 1024;
+			void* p = test_alloc(pool, n);
+			if (!p)
+				continue;
+			ptrs[s] = p;
+			sizes[s] = n;
+			pats[s] = (unsigned char)(s + 1);
+			memset(p, pats[s], n);
+		} else if (op == 0) {
+			test_free(pool, ptrs[s]);
+			ptrs[s] = NULL;
+		} else {
+			size_t old = sizes[s];
+			size_t n = 1 + stress_next() % 1024;
+			void* r = test_realloc(pool, ptrs[s], n);
+			if (!r)
+				continue;
+			size_t keep = old < n ? old : n;
+			unsigned char* rb = (unsigned char*)r;
+			for (size_t k = 0; k < keep && ok; ++k)
+				if (rb[k] != pats[s])
+					ok = 0;
+			ptrs[s] = r;
+			sizes[s] = n;
+			memset(r, pats[s], n);
+		}
+	}
+	for (unsigned s = 0; s < STRESS_SLOTS; ++s)
+		if (ptrs[s]) {
+			test_free(pool, ptrs[s]);
+			ptrs[s] = NULL;
+		}
+	uint64_t v1 = tlsf_dbg_violation_count();
+	UARTDebugOut("[alloc-test]: churn %d iters data %s, new violations=%d %s\r\n",
+		STRESS_ITERS, ok ? "intact" : "CORRUPTED", v1 - v0,
+		(ok && v1 == v0) ? "PASS" : "FAIL");
+}
+
 static __attribute__((noinline)) void* leak_from_a(tlsf_pool_t* p, size_t n) {
 	tlsf_dbg_hint_set(__builtin_return_address(0));
 	return tlsf_malloc(p, n);
@@ -164,6 +248,10 @@ void AuAllocDebugTest(void) {
 	UARTDebugOut("[alloc-test]: realloc data %s, new violations=%d %s\r\n",
 		rok ? "preserved" : "CORRUPTED", v3 - v2,
 		(rok && v3 == v2) ? "PASS" : "FAIL");
+
+	/* Deterministic volume churn: split/merge/realloc at scale must stay
+	 * redzone-clean with zero violations. */
+	alloc_churn_test(pool);
 
 	/* Live-heap dump: proves the region filter (scratch blocks must not
 	 * appear here) and exercises the kheap_leak_dump path. */
