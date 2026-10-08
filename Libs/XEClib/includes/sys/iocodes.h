@@ -92,4 +92,11 @@
 #define SOCK_ADD_DNS_SERVER			 0x124
 #define SOCK_GET_DNS_SERVER			 0x125
 
+#define WIFI_SCAN        0x140
+#define WIFI_GET_SCAN    0x141
+#define WIFI_CONNECT     0x142
+#define WIFI_DISCONNECT  0x143
+#define WIFI_GET_STATUS  0x144
+#define WIFI_UPLINK      0x145
+
 #endif

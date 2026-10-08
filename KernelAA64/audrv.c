@@ -513,6 +513,15 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 				driver->entry(driver);
 			}
 		}
+		/* Station driver is not a PCI function. virtio-net stays class 02,00. */
+		if (AuVFSOpen("/wifi.dll")) {
+			AuDriver* wifi = AuCreateDriverInstance("/wifi.dll");
+			if (wifi) {
+				AuDriverLoad(wifi->name, wifi);
+				if (wifi->entry)
+					wifi->entry(wifi);
+			}
+		}
 	}
 
 	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");

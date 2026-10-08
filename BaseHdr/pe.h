@@ -312,7 +312,7 @@ extern void AuKernelLinkImports(void* image);
 * @param nt -- nt headers
 * @param diff -- difference from its original
 */
-extern void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff);
+extern void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff);
 
 /*
 * AuPEFileIsDynamicallyLinked -- checks if the current

@@ -349,6 +349,7 @@
     <ClCompile Include="Net\ipv4.c" />
     <ClCompile Include="Net\netserv.c" />
     <ClCompile Include="Net\route.c" />
+    <ClCompile Include="Net\wifiport.c" />
     <ClCompile Include="Net\socket.c" />
     <ClCompile Include="Net\tcp.c" />
     <ClCompile Include="Net\udp.c" />
