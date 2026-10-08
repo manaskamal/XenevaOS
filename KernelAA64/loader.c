@@ -165,7 +165,7 @@ void AuLoaderMapExecFromCache(AuProcess* proc,
 		for (size_t v_page = (load_addr & ~0xFFFULL); v_page < end_addr; v_page += PAGE_SIZE) {
 			void* phys = AuGetPhysicalAddressEx(proc->cr3, v_page);
 			if (!phys) {
-				phys = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+				phys = (void*)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 				memset((void*)P2V((size_t)phys), 0, PAGE_SIZE);
 				AuMapPageEx(proc->cr3,
 							(uint64_t)phys,
@@ -380,7 +380,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uint64_t argvkernel = 0;
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
-		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id));
 		memset(args, 0, PAGE_SIZE);
 		if (!AuMapPageEx(proc->cr3,
 						 (size_t)V2P((uint64_t)args),

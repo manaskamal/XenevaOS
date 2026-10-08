@@ -29,7 +29,7 @@ fi
 ( cd ../../BootAA64 && make clean && make all )
 
 # AArch64 kernel
-( cd ../../KernelAA64 && make clean && make SOAK="${SOAK:-0}" all )
+( cd ../../KernelAA64 && make clean && make SOAK="${SOAK:-0}" DEBUG_ALLOC="${DEBUG_ALLOC:-0}" all )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
@@ -48,13 +48,13 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook wifictl)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Ntpd wifictl)
     else
         echo "[gcc] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
             ../../Resources/resources/route.exe ../../Resources/resources/iptable.exe \
             ../../Resources/resources/netmngr.exe ../../Resources/resources/dig.exe \
-            ../../Resources/resources/nslook.exe \
+            ../../Resources/resources/nslook.exe ../../Resources/resources/ntpd.exe \
             ../../Resources/resources/wifictl.exe
     fi
     for app in "${APPS[@]}"; do
@@ -76,6 +76,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        cp -f ../../Process/Ntpd/ntpd.exe         ../../Resources/resources/
         cp -f ../../Process/wifictl/wifictl.exe   ../../Resources/resources/
     fi
 fi

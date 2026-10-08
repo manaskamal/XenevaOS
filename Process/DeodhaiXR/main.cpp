@@ -46,6 +46,7 @@
 #include "cursor.h"
 #include "backdirty.h"
 #include "window.h"
+#include "resize.h"
 #include "clip.h"
 #include "_fastcpy.h"
 #include "animation.h"
@@ -56,6 +57,8 @@
 #include "compose.h"
 #include "unikernel.h"
 #include "xr_present.h"
+#include <draw.h>
+
 #include "keybind.h"
 #include <sys/_ketime.h>
 
@@ -97,6 +100,8 @@ static int gpu_display_id;
 
 #define DEODHAI_TARGET_FPS 60
 #define FRAME_TIME_MS	   (1000 / DEODHAI_TARGET_FPS)
+
+static void DeodhaiComposeResizePreview(ChCanvas* canv);
 
 /**
  * @brief DeodhaiAllocateNewHandle -- get a new window handle
@@ -321,6 +326,22 @@ void DrawWallpaper(ChCanvas* canv, const char* filename) {
 }
 
 /**
+ * @brief ChangeCursor -- change current cursor
+ * to new cursor
+ * @param newCursor -- desired cursor
+ */
+void ChangeCursor(Cursor* newCursor) {
+	if (!newCursor)
+		return;
+	newCursor->xpos = currentCursor->xpos;
+	newCursor->ypos = currentCursor->ypos;
+	newCursor->oldXPos = currentCursor->oldXPos;
+	newCursor->oldYPos = currentCursor->oldYPos;
+	memcpy(newCursor->cursorBack, currentCursor->cursorBack, 24 * 24 * 32);
+	currentCursor = newCursor;
+}
+
+/**
  * @brief DeodhaiXR -- The Graphics compositing pipeline
  * Supports three types of input -- (1) Mouse (2) Keyboard (3) Special XR input
  * two types of rendering : 2D Compositing for non-xr system(GPU/Software), 3D compositing for XR system (GPU)
@@ -419,6 +440,7 @@ void XRComposeFrame(ChCanvas* canvas) {
 	/**
 	 * Always on Top window , stacking order
 	 */
+	DeodhaiComposeResizePreview(canvas);
 	for (Window* win = alwaysOnTop; win != NULL; win = win->next) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 
@@ -599,6 +621,7 @@ _skip:
 	_shadow_update = true;
 	//_clients_advice = false;
 	//currentCursor = arrow;
+	//ChangeCursor(arrow);
 }
 
 /**
@@ -644,6 +667,11 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
  * @param button -- mouse button state
  */
 void DeodhaiWindowCheckDraggable(int x, int y, int button) {
+	if (reszWin) {
+		dragWin = NULL;
+		lastMouseButton = button;
+		return;
+	}
 	for (Window* win = lastWin; win != NULL; win = win->prev) {
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
 		if (info->zoomed)
@@ -674,19 +702,211 @@ void DeodhaiWindowCheckDraggable(int x, int y, int button) {
 		WinSharedInfo* winInfo = (WinSharedInfo*)dragWin->sharedInfo;
 		int posx = x - dragWin->dragX;
 		int posy = y - dragWin->dragY;
-		//ChangeCursor(move);
+		ChangeCursor(move);
 		DeodhaiWindowMove(dragWin, posx, posy);
 	}
 
 	if (!button) {
-		/*	if (dragWin)
-			ChangeCursor(arrow);*/
+		if (dragWin)
+			ChangeCursor(arrow);
 		dragWin = NULL;
-		reszWin = NULL;
 		_window_broadcast_mouse_ = true;
 	}
 
 	lastMouseButton = button;
+}
+
+#define RESIZE_EDGE_NONE   0
+#define RESIZE_EDGE_LEFT   (1 << 0)
+#define RESIZE_EDGE_RIGHT  (1 << 1)
+#define RESIZE_EDGE_TOP	   (1 << 2)
+#define RESIZE_EDGE_BOTTOM (1 << 3)
+#define RESIZE_BORDER_LR   8
+#define RESIZE_BORDER_TD   4
+static int reszStartX = 0;
+static int reszStartY = 0;
+static int reszOLDW = 0;
+static int reszOLDH = 0;
+static int reszOLDX = 0;
+static int reszOLDY = 0;
+static int edge = 0;
+static int reszNewX = 0;
+static int reszNewY = 0;
+static int reszNewW = 0;
+static int reszNewH = 0;
+
+static void _deodhai_repaint_region(ChCanvas* canvas,
+									int rx,
+									int ry,
+									int rw,
+									int rh,
+									Window* rwin,
+									int nx,
+									int ny,
+									int nw,
+									int nh) {
+	int cw = (int)canvas->canvasWidth;
+	int ch = (int)canvas->canvasHeight;
+
+	/**
+	 * clamp the region to the canvas
+	 */
+	if (rx < 0) {
+		rw += rx;
+		rx = 0;
+	}
+	if (ry < 0) {
+		rh += ry;
+		ry = 0;
+	}
+
+	if (rx + rw > cw)
+		rw = cw - rx;
+	if (ry + rh > ch)
+		rh = ch - ry;
+	if (rw <= 0 || rh <= 0)
+		return;
+
+	/**
+	 * wallpaper for the whole region first so alpha window
+	 * remains alpha and dont go for becoming opaque hero ! huh :)
+	 */
+	DeodhaiBackSurfaceUpdate(canvas, rx, ry, rw, rh);
+
+	Window* bottom = lastWin;
+	while (bottom && bottom->prev)
+		bottom = bottom->prev;
+
+	for (Window* w = bottom; w != NULL; w = w->next) {
+		WinSharedInfo* wi = (WinSharedInfo*)w->sharedInfo;
+		if (wi->hide)
+			continue;
+		if (w == rwin) {
+			compose_window_scaled_to_clip(
+				canvas, w, w->originalW, w->originalH, nx, ny, nw, nh, rx, ry, rw, rh);
+			continue;
+		}
+
+		if (wi->zoomed) {
+			compose_window_scaled_to_clip(
+				canvas, w, wi->width, wi->height, 0, 0, cw, ch, rx, ry, rw, rh);
+			continue;
+		}
+
+		if (wi->x >= rx + rw || (wi->x + (int)wi->width) <= rx || wi->y >= ry + rh ||
+			(wi->y + (int)wi->height) <= ry)
+			continue;
+
+		compose_window_scaled_to_clip(
+			canvas, w, wi->width, wi->height, wi->x, wi->y, wi->width, wi->height, rx, ry, rw, rh);
+	}
+	AddDirtyClip(rx, ry, rw, rh);
+}
+
+static void DeodhaiComposeResizePreview(ChCanvas* canv) {
+	if (!reszWin)
+		return;
+	_always_on_top_update = true;
+	int rx = reszNewX < reszOLDX ? reszNewX : reszOLDX;
+	int ry = reszNewY < reszOLDY ? reszNewY : reszOLDY;
+	int right = reszNewX + reszNewW > reszOLDX + reszOLDW ? reszNewX + reszNewW
+																 : reszOLDX + reszOLDW;
+	int bottom = reszNewY + reszNewH > reszOLDY + reszOLDH ? reszNewY + reszNewH
+																  : reszOLDY + reszOLDH;
+	_deodhai_repaint_region(canv,
+						   rx,
+						   ry,
+						   right - rx,
+						   bottom - ry,
+						   reszWin,
+						   reszNewX,
+						   reszNewY,
+						   reszNewW,
+						   reszNewH);
+}
+/**
+ * @brief DeodhaiWindowCheckResizable -- checks and resize
+ * focused Window 
+ * @param x -- Mouse x location
+ * @param y -- Mouse y location
+ * @param button -- Mouse button state
+ */
+void DeodhaiWindowCheckResizable(int x, int y, int button) {
+	if (!reszWin) {
+		Window* win = focusedWin;
+		if (!win || dragWin || win->resizePending ||
+			(win->flags & (WINDOW_FLAG_MESSAGEBOX | WINDOW_FLAG_BLOCKED |
+						   WINDOW_FLAG_NON_RESIZABLE)))
+			return;
+		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+		if (info->hide || info->zoomed || x < info->x || y < info->y || x >= info->x + info->width ||
+			y >= info->y + info->height)
+			return;
+		int hitEdge = RESIZE_EDGE_NONE;
+		if (x < info->x + RESIZE_BORDER_LR)
+			hitEdge |= RESIZE_EDGE_LEFT;
+		else if (x >= info->x + info->width - RESIZE_BORDER_LR)
+			hitEdge |= RESIZE_EDGE_RIGHT;
+		if (y < info->y + RESIZE_BORDER_TD)
+			hitEdge |= RESIZE_EDGE_TOP;
+		else if (y >= info->y + info->height - RESIZE_BORDER_TD)
+			hitEdge |= RESIZE_EDGE_BOTTOM;
+		if (!hitEdge) {
+			if (currentCursor != arrow)
+				ChangeCursor(arrow);
+			return;
+		}
+		ChangeCursor((hitEdge & (RESIZE_EDGE_LEFT | RESIZE_EDGE_RIGHT))
+					 ? resizeLeftRight
+					 : resizeUpDown);
+		if (!button || lastMouseButton)
+			return;
+		edge = hitEdge;
+		reszWin = win;
+		reszStartX = x;
+		reszStartY = y;
+		reszNewX = reszOLDX = info->x;
+		reszNewY = reszOLDY = info->y;
+		reszNewW = reszOLDW = info->width;
+		reszNewH = reszOLDH = info->height;
+	}
+
+	/* Preview geometry is compositor-private: clients still draw using the
+	 * old buffer's stride, even while a resize reply is pending. */
+	BackDirtyAdd(reszNewX, reszNewY, reszNewW, reszNewH);
+	int dx = x - reszStartX;
+	int dy = y - reszStartY;
+	int width = reszOLDW;
+	int height = reszOLDH;
+	if (edge & RESIZE_EDGE_LEFT)
+		width -= dx;
+	else if (edge & RESIZE_EDGE_RIGHT)
+		width += dx;
+	if (edge & RESIZE_EDGE_TOP)
+		height -= dy;
+	else if (edge & RESIZE_EDGE_BOTTOM)
+		height += dy;
+	if (width < 160)
+		width = 160;
+	if (height < 80)
+		height = 80;
+	if (width > (int)screen_w)
+		width = screen_w;
+	if (height > (int)screen_h)
+		height = screen_h;
+	reszNewW = width;
+	reszNewH = height;
+	reszNewX = (edge & RESIZE_EDGE_LEFT) ? reszOLDX + reszOLDW - width : reszOLDX;
+	reszNewY = (edge & RESIZE_EDGE_TOP) ? reszOLDY + reszOLDH - height : reszOLDY;
+	_window_update_all_ = true;
+	_always_on_top_update = true;
+	if (!button) {
+		BackDirtyAdd(reszNewX, reszNewY, reszNewW, reszNewH);
+		DeodhaiBeginResize(reszWin, postbox_fd, reszNewX, reszNewY, width, height);
+		reszWin = NULL;
+		edge = RESIZE_EDGE_NONE;
+		ChangeCursor(arrow);
+	}
 }
 
 /**
@@ -859,6 +1079,7 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	currentCursor->xpos = input->xpos;
 	currentCursor->ypos = input->ypos;
 	int button = input->button_state;
+	DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
 	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
 	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
 
@@ -969,27 +1190,21 @@ void DeodhaiCloseWindow(Window* win) {
 	_KePrint("[Deodhai]:CloseWindow : %s \r\n", win->title);
 
 	/* iterate all popup window and close them */
-	for (Window* popup = win->firstPopupWin; popup != NULL; popup = popup->next) {
-		//close all
+	for (Window* popup = win->firstPopupWin; popup != NULL;) {
+		Window* next = popup->next;
 		free(popup->title);
 		_KeUnmapSharedMem(popup->shWinKey);
 		_KeUnmapSharedMem(popup->backBufferKey);
-#ifdef SHADOW_ENABLED
-		_KeMemUnmap(popup->shadowBuffers,
-					(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) *
-						4);
-#endif
+		ReleaseWindowEffects(popup);
 		free(popup);
+		popup = next;
 	}
 
 	_KePrint("Unmapping shared mems \r\n");
 	_KeUnmapSharedMem(win->shWinKey);
 	_KeUnmapSharedMem(win->backBufferKey);
 	_KePrint("Unmapped all shared mems from deodhai side for process\r\n");
-#ifdef SHADOW_ENABLED
-	_KeMemUnmap(win->shadowBuffers,
-				(static_cast<size_t>(width) + SHADOW_SIZE * 2) * (height + SHADOW_SIZE * 2) * 4);
-#endif
+	ReleaseWindowEffects(win);
 	/* A zoomed window covered the whole scanout: only repainting its
 	 * normal rect would leave stale zoom pixels everywhere else. */
 	if (wasZoomed)
@@ -1104,7 +1319,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	DeoBakeScreenBlur((int)canv->canvasWidth, (int)canv->canvasHeight);
-	_KePrint("Wallpaper ready \r\n");
 
 	//	ChCanvasScreenUpdate(canv, 0, 0, canv->canvasWidth, canv->canvasHeight);
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
@@ -1177,6 +1391,15 @@ int main(int argc, char* argv[]) {
 	arrow->ypos = 0;
 	arrow->oldXPos = 0;
 	arrow->oldYPos = 0;
+
+	move = CursorOpen("/cur_mv.bmp", CURSOR_TYPE_MOVE);
+	CursorRead(move);
+	resizeUpDown = CursorOpen("/cur_up.bmp", CURSOR_TYPE_RESIZE_UPDOWN);
+	CursorRead(resizeUpDown);
+
+	resizeLeftRight = CursorOpen("/cur_rl.bmp", CURSOR_TYPE_RESIZE_RIGHTLEFT);
+	CursorRead(resizeLeftRight);
+
 	CursorStoreBack(canv, currentCursor, 0, 0);
 	CursorDraw(canv, arrow, 0, 0);
 
@@ -1262,7 +1485,28 @@ int main(int argc, char* argv[]) {
 			_KeReadFile(mouse_fd, &mice_input, sizeof(AuInputMessage));
 			_KeReadFile(kybrd_fd, &kybrd_input, sizeof(AuInputMessage));
 		}
+		memset(&event, 0, sizeof(event));
 		_KeFileIoControl(postbox_fd, POSTBOX_GET_EVENT_ROOT, &event);
+		for (Window* win = rootWin; win; win = win->next)
+			DeodhaiPollResize(win);
+		for (Window* win = alwaysOnTop; win; win = win->next)
+			DeodhaiPollResize(win);
+		if (event.type == DEODHAI_MESSAGE_BUFFER_DESTROYED) {
+			Window* lists[] = {rootWin, alwaysOnTop};
+			for (Window* head : lists) {
+				for (Window* win = head; win; win = win->next) {
+					WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+					int oldX = info->x, oldY = info->y;
+					int oldW = info->width, oldH = info->height;
+					if (DeodhaiHandleResizeReply(win, postbox_fd, &event)) {
+						BackDirtyAdd(oldX, oldY, oldW, oldH);
+						_window_update_all_ = true;
+						_always_on_top_update = true;
+					}
+				}
+			}
+			memset(&event, 0, sizeof(event));
+		}
 
 		if (mice_input.type == AU_INPUT_MOUSE) {
 			DeodhaiHandleMouseInput(canv, &mice_input);
@@ -1462,6 +1706,10 @@ int main(int argc, char* argv[]) {
 					focusedLast = NULL;
 				if (mouseLastHovered == removable)
 					mouseLastHovered = NULL;
+				if (dragWin == removable)
+					dragWin = NULL;
+				if (reszWin == removable)
+					reszWin = NULL;
 				DeodhaiCloseWindow(removable);
 			}
 			memset(&event, 0, sizeof(PostEvent));

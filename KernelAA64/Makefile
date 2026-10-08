@@ -21,6 +21,15 @@ ifeq ($(SOAK),1)
     SOAK_FLAGS = -D__XENEVA_SOAK__
 endif
 
+# Stage 1 always allocates owner accounting; Stages 2-3 (redzones,
+# poisoning, caller tracking, leak dump, frame-table owner scan) compile
+# in only with DEBUG_ALLOC=1. Threaded through from
+# Scripts/Linux/build_and_run_qemu.sh --debug-alloc.
+DEBUG_ALLOC ?= 0
+ifeq ($(DEBUG_ALLOC),1)
+    DEBUG_ALLOC_FLAGS = -D__XENEVA_DEBUG_ALLOC__
+endif
+
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
 llvm:
@@ -48,7 +57,7 @@ ifeq ($(TOOLCHAIN), llvm)
     
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -79,7 +88,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) \
+              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
               $(INCLUDES)
 endif
 
