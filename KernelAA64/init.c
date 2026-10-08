@@ -295,7 +295,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
-	//AuBtInitialize();
+	AuBtInitialize();
 	//AuEDFSelfTestStart();
 #ifdef __XENEVA_SOAK__
 	AuSoakStart();
