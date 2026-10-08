@@ -90,6 +90,14 @@ typedef struct _netdev_{
 #define AUNET_GET_IPV6_PREFIX 0x10C
 #define AUNET_SET_IPV6_PREFIX 0x10D
 
+/* 802.11 station ioctls (IEEE 802.11-2020). Arg is Wifi* from Net/wifi.h. */
+#define WIFI_SCAN        0x140
+#define WIFI_GET_SCAN    0x141
+#define WIFI_CONNECT     0x142
+#define WIFI_DISCONNECT  0x143
+#define WIFI_GET_STATUS  0x144
+#define WIFI_UPLINK      0x145
+
 /*
 * AuInitialiseNet -- initialise network data structures
 */

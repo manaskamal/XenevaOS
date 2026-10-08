@@ -785,6 +785,8 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         echo "[+] Building external drivers..."
         ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
+        ( cd "$REPO_ROOT/Drivers/Net/wifi" && make clean && make )
+        cp -f "$REPO_ROOT/Drivers/Net/wifi/wifi.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
@@ -860,7 +862,7 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         case "$1" in
             MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
-            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe|ntpd.exe|curl.exe)
+            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe|ntpd.exe|curl.exe|wifictl.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
             doom.exe|doom2.wad)
                 [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;

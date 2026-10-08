@@ -48,13 +48,14 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook Ntpd)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Ntpd wifictl)
     else
         echo "[gcc] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
             ../../Resources/resources/route.exe ../../Resources/resources/iptable.exe \
             ../../Resources/resources/netmngr.exe ../../Resources/resources/dig.exe \
-            ../../Resources/resources/nslook.exe ../../Resources/resources/ntpd.exe
+            ../../Resources/resources/nslook.exe ../../Resources/resources/ntpd.exe \
+            ../../Resources/resources/wifictl.exe
     fi
     for app in "${APPS[@]}"; do
         ( cd "../../Process/$app" && make clean && make DIRECT_SCANOUT="${DIRECT_SCANOUT:-0}" OPENXR="${OPENXR:-0}" )
@@ -74,7 +75,10 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/NETMngr/netmngr.exe       ../../Resources/resources/
-    cp -f ../../Process/Ntpd/ntpd.exe             ../../Resources/resources/
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        cp -f ../../Process/Ntpd/ntpd.exe         ../../Resources/resources/
+        cp -f ../../Process/wifictl/wifictl.exe   ../../Resources/resources/
+    fi
 fi
 
 printf "${STY_GREEN}[gcc] AArch64 GCC build complete.${STY_RST}\n"

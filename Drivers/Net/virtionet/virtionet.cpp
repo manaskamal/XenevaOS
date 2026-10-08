@@ -36,6 +36,7 @@
 #include <Fs/vfs.h>
 #include <Drivers/virtio.h>
 #include <Drivers/uart.h>
+#include <Net/wifi.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
 #include <aucon.h>
@@ -132,8 +133,10 @@ static void AuVirtioNetRxPoll(void) {
 		isb_flush();
 		if (ethlen)
 			virt_cache_inv(buffer, totlen);
-		if (nic && ethlen)
-			AuEthernetHandle(eth, (int)ethlen, nic);
+		if (nic && ethlen) {
+			if (!AuWifiPortalRx(eth, (int)ethlen))
+				AuEthernetHandle(eth, (int)ethlen, nic);
+		}
 	}
 	in_poll = 0;
 }
@@ -261,6 +264,10 @@ static int AuVirtioTransmit(void* packet, uint16_t len) {
 	isb_flush();
 	AuVirtioPCINotifyQueue(&netDev, 1);
 	return 0;
+}
+
+extern "C" void AuVirtioNetPortalTx(void* packet, uint16_t len) {
+	AuVirtioTransmit(packet, len);
 }
 
 /**
@@ -421,6 +428,7 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 		AuNetAddConnectedRoute6(alias, "virtio-net");
 		AuNetAddDefaultRoute6(alias, "virtio-net");
 		AuNetRegisterRxPoll(AuVirtioNetRxPoll);
+		AuWifiPortalSetTx(AuVirtioNetPortalTx);
 	}
 }
 
