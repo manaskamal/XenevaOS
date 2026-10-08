@@ -35,7 +35,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd http)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd http wifictl)
     else
         echo "[llvm] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
@@ -44,6 +44,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
             ../../Resources/resources/nslook.exe ../../Resources/resources/telnet.exe \
             ../../Resources/resources/finger.exe ../../Resources/resources/gopher.exe \
             ../../Resources/resources/ntpd.exe ../../Resources/resources/curl.exe \
+            ../../Resources/resources/wifictl.exe \
             ../../Resources/resources/netsurf.exe
     fi
     for app in "${APPS[@]}"; do
@@ -83,6 +84,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         ( cd ../../Ports/mbedtls && make llvm )
         ( cd ../../Process/http && make clean && make llvm )
         cp -f ../../Process/http/curl.exe             ../../Resources/resources/
+        cp -f ../../Process/wifictl/wifictl.exe       ../../Resources/resources/
         if [ "${NO_NETSURF:-0}" -eq 0 ]; then
             ( cd ../../Ports/CssLibs && make llvm )
             ( cd ../../Process/NetSurf && make clean && make llvm )
