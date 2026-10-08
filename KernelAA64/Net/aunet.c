@@ -340,6 +340,8 @@ int AuAddrIsLocal4(uint32_t address) {
 		return 1;
 	if (AuCheckNicLocal4("e1000", address))
 		return 1;
+	if (AuCheckNicLocal4("wlan0", address))
+		return 1;
 	return 0;
 }
 

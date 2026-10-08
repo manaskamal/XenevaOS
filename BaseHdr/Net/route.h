@@ -107,6 +107,12 @@ extern void AuRouteTableAdd(AuRouteEntry* entry);
 extern void AuRouteTableDelete(AuRouteEntry* entry);
 
 /*
+ * AuRouteSetFlag4 -- set or clear RTF_UP on one IPv4 route.
+ * Two default routes share a prefix; the first RTF_UP entry wins.
+ */
+AU_EXTERN AU_EXPORT int AuRouteSetFlag4(const char* ifname, uint32_t dest, uint32_t netmask, int up);
+
+/*
  * AuRouteTableGetNumEntry -- returns the number
  * route entry present in the system
  */

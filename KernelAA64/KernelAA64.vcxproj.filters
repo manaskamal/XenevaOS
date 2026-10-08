@@ -154,6 +154,9 @@
     <ClCompile Include="Net\route.c">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\wifiport.c">
+      <Filter>Net</Filter>
+    </ClCompile>
     <ClCompile Include="stack.c" />
     <ClCompile Include="Net\udp.c">
       <Filter>Net</Filter>
