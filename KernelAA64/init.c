@@ -49,6 +49,7 @@
 #include <Hal/AA64/qemu.h>
 #include <list.h>
 #include <Fs/vfs.h>
+#include <Fs/Dev/devclip.h>
 #include <Fs/initrd.h>
 #include <Drivers/virtio.h>
 #include <audrv.h>
@@ -248,6 +249,12 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	 * because file system may use credentials 
 	 */
 	AuCredGroupInitialize();
+
+	/* /dev/clipboard registers here rather than from devfs: its group comes
+	 * from the table above, which is empty until this line. Registering with
+	 * devfs gave the node group 0, and AuCredCheckPermissions admits only
+	 * root or a matching group, so no ordinary process could open it. */
+	AuDevClipInitialise();
 
 	/* initialize the network layer */
 	AuInitialiseNet();

@@ -23,7 +23,7 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
-EXP_DCLTEST=27
+EXP_DCLTEST=33
 fails=0
 ok()  { printf '  %-46s ok\n' "$1"; }
 bad() { printf '  %-46s FAILED (%s)\n' "$1" "${2:-}"; fails=$((fails + 1)); }
@@ -33,9 +33,25 @@ if [ $# -ge 1 ]; then
 else
 	LOG=/tmp/xeneva/test_dclapp.log
 	mkdir -p "$(dirname "$LOG")"
+	: >"$LOG"
 	echo "booting (log: $LOG) -- close the QEMU window when the tests are done"
+	# Same reason Tests/dcl_test_all.sh builds first: the general build only
+	# ships user apps under --force-user-apps, so a window booted straight
+	# from the tree would run whatever stale copy is sitting in Resources/.
+	for app in Init Clipd dcltest XEShell Terminal; do
+		( make -C "Process/$app" llvm ) >>"$LOG" 2>&1
+	done
+	cp -f Process/Init/init.exe Process/Clipd/clipd.exe \
+		Process/dcltest/dcltest.exe Process/XEShell/xesh.exe \
+		Process/Terminal/term.exe \
+		Resources/resources/ >>"$LOG" 2>&1
+	# The guest side of the clipboard bridge is now in the image; this end
+	# is a separate process because which way it copies is the operator's
+	# choice, not the guest's.
+	echo "  copy host <-> VM from another terminal:"
+	echo "    ./Tests/clip_bridge.py --dir=bi --watch"
 	./Scripts/Linux/build_and_run_qemu.sh \
-		--llvm --no-bt --no-audio >"$LOG" 2>&1
+		--llvm --no-bt --no-audio >>"$LOG" 2>&1
 fi
 
 [ -f "$LOG" ] || { echo "no log at $LOG"; exit 1; }
@@ -47,6 +63,12 @@ expect() {   # label pattern
 echo "dcltest ($LOG)"
 
 expect "summary" "[dcltest] SUMMARY $EXP_DCLTEST ok, 0 failed"
+
+# clipd is spawned by init and reports in before it starts its loop; no
+# host on the other end is needed to get that far, and none is expected
+# here -- the bridge that would supply one is run by hand, not part of
+# the gate.
+expect "clipd running" "[clipd] ready"
 
 # Every PASS line must be there and no line may say FAIL -- a summary of
 # "27 ok, 0 failed" is only meaningful if it is the whole story.

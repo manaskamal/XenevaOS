@@ -17,6 +17,21 @@
 #include <Cred/group.h>
 #include <Drivers/uart.h>
 
+/* O_NONBLOCK as the fops see it -- asm-generic fcntl.h: 00004000. Defined
+ * up here rather than next to the boot probe that first needed it, because
+ * DclVportOpen() needs it too: there is no fcntl(2) for a later opener to
+ * set the flag with, so the port has to open non-blocking already. */
+#define DCL_O_NONBLOCK 0x800
+
+/* DCL's virtio rings are polled, never interrupt-driven: nothing services
+ * them between operations, so RX buffers -- and the control queue carrying
+ * the host's PORT_OPEN, which is what host_connected -- and therefore a
+ * writable port -- actually turns on -- sit unread until someone asks.
+ * Read and write pump it before every operation; the boot probe below pumps
+ * it in a loop. Declared here because those two come well above the probe
+ * that first needed it. */
+extern void virtio_poll_vqs(void);
+
 /*
  * DCL char-device layer: register_chrdev/cdev/class/device for mainline
  * .ko modules, bridged into XenevaOS devfs.
@@ -338,6 +353,16 @@ static AuVFSNode* DclVportOpen(AuVFSNode* node, char* path) {
 		UARTDebugOut("[dcl]: vport open rejected: %d\r\n", rc);
 		return 0;
 	}
+	/* Ports are opened non-blocking, and have to be: there is no fcntl(2)
+	 * here to ask for O_NONBLOCK after the fact, and port_fops_read() on a
+	 * connected-but-quiet port would then sit in wait_event_freezable() for
+	 * the whole DCL_WAIT_EVENT_MS budget -- five seconds of mdelay(1) for a
+	 * reader that only wanted to know whether anything had arrived. The boot
+	 * probe has always set this by hand for the same reason; only the vport
+	 * nodes get it, since /dev/null, /dev/kmsg and the rest of the cdevs
+	 * have nothing to block on. */
+	if (node && strncmp(node->filename, "vport", 5) == 0)
+		s->file.f_flags |= DCL_O_NONBLOCK;
 	UARTDebugOut("[dcl]: vport %d:%d opened\r\n",
 				 (int)MAJOR(s->devt), (int)MINOR(s->devt));
 	return node;
@@ -372,6 +397,10 @@ static size_t DclVportRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer,
 		return 0;
 	if (!s->file.f_op || !s->file.f_op->read)
 		return 0;
+	/* Poll first: an RX buffer is only ever moved by this call, so reading
+	 * without it sees a queue nobody has drained. It also picks up the
+	 * control packet that says the host attached. */
+	virtio_poll_vqs();
 	long r = s->file.f_op->read(&s->file, (char*)buffer, length, &s->pos);
 	return r > 0 ? (size_t)r : 0;
 }
@@ -383,6 +412,10 @@ static size_t DclVportWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer,
 		return 0;
 	if (!s->file.f_op || !s->file.f_op->write)
 		return 0;
+	/* Same poll, and here it is load-bearing: will_write_block() refuses to
+	 * send while host_connected is false, and the packet that sets it only
+	 * arrives through the control queue. */
+	virtio_poll_vqs();
 	long r = s->file.f_op->write(&s->file, (const char*)buffer, length, &s->pos);
 	return r > 0 ? (size_t)r : 0;
 }
@@ -506,11 +539,9 @@ void device_destroy(const void* class, unsigned int devt) {
  * the CI case -- costs one fixed window, never a hang), and opened with
  * O_NONBLOCK because DCL's wait queues have no scheduler to sleep on yet
  * and would busy-spin the boot instead. */
-extern void virtio_poll_vqs(void);
 extern uint64_t get_cntpct_el0(void);
 extern uint64_t get_cntfrq_el0(void);
 
-#define DCL_O_NONBLOCK 0x800 /* asm-generic fcntl.h: 00004000 */
 #define DCL_VPORT_WINDOW_US 5000000ull
 #define DCL_VPORT_PUMP_BACKSTOP 2000000u /* if the timer is unusable */
 /* user-range VA far above anything firmware or userland maps, still under
@@ -630,6 +661,8 @@ int dcl_vport_selftest(void) {
 	struct cdev* cdev = s ? dcl_cdev_by_devt(s->devt) : 0;
 	if (!s || !cdev || !cdev->ops || !cdev->ops->write || !cdev->ops->read) {
 		UARTDebugOut("[dcl]: vport selftest: no file_operations\r\n");
+		if (n->close)
+			n->close(n, NULL);
 		return -3;
 	}
 	/* open() memsets the per-open file, so set this afterwards; the module
@@ -648,6 +681,8 @@ int dcl_vport_selftest(void) {
 		if (phys)
 			AuPmmngrReleasePage(phys);
 		UARTDebugOut("[dcl]: vport selftest: no user buffer page\r\n");
+		if (n->close)
+			n->close(n, NULL);
 		return -5;
 	}
 	char* uprobe = (char*)slot;
@@ -704,6 +739,12 @@ int dcl_vport_selftest(void) {
 
 	AuFreePages((uint64_t)slot, false, 4096); /* unmap only: silent */
 	AuPmmngrReleasePage(phys);
+	/* Hand the port back. port_fops_open() takes guest_connected and only
+	 * port_fops_release() puts it, so a probe that kept the port would leave
+	 * every later opener -- clipd, the clipboard bridge -- a permanent
+	 * -EBUSY with nobody to clear it. */
+	if (n->close)
+		n->close(n, NULL);
 	return rc;
 }
 

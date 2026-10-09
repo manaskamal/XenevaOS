@@ -37,6 +37,12 @@
 
 #define TERMINAL_HISTORY_MAX 100
 
+/* Cell flag bits. 0x1 marks a cell TerminalFlush should repaint, 0x2 is the
+ * blinking cursor block, and 0x4 is a selected cell. Selection is a flag
+ * rather than swapped colours because new output can land under a live
+ * highlight, and swapping in place would corrupt the cell's real colours. */
+#define TERMINAL_CELL_SELECTED 0x4
+
 typedef struct _cell_ {
 	uint8_t c;
 	uint32_t bg;
@@ -71,6 +77,18 @@ typedef struct {
 	int intputLen;
 	int lastCellXClicked;
 	int lastCellYClicked;
+	/* Mouse selection. lastCellXClicked/YClicked doubles as the anchor,
+	 * selEndX/Y is the corner being dragged to, and selPaintX0..Y1 is the
+	 * rectangle currently highlighted so shrinking a selection repaints
+	 * only the rows it is leaving. */
+	int selEndX;
+	int selEndY;
+	bool selActive;
+	int lastButtonState;
+	int selPaintX0;
+	int selPaintY0;
+	int selPaintX1;
+	int selPaintY1;
 	volatile bool blink_visible;
 	bool scrolling;
 	bool cursor_hide;

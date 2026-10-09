@@ -32,14 +32,14 @@ EXP_ASM_H=6        # BaseHdr/asm/*.h
 EXP_DCL_C=16       # DCL/*.c   (dcl_va_trampoline.s adds the 17th object)
 EXP_DCL_O=17       # KernelAA64/obj/DCL/*.o
 EXP_VEND_O=9       # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial, virtio_console)
-EXP_ALL_O=144      # everything under KernelAA64/obj
+EXP_ALL_O=147      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=27
+EXP_DCLTEST=33
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -102,7 +102,34 @@ echo "build + boot (log: $LOG)"
 if [ -n "${CLEAN:-}" ]; then
 	echo "  CLEAN=1 -> make clean"
 	make -C KernelAA64 clean >/dev/null 2>&1
+	for app in Init Clipd dcltest XEShell Terminal; do
+		( cd "Process/$app" && make clean >/dev/null 2>&1 )
+	done
 fi
+
+# Everything this run prints goes in one file, from a fresh start: QEMU
+# appends below rather than truncating, so the test programs' own build
+# logs stay visible to the assertions.
+: >"$LOG"
+
+# The assertions read these programs' output, so this run has to build them.
+# The general build only ships user apps under --force-user-apps, so without
+# this the summary would be read off whatever stale dcltest.exe happens to
+# be in Resources/ -- which is how a changed test kept reporting its old
+# count. Same for every program this feature touches, and for the reason
+# that is easier to miss: init spawns clipd, XEShell carries Ctrl+C/Ctrl+V,
+# and the GUI Terminal carries Ctrl+Shift+C/V on the same clipboard node.
+# A source change that never reaches the image reads as a bug somewhere
+# else entirely.
+echo "  building Process/{Init,Clipd,dcltest,XEShell,Terminal}"
+for app in Init Clipd dcltest XEShell Terminal; do
+	( cd "Process/$app" && make llvm ) >>"$LOG" 2>&1
+done
+cp -f Process/Init/init.exe Resources/resources/ >>"$LOG" 2>&1
+cp -f Process/Clipd/clipd.exe Resources/resources/ >>"$LOG" 2>&1
+cp -f Process/dcltest/dcltest.exe Resources/resources/ >>"$LOG" 2>&1
+cp -f Process/XEShell/xesh.exe Resources/resources/ >>"$LOG" 2>&1
+cp -f Process/Terminal/term.exe Resources/resources/ >>"$LOG" 2>&1
 
 # stdin from /dev/null rather than inherited. `-serial stdio` makes the
 # guest's console this process's stdin, and a TTY there gives a guest that
@@ -111,7 +138,7 @@ fi
 # never happened. Verified -- the same run green on a non-TTY stdin, 17
 # FAILED on a pty.
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
-	--llvm --headless --no-bt --no-audio >"$LOG" 2>&1 </dev/null
+	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
 rc=$?
 case $rc in
 	124) ok "QEMU ran to timeout (124, expected)" ;;
@@ -158,6 +185,7 @@ expect "vendored driver registered"         "[dcl]: virtio_rng driver registered
 expect "vendored driver is not a .ko"       "[modtest]: virtio_rng built-in"
 expect "probe ran"                          "[dcl-virtio]: probe done"
 expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng.0)"
+expect "clipboard device"                   "[aurora]: device clipboard registered"
 expect "/dev/hwrng round-trip"              "[dcl]: /dev/hwrng round-trip OK (samples differ)"
 
 # Stage 4: drivers/char/virtio_console.c, vendored from source and compiled

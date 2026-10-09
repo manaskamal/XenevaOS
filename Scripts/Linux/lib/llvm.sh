@@ -27,6 +27,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
         Calender Calculator Files Control XEShell btctl XENotes
+        Clipd dcltest
     )
     if [ "${NO_AUDIO:-0}" -eq 0 ]; then
         APPS+=(DeodhaiAudio AudioPlayer)
@@ -65,6 +66,8 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
+    cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
+    cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
     if [ "${NO_AUDIO:-0}" -eq 0 ]; then
         cp -f ../../Process/DeodhaiAudio/deoaud.exe   ../../Resources/resources/
         cp -f ../../Process/AudioPlayer/audplr.exe    ../../Resources/resources/

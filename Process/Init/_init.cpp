@@ -392,6 +392,24 @@ extern "C" void main(int argc, char* argv[]) {
 		_KePrint("[init]: dcltest.exe absent, skipping DCL self-test\r\n");
 	}
 
+	/* clipd: the guest half of the host<->VM clipboard. Same absence rule
+	 * as dcltest.exe above -- no binary, no process slot, no leaked entry
+	 * -- and the same credential set, because it opens the same class of
+	 * node: /dev/clipboard and /dev/vport* are uid0/gid-world, so it gets
+	 * world-readable misc and nothing more. It is spawned and never
+	 * awaited, so a boot with no host on the other end is unaffected. */
+	int cdaemon = _KeOpenFile("/clipd.exe", FILE_OPEN_READ_ONLY);
+	if (cdaemon != -1) {
+		_KeCloseFile(cdaemon);
+		proc = _KeCreateProcess(0, "clipd");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/clipd.exe", 0, NULL);
+	} else {
+		_KePrint("[init]: clipd.exe absent, no clipboard bridge\r\n");
+	}
+
 #ifdef ARCH_ARM64
 #ifdef __XENEVA_TERM__
 	_KePrint("[init]: tty, skipping compositor \r\n");

@@ -202,6 +202,24 @@ int main(int argc, char* argv[]) {
 		_KeCloseFile(fd);
 	}
 
+	/* /dev/clipboard: a write replaces the contents, a read reports them
+	 * without consuming -- pasting twice has to paste twice. */
+	fd = opendev("/dev/clipboard", FILE_OPEN_WRITE);
+	if (fd >= 0) {
+		report("clipboard write", (int)_KeWriteFile(fd, (void*)"hello, dcl", 10),
+			   10);
+		_KeCloseFile(fd);
+	}
+	fd = opendev("/dev/clipboard", FILE_OPEN_READ_ONLY);
+	if (fd >= 0) {
+		char cb[64];
+		memset(cb, 0, sizeof cb);
+		report("clipboard read", (int)_KeReadFile(fd, cb, sizeof cb), 10);
+		report("clipboard bytes", (int)memcmp(cb, "hello, dcl", 10), 0);
+		report("clipboard read again", (int)_KeReadFile(fd, cb, sizeof cb), 10);
+		_KeCloseFile(fd);
+	}
+
 	{
 		char line[168];
 		sprintf(line, "[dcltest] SUMMARY %d ok, %d failed\n", g_ok, g_bad);
