@@ -107,8 +107,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	 * kfree poisons both fields in debug builds. */
 	AuPmmOwnerTeardownCheck(killable->proc_id, killable->name);
 	AuRemoveProcess(parent, killable);
-	UARTDebugOut("[aurora-clean]: kernel heap in use: %d bytes\r\n",
-				 tlsf_used(tlsf_get_pool()));
+	UARTDebugOut("[aurora-clean]: kernel heap in use: %d bytes\r\n", tlsf_used(tlsf_get_pool()));
 
 	AuPmmStats pmm_stats;
 	AuPmmngrGetStats(&pmm_stats);
@@ -116,6 +115,33 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	size_t used_ram = (pmm_stats.allocated_pages * PAGE_SIZE) / 1024 / 1024;
 	size_t free_ram = (pmm_stats.free_pages * PAGE_SIZE) / 1024 / 1024;
 	UARTDebugOut("[aurora-clean]: process cleaned successfully \r\n");
-	UARTDebugOut(
-		"total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n", total_ram, used_ram, free_ram);
+	UARTDebugOut("total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n",
+				 total_ram,
+				 used_ram,
+				 free_ram);
+}
+
+/**
+ * @brief AuExitSubThread -- exit a sub thread of a process
+ * @param proc -- pointer to the process
+ * @param thread_id -- sub thread id
+ */
+void AuExitSubThread(AuProcess* proc, AA64Thread* thread, int thread_id) {
+	for (int i = 0; i < proc->num_thread; i++) {
+		AA64Thread* thr = proc->threads[i];
+		if (!thr)
+			continue;
+		if (thr->thread_id == thread_id && thr == thread) {
+			/* we cannot directly kill thread here, freeing up the running
+			   stack will immediately stall the kernel, so better mark it as
+			   killable and move it to trash from scheduler ready queue,
+			   process reaper will automatically cleanup all allocated 
+			   resources by the thread and reap it
+			*/
+			thr->state = THREAD_STATE_KILLABLE;
+			AuProcessFreeKeResource(thr);
+			AuThreadMoveToTrash(thr);
+			break;
+		}
+	}
 }

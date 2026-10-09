@@ -256,7 +256,8 @@ AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	proc->_main_stack_ = main_thr_stack;
 	proc->prev_sample_time_us = AuGetCurrentUS();
 	proc->prev_sample_runtime_us = 0;
-	uint64_t* envpBlock = (uint64_t*)P2V((size_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id));
+	uint64_t* envpBlock =
+		(uint64_t*)P2V((size_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id));
 	memset(envpBlock, 0, PAGE_SIZE);
 
 	/** confusing code :hehehehe **/
@@ -312,19 +313,19 @@ int AuProcessGetFileDesc(AuProcess* proc) {
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name) {
+int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name, uint64_t arg) {
 	UARTDebugOut("[aurora]: user thread creating kmapping : %s \r\n", proc->name);
 	uint64_t stack = AuCreateKernelStack(proc->cr3);
 	uint64_t kstack = stack;
 	stack = ((uint64_t)kstack & ~(uint64_t)0xF);
 	stack -= 64;
-	AA64Thread* thr = AuCreateSubKthread(AuProcessEntUser, stack, proc->cr3, name);
+	AA64Thread* thr = AuCreateSubKthread(AuProcessEntSubThread, stack, proc->cr3, name);
 	thr->threadType = THREAD_LEVEL_USER;
 	thr->first_run = 0;
 	thr->procSlot = proc;
 	AuUserEntry* uentry = (AuUserEntry*)kmalloc(sizeof(AuUserEntry));
 	memset(uentry, 0, sizeof(AuUserEntry));
-	uentry->argvaddr = 0;
+	uentry->argvaddr = arg;
 	uentry->entrypoint = (uint64_t)entry;
 	uentry->argvs = 0;
 	uentry->num_args = 0;
@@ -343,7 +344,7 @@ int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name) {
  * @param thr -- Pointer to thread which allocated
  * kernel resources
  */
-static void AuProcessFreeKeResource(AA64Thread* thr) {
+void AuProcessFreeKeResource(AA64Thread* thr) {
 	if (!thr)
 		return;
 	AuSoundRemoveDSP(thr->thread_id);
@@ -436,7 +437,12 @@ void AuProcessExit(AuProcess* proc, bool schedulable) {
 	AuProcessWakeWaiters(proc);
 	for (int i = 0; i < proc->num_thread; i++) {
 		AA64Thread* killable = proc->threads[i];
-		if (!killable || killable == proc->main_thread)
+
+		/* here check if the thread is already marked as THREAD_STATE_KILLABLE, that
+		 * should be marked by exit thread call, because some thread may exit after 
+		 * finishing up their job
+		 */
+		if (!killable || killable == proc->main_thread || killable->state == THREAD_STATE_KILLABLE)
 			continue;
 		AuProcessFreeKeResource(killable);
 		if (killable == current)

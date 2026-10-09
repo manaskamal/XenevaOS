@@ -47,7 +47,7 @@
 
 /* maximum supported system calls */
 //#define AURORA_MAX_SYSCALL  58
-#define AURORA_SYSCALL_MAGIC  0x15062023 
+#define AURORA_SYSCALL_MAGIC 0x15062023
 
 /* ==========================================
  *  Threading
@@ -93,7 +93,7 @@ extern int ProcessWaitForTermination(int pid);
 * @param parent_id -- parent process id
 * @param name -- name of the current process slot
 */
-extern int CreateProcess(int parent_id, char *name);
+extern int CreateProcess(int parent_id, char* name);
 
 /**
 * @brief ProcessLoadExec -- loads an executable to a
@@ -226,7 +226,7 @@ extern size_t GetSystemTimerTick();
 /**
 * @brief CreateUserThread -- creates an user mode thread
 */
-extern int CreateUserThread(void(*entry) (), char *name);
+extern int CreateUserThread(void (*entry)(), char* name);
 
 /*
 * SetFileToProcess -- copies a file from one process
@@ -253,6 +253,14 @@ extern int ProcessHeapUnmap(void* ptr, size_t sz);
 */
 extern int SendSignal(int pid, int signo);
 
+/**
+ * @brief SendSignalToThread -- sends a signal to
+ * specific thread
+ * @param thread_id -- thread id
+ * @param signum -- signal num tu kela
+ */
+extern int SendSignalToThread(int thread_id, int signum);
+
 /*
 * GetCurrentTime -- get current time
 * @param ptr -- pointer to time struct
@@ -278,13 +286,12 @@ extern int OpenDir(char* filename);
 */
 extern int ReadDir(int dirfd, void* dirent);
 
-
 /**
 * @brief CreateTimer -- create timer service
 * @param maxTickLimit -- maximum tick limit
 * @param updatemode -- Timer update mode
 */
-extern int CreateTimer(int threadID,int maxTickLimit, uint8_t updatemode);
+extern int CreateTimer(int threadID, int maxTickLimit, uint8_t updatemode);
 
 /**
 * @brief StartTimer -- starts the timer
@@ -300,7 +307,6 @@ extern int StopTimer(int threadID);
 * @brief DestroyTimer -- remove the timer
 */
 extern int DestroyTimer(int threadID);
-
 
 /**
 * @brief ProcessGetFileDesc -- Searches all process file
@@ -327,13 +333,13 @@ extern int GetTimeOfDay(void* ptr);
 
 extern int NetSend(int sockfd, msghdr* msg, int flags);
 
-extern int NetReceive(int sockfd, msghdr *msg, int flags);
+extern int NetReceive(int sockfd, msghdr* msg, int flags);
 
 extern int NetConnect(int sockfd, sockaddr* addr, socklen_t addrlen);
 
-extern int NetBind(int sockfd, sockaddr *addr, socklen_t addrlen);
+extern int NetBind(int sockfd, sockaddr* addr, socklen_t addrlen);
 
-extern int NetAccept(int sockfd, sockaddr *addr, socklen_t * addrlen);
+extern int NetAccept(int sockfd, sockaddr* addr, socklen_t* addrlen);
 
 extern int NetListen(int sockfd, int backlog);
 
@@ -352,6 +358,11 @@ extern int Alarm(uint64_t seconds);
 extern int SetITimer(int which, const itimerval_t* new_value, itimerval_t* old_value);
 
 extern int GetITimer(int which, const itimerval_t* curr_value);
+
+/**
+ * @brief ExitSubThread -- exit a sub thread from process
+ */
+extern int ExitSubThread(int thread_id);
 
 #ifdef ARCH_ARM64
 extern AA64Registers* AA64GetCurrentRegCtx();

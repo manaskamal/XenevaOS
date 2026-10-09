@@ -328,6 +328,7 @@ aa64_enter_user:
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1
+   mov x0, x2
    eret
   // mov sp, x8
   
