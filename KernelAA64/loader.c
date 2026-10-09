@@ -133,8 +133,20 @@ void AuProcessEntUser(uint64_t rcx) {
 	uint64_t* check_sp = (uint64_t*)uentry->rsp;
 	//UARTDebugOut("[loader]: stack check [0]: %x, [1]: %x\r\n", check_sp[0], check_sp[1]);
 
-	aa64_enter_user(uentry->rsp, uentry->entrypoint);
+	aa64_enter_user(uentry->rsp, uentry->entrypoint, 0);
 	while (1) {}
+}
+
+/**
+ * AuProcessEntSubThread -- Sub process thread entry helper
+ */
+void AuProcessEntSubThread(uint64_t rcx) {
+	(void)rcx;
+	mask_irqs();
+	AA64Thread* t = AuGetCurrentThread();
+	t->start_time_us = AuGetCurrentUS();
+	AuUserEntry* uentry = t->uentry;
+	aa64_enter_user(uentry->rsp, uentry->entrypoint, uentry->argvaddr);
 }
 
 /**
@@ -165,7 +177,7 @@ void AuLoaderMapExecFromCache(AuProcess* proc,
 		for (size_t v_page = (load_addr & ~0xFFFULL); v_page < end_addr; v_page += PAGE_SIZE) {
 			void* phys = AuGetPhysicalAddressEx(proc->cr3, v_page);
 			if (!phys) {
-				phys = (void*)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+				phys = (void*)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 				memset((void*)P2V((size_t)phys), 0, PAGE_SIZE);
 				AuMapPageEx(proc->cr3,
 							(uint64_t)phys,
@@ -380,7 +392,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	uint64_t argvkernel = 0;
 	if (num_args) {
 		/* Allocate a memory for passing arguments */
-		uint64_t* args = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+		uint64_t* args =
+			(uint64_t*)P2V((size_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id));
 		memset(args, 0, PAGE_SIZE);
 		if (!AuMapPageEx(proc->cr3,
 						 (size_t)V2P((uint64_t)args),
@@ -434,7 +447,9 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
  */
 void AuInitialiseLoader() {
 	for (int i = 0; i < (1024 * 1024) / 0x1000; i++) {
-		AuMapPage((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL), LOADER_SCRATCH_VIRT + i * 0x1000, PTE_NORMAL_MEM);
+		AuMapPage((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL),
+				  LOADER_SCRATCH_VIRT + i * 0x1000,
+				  PTE_NORMAL_MEM);
 	}
 	_ldr_scratchBuffer = (uint64_t*)
 		LOADER_SCRATCH_VIRT; // (uint64_t*)P2V((uint64_t)AuPmmngrAllocBlocks((1024 * 1024) / 0x1000));

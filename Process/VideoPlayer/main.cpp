@@ -36,6 +36,7 @@
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
 #include <sys/iocodes.h>
+#include <pthread.h>
 extern "C" {
 #include "h264bsd/h264bsd_decoder.h"
 #include "libhelix-aac/aacdec.h"
@@ -491,7 +492,7 @@ void play_video(const char* path) {
 		if (take_audio) {
 			uint8_t* buf = (uint8_t*)malloc(a_frame_bytes);
 			if (mp4_read_cb((int64_t)a_off, buf, a_frame_bytes, &mf) == 0) {
-				decode_audio_sample(buf, a_frame_bytes);
+				//decode_audio_sample(buf, a_frame_bytes);
 			} else {
 				_KePrint("audio sample %d read failed \r\n", a_sample);
 			}
@@ -524,53 +525,6 @@ void play_video(const char* path) {
 	h264bsdShutdown(&h264);
 	MP4D_close(&mp4);
 	fclose(mf.f);
-}
-
-void audio_thread() {
-	Mp4File mf;
-	mf.f = fopen("/test.mp4", "rb");
-	if (!mf.f) {
-		printf("audio thread: failed to open file \r\n");
-		_KePauseThread();
-	}
-
-	fseek(mf.f, 0, SEEK_END);
-	int64_t file_size = ftell(mf.f);
-	fseek(mf.f, 0, SEEK_SET);
-
-	MP4D_demux_t mp4;
-	if (!MP4D_open(&mp4, mp4_read_cb, &mf, file_size)) {
-		fclose(mf.f);
-		_KePauseThread();
-	}
-
-	int audio_track = -1;
-	for (int i = 0; i < mp4.track_count; i++) {
-		if (mp4.track[i].object_type_indication == MP4_OBJECT_TYPE_AUDIO_ISO_IEC_14496_3) {
-			audio_track = i;
-			break;
-		}
-	}
-
-	if (audio_track < 0) {
-		MP4D_close(&mp4);
-		fclose(mf.f);
-		_KePauseThread();
-	}
-
-	MP4D_track_t* at = &mp4.track[audio_track];
-	init_audio_decoder(at);
-
-	for (unsigned s = 0; s < at->sample_count; s++) {
-		unsigned frame_bytes = 0, ts = 0, dur = 0;
-		MP4D_file_offset_t off = MP4D_frame_offset(&mp4, audio_track, s, &frame_bytes, &ts, &dur);
-		uint8_t* buf = (uint8_t*)malloc(frame_bytes);
-		if (mp4_read_cb((int64_t)off, buf, frame_bytes, &mf) == 0)
-			decode_audio_sample(buf, frame_bytes);
-		free(buf);
-	}
-
-	_KePauseThread();
 }
 
 typedef struct _sound_card_list {
@@ -615,6 +569,60 @@ void open_sound() {
 	_KeFileIoControl(sound, SOUND_REGISTER_SNDPLR, &ioctl);
 }
 
+void* audio_thread(void* arg) {
+	open_sound();
+
+	Mp4File mf;
+	mf.f = fopen("/test.mp4", "rb");
+	if (!mf.f) {
+		printf("audio thread: failed to open file \r\n");
+		_KePrint("failed to open file \r\n");
+		_KePauseThread();
+	}
+
+	fseek(mf.f, 0, SEEK_END);
+	int64_t file_size = ftell(mf.f);
+	fseek(mf.f, 0, SEEK_SET);
+
+	MP4D_demux_t mp4;
+	if (!MP4D_open(&mp4, mp4_read_cb, &mf, file_size)) {
+		_KePrint("MP4 failed \r\n");
+		fclose(mf.f);
+		_KePauseThread();
+	}
+
+	int audio_track = -1;
+	for (int i = 0; i < mp4.track_count; i++) {
+		if (mp4.track[i].object_type_indication == MP4_OBJECT_TYPE_AUDIO_ISO_IEC_14496_3) {
+			audio_track = i;
+			break;
+		}
+	}
+
+	if (audio_track < 0) {
+		MP4D_close(&mp4);
+		fclose(mf.f);
+		_KePauseThread();
+	}
+
+	MP4D_track_t* at = &mp4.track[audio_track];
+	init_audio_decoder(at);
+	_KePrint("Audio decoder initialized \r\n");
+	printf("decoding audio samples in audio thread \r\n");
+
+	for (unsigned s = 0; s < at->sample_count; s++) {
+		unsigned frame_bytes = 0, ts = 0, dur = 0;
+		MP4D_file_offset_t off = MP4D_frame_offset(&mp4, audio_track, s, &frame_bytes, &ts, &dur);
+		uint8_t* buf = (uint8_t*)malloc(frame_bytes);
+		if (mp4_read_cb((int64_t)off, buf, frame_bytes, &mf) == 0)
+			decode_audio_sample(buf, frame_bytes);
+		free(buf);
+	}
+
+	//_KePauseThread();
+	pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[]) {
 	printf("videoplayer started :%d\r\n", argc);
 
@@ -623,8 +631,14 @@ int main(int argc, char* argv[]) {
 		ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Video Player", 400, 480 / 2 - 400 / 2, 800, 700);
 
 	ChWindowPaint(mainWin);
-	open_sound();
+
+	pthread_t thr;
+	pthread_create(&thr, NULL, audio_thread, NULL);
 
 	play_video("/test.mp4");
+	while (1) {
+		_KeProcessSleep(100);
+	}
+
 	return 0;
 }

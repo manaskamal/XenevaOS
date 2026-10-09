@@ -52,51 +52,51 @@
 #endif
 #include <list.h>
 
-#define PROCESS_USER_STACK_SZ 512*1024
+#define PROCESS_USER_STACK_SZ 512 * 1024
 
-#define MAX_THREADS_PER_PROCESS  60
-#define FILE_DESC_PER_PROCESS 60
+#define MAX_THREADS_PER_PROCESS 60
+#define FILE_DESC_PER_PROCESS	60
 
-#define PROCESS_STATE_NOT_READY  (1<<0)
-#define PROCESS_STATE_READY      (1<<1)
-#define PROCESS_STATE_SUSPENDED  (1<<2)
+#define PROCESS_STATE_NOT_READY (1 << 0)
+#define PROCESS_STATE_READY		(1 << 1)
+#define PROCESS_STATE_SUSPENDED (1 << 2)
 
 /* when a process exits, it's marked
  * as died */
-#define PROCESS_STATE_DIED       (1<<3) 
+#define PROCESS_STATE_DIED (1 << 3)
 
 /* when a process's parents dies, whitout
  * terminating its childs, childs are 
  * marked as zombies
  */
-#define PROCESS_STATE_ZOMBIE     (1<<4)
-#define PROCESS_STATE_ORPHAN     (1<<5)
+#define PROCESS_STATE_ZOMBIE (1 << 4)
+#define PROCESS_STATE_ORPHAN (1 << 5)
 
 /* process state busy wait is set when
  * any locks set its as waiting 
  */
-#define PROCESS_STATE_BUSY_WAIT  (1<<6)
+#define PROCESS_STATE_BUSY_WAIT (1 << 6)
 
 /* Exit codes for processes */
-#define PROCESS_EXIT_SUCCESS  0
-#define PROCESS_EXIT_FAILURE  1
+#define PROCESS_EXIT_SUCCESS 0
+#define PROCESS_EXIT_FAILURE 1
 
 /* process types */
-#define PROCESS_TYPE_GENERAL      (0<<1)
-#define PROCESS_TYPE_SYSTEM       (1<<1)
-#define PROCESS_TYPE_BACKGROUND   (1<<2)
-#define PROCESS_TYPE_NON_KILLABLE (1<<3)
+#define PROCESS_TYPE_GENERAL	  (0 << 1)
+#define PROCESS_TYPE_SYSTEM		  (1 << 1)
+#define PROCESS_TYPE_BACKGROUND	  (1 << 2)
+#define PROCESS_TYPE_NON_KILLABLE (1 << 3)
 
-#define PROCESS_BREAK_ADDRESS   0x0000003000000000
+#define PROCESS_BREAK_ADDRESS 0x0000003000000000
 #ifdef ARCH_X64
-#define PROCESS_MMAP_ADDRESS    0x00000000C0000000
-#define PROCESS_SHM_ADDRESS     0x0000000080000000
+#define PROCESS_MMAP_ADDRESS 0x00000000C0000000
+#define PROCESS_SHM_ADDRESS	 0x0000000080000000
 #elif ARCH_ARM64
-#define PROCESS_MMAP_ADDRESS    0x0000000C00000000
-#define PROCESS_SHM_ADDRESS     0x0000000800000000
+#define PROCESS_MMAP_ADDRESS 0x0000000C00000000
+#define PROCESS_SHM_ADDRESS	 0x0000000800000000
 #endif
 
-typedef void(*entry) (void*);
+typedef void (*entry)(void*);
 
 typedef struct _au_proc_cred_ {
 	uint8_t caps;
@@ -104,7 +104,7 @@ typedef struct _au_proc_cred_ {
 	GID_NUM gid;
 	GID_NUM sgid[AURORA_MAX_GROUPS];
 	uint16_t num_sgid;
-}AuProcCredentials;
+} AuProcCredentials;
 
 /**
  * _sys_proc_list -- a way to report current status
@@ -118,8 +118,7 @@ typedef struct _sys_proc_list_ {
 	uint32_t num_threads;
 	uint32_t num_file_opened;
 	uint32_t cpu_usage;
-}AuProcessList;
-
+} AuProcessList;
 
 //#pragma pack(push,1)
 typedef struct _au_proc_ {
@@ -127,9 +126,9 @@ typedef struct _au_proc_ {
 	int proc_id;
 	uint8_t state;
 	uint8_t type_flags;
-	
+
 	/* process image related stuff */
-	uint64_t  *cr3;
+	uint64_t* cr3;
 	uint64_t _image_size_;
 	uint64_t _image_base_;
 	uint64_t _main_stack_;
@@ -148,7 +147,7 @@ typedef struct _au_proc_ {
 	AA64Thread* main_thread;
 #endif // Maybe RISC-V?
 
-    uint8_t num_thread;
+	uint8_t num_thread;
 	entry entry_point;
 
 #ifdef ARCH_X64
@@ -162,8 +161,8 @@ typedef struct _au_proc_ {
 	/* capability table -- parallel to fds[]*/
 	AuCapability caps[FILE_DESC_PER_PROCESS];
 	/*loader related data*/
-	AuVFSNode *file;
-	AuVFSNode *fsys;
+	AuVFSNode* file;
+	AuVFSNode* fsys;
 
 	/* memory account */
 	list_t* vmareas;
@@ -180,10 +179,9 @@ typedef struct _au_proc_ {
 	AuProcCredentials creds;
 
 	/* data structure */
-	struct _au_proc_ *next;
-	struct _au_proc_ *prev;
-}AuProcess;
-
+	struct _au_proc_* next;
+	struct _au_proc_* prev;
+} AuProcess;
 
 //#pragma pack(pop)
 /*
@@ -191,7 +189,7 @@ typedef struct _au_proc_ {
 * @param root -- pointer to the root process
 * @param proc -- process to add
 */
-extern void AuAddProcess(AuProcess* parent, AuProcess *proc);
+extern void AuAddProcess(AuProcess* parent, AuProcess* proc);
 
 /*
 * AuRemoveProcess -- removes a process from the process
@@ -201,20 +199,19 @@ extern void AuAddProcess(AuProcess* parent, AuProcess *proc);
 */
 extern void AuRemoveProcess(AuProcess* parent, AuProcess* proc);
 
-
 /*
 * Allocate kernel stack
 * @param cr3 -- root page map level, it should be
 * converted to linear virtual address
 */
-extern uint64_t CreateKernelStack(AuProcess* proc, uint64_t *cr3);
+extern uint64_t CreateKernelStack(AuProcess* proc, uint64_t* cr3);
 /*
 * KernelStackFree -- frees up an allocated stack
 * @param proc -- Pointer to process
 * @param ptr -- Starting address of the stack
 * @param cr3 -- page root level mapping
 */
-extern void KernelStackFree(AuProcess* proc, void* ptr, uint64_t *cr3);
+extern void KernelStackFree(AuProcess* proc, void* ptr, uint64_t* cr3);
 
 /*
 * AuProcessFindPID -- finds a process by its pid
@@ -228,7 +225,7 @@ extern AuProcess* AuProcessFindPID(int pid);
 * main thread
 * @param thread -- pointer to  main thread
 */
-extern AuProcess *AuProcessFindThread(AuThread* thread);
+extern AuProcess* AuProcessFindThread(AuThread* thread);
 
 /*
 * AuProcessFindSubThread -- find a process from its
@@ -261,7 +258,7 @@ extern AuProcess* AuProcessFindSubThread(AA64Thread* thread);
 * @param cr3 -- pointer to the address space where to
 * map
 */
-extern uint64_t* CreateUserStack(AuProcess* proc,uint64_t* cr3);
+extern uint64_t* CreateUserStack(AuProcess* proc, uint64_t* cr3);
 
 /*
 * AuStartRootProc -- starts the very first process
@@ -286,12 +283,20 @@ extern AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name);
 */
 extern AuProcess* AuProcessFork(AuProcess* parent);
 
-
 /* AuProcessExit -- marks a process
 * as killable
 * @param proc -- process to exit
 */
 extern void AuProcessExit(AuProcess* proc, bool schedulable);
+
+#ifdef ARCH_ARM64
+/* Reaping requires an inactive address space and stopped threads. */
+extern bool AuProcessCanReap(AuProcess* proc);
+extern AuProcess* AuGetKillableProcess(void);
+
+/* Wake borrowed waiter threads, then release the list and its entries. */
+extern void AuProcessWakeWaiters(AuProcess* proc);
+#endif
 
 /*
 * AuProcessGetFileDesc -- returns a empty file descriptor
@@ -308,7 +313,7 @@ extern int AuProcessGetFileDesc(AuProcess* proc);
 * @param pid -- pid of the process, if -1 then any child
 * process
 */
-extern int AuProcessWaitForTermination(AuProcess *proc, int pid);
+extern int AuProcessWaitForTermination(AuProcess* proc, int pid);
 
 #ifdef ARCH_X64
 extern AuMutex* AuProcessGetMutex();
@@ -329,6 +334,14 @@ extern uint64_t AuCreateSubKernelStack(AuProcess* proc, uint64_t* pml);
  * map
  */
 extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
+
+/**
+ * @brief AuProcessFreeKeResource -- free up allocated kernel
+ * resources
+ * @param thr -- Pointer to thread which allocated
+ * kernel resources
+ */
+extern void AuProcessFreeKeResource(AA64Thread* thr);
 #endif
 /**
 *  Creates a user mode thread
@@ -338,7 +351,7 @@ extern uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3);
 *  @param name -- name of the thread
 *  @param priority -- (currently unused) thread's priority
 */
-extern int AuCreateUserthread(AuProcess* proc, void(*entry) (), char *name);
+extern int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name, uint64_t args);
 
 /**
  * @brief AuProcGetNumProcessCount -- returns the total number

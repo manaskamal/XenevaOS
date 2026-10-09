@@ -35,7 +35,6 @@
 
 #define USER_SHARED_MEM_START 0x0000000080000000
 
-//#pragma pack(push,1)
 /*
  * AuSHM -- shared memory segment
  */
@@ -46,35 +45,35 @@ typedef struct _shm_ {
 	uint64_t* frames;
 	uint16_t link_count;
 }AuSHM;
-//#pragma pack(pop)
-
-//#pragma pack(push,1)
 typedef struct _shm_mapping_ {
 	uint64_t start_addr;
 	size_t length;
 	AuSHM* shm;
 }AuSHMMappings;
-//#pragma pack(pop)
 
 /**
  * @brief AuInitialiseSHMMan -- initialise shm manager
  */
-extern void AuInitialiseSHMMan();
+extern void AuInitialiseSHMMan(void);
 
 /*
-* AuGetSHMSeg -- searches and return a
-* shm segment by its key
-* @param key -- key to search
+* AuGetSHMByID -- find a shared memory segment by ID
+* @param id -- segment ID to search
 */
-extern AuSHM * AuGetSHMByID(uint16_t id);
+extern AuSHM* AuGetSHMByID(uint16_t id);
+
+/* Kernel services holding a segment beyond any client mapping must retain
+ * their own reference, then release it when removing that cached segment. */
+extern void AuSHMRetain(AuSHM* shm);
+extern void AuSHMRelease(AuSHM* shm);
 
 /**
  * @brief AuCreateSHM -- create a new shared memory segment or
  * returns previously allocated one
  * @param proc -- Creator process
  * @param key  --  unique key to use
- * @param sz   --  size in multiple of PAGE_SIZE
- * @param flags -- security flags
+ * @param sz   -- size in bytes, rounded up to whole pages
+ * @param flags -- reserved
  * @return id of newly created SHM, -1 on failure
  */
 extern int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags);
@@ -84,8 +83,8 @@ extern int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags);
  * shm segment
  * @param proc -- Calling process
  * @param id -- shm segment id
- * @param shmaddr -- starting shared memory address to map
- * @parma shmflg -- flags
+ * @param shmaddr -- reserved; the kernel chooses the mapping address
+ * @param shmflg -- reserved
  * @return starting address of this shm on success, NULL on failure
  */
 extern void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg);

@@ -1099,8 +1099,14 @@ XE_EXTERN XE_EXPORT void ChWindowHandleDestroyBuffer(ChWindow* win) {
 		return;
 	_KeUnmapSharedMem(win->app->backbufkey);
 	PostEvent e1;
+	memset(&e1, 0, sizeof(e1));
 	e1.type = DEODHAI_MESSAGE_BUFFER_DESTROYED;
 	e1.to_id = POSTBOX_ROOT_ID;
+	e1.from_id = win->app->currentID;
+	e1.dword = win->app->backbufkey;
+	e1.dword4 = win->handle;
+	e1.dword5 = (win->flags & WINDOW_FLAG_POPUP) ? WINDOW_HANDLE_TYPE_POPUP
+														 : WINDOW_HANDLE_TYPE_NORMAL;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
 }
 

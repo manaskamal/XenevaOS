@@ -35,77 +35,36 @@
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
+#include <Mm/tlsf.h>
+#include <Mm/shm.h>
 #include <Hal/AA64/sched.h>
 #include <_null.h>
-/**
- * @brief AuCleanMMap -- clean default mmap addresses
- * @param proc -- Pointer to killable process
- */
-void AuCleanMMap(AuProcess* proc) {
-	for (int i = 0; i < proc->proc_mmap_len / 0x1000; i++) {
-		uint64_t phys =
-			(uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_MMAP_ADDRESS + i * 0x1000);
 
-		/* also do check, if the physical address is backed by file, 
-		 * need to behave differently with file backed physical addresses 
-		 */
-		if (phys != 0) {
-			if (AuPmmngrGetBackingBlock(phys) == -1) {
-				AuPmmngrReleasePage((uint64_t)phys);
-			}
-		}
+static void AuCleanThread(AA64Thread* thr) {
+	AuThreadCleanTrash(thr);
+	if (thr->originalKSp) {
+		uint64_t location = (thr->originalKSp + 64) - KERNEL_STACK_SIZE;
+		AuFreePages(location, true, KERNEL_STACK_SIZE);
 	}
-	proc->proc_mmap_len = 0;
+	AuUserEntry* uentry = thr->uentry;
+	if (uentry) {
+		/* A process killed before its first run still owns argv copies. */
+		if (uentry->argvs) {
+			for (int i = 0; i < uentry->num_args; ++i)
+				kfree(uentry->argvs[i]);
+			kfree(uentry->argvs);
+		}
+		kfree(uentry);
+	}
+	kfree(thr);
 }
 
-/**
- * @brief AuCleanHeapMem -- cleanup heap area of the process
- * @param proc -- Pointer to the killable process
- */
-void AuCleanHeapMem(AuProcess* proc) {
-	for (int i = 0; i < proc->proc_heapmem_len / 0x1000; i++) {
-		uint64_t phys =
-			(uint64_t)AuGetPhysicalAddressEx(proc->cr3, PROCESS_BREAK_ADDRESS + i * 0x1000);
-		if (phys) {
-			if (AuPmmngrGetBackingBlock(phys) == -1)
-				AuPmmngrReleasePage((uint64_t)phys);
-		}
-	}
-	proc->proc_heapmem_len = 0;
-}
-
-/**
- * @brief AuCleanUserStack -- clean up given user stack
- * @param proc -- Pointer to killable process
- * @param uentry -- Pointer to user entry data structure
- */
-void AuCleanUserStack(AuProcess* proc, AuUserEntry* uentry) {
-	uint64_t location = uentry->stackBase - PROCESS_USER_STACK_SZ;
-	UARTDebugOut("stack location : %x \r\n", location);
-	for (int i = 0; i < PROCESS_USER_STACK_SZ / 0x1000; i++) {
-		uint64_t phys = (uint64_t)AuGetPhysicalAddressEx(proc->cr3, location + i * 0x1000);
-		if (phys) {
-			if (AuPmmngrGetBackingBlock(phys) == -1)
-				AuPmmngrReleasePage((uint64_t)phys);
-		}
-	}
-}
-
-/**
- * @brief AuCleanKernelStack -- clean up given kernel stack
- * @param proc -- Pointer to killable process
- * @param thr -- Pointer to thread that needs kernel stack cleanup
- */
-void AuCleanKernelStack(AuProcess* proc, AA64Thread* thr) {
-	uint64_t location = (thr->originalKSp + 64) - KERNEL_STACK_SIZE;
-	UARTDebugOut("kstack location to clean: %x \r\n", location);
-	for (int i = 0; i < KERNEL_STACK_SIZE / 0x1000; i++) {
-		uint64_t phys = (uint64_t)AuGetPhysicalAddress(location + i * 0x1000);
-		if (phys) {
-			if (AuPmmngrGetBackingBlock(phys) == -1)
-				AuPmmngrReleasePage((uint64_t)phys);
-		}
-	}
+static void AuCleanList(list_t* list) {
+	if (!list)
+		return;
+	while (list->pointer)
+		kfree(list_remove(list, 0));
+	kfree(list);
 }
 
 /**
@@ -114,118 +73,75 @@ void AuCleanKernelStack(AuProcess* proc, AA64Thread* thr) {
  * @param killable -- Killable process
  */
 void AuProcessClean(AuProcess* parent, AuProcess* killable) {
+	if (!AuProcessCanReap(killable))
+		return;
 	UARTDebugOut("[aurora-clean]: killing process : %s \r\n", killable->name);
-	/** first clean up process_mmap areas **/
-	AuCleanMMap(killable);
-
-	/** clean up heap areas **/
-	AuCleanHeapMem(killable);
-
-	/** clean up user allocated areas **/
-
-	/** free up each sub thread's user stack **/
-	for (int i = 0; i < killable->num_thread; i++) {
-		AA64Thread* subthr = killable->threads[i];
-		if (subthr) {
-			if (!subthr->uentry)
-				continue;
-			AuCleanUserStack(killable, subthr->uentry);
-		}
-	}
-	/** free up the user stack **/
-	if (killable->main_thread) {
-		AuUserEntry* uentry = killable->main_thread->uentry;
-		if (uentry)
-			AuCleanUserStack(killable, uentry);
-	}
-
-	/** clean up the kernel stack of sub threads **/
-	for (int i = 0; i < killable->num_thread; i++) {
-		AA64Thread* subthr = killable->threads[i];
-		if (subthr) {
-			AuCleanKernelStack(killable, subthr);
-		}
-	}
-
-	/** free up the kernel stack of main thread **/
-	if (killable->main_thread)
-		AuCleanKernelStack(killable, killable->main_thread);
-
-	/** check for argument blocks **/
-	AuUserEntry* uentry = killable->main_thread->uentry;
-	if (uentry) {
-		if (uentry->argvaddr != 0) {
-			void* phys = AuGetPhysicalAddressEx(killable->cr3, uentry->argvaddr);
-			if (phys)
-				AuPmmngrReleasePage((uint64_t)phys);
-		}
-	}
-
-	/** Check for additional argument block allocated for sub threads **/
-	for (int i = 0; i < killable->num_thread; i++) {
-		AA64Thread* subthr = killable->threads[i];
-		if (subthr) {
-			if (!subthr->uentry)
-				continue;
-			if (subthr->uentry->argvaddr != 0) {
-				void* phys = AuGetPhysicalAddressEx(killable->cr3, subthr->uentry->argvaddr);
-				if (phys)
-					AuPmmngrReleasePage((uint64_t)phys);
-			}
-		}
-	}
-
-	/** free up environment block **/
-	void* envBlock = AuGetPhysicalAddressEx(killable->cr3, 0x5000);
-	if (envBlock)
-		AuPmmngrReleasePage((uint64_t)envBlock);
-
-	/** free up uentry structs **/
-	if (uentry)
-		kfree(uentry);
-
-	/** free up uentry structs of sub threads **/
-	for (int i = 0; i < killable->num_thread; i++) {
-		AA64Thread* subthr = killable->threads[i];
-		if (subthr) {
-			if (!subthr->uentry)
-				continue;
-			if (subthr->uentry)
-				kfree(subthr->uentry);
-		}
-	}
-
-	/** now free up thread data structures **/
-	AA64Thread* current = AuGetCurrentThread();
-	AA64Thread* mainThr = killable->main_thread;
-	if (mainThr && mainThr != current) {
-		if (mainThr->state != THREAD_STATE_KILLABLE)
-			AuThreadMoveToTrash(mainThr);
-		AuThreadCleanTrash(mainThr);
-		kfree(mainThr);
-		killable->main_thread = NULL;
-	}
-
-	for (int i = 0; i < killable->num_thread; i++) {
-		AA64Thread* subthr = killable->threads[i];
-		if (!subthr || subthr == current)
-			continue;
-		if (subthr->state != THREAD_STATE_KILLABLE)
-			AuThreadMoveToTrash(subthr);
-		AuThreadCleanTrash(subthr);
-		kfree(subthr);
+	AuSHMUnmapAll(killable);
+	AA64Thread* main_thr = killable->main_thread;
+	for (int i = 0; i < killable->num_thread; ++i) {
+		AA64Thread* thr = killable->threads[i];
 		killable->threads[i] = NULL;
+		if (!thr || thr == main_thr)
+			continue;
+		/* Drop aliases before poisoning the thread object. */
+		for (int j = i + 1; j < killable->num_thread; ++j) {
+			if (killable->threads[j] == thr)
+				killable->threads[j] = NULL;
+		}
+		AuCleanThread(thr);
 	}
+	if (main_thr)
+		AuCleanThread(main_thr);
+	killable->main_thread = NULL;
 
-	/** clear up the process data structure **/
+	/* Walk actual mappings, including executable pages, signal trampoline,
+	 * stacks and sparse/explicit mmap ranges. Length counters miss holes
+	 * and cannot reclaim the page tables themselves. */
+	AuDestroyVirtualAddressSpace(killable->cr3);
+	killable->cr3 = NULL;
+	AuCleanList(killable->vmareas);
+	killable->vmareas = NULL;
+	AuProcessWakeWaiters(killable);
+
+	/* Keep the process alive until diagnostics have read its PID/name.
+	 * kfree poisons both fields in debug builds. */
+	AuPmmOwnerTeardownCheck(killable->proc_id, killable->name);
 	AuRemoveProcess(parent, killable);
+	UARTDebugOut("[aurora-clean]: kernel heap in use: %d bytes\r\n", tlsf_used(tlsf_get_pool()));
 
 	AuPmmStats pmm_stats;
 	AuPmmngrGetStats(&pmm_stats);
-	size_t totalRam = (pmm_stats.managed_pages * 0x1000) / 1024 / 1024;
-	size_t usedRam = (pmm_stats.allocated_pages * 0x1000) / 1024 / 1024;
-	size_t freeRam = (pmm_stats.free_pages * 0x1000) / 1024 / 1024;
+	size_t total_ram = (pmm_stats.managed_pages * PAGE_SIZE) / 1024 / 1024;
+	size_t used_ram = (pmm_stats.allocated_pages * PAGE_SIZE) / 1024 / 1024;
+	size_t free_ram = (pmm_stats.free_pages * PAGE_SIZE) / 1024 / 1024;
 	UARTDebugOut("[aurora-clean]: process cleaned successfully \r\n");
-	UARTDebugOut(
-		"total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n", totalRam, usedRam, freeRam);
+	UARTDebugOut("total mem : %d mb, used mem : %d mb , free mem : %d mb\r\n",
+				 total_ram,
+				 used_ram,
+				 free_ram);
+}
+
+/**
+ * @brief AuExitSubThread -- exit a sub thread of a process
+ * @param proc -- pointer to the process
+ * @param thread_id -- sub thread id
+ */
+void AuExitSubThread(AuProcess* proc, AA64Thread* thread, int thread_id) {
+	for (int i = 0; i < proc->num_thread; i++) {
+		AA64Thread* thr = proc->threads[i];
+		if (!thr)
+			continue;
+		if (thr->thread_id == thread_id && thr == thread) {
+			/* we cannot directly kill thread here, freeing up the running
+			   stack will immediately stall the kernel, so better mark it as
+			   killable and move it to trash from scheduler ready queue,
+			   process reaper will automatically cleanup all allocated 
+			   resources by the thread and reap it
+			*/
+			thr->state = THREAD_STATE_KILLABLE;
+			AuProcessFreeKeResource(thr);
+			AuThreadMoveToTrash(thr);
+			break;
+		}
+	}
 }

@@ -184,7 +184,7 @@ void AuKernelLinkImports(void* image) {
 * @param nt -- nt headers
 * @param diff -- difference from its original
 */
-void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
+void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 	if (!diff)
 		return;
 	if ((nt->OptionalHeader.DllCharacteristics & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == 0)
@@ -220,8 +220,7 @@ void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 				return;
 				break;
 			case IMAGE_REL_BASED_DIR64:
-				*reinterpret_cast<uint64_t*>(relocitem) += (diff & UINT32_MAX);
-				SeTextOut("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
+				*reinterpret_cast<uint64_t*>(relocitem) += diff;
 				break;
 			default:
 				return;

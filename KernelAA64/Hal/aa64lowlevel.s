@@ -159,7 +159,9 @@ isb_flush:
 .global tlb_flush
 tlb_flush:
      dsb ishst
-     tlbi vaae1is, x0 //vae1is
+     // TLBI takes VA[55:12], not a byte address. Leave TTL/ASID bits zero.
+     ubfx x0, x0, #12, #44
+     tlbi vaae1is, x0
      dsb ish
      isb
      ret
@@ -326,6 +328,7 @@ aa64_enter_user:
    msr SPSR_EL1, x8
    msr SP_EL0, x0
    msr ELR_EL1,x1
+   mov x0, x2
    eret
   // mov sp, x8
   

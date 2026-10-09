@@ -205,8 +205,12 @@ void init_basic_gid_to_dev() {
 	}
 	/* The desktop terminal is started by the compositor, which does not
 	 * have GROUP_NETWORK or GROUP_AUDIO. Every normal user process does
-	 * have the world group, so btctl in that terminal can open /dev/bt0
-	 * and write PCM to /dev/sound the same way this process does. */
+	 * have the world group, so btctl and wifictl in that terminal can
+	 * open these nodes the same way this process does. */
+	fd = _KeOpenFile("/dev/net/wlan0", FILE_OPEN_READ_ONLY);
+	if (fd != -1) {
+		_KeCredChangeID(fd, 0, _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD));
+	}
 	fd = _KeOpenFile("/dev/bt0", FILE_OPEN_READ_ONLY);
 	if (fd != -1) {
 		_KeCredChangeID(fd, 0, _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD));
@@ -392,22 +396,25 @@ extern "C" void main(int argc, char* argv[]) {
 #ifdef __XENEVA_TERM__
 	_KePrint("[init]: tty, skipping compositor \r\n");
 	proc = _KeCreateProcess(0, "netmngr");
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_NETWORK);
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
-	if (ret_nm != -1) {
-		_KeSetUID(proc, UAC_DEAMONS);
-		_KeSetGID(proc, UAC_DEAMONS);
-		_KeCredAddSGroup(proc, ggid_misc_world);
-		_KeCredAddSGroup(proc, GROUP_NETWORK);
+	if (ret_nm != -1)
 		_KeProcessSleep(500);
-	}
-	proc = _KeCreateProcess(0, "ntpd");
-	if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) != -1) {
+	/* --no-network drops ntpd.exe from the image, so check it exists before
+	 * creating the process, otherwise I leave a half-created ntpd behind --axiss */
+	int ntpd = _KeOpenFile("/ntpd.exe", FILE_OPEN_READ_ONLY);
+	if (ntpd != -1) {
+		_KeCloseFile(ntpd);
+		proc = _KeCreateProcess(0, "ntpd");
 		_KeSetUID(proc, UAC_DEAMONS);
 		_KeSetGID(proc, UAC_DEAMONS);
 		_KeCredAddSGroup(proc, ggid_misc_world);
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
-	} else {
-		_KePrint("[init]: ntpd not started\r\n");
+		if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) == -1)
+			_KePrint("[init]: ntpd not started\r\n");
 	}
 	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
 	if (con == -1) {
@@ -422,22 +429,25 @@ extern "C" void main(int argc, char* argv[]) {
 	init_run_term_command(ggid_misc_world, con);
 #else
 	proc = _KeCreateProcess(0, "netmngr");
+	_KeSetUID(proc, UAC_DEAMONS);
+	_KeSetGID(proc, UAC_DEAMONS);
+	_KeCredAddSGroup(proc, ggid_misc_world);
+	_KeCredAddSGroup(proc, GROUP_NETWORK);
 	int ret_nm = _KeProcessLoadExec(proc, "/netmngr.exe", 0, NULL);
-	if (ret_nm != -1) {
-		_KeSetUID(proc, UAC_DEAMONS);
-		_KeSetGID(proc, UAC_DEAMONS);
-		_KeCredAddSGroup(proc, ggid_misc_world);
-		_KeCredAddSGroup(proc, GROUP_NETWORK);
+	if (ret_nm != -1)
 		_KeProcessSleep(500);
-	}
-	proc = _KeCreateProcess(0, "ntpd");
-	if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) != -1) {
+	/* --no-network drops ntpd.exe from the image, so check it exists before
+	 * creating the process, otherwise I leave a half-created ntpd behind --axiss */
+	int ntpd = _KeOpenFile("/ntpd.exe", FILE_OPEN_READ_ONLY);
+	if (ntpd != -1) {
+		_KeCloseFile(ntpd);
+		proc = _KeCreateProcess(0, "ntpd");
 		_KeSetUID(proc, UAC_DEAMONS);
 		_KeSetGID(proc, UAC_DEAMONS);
 		_KeCredAddSGroup(proc, ggid_misc_world);
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
-	} else {
-		_KePrint("[init]: ntpd not started\r\n");
+		if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) == -1)
+			_KePrint("[init]: ntpd not started\r\n");
 	}
 
 	/** actually, design should be like that, each process after

@@ -43,6 +43,7 @@
 #include <timer.h>
 #include <Log/klog.h>
 #include <string.h>
+#include <clean.h>
 
 /**
  * @brief GetThreadID -- returns current id
@@ -322,8 +323,8 @@ int CreateUserThread(void (*entry)(), char* name) {
 		if (!proc)
 			return 0;
 	}
-	int idx = AuCreateUserthread(proc, entry, name);
 	AA64Registers* regs = AA64GetCurrentRegCtx();
+	int idx = AuCreateUserthread(proc, entry, name, regs->x2);
 	//current_thr->sp = (uint64_t)regs;
 	AuScheduleThread(regs);
 	return idx;
@@ -371,6 +372,28 @@ int SendSignal(int pid, int signum) {
 	return AuAllocSignal(mainthr, signum);
 }
 
+/**
+ * @brief SendSignalToThread -- sends a signal to
+ * specific thread
+ * @param thread_id -- thread id
+ * @param signum -- signal num tu kela
+ */
+int SendSignalToThread(int thread_id, int signum) {
+	UARTDebugOut("Sending signal to thread \r\n");
+	AA64Thread* thr = AuThreadFindByID(thread_id);
+	if (!thr) {
+		thr = AuThreadFindByIDBlockList(thread_id);
+		if (!thr) {
+			thr = AuThreadFindByIDSleepList(thread_id);
+			if (!thr) {
+				thr = AuThreadFindByIDBlockList(thread_id);
+			}
+		}
+	}
+	if (!thr)
+		return 1;
+	return AuAllocSignal(thr, signum);
+}
 /*
  * SetSignal -- register a signal handler
  * @param signo -- signal number
@@ -413,4 +436,23 @@ int GetITimer(int which, const itimerval_t* curr_value) {
 	if (!thr)
 		return 0;
 	return AuTimerGetITimer(thr, which, curr_value);
+}
+
+/**
+ * @brief ExitSubThread -- exit a sub thread from process
+ */
+int ExitSubThread(int thread_id) {
+	AA64Thread* thr = AuGetCurrentThread();
+	if (!thr)
+		return 1;
+	AuProcess* proc = AuProcessFindThread(thr);
+	if (!proc) {
+		proc = AuProcessFindSubThread(thr);
+		if (!proc)
+			return 0;
+	}
+	AuExitSubThread(proc, thr, thread_id);
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	AuScheduleThread(regs);
+	//never returned
 }

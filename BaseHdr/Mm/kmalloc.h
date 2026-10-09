@@ -54,6 +54,12 @@ extern "C" {
 	AU_EXTERN AU_EXPORT void      kfree(void *);					//< The standard function.
 	extern void kheap_debug();
 	extern void kmalloc_debug_on(bool bit);
+#ifdef __XENEVA_DEBUG_ALLOC__
+	/* Stage 2 (debug-only): dump live heap blocks grouped by caller. */
+	extern void kheap_leak_dump();
+	/* Stage 2 deliberate-bug tests on a scratch pool (alloc_test.c). */
+	extern void AuAllocDebugTest();
+#endif
 
 #ifdef __cplusplus
 }

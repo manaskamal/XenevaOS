@@ -69,6 +69,15 @@ extern void sg_init_one(void);
 extern void _sprintf(void);
 extern void __kmalloc_cache_noprof(void);
 extern void kmalloc_caches(void);
+extern void AuWifiPortalSetTx(void);
+extern void AuWifiPortalTx(void);
+extern void AuWifiPortalSetRx(void);
+extern void AuWifiPortalRx(void);
+extern void AuRouteSetFlag4(void);
+extern void AuGetNetworkAdapter(void);
+extern void strcmp(void);
+extern void strlen(void);
+extern void memcmp(void);
 
 struct kernel_export k_exports[] = {
 	{"AuPCIEAllocMSI", (void*)AuPCIEAllocMSI},
@@ -131,6 +140,15 @@ struct kernel_export k_exports[] = {
 	{"sprintf", (void*)_sprintf},
 	{"__kmalloc_cache_noprof", (void*)__kmalloc_cache_noprof},
 	{"kmalloc_caches", (void*)kmalloc_caches},
+	{"AuWifiPortalSetTx", (void*)AuWifiPortalSetTx},
+	{"AuWifiPortalTx", (void*)AuWifiPortalTx},
+	{"AuWifiPortalSetRx", (void*)AuWifiPortalSetRx},
+	{"AuWifiPortalRx", (void*)AuWifiPortalRx},
+	{"AuRouteSetFlag4", (void*)AuRouteSetFlag4},
+	{"AuGetNetworkAdapter", (void*)AuGetNetworkAdapter},
+	{"strcmp", (void*)strcmp},
+	{"strlen", (void*)strlen},
+	{"memcmp", (void*)memcmp},
 };
 
 int k_exports_count = sizeof(k_exports) / sizeof(struct kernel_export);

@@ -62,10 +62,66 @@ uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId) {
 void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t* key) {
 	uint32_t key_prefix = back_buffer_key_prefix + ownerId;
 	int id = _KeCreateSharedMem(key_prefix, sz, 0);
-	void* ptr = _KeObtainSharedMem(id, 0, NULL);
+	void* ptr = _KeObtainSharedMem(id, NULL, 0);
 	*key = key_prefix;
 	back_buffer_key_prefix += 10;
 	return ptr;
+}
+
+void _window_generate_shadow(Window* win, int winw, int winh);
+
+void ReleaseWindowEffects(Window* win) {
+	size_t bytes = (size_t)win->originalW * win->originalH * sizeof(uint32_t);
+	if (win->glassBlur)
+		_KeMemUnmap(win->glassBlur, bytes);
+	if (win->glassTmp)
+		_KeMemUnmap(win->glassTmp, bytes);
+	win->glassBlur = win->glassTmp = NULL;
+	win->glassBlurValid = false;
+#ifdef SHADOW_ENABLED
+	size_t shadowBytes = (size_t)(win->originalW + 2 * SHADOW_SIZE) *
+						 (win->originalH + 2 * SHADOW_SIZE) * sizeof(uint32_t);
+	if (win->shadowBuffers)
+		_KeMemUnmap(win->shadowBuffers, shadowBytes);
+	if (win->shadowTmp)
+		_KeMemUnmap(win->shadowTmp, shadowBytes);
+	win->shadowBuffers = win->shadowTmp = NULL;
+#endif
+}
+
+bool ResizeWindowBackBuffer(Window* win, int width, int height) {
+	uint16_t key = 0;
+	size_t bytes = (size_t)width * height * sizeof(uint32_t);
+	uint32_t* buffer = (uint32_t*)CreateNewBackBuffer(win->ownerId, bytes, &key);
+	if (!buffer)
+		return false;
+	memset(buffer, 0, bytes);
+	_KeUnmapSharedMem(win->backBufferKey);
+	win->backBuffer = buffer;
+	win->backBufferKey = key;
+	ReleaseWindowEffects(win);
+
+	if (win->flags & WINDOW_FLAG_GLASS) {
+		win->glassBlur = (uint32_t*)_KeMemMap(NULL, bytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+		win->glassTmp = (uint32_t*)_KeMemMap(NULL, bytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+		win->glassBlurValid = false;
+	}
+#ifdef SHADOW_ENABLED
+	size_t shadowBytes =
+		(size_t)(width + 2 * SHADOW_SIZE) * (height + 2 * SHADOW_SIZE) * sizeof(uint32_t);
+	win->shadowBuffers = (uint32_t*)_KeMemMap(NULL, shadowBytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	win->shadowTmp = (uint32_t*)_KeMemMap(NULL, shadowBytes, 0, 0, MEMMAP_NO_FILEDESC, 0);
+	_window_generate_shadow(win, width, height);
+#endif
+	win->originalW = width;
+	win->originalH = height;
+	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
+	info->width = width;
+	info->height = height;
+	info->rect_count = 0;
+	WinSharedFlagStore(&info->dirty, false);
+	WinSharedFlagStore(&info->updateEntireWindow, true);
+	return true;
 }
 
 void WindowShadowPutPixel(Window* win, int x, int y, int shadow_w, uint32_t color) {

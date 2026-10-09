@@ -135,7 +135,6 @@ extern void set_cntp_cval_el0(uint64_t val);
 
 extern void set_cntp_ctl_el0(uint64_t val);
 
-
 extern void setupTimerIRQ();
 extern void suspendTimer();
 extern void resetTimer();
@@ -156,8 +155,13 @@ extern uint64_t read_mpidr_el1();
 extern uint64_t read_daif();
 extern void restore_daif(uint64_t daif);
 extern uint64_t read_spsel();
-
-extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr);
+/**
+ * aa64_enter_user -- helps current kernel thread to enter user mode
+ * @param stack -- user space stack
+ * @param entryAddr -- entry point
+ * @param arg -- argument only valid for sub threads
+ */
+extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr, uint64_t arg);
 extern void aa64_svc_test();
 extern void aa64_utest();
 /* was a plain extern with no AU_EXPORT, so driver DLLs importing it got an

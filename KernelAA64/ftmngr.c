@@ -87,6 +87,8 @@ void FontManagerRemoveSegment(FontSeg* seg) {
 	} else {
 		seg->next->prev = seg->prev;
 	}
+	AuSHMRelease(seg->sharedSeg);
+	seg->sharedSeg = NULL;
 }
 
 /**
@@ -115,6 +117,8 @@ FontSeg* FontManagerAllocateSegment(AuVFSNode* fontfile, char* fontname) {
 	UARTDebugOut("Creating SHM \r\n");
 	int id = AuCreateSHM(NULL, FontManagerGetKey(), alignedSz, 0);
 	seg->sharedSeg = AuGetSHMByID(id);
+	/* The font registry is an owner even when the last client exits. */
+	AuSHMRetain(seg->sharedSeg);
 	seg->fontFileSz = fontfile->size;
 	FontManagerAddSegment(seg);
 	return seg;
@@ -310,7 +314,7 @@ int AuFTMngrGetFontID(char* fontname) {
 	for (seg = firstSeg; seg != NULL; seg = seg->next) {
 		if (strcmp(fontname, seg->fontname) == 0) {
 			UARTDebugOut("Found font id : %d \n", seg->sharedSeg->id);
-			font_id = (seg->sharedSeg->id << 16) | seg->sharedSeg->key & UINT16_MAX;
+			font_id = (seg->sharedSeg->id << 16) | (seg->sharedSeg->key & UINT16_MAX);
 			UARTDebugOut("Font ID value : %x \r\n", font_id);
 			return font_id;
 		}

@@ -237,7 +237,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 				} else {
 					if (flags & MEMMAP_FLAG_COW) {
 						uint64_t datablk = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
-						phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+						phys = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 						memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
 
 					} else {
@@ -246,7 +246,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 				}
 
 			} else {
-				phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+				phys = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 			}
 		}
 
