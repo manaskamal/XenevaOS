@@ -162,6 +162,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	[SYS_GET_WALLTIME] = AuGetWalltime,
 	[SYS_EXIT_SUB_THREAD] = ExitSubThread,
 	[SYS_SEND_SIGNAL_TO_THREAD] = SendSignalToThread,
+	[SYS_THREAD_WAIT_FOR_TERMINATION] = AuThreadWaitForTermination,
 };
 
 #ifdef __KERNEL_PROFILER_ON__

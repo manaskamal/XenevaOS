@@ -56,6 +56,7 @@ static void AuCleanThread(AA64Thread* thr) {
 		}
 		kfree(uentry);
 	}
+	kfree(thr->waitlist);
 	kfree(thr);
 }
 

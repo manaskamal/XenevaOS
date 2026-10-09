@@ -685,3 +685,10 @@ _KeSendSignalToThread:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _KeThreadWaitForTermination
+_KeThreadWaitForTermination:
+    mov x16, 81
+	svc #0
+	mov x0, x6
+	ret

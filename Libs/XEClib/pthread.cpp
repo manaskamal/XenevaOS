@@ -48,6 +48,7 @@ int pthread_create(pthread_t* thread,
 	int tid = _KeCreateThread(ent, "pthr");
 	thread->data = NULL;
 	thread->id = tid;
+	_KePrint("pthread id : %d \r\n", thread->id);
 	return 0; // haha, always success
 }
 
@@ -77,7 +78,8 @@ int pthread_join(pthread_t thread, void** retval) {
 	//nijor bf tur logot lilimaai kori ahi
 	//eyar tat ahibo, tar pisot ee nijor kaam
 	//resume koribo
-	return 0;
+	int result = _KeThreadWaitForTermination(thread.id);
+	return result;
 }
 
 void pthread_cleanup_push(void (*routine)(void*), void* arg) {}

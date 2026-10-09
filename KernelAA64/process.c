@@ -335,7 +335,7 @@ int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name, uint64_t ar
 	int thread_indx = proc->num_thread;
 	proc->threads[proc->num_thread] = thr;
 	proc->num_thread += 1;
-	return thread_indx;
+	return thr->thread_id;
 }
 
 /**
@@ -352,6 +352,8 @@ void AuProcessFreeKeResource(AA64Thread* thr) {
 	int timer_id = AuGetTimerByThread(thr);
 	if (timer_id != -1)
 		AuroraTimerCancel(timer_id);
+
+	AuThreadAwakeWaiters(thr);
 }
 
 static void AuProcessCloseFiles(AuProcess* proc) {
@@ -410,8 +412,10 @@ void AuProcessWakeWaiters(AuProcess* proc) {
  */
 void AuProcessExit(AuProcess* proc, bool schedulable) {
 	(void)schedulable;
-	if (!proc || (proc->state & PROCESS_STATE_DIED))
+	if (!proc || (proc->state & PROCESS_STATE_DIED) || (proc->state & PROCESS_STATE_BUSY_WAIT)) {
+		UARTDebugOut("[aurora]: process : %s cannot exit, as it is marked dead or busy wait \r\n");
 		return;
+	}
 	if (proc == root_proc) {
 		UARTDebugOut("[aurora]: cannot exit root process \r\n");
 		return;
@@ -585,4 +589,19 @@ int AuProcessFetch(AuProcessList* list, int num_proc_count) {
 	}
 
 	return 0;
+}
+
+/**
+ * @brief AuProcessReapWaitCount -- decrease waiting thread counts
+ * @param proc -- desired process
+ * @param num_count -- total number of threads to decrease
+ */
+void AuProcessReapWaitcount(AuProcess* proc, int num_count) {
+	proc->waiting_threads -= num_count;
+	if ((int16_t)proc->waiting_threads <= 0) {
+		UARTDebugOut("[aurora]: process : %s has now %d waiting threads, marking it free \r\n",
+					 proc->name);
+		proc->waiting_threads = 0;
+		proc->state &= ~PROCESS_STATE_BUSY_WAIT;
+	}
 }

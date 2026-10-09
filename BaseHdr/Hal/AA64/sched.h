@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
+#include <list.h>
 
 #ifdef ARCH_ARM64
 
@@ -142,6 +143,9 @@ typedef struct _aa64_task_ {
 	uint64_t edf_deadline_us;
 	uint64_t edf_release_us;
 	uint64_t edf_misses;
+	/** waitlist */
+	list_t* waitlist;
+	uint16_t wait_ref_count;
 } AA64Thread;
 
 //#pragma pack(pop)
@@ -259,6 +263,20 @@ extern AA64Thread* AuEDFPickNext(void);
 extern uint64_t AuEDFGetMisses(AA64Thread* thread);
 extern void AuEDFSelfTestStart(void);
 extern void AuSoakStart(void);
+
+/**
+ * @brief AuThreadWaitForTermination -- wait for desired thread
+ * termination
+ * @param thread_id -- desired thread id
+ */
+extern int AuThreadWaitForTermination(int thread_id);
+/**
+ * @brief AuThreadAwakeWaiters -- unblock all awaiting
+ * threads for the current thread
+ * @praram thread -- current thread which waitlist
+ * needs to be freed
+ */
+extern void AuThreadAwakeWaiters(AA64Thread* thread);
 
 #endif
 
