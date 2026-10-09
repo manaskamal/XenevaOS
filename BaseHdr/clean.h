@@ -31,12 +31,12 @@
 #define __CLEAN_H__
 
 #include <process.h>
+#include <Hal/AA64/sched.h>
 
 #ifdef ARCH_X64
 #include <Hal/x86_64_sched.h>
 #endif
 #include <stdint.h>
-
 
 /**
 * @brief AuProcessClean -- completely remove a process
@@ -44,4 +44,12 @@
 * @param proc -- Process to remove
 */
 extern void AuProcessClean(AuProcess* parent, AuProcess* killable);
+
+/**
+ * @brief AuExitSubThread -- exit a sub thread of a process
+ * @param proc -- pointer to the process
+ * @param thread -- pointer to killable thread
+ * @param thread_id -- sub thread id
+ */
+extern void AuExitSubThread(AuProcess* proc, AA64Thread* thread, int thread_id);
 #endif

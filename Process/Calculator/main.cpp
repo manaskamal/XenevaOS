@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include "calculator.h"
 #include <sys/mman.h>
+#include <pthread.h>
 
 ChitralekhaApp* app;
 ChWindow* mainWin;

@@ -65,6 +65,8 @@ XE_EXTERN {
 		uint32_t cpu_usage;
 	} XEProcessList;
 
+	typedef void (*_XEThreadEntry)();
+
 	/**
 	 * @brief _KePauseThread -- pause currently running
 	 * thread
@@ -169,6 +171,14 @@ XE_EXTERN {
 	XE_LIB int _KeSendSignal(int pid, int signum);
 
 	/**
+	 * @brief _KeSendSignalToThread -- send a signal to desired
+	 * thread
+	 * @param tid -- thread id
+	 * @param signum -- signal number
+	 */
+	XE_LIB int _KeSendSignalToThread(int tid, int signum);
+
+	/**
 	 * 2brief _KeProcessGetFileDesc -- returns file descriptor for
 	 * given filename
 	 * @param filename -- name of the file if it's already
@@ -205,6 +215,8 @@ XE_EXTERN {
 	XE_LIB int _KeGetNumProcessCount();
 
 	XE_LIB int _KeProcessFetch(XEProcessList * list, int num_proc_count);
+
+	XE_LIB int _KeExitSubThread(int thread_id);
 
 #ifdef __cplusplus
 }

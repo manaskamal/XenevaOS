@@ -41,7 +41,7 @@
 /* the base address from where every executable image
  * starts
  */
-#define PROC_IMAGE_BASE_START  0x0000000000600000
+#define PROC_IMAGE_BASE_START 0x0000000000600000
 
 extern void AuInitialiseLoader();
 
@@ -53,7 +53,7 @@ extern void AuInitialiseLoader();
 * @param argc -- number of arguments
 * @param argv -- array of argument in strings
 */
-extern int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** argv);
+extern int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv);
 
 /*
 * AuProcessEntUser -- main kernel thread call
@@ -61,6 +61,8 @@ extern int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc,char** 
 * @param rcx -- user entry structure
 */
 extern void AuProcessEntUser(uint64_t rcx);
+
+extern void AuProcessEntSubThread(uint64_t rcx);
 
 #ifdef ARCH_X64
 /*

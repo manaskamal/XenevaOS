@@ -82,7 +82,8 @@ int OpenFile(char* filename, int mode) {
 	AuVFSNode* file = AuVFSOpen(fname);
 
 	/** check permissions before procedding **/
-	if (AuCredCheckPermissions(file, &current_proc->creds)) {
+	if (AuCredCheckPermissions(file, &current_proc->creds) &&
+		!((mode & FILE_OPEN_CREAT) || (mode & FILE_OPEN_WRITE))) {
 		if (!file) {
 			UARTDebugOut("[fserv]: open '%s' denied: no node\r\n", fname);
 			return -1;
@@ -100,15 +101,16 @@ int OpenFile(char* filename, int mode) {
 				  file->filename,
 				  current_proc->creds.uid);
 		return -1;
-	}
-	bool created = false;
-	if (!file) {
-		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
-			file = AuVFSCreateFile(fsys, filename);
-			created = true;
-		} else {
-			UARTDebugOut("[fserv]: open '%s' failed: no node, mode=%x\r\n", fname, mode);
-			return -1;
+	} else {
+		bool created = false;
+		if (!file) {
+			if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
+				file = AuVFSCreateFile(fsys, filename);
+				created = true;
+			} else {
+				UARTDebugOut("[fserv]: open '%s' failed: no node, mode=%x\r\n", fname, mode);
+				return -1;
+			}
 		}
 	}
 	/* check for last time, if any error occured */

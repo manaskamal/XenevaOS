@@ -221,18 +221,19 @@ size_t AuSoundRead(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t 
  * that period. bredr0's write already waits the same 21 ms on the
  * sample clock. Doing both turns one chunk into two. */
 static int snd_is_virtio(AuSound* card) {
-	return card && card->name[0] == 'v' && card->name[1] == 'i' &&
-		   card->name[2] == 'r';
+	return card && card->name[0] == 'v' && card->name[1] == 'i' && card->name[2] == 'r';
 }
 
 static int snd_is_bredr(AuSound* card) {
-	return card && card->name[0] == 'b' && card->name[1] == 'r' &&
-		   card->name[2] == 'e' && card->name[3] == 'd' && card->name[4] == 'r';
+	return card && card->name[0] == 'b' && card->name[1] == 'r' && card->name[2] == 'e' &&
+		   card->name[3] == 'd' && card->name[4] == 'r';
 }
 
 size_t AuSoundWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
 	AA64Thread* t = AuGetCurrentThread();
 	AuDSP* dsp = AuSoundGetDSP(t->thread_id);
+	if (!dsp)
+		return 0;
 	uint8_t* aligned_buf = (uint8_t*)buffer;
 	/** see if dps has card attached to it, also
 	 * verify if the card is in force write mode

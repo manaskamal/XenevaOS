@@ -666,3 +666,22 @@ _KeGetWalltime:
 	svc #0
 	mov x0, x6
 	ret
+
+.global _PthreadSetParam
+_PthreadSetParam:
+    mov x2, x0
+	ret
+
+.global _KeExitSubThread
+_KeExitSubThread:
+    mov x16, 79
+	svc #0
+	mov x0, x6
+	ret
+
+.global _KeSendSignalToThread
+_KeSendSignalToThread:
+    mov x16, 80
+	svc #0
+	mov x0, x6
+	ret

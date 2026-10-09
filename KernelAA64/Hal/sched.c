@@ -53,8 +53,8 @@ extern bool aa64_restore_context(AA64Thread* thr);
 extern void aa64_restore_sp(AA64Thread* thr);
 extern void aa64_schedule_init(AA64Thread* current, AA64Thread* init, uint64_t va);
 extern void ret_from_syscall(AA64Thread* thr);
-extern void aa64_resume_exception_frame(AA64Registers* regs,
-	uint64_t elr_el1, uint64_t spsr_el1) __attribute__((noreturn));
+extern void aa64_resume_exception_frame(AA64Registers* regs, uint64_t elr_el1, uint64_t spsr_el1)
+	__attribute__((noreturn));
 bool AuSchedValidateLists(void);
 
 /* Bounds every scheduler list walk so a corrupted/cyclic list can never
@@ -305,14 +305,24 @@ static void AuSchedHeartbeat(void) {
 		if (t == _idle_thr)
 			continue;
 		switch (t->state) {
-		case THREAD_STATE_READY: ready++; break;
-		case THREAD_STATE_SLEEP: sleep++; break;
-		case THREAD_STATE_BLOCKED: blocked++; break;
-		case THREAD_STATE_LEFT_IN_KERNEL: leftk++; break;
-		default: other++; break;
+		case THREAD_STATE_READY:
+			ready++;
+			break;
+		case THREAD_STATE_SLEEP:
+			sleep++;
+			break;
+		case THREAD_STATE_BLOCKED:
+			blocked++;
+			break;
+		case THREAD_STATE_LEFT_IN_KERNEL:
+			leftk++;
+			break;
+		default:
+			other++;
+			break;
 		}
-		if (t->edf_enabled && (t->state == THREAD_STATE_READY ||
-				t->state == THREAD_STATE_LEFT_IN_KERNEL))
+		if (t->edf_enabled &&
+			(t->state == THREAD_STATE_READY || t->state == THREAD_STATE_LEFT_IN_KERNEL))
 			edfready++;
 		if (shown < 5) {
 			for (int i = 0; i < 8; i++)
@@ -330,14 +340,20 @@ static void AuSchedHeartbeat(void) {
 	 * on failure; healthy boots stay quiet. --axiss */
 	if (!AuSchedValidateLists())
 		UARTDebugOut("[sched-dbg]: LISTS CORRUPT tick=%d\n", (int)scheduler_tick);
-	UARTDebugOut("[sched-dbg]: tick=%d ms=%d ready=%d sleep=%d blocked=%d leftk=%d other=%d sleeplist=%d \n",
-		(int)scheduler_tick, (int)AuGetCurrentMS(),
-		ready, sleep, blocked, leftk, other, sleeplist);
+	UARTDebugOut(
+		"[sched-dbg]: tick=%d ms=%d ready=%d sleep=%d blocked=%d leftk=%d other=%d sleeplist=%d \n",
+		(int)scheduler_tick,
+		(int)AuGetCurrentMS(),
+		ready,
+		sleep,
+		blocked,
+		leftk,
+		other,
+		sleeplist);
 	if (edfready)
 		UARTDebugOut("[sched-dbg]: edf_ready=%d\n", edfready);
 	for (int i = 0; i < shown; i++)
-		UARTDebugOut("[sched-dbg]: thr %s state=%d quanta=%d \n",
-			names[i], states[i], quantas[i]);
+		UARTDebugOut("[sched-dbg]: thr %s state=%d quanta=%d \n", names[i], states[i], quantas[i]);
 }
 
 /* the idle loop body, factored out of AuIdleThread so aa64_schedule_init can
@@ -444,17 +460,27 @@ void AuScheduleThread(AA64Registers* regs) {
 	runThr->sp = (uint64_t)regs;
 	runThr->elr_el1 = read_elr_el1();
 	runThr->spsr_el1 = read_spsr_el1();
-	runThr->x0 = regs->x0; runThr->x1 = regs->x1;
-	runThr->x2 = regs->x2; runThr->x3 = regs->x3;
-	runThr->x4 = regs->x4; runThr->x5 = regs->x5;
-	runThr->x6 = regs->x6; runThr->x7 = regs->x7;
+	runThr->x0 = regs->x0;
+	runThr->x1 = regs->x1;
+	runThr->x2 = regs->x2;
+	runThr->x3 = regs->x3;
+	runThr->x4 = regs->x4;
+	runThr->x5 = regs->x5;
+	runThr->x6 = regs->x6;
+	runThr->x7 = regs->x7;
 	runThr->x8 = regs->x8;
-	runThr->x19 = regs->x19; runThr->x20 = regs->x20;
-	runThr->x21 = regs->x21; runThr->x22 = regs->x22;
-	runThr->x23 = regs->x23; runThr->x24 = regs->x24;
-	runThr->x25 = regs->x25; runThr->x26 = regs->x26;
-	runThr->x27 = regs->x27; runThr->x28 = regs->x28;
-	runThr->x29 = regs->x29; runThr->x30 = regs->x30;
+	runThr->x19 = regs->x19;
+	runThr->x20 = regs->x20;
+	runThr->x21 = regs->x21;
+	runThr->x22 = regs->x22;
+	runThr->x23 = regs->x23;
+	runThr->x24 = regs->x24;
+	runThr->x25 = regs->x25;
+	runThr->x26 = regs->x26;
+	runThr->x27 = regs->x27;
+	runThr->x28 = regs->x28;
+	runThr->x29 = regs->x29;
+	runThr->x30 = regs->x30;
 	runThr->justStored = true;
 
 	/* The wrapper captured this state before entering C. Saving live q
@@ -521,8 +547,7 @@ void AuScheduleThread(AA64Registers* regs) {
 
 	AA64Registers* return_frame = (AA64Registers*)current_thread->sp;
 	current_thread->data = return_frame;
-	aa64_resume_exception_frame(return_frame,
-		current_thread->elr_el1, current_thread->spsr_el1);
+	aa64_resume_exception_frame(return_frame, current_thread->elr_el1, current_thread->spsr_el1);
 	__builtin_unreachable();
 }
 
@@ -737,6 +762,24 @@ AA64Thread* AuThreadFindByIDBlockList(uint64_t id) {
 }
 
 /**
+ * @brief AuThreadFindByIDSleepList -- finds a thread by its id from
+ * the sleep queue
+ * @param id -- thread id
+ */
+AA64Thread* AuThreadFindByIDSleepList(uint64_t id) {
+	uint64_t d = AuSchedLock();
+	AA64Thread* sleep_queue = NULL;
+	AA64Thread* found = NULL;
+	for (sleep_queue = sleep_thr_head; sleep_queue != NULL; sleep_queue = sleep_queue->next) {
+		if (sleep_queue->thread_id == id) {
+			found = sleep_queue;
+			break;
+		}
+	}
+	AuSchedUnlock(d);
+	return found;
+}
+/**
  * @brief AuThreadMoveToTrash -- move given thread to
  * trash
  * @param t -- Thread to move to trash
@@ -790,8 +833,8 @@ void AuThreadCleanTrash(AA64Thread* t) {
 	AuThreadDeleteTrash(t);
 }
 
-static bool schedValidateOne(AA64Thread* head, AA64Thread* last, uint8_t s0, uint8_t s1,
-	uint8_t s2, int* count) {
+static bool schedValidateOne(
+	AA64Thread* head, AA64Thread* last, uint8_t s0, uint8_t s1, uint8_t s2, int* count) {
 	int steps = 0;
 	AA64Thread* prev = NULL;
 	for (AA64Thread* t = head; t != NULL; t = t->next) {
@@ -818,17 +861,33 @@ static bool schedValidateOne(AA64Thread* head, AA64Thread* last, uint8_t s0, uin
 bool AuSchedValidateLists(void) {
 	uint64_t d = AuSchedLock();
 	int count = 0;
-	bool ok = schedValidateOne(thread_list_head, thread_list_last,
-		THREAD_STATE_READY, THREAD_STATE_RUNNING, THREAD_STATE_LEFT_IN_KERNEL, &count);
-	ok = schedValidateOne(blocked_thr_head, blocked_thr_last,
-		THREAD_STATE_BLOCKED, THREAD_STATE_LEFT_IN_KERNEL,
-		THREAD_STATE_LEFT_IN_KERNEL, &count) && ok;
-	ok = schedValidateOne(sleep_thr_head, sleep_thr_last,
-		THREAD_STATE_SLEEP, THREAD_STATE_LEFT_IN_KERNEL,
-		THREAD_STATE_LEFT_IN_KERNEL, &count) && ok;
-	ok = schedValidateOne(trash_thr_head, trash_thr_last,
-		THREAD_STATE_KILLABLE, THREAD_STATE_KILLABLE,
-		THREAD_STATE_KILLABLE, &count) && ok;
+	bool ok = schedValidateOne(thread_list_head,
+							   thread_list_last,
+							   THREAD_STATE_READY,
+							   THREAD_STATE_RUNNING,
+							   THREAD_STATE_LEFT_IN_KERNEL,
+							   &count);
+	ok = schedValidateOne(blocked_thr_head,
+						  blocked_thr_last,
+						  THREAD_STATE_BLOCKED,
+						  THREAD_STATE_LEFT_IN_KERNEL,
+						  THREAD_STATE_LEFT_IN_KERNEL,
+						  &count) &&
+		 ok;
+	ok = schedValidateOne(sleep_thr_head,
+						  sleep_thr_last,
+						  THREAD_STATE_SLEEP,
+						  THREAD_STATE_LEFT_IN_KERNEL,
+						  THREAD_STATE_LEFT_IN_KERNEL,
+						  &count) &&
+		 ok;
+	ok = schedValidateOne(trash_thr_head,
+						  trash_thr_last,
+						  THREAD_STATE_KILLABLE,
+						  THREAD_STATE_KILLABLE,
+						  THREAD_STATE_KILLABLE,
+						  &count) &&
+		 ok;
 	AuSchedUnlock(d);
 	return ok && count > 0;
 }
