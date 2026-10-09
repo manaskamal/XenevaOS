@@ -1,6 +1,6 @@
 # Building XenevaOS with `xdev`
 
-> ⚠️ **Experimental Alpha Notice**: The `xdev` toolchain and current XenevaOS builds are in **experimental alpha release** (`v0.1.0-alpha`). Certain system applications, drivers, and userland features are actively under development and may be incomplete, unstable, or non-functional.
+> ⚠️ **Experimental Notice**: The `xdev` toolchain and current XenevaOS builds are in **experimental alpha release** (`v0.1.0-alpha`). Certain system applications, drivers, and userland features are actively under development and may be incomplete, unstable, or non-functional.
 
 ---
 
@@ -20,7 +20,7 @@ The script automatically detects your package manager, installs required depende
 
 ### Windows
 
-1. Download `xdev-setup.exe` from the [`xdev` Releases](https://github.com/avrahtac/xdev/releases).
+1. Download `xdev-setup.exe` from the [Releases](https://github.com/avrahtac/xdev/releases).
 2. Run the installer (requires Administrator privileges) to set up MSYS2 UCRT64 dependencies.
 3. Open PowerShell and set your repository path:
 
