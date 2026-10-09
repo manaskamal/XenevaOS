@@ -413,7 +413,10 @@ void AuProcessWakeWaiters(AuProcess* proc) {
 void AuProcessExit(AuProcess* proc, bool schedulable) {
 	(void)schedulable;
 	if (!proc || (proc->state & PROCESS_STATE_DIED) || (proc->state & PROCESS_STATE_BUSY_WAIT)) {
-		UARTDebugOut("[aurora]: process : %s cannot exit, as it is marked dead or busy wait \r\n");
+		if (proc)
+			UARTDebugOut(
+				"[aurora]: process : %s cannot exit, as it is marked dead or busy wait \r\n",
+				proc->name);
 		return;
 	}
 	if (proc == root_proc) {
@@ -600,7 +603,8 @@ void AuProcessReapWaitcount(AuProcess* proc, int num_count) {
 	proc->waiting_threads -= num_count;
 	if ((int16_t)proc->waiting_threads <= 0) {
 		UARTDebugOut("[aurora]: process : %s has now %d waiting threads, marking it free \r\n",
-					 proc->name);
+					 proc->name,
+					 proc->waiting_threads);
 		proc->waiting_threads = 0;
 		proc->state &= ~PROCESS_STATE_BUSY_WAIT;
 	}

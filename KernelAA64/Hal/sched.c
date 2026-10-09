@@ -966,9 +966,11 @@ void AuThreadAwakeWaiters(AA64Thread* thread) {
 	if (!thread->waitlist)
 		return;
 
+	UARTDebugOut("AuThreadAwakeWaiters ======= \r\n");
 	/** remove all waiters */
 	while (thread->waitlist->pointer > 0) {
 		AA64Thread* unblockable = (AA64Thread*)list_remove(thread->waitlist, 0);
+		UARTDebugOut("unblocking thread : %s \r\n", unblockable->name);
 		unblockable->wait_ref_count -= 1;
 		AuProcess* proc = AuProcessFindThread(unblockable);
 
