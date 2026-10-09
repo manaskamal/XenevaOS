@@ -61,4 +61,4 @@ xdev run --memory=2048M      # Launch QEMU with custom RAM allocation
 xdev fetch                   # Pull latest changes inside $XENEVA_PROJECT
 ```
 
-For issues or toolchain bug reports, please refer to the [`xdev` Repository](https://github.com/avrahtac/xdev).
+For issues or toolchain bug reports, please refer to the [Repository](https://github.com/avrahtac/xdev).
