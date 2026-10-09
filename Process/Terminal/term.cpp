@@ -214,8 +214,16 @@ void TerminalDrawCell(Terminal* t, int col, int row) {
 	int px = _terminal_cell_to_pixelX(t, col);
 	int py = _terminal_cell_to_pixelY(t, row);
 
-	if (cell->c || cell->flags & (1 << 1)) {
-		ChDrawRect(win->canv, px, py, t->cellW, t->cellH, cell->bg);
+	/* A selected cell paints with fg and bg exchanged, and paints even
+	 * when empty so the highlight reaches the end of the line. The cell
+	 * itself is left alone: output can arrive under a live selection and
+	 * the real colours have to survive that. */
+	bool selected = (cell->flags & TERMINAL_CELL_SELECTED) != 0;
+	uint32_t bg = selected ? cell->fg : cell->bg;
+	uint32_t fg = selected ? cell->bg : cell->fg;
+
+	if (cell->c || cell->flags & (1 << 1) || selected) {
+		ChDrawRect(win->canv, px, py, t->cellW, t->cellH, bg);
 		if (cell->c) {
 			char buf[2] = {cell->c, '\0'};
 			ChRect clip;
@@ -224,7 +232,7 @@ void TerminalDrawCell(Terminal* t, int col, int row) {
 			clip.w = t->cellW;
 			clip.h = t->cellH;
 
-			ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, cell->fg, &clip);
+			ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, fg, &clip);
 		}
 	}
 }
@@ -269,10 +277,107 @@ void TerminalDrawAllCells() {}
 /* TerminalDrawCursor -- draws the cursor */
 void TerminalDrawCursor() {}
 
+/* -----------------------------------------------------------
+ * Mouse selection.
+ *
+ * The anchor is lastCellXClicked/YClicked -- the cell the drag
+ * started on -- and selEndX/Y is wherever the pointer has got to.
+ * Highlighting is a flag on each cell plus a repaint, never a
+ * colour swap inside the cell, so text arriving underneath a live
+ * selection keeps its real colours. selPaintX0..Y1 remembers the
+ * rectangle that is currently lit, so shrinking a selection only
+ * touches the rows it is leaving; that matters because this runs
+ * on every mouse motion, and walking the whole grid per event is
+ * what makes a drag stutter.
+ * --------------------------------------------------------- */
+
+/* TerminalSelectionUnpaint -- take the highlight off the rectangle that was
+ * painted last and forget that rectangle. Leaves selActive alone. */
+static void TerminalSelectionUnpaint(Terminal* t) {
+	if (t->selPaintY0 < 0)
+		return; /* nothing was lit, and the rectangle is already empty */
+	for (int y = t->selPaintY0; y <= t->selPaintY1 && y < t->rows; y++)
+		for (int x = t->selPaintX0; x <= t->selPaintX1 && x < t->cols; x++) {
+			TermCell* cell = &t->cells[y][x];
+			if (cell->flags & TERMINAL_CELL_SELECTED) {
+				cell->flags &= ~TERMINAL_CELL_SELECTED;
+				cell->flags |= 0x1;
+			}
+		}
+	t->selPaintX0 = t->selPaintY0 = t->selPaintX1 = t->selPaintY1 = -1;
+}
+
+/* TerminalSelectionClear -- unpaint and switch selection off */
+static void TerminalSelectionClear(Terminal* t) {
+	TerminalSelectionUnpaint(t);
+	t->selActive = false;
+}
+
+/* TerminalSelectionCorners -- order the anchor and the dragged corner into an
+ * inclusive top-left and bottom-right, clamped to the grid. False when the
+ * result is empty, so callers can bail before touching cells. */
+static bool TerminalSelectionCorners(Terminal* t, int* x0, int* y0, int* x1, int* y1) {
+	*x0 = t->lastCellXClicked;
+	*x1 = t->selEndX;
+	if (*x0 > *x1) {
+		int s = *x0;
+		*x0 = *x1;
+		*x1 = s;
+	}
+	*y0 = t->lastCellYClicked;
+	*y1 = t->selEndY;
+	if (*y0 > *y1) {
+		int s = *y0;
+		*y0 = *y1;
+		*y1 = s;
+	}
+	if (*x0 < 0)
+		*x0 = 0;
+	if (*x1 >= t->cols)
+		*x1 = t->cols - 1;
+	if (*y0 < 0)
+		*y0 = 0;
+	if (*y1 >= t->rows)
+		*y1 = t->rows - 1;
+	return *y1 >= *y0 && *x1 >= *x0;
+}
+
+/* TerminalSelectionRefresh -- light the range for the current selection */
+static void TerminalSelectionRefresh(Terminal* t) {
+	if (!t->selActive)
+		return;
+	int x0, y0, x1, y1;
+	if (!TerminalSelectionCorners(t, &x0, &y0, &x1, &y1))
+		return;
+
+	TerminalSelectionUnpaint(t);
+	for (int y = y0; y <= y1; y++) {
+		int sx = (y == y0) ? x0 : 0;
+		int ex = (y == y1) ? x1 : t->cols - 1;
+		for (int x = sx; x <= ex; x++) {
+			TermCell* cell = &t->cells[y][x];
+			if (!(cell->flags & TERMINAL_CELL_SELECTED)) {
+				cell->flags |= TERMINAL_CELL_SELECTED | 0x1;
+			}
+		}
+	}
+	/* the bounding rectangle, not the ragged shape: unpaint walks this
+	 * and only clears cells that actually carry the flag */
+	t->selPaintX0 = 0;
+	t->selPaintY0 = y0;
+	t->selPaintX1 = t->cols - 1;
+	t->selPaintY1 = y1;
+	TerminalFlush(t);
+}
+
 /* TerminalScroll -- scrolls the current terminal 
  * one line up
  */
 void TerminalScroll(Terminal* t, int lines) {
+	/* the cells slide under the highlight when the screen scrolls, so the
+	 * range stops meaning anything -- drop it rather than leave lit cells
+	 * marking text that is no longer there */
+	TerminalSelectionClear(t);
 	t->scrolling = true;
 	int regionRows = t->scrollBot - t->scrollTop + 1;
 	if (lines > regionRows)
@@ -360,6 +465,8 @@ void TerminalScroll(Terminal* t, int lines) {
  * terminal
  */
 void TerminalClearScreen(Terminal* t) {
+	/* the highlight flags live on the cells this is about to overwrite */
+	TerminalSelectionClear(t);
 	t->lastCursorX = t->cursorX;
 	t->lastCursorY = t->cursorY;
 	_terminal_erase_cursor(t);
@@ -1031,6 +1138,13 @@ void TerminalProcessLine(Terminal* t, char ch) {
 }
 
 void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
+	/* button carries the state that is held down, not an edge, so the
+	 * press that begins a drag is the one arriving while nothing was held
+	 * -- and the release has to be delivered for the next press to be
+	 * recognised, which is why the caller no longer skips button==0 */
+	bool pressed = (button != 0) && (t->lastButtonState == 0);
+	t->lastButtonState = button;
+
 	/** skip the titlebar **/
 	if (mouseY <= 26)
 		return;
@@ -1039,29 +1153,127 @@ void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
 	int cellY = 0;
 	_terminal_mouse_to_cell(t, mouseX, mouseY, &cellX, &cellY);
 
-	//if (t->lastCellXClicked == cellX && t->lastCellYClicked == cellY) {
-	//	t->lastCellXClicked = -1;
-	//	t->lastCellYClicked = -1;
-	//}
-
-	if (t->lastCellXClicked != -1 && t->lastCellYClicked != -1) {
-		TermCell* cell = &t->cells[t->lastCellYClicked][t->lastCellXClicked];
-		uint32_t bg = cell->bg;
-		cell->bg = cell->fg;
-		cell->fg = bg;
-		cell->flags |= 0x1;
+	if (pressed) {
+		/* a new drag starts a new selection rather than extending the
+		 * old one, and lights the anchor cell straight away so a plain
+		 * click still shows the one-cell highlight it always did */
+		TerminalSelectionClear(t);
+		t->lastCellXClicked = cellX;
+		t->lastCellYClicked = cellY;
+		t->selEndX = cellX;
+		t->selEndY = cellY;
+		t->selActive = true;
+		TerminalSelectionRefresh(t);
+		return;
 	}
 
-	TermCell* cell = &t->cells[cellY][cellX];
-	uint32_t bg = cell->bg;
-	cell->bg = cell->fg;
-	cell->fg = bg;
-	cell->flags |= 0x1;
+	/* release keeps the selection; motion with nothing held is a hover */
+	if (button == 0 || !t->selActive)
+		return;
 
-	t->lastCellXClicked = cellX;
-	t->lastCellYClicked = cellY;
+	t->selEndX = cellX;
+	t->selEndY = cellY;
+	TerminalSelectionRefresh(t);
+}
 
-	TerminalFlush(t);
+/* The clipboard device holds CLIPBOARD_MAX (4096) bytes; a longer write is
+ * truncated by the device, so the copy builds to the same size and stops.
+ * Static rather than a stack frame because this runs on the input thread of
+ * a process whose stack also does font work. */
+#define TERMINAL_CLIP_MAX 4096
+static char _terminal_clip_out[TERMINAL_CLIP_MAX];
+
+/* TerminalClipboardBuildSelection -- flatten the highlighted range into text,
+ * one line per row, trailing spaces trimmed so what lands on the host reads
+ * like text rather than a filled rectangle. Rows outside the first and last
+ * are taken whole, which is what a drag across lines means. */
+static int TerminalClipboardBuildSelection(Terminal* t) {
+	int x0, y0, x1, y1;
+	if (!TerminalSelectionCorners(t, &x0, &y0, &x1, &y1))
+		return 0;
+
+	int len = 0;
+	for (int y = y0; y <= y1; y++) {
+		int sx = (y == y0) ? x0 : 0;
+		int ex = (y == y1) ? x1 : t->cols - 1;
+		int start = len;
+		for (int x = sx; x <= ex; x++) {
+			if (len >= TERMINAL_CLIP_MAX - 2)
+				break;
+			char ch = t->cells[y][x].c;
+			_terminal_clip_out[len++] = ch ? ch : ' ';
+		}
+		while (len > start && _terminal_clip_out[len - 1] == ' ')
+			len--;
+		if (len >= TERMINAL_CLIP_MAX - 2)
+			break;
+		if (y != y1)
+			_terminal_clip_out[len++] = '\n';
+	}
+	return len;
+}
+
+/* TerminalClipboardCopy -- put something on the clipboard: the highlighted
+ * range if there is one, otherwise the line being typed, which is the same
+ * rule the tty shell's Ctrl+C uses. An empty line with nothing selected
+ * leaves the clipboard alone rather than clearing it. */
+static void TerminalClipboardCopy(Terminal* t) {
+	int len = 0;
+
+	if (t->selActive)
+		len = TerminalClipboardBuildSelection(t);
+	else if (t->intputLen > 0) {
+		len = t->intputLen;
+		memcpy(_terminal_clip_out, t->inputBuffer, len);
+	}
+
+	if (len <= 0) {
+		_KePrint("[term]: copy skipped, nothing selected and input line empty\r\n");
+		return;
+	}
+	int fd = _KeOpenFile((char*)"/dev/clipboard", FILE_OPEN_WRITE);
+	if (fd < 0) {
+		_KePrint("[term]: /dev/clipboard unavailable\r\n");
+		return;
+	}
+	_KeWriteFile(fd, (void*)_terminal_clip_out, len);
+	_KeCloseFile(fd);
+	_KePrint("[term]: copied %d bytes\r\n", len);
+}
+
+/* TerminalClipboardPaste -- type the clipboard into the prompt through the
+ * same path a keystroke takes, so the shell on the other end sees exactly
+ * what a fast typist would have sent. Stops at the first line break: pasting
+ * several shell commands at once would run all of them, which is a surprise
+ * rather than a convenience. */
+static void TerminalClipboardPaste(Terminal* t) {
+	int fd = _KeOpenFile((char*)"/dev/clipboard", FILE_OPEN_READ_ONLY);
+	if (fd < 0) {
+		_KePrint("[term]: /dev/clipboard unavailable\r\n");
+		return;
+	}
+	char buf[256];
+	int got = _KeReadFile(fd, buf, sizeof(buf) - 1);
+	_KeCloseFile(fd);
+	if (got <= 0) {
+		_KePrint("[term]: clipboard empty\r\n");
+		return;
+	}
+	int pasted = 0;
+	for (int i = 0; i < got; i++) {
+		char ch = buf[i];
+		if (ch == '\n' || ch == '\r')
+			break;
+		if (ch < 32 || ch > 126)
+			continue;
+		if (t->intputLen >= 255)
+			break;
+		t->inputBuffer[t->intputLen++] = ch;
+		t->inputBuffer[t->intputLen] = '\0';
+		_KeWriteFile(master_fd, &ch, 1);
+		pasted++;
+	}
+	_KePrint("[term]: pasted %d bytes\r\n", pasted);
 }
 
 /* Special keys must match on scancode: ChitralekhaGetKeyPress returns ASCII
@@ -1081,10 +1293,10 @@ void TerminalHandleMouseClick(Terminal* t, int mouseX, int mouseY, int button) {
 void TerminalHandleMessage(PostEvent* e) {
 	switch (e->type) {
 	case DEODHAI_REPLY_MOUSE_EVENT:
-		if (e->dword3) {
-			TerminalHandleMouseClick(
-				&term, e->dword - win->info->x, e->dword2 - win->info->y, e->dword3);
-		}
+		/* always delivered, button state included: TerminalHandleMouseClick
+		 * needs the release edge to tell one drag from the next */
+		TerminalHandleMouseClick(
+			&term, e->dword - win->info->x, e->dword2 - win->info->y, e->dword3);
 		ChWindowHandleMouse(win, e->dword, e->dword2, e->dword3);
 		memset(e, 0, sizeof(PostEvent));
 		break;
@@ -1145,6 +1357,29 @@ void TerminalHandleMessage(PostEvent* e) {
 			}
 			memset(e, 0, sizeof(PostEvent));
 		}
+		/**
+		 * CTRL + SHIFT + C/V -- the host<->VM clipboard, on the same
+		 * /dev/clipboard node the tty shell uses, so a copy here reaches
+		 * the host and a paste here reads whatever the host last copied.
+		 * Shift has to be part of the binding: on its own Ctrl+C is
+		 * SIGINT, which is what people already use below. Only Ctrl+X and
+		 * Ctrl+A are taken by the compositor's own keybinds, so this
+		 * arrives as a raw scancode. ChitralekhaKeyToASCII uppercases
+		 * while shift is held, hence both letters are matched.
+		 */
+		if (ChitralekhaKeyGetCTRL() && ChitralekhaKeyGetShift()) {
+			if (c == KEY_C || c == 'C') {
+				TerminalClipboardCopy(&term);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+			if (c == KEY_V || c == 'V') {
+				TerminalClipboardPaste(&term);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+		}
+
 		/**
 		 * handle CTRL + combined keys 
 		 */
@@ -1327,6 +1562,12 @@ int main(int argc, char* arv[]) {
 	term.originY = 26;
 	term.lastCellXClicked = -1;
 	term.lastCellYClicked = -1;
+	/* no selection, and the painted rectangle is empty: an unpaint with a
+	 * zeroed rect would walk row 0 looking for highlights that are not
+	 * there, which is harmless but not free */
+	term.selActive = false;
+	term.lastButtonState = 0;
+	term.selPaintX0 = term.selPaintY0 = term.selPaintX1 = term.selPaintY1 = -1;
 	term.inputStartX = 0;
 	term.inputStartY = 0;
 	term.scrolling = 0;

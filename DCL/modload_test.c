@@ -7,12 +7,12 @@
 #include <list.h>
 #include <string.h>
 
-#include "test_module_bin.h"
+#include <linux/test_module_bin.h>
 static const size_t test_module_size = sizeof(test_module_o);
 
-#include "virtio_rng_bin.h"
-
 extern void virtio_rng_detect(void);
+extern int virtio_console_detect(void);
+extern int dcl_vport_selftest(void);
 extern int hwrng_selftest(void);
 extern int hwrng_read_bytes(void* buf, unsigned int max);
 
@@ -221,51 +221,98 @@ static void hwrng_roundtrip_test(void) {
 		UARTDebugOut("[dcl]: /dev/hwrng round-trip FAILED (identical samples)\r\n");
 }
 
+/*
+ * modload_virtio_rng_test -- the virtio-rng half of the boot gate.
+ *
+ * This used to hand mod_load() a 10552-byte virtio_rng.ko that had been
+ * built in a separate arm64 kernel tree and embedded as an xxd -i array, then
+ * call init_module() on it. That path is gone: the driver now compiles from
+ * source into the image (Vendored/drivers/char/hw_random/virtio-rng.c, see
+ * Vendored/README.md) and registers itself at boot through
+ * module_virtio_driver() -> DclRunInitcalls(), so there is nothing to load
+ * and no init_module to call.
+ *
+ * Two things still belong here, in this order:
+ *
+ *   - virtio_rng_detect() scans PCI for 1AF4:1044. It cannot move into the
+ *     initcall, because at initcall time there is no device to find yet;
+ *     detect() -> virtio_device_register() is what does the matching, and by
+ *     the time it runs the driver is already on the registered list
+ *     (init.c calls DclRunInitcalls() before modload_test_run()).
+ *   - the self-test and the round-trip read /dev/hwrng, which exists only
+ *     after probe -> scan -> hwrng_register, i.e. only once detect() matched.
+ *
+ * The ELF loader itself is untouched: modload_test() still loads
+ * test_module.o through DCL/module_loader.c, which walks the AArch64
+ * relocation table and resolves undefined symbols against k_exports[]. What
+ * changed is where the driver under test comes from -- a source file this
+ * build compiled, instead of a binary another tree produced.
+ */
 static int modload_virtio_rng_test(void) {
-	UARTDebugOut("[modtest]: loading virtio_rng.ko (");
-	print_dec(virtio_rng_ko_len);
-	UARTDebugOut("B)\r\n");
+	UARTDebugOut("[modtest]: virtio_rng built-in (Vendored/, not a .ko)\r\n");
 
-	struct mod_handle vmod;
-	int vload = mod_load(virtio_rng_ko, virtio_rng_ko_len, &vmod);
-	if (vload != 0) {
-		UARTDebugOut("[modtest]: virtio_rng.ko mod_load FAILED\r\n");
-		dcl_puts("  virtio_rng   load=");
-		dcl_putdec(vload);
-		dcl_puts(" FAILED\r\n");
-		return 0;
-	}
-	UARTDebugOut("[modtest]: name=");
-	UARTDebugOut(vmod.name);
-	UARTDebugOut(" loaded\r\n");
+	UARTDebugOut("[modtest]: calling virtio_rng_detect...\r\n");
+	virtio_rng_detect();
 
-	UARTDebugOut("[modtest]: calling init_module...\r\n");
-	int vrc = mod_call_init(&vmod);
-	UARTDebugOut("[modtest]: init_module returned ");
-	if (vrc < 0) {
-		UARTDebugOut("-");
-		print_dec((unsigned long)(-(long)vrc));
-	} else {
-		print_dec((unsigned long)vrc);
-	}
-	UARTDebugOut("\r\n");
-	if (vrc == 0)
-		UARTDebugOut("[modtest]: virtio_rng init_module OK\r\n");
-	else
-		UARTDebugOut("[modtest]: virtio_rng init_module FAILED\r\n");
-
-	if (vrc == 0)
-		virtio_rng_detect();
 	hwrng_selftest();
 	hwrng_roundtrip_test();
-	dcl_puts("  virtio_rng   load=0 init=");
-	dcl_putdec(vrc);
-	dcl_puts(" name=");
-	dcl_puts(vmod.name);
-	dcl_puts("\r\n");
 
-	UARTDebugOut("[modtest]: virtio_rng kept resident\r\n");
+	dcl_puts("  virtio_rng   load=0 init=0 name=built-in\r\n");
+	UARTDebugOut("[modtest]: virtio_rng resident\r\n");
 	return 1;
+}
+
+/*
+ * The virtio-console half of the same pair, and it is a pair for the same
+ * reason: register in DclRunInitcalls(), find the device here.
+ *
+ * virtio_console_detect() scans 1AF4:1043 the way virtio_rng_detect() scans
+ * 1AF4:1044, and dcl_vport_selftest() then opens the /dev/vport* node that
+ * probe created and pumps one write/read round through the fops. It is a
+ * self-test rather than a bare detect because the failure that matters is
+ * not "device absent" -- QEMU may simply not have been given a
+ * `-device virtio-serial-pci` -- but "device present, driver registered,
+ * probe ran, and the port still does not move a byte". The test says which
+ * of the three it is: "host not attached" is the benign no-chardev case,
+ * and any other non-zero return is a real failure.
+ *
+ * Timing is part of that: probe registers the char devices at once, but the
+ * /dev/vport* node comes from the host's PORT_ADD control message, which
+ * only lands when the control queue is pumped. Nothing has pumped it by the
+ * time this runs, so dcl_vport_selftest() waits (and pumps) rather than
+ * reporting a driver that was never given the chance to finish.
+ *
+ * All of its output goes through UARTDebugOut because it runs before
+ * userspace has anything to read a /dev node with.
+ */
+static int modload_virtio_console_test(void) {
+	int found;
+	int rc;
+
+	UARTDebugOut("[modtest]: virtio_console built-in (Vendored/, not a .ko)\r\n");
+
+	UARTDebugOut("[modtest]: calling virtio_console_detect...\r\n");
+	found = virtio_console_detect();
+
+	/*
+	 * The self-test waits for the /dev/vport* node, so it is only worth
+	 * running when a device exists to make one. With --no-virtio-serial
+	 * there is no controller, hence no PORT_ADD, hence no node ever --
+	 * and a wait that cannot end in a result is dead boot time rather
+	 * than a measurement.
+	 */
+	if (!found) {
+		UARTDebugOut("[modtest]: vport selftest skipped (no device)\r\n");
+		dcl_puts("  virtio_console: no device\r\n");
+		return 0;
+	}
+
+	rc = dcl_vport_selftest();
+	UARTDebugOut("[modtest]: vport selftest rc=%d\r\n", rc);
+
+	dcl_puts(rc ? "  virtio_console selftest FAILED\r\n"
+				: "  virtio_console selftest ok\r\n");
+	return rc < 0 ? 0 : 1;
 }
 
 void modload_test_run(void) {
@@ -277,5 +324,8 @@ void modload_test_run(void) {
 	 * so userspace HTTPS can read /dev/hwrng. */
 	modload_embedded_test();
 	modload_virtio_rng_test();
+	/* After rng: both scan the same bus, and rng's scan returns on its
+	 * own device rather than walking past it. */
+	modload_virtio_console_test();
 	UARTDebugOut("[modtest]: done\r\n");
 }

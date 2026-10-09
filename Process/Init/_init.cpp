@@ -367,6 +367,49 @@ extern "C" void main(int argc, char* argv[]) {
 
 	int proc = 0;
 
+	/* DCL self-test on every boot. Runs only while dcltest.exe is in the
+	 * image, so the binary itself is the opt-out -- same absence rule as
+	 * deoaud.exe below: a removed component stays absent and init does not
+	 * leak a process slot. It is spawned and never awaited, so desktop
+	 * startup is unaffected (the app finishes in ~40 ms).
+	 *
+	 * No console fd is handed out on purpose. Results go through /dev/kmsg
+	 * onto the serial log rather than painting over the boot screen, which
+	 * is also what the checkers grep for.
+	 *
+	 * UAC_NORMAL_USER + ggid_misc_world is the credential set a real
+	 * application gets; the DCL nodes are uid0/gid-world, so this proves
+	 * the permission path on every boot instead of only by hand. */
+	int dtest = _KeOpenFile("/dcltest.exe", FILE_OPEN_READ_ONLY);
+	if (dtest != -1) {
+		_KeCloseFile(dtest);
+		proc = _KeCreateProcess(0, "dcltest");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/dcltest.exe", 0, NULL);
+	} else {
+		_KePrint("[init]: dcltest.exe absent, skipping DCL self-test\r\n");
+	}
+
+	/* clipd: the guest half of the host<->VM clipboard. Same absence rule
+	 * as dcltest.exe above -- no binary, no process slot, no leaked entry
+	 * -- and the same credential set, because it opens the same class of
+	 * node: /dev/clipboard and /dev/vport* are uid0/gid-world, so it gets
+	 * world-readable misc and nothing more. It is spawned and never
+	 * awaited, so a boot with no host on the other end is unaffected. */
+	int cdaemon = _KeOpenFile("/clipd.exe", FILE_OPEN_READ_ONLY);
+	if (cdaemon != -1) {
+		_KeCloseFile(cdaemon);
+		proc = _KeCreateProcess(0, "clipd");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/clipd.exe", 0, NULL);
+	} else {
+		_KePrint("[init]: clipd.exe absent, no clipboard bridge\r\n");
+	}
+
 #ifdef ARCH_ARM64
 #ifdef __XENEVA_TERM__
 	_KePrint("[init]: tty, skipping compositor \r\n");

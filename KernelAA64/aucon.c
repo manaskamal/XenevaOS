@@ -50,6 +50,7 @@
 #include <Fs/tty.h>
 #include <Fs/Dev/devfs.h>
 #include <Fs/Dev/devinput.h>
+#include <Fs/Dev/devclip.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
@@ -256,6 +257,7 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 }
 
 static int _con_shift;
+static int _con_ctrl;
 static int _con_esc;
 
 static const char _con_map[58] = {
@@ -272,6 +274,35 @@ static const char _con_map_s[58] = {
 	'Z',  'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,	0,	 0,	 ' '
 };
 
+/* Bytes waiting for the next reader of stdin. Ctrl+V fills this from the
+ * clipboard, so a pasted line arrives exactly like one that was typed and
+ * every console application gets paste without knowing it exists. */
+static uint8_t con_paste[CLIPBOARD_MAX];
+static uint32_t con_paste_r;
+static uint32_t con_paste_w;
+
+/*
+ * AuConsolePasteClipboard -- queue the clipboard ahead of the keyboard
+ */
+static void AuConsolePasteClipboard() {
+	/* Drop what the reader has already taken, then append. Compacting
+	 * instead of wrapping keeps both indices trivial. There is no memmove
+	 * in this libc, but the destination is below the source, so a forward
+	 * byte copy is the overlap-safe direction. */
+	if (con_paste_r) {
+		uint32_t left = con_paste_w - con_paste_r;
+		uint32_t i;
+		for (i = 0; i < left; i++)
+			con_paste[i] = con_paste[con_paste_r + i];
+		con_paste_w = left;
+		con_paste_r = 0;
+	}
+	uint32_t space = CLIPBOARD_MAX - con_paste_w;
+	if (!space)
+		return;
+	con_paste_w += AuClipboardGet(&con_paste[con_paste_w], space);
+}
+
 /**
  * @brief AuConsoleMapKey -- map a virtio/XT scancode to ASCII
  * @param code -- scancode from /dev/kybrd
@@ -286,10 +317,29 @@ static char AuConsoleMapKey(uint32_t code) {
 		_con_shift = 0;
 		return 0;
 	}
+	if (sc == 0x1d) {
+		_con_ctrl = 1;
+		return 0;
+	}
+	if (sc == 0x9d) {
+		_con_ctrl = 0;
+		return 0;
+	}
 	if (sc & 0x80)
 		return 0;
 	if (sc >= sizeof(_con_map))
 		return 0;
+	/* Ctrl held: V pastes instead of typing a 'v', C becomes ^C so the
+	 * application can copy its own selection back. Before the plain map,
+	 * so paste reaches whoever owns stdin. */
+	if (_con_ctrl) {
+		if (sc == 0x2f) {
+			AuConsolePasteClipboard();
+			return 0;
+		}
+		if (sc == 0x2e)
+			return 3;
+	}
 	return _con_shift ? _con_map_s[sc] : _con_map[sc];
 }
 
@@ -313,6 +363,14 @@ static size_t AuConsoleRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, 
 	static uint32_t con_dbg_polls;
 	static uint32_t con_dbg_msgs;
 	while (n < length) {
+		/* Pasted bytes first: they were meant for this reader and must
+		 * not wait behind an idle keyboard. */
+		if (con_paste_r < con_paste_w) {
+			out[n++] = con_paste[con_paste_r++];
+			if (out[n - 1] == '\n')
+				break;
+			continue;
+		}
 		AuInputMessage msg;
 		char c;
 		memset(&msg, 0, sizeof(msg));

@@ -132,6 +132,18 @@ AU_EXTERN AU_EXPORT void GICSetTargetCPU(int spi);
 AU_EXTERN AU_EXPORT void GICRegisterSPIHandler(void* fptr, int spi);
 
 /**
+ * GICGetSPIHandler -- read back the callback registered for an spi
+ * (0 when free). Paired with GICRegisterSPIHandler()'s first-writer-wins
+ * behaviour so callers can detect an occupied slot; see gic.c.
+ */
+AU_EXTERN AU_EXPORT void* GICGetSPIHandler(int spi);
+
+/**
+ * GICClearSPIHandler -- release an spi slot (bounds checked).
+ */
+AU_EXTERN AU_EXPORT void GICClearSPIHandler(int spi);
+
+/**
  * @brief GICCallSPIHandler -- jump to a callback handler
  * associated with given spi number
  * @param spi -- SPI number
