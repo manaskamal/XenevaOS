@@ -31,6 +31,7 @@
 
 #include <pcie.h>
 #include <Drivers/virtio.h>
+#include <Drivers/usb.h>
 #include <string.h>
 #include <Drivers/uart.h>
 #include <Mm/vmmngr.h>
@@ -119,6 +120,7 @@ void AuVirtIOInputInitialize() {
 		}
 	}
 	UARTDebugOut("Virtio Input initialized \r\n");
+	AuXhciInitialize();
 }
 
 #define GOOGLE_GOLDFISH_RTC_BASE 0x09010000

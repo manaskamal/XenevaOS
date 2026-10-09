@@ -95,13 +95,39 @@ endif
 
 C_SRCS_ALL = $(shell find . -name '*.c')
 # Exclude dead allocator code (replaced by TLSF)
-C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c ./Usb/xhci.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
+C_SRCS = $(filter-out ./Mm/dlmalloc.c ./Mm/liballoc.c, $(filter-out ./Board/Rpi3bp/vc4dsi.c, $(C_SRCS_ALL)))
 S_SRCS = $(shell find . -name '*.s')
+
+# DCL (Driver Compatibility Layer) sources live outside KernelAA64, in ../DCL.
+# Their objects are rewritten into $(OBJDIR)/DCL/ so nothing escapes obj/.
+DCL_C_SRCS := $(patsubst ../DCL/%,%,$(shell find ../DCL -name '*.c' 2>/dev/null))
+DCL_S_SRCS := $(patsubst ../DCL/%,%,$(shell find ../DCL -name '*.s' 2>/dev/null))
+
+# Vendored mainline sources live in ../Vendored: byte-identical copies of
+# upstream *.c compiled straight into the image. Same treatment as ../DCL, in
+# a separate tree, for two reasons that only show up once a few drivers are
+# in here:
+#
+#   1. ../DCL is enumerated by the test gate ("DCL sources = N"), so moving a
+#      driver into it changes an assertion meant to track DCL itself.
+#   2. the Makefile enumerates ../DCL with $(shell find ...), so a file
+#      dropped in there while a build holds Build/.build.lock would be
+#      compiled mid-run. A separate tree keeps that hazard scoped to DCL.
+#
+# A .c here is expected to be unmodified from upstream: porting fixes go in
+# BaseHdr/ or in a ../DCL shim, never in the vendored file. DCL/tty_buffer.c
+# is held to the same rule (md5-identical to v7.2) for the same reason.
+VENDORED_C_SRCS := $(patsubst ../Vendored/%,%,$(shell find ../Vendored -name '*.c' 2>/dev/null))
+VENDORED_S_SRCS := $(patsubst ../Vendored/%,%,$(shell find ../Vendored -name '*.s' 2>/dev/null))
 
 C_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(C_SRCS))
 S_OBJS = $(patsubst %.s,$(OBJDIR)/%.o,$(S_SRCS))
+DCL_C_OBJS = $(patsubst %.c,$(OBJDIR)/DCL/%.o,$(DCL_C_SRCS))
+DCL_S_OBJS = $(patsubst %.s,$(OBJDIR)/DCL/%.o,$(DCL_S_SRCS))
+VENDORED_C_OBJS = $(patsubst %.c,$(OBJDIR)/Vendored/%.o,$(VENDORED_C_SRCS))
+VENDORED_S_OBJS = $(patsubst %.s,$(OBJDIR)/Vendored/%.o,$(VENDORED_S_SRCS))
 
-OBJS = $(C_OBJS) $(S_OBJS)
+OBJS = $(C_OBJS) $(S_OBJS) $(DCL_C_OBJS) $(DCL_S_OBJS) $(VENDORED_C_OBJS) $(VENDORED_S_OBJS)
 
 
 all: $(TARGET)
@@ -126,8 +152,36 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile DCL (Driver Compatibility Layer) sources from ../DCL
+$(OBJDIR)/DCL/%.o: ../DCL/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Assemble ASM source files
 $(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Assemble DCL ASM source files from ../DCL
+$(OBJDIR)/DCL/%.o: ../DCL/%.s
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile vendored mainline sources from ../Vendored (same flags as everything
+# else -- they see BaseHdr/linux via $(INCLUDES), which is the whole point:
+# the headers become the contract the driver is compiled against).
+#
+# KBUILD_MODNAME mirrors what kbuild passes a module: the driver's own basename,
+# used for .driver.name. $(basename $(notdir $<)) -- "virtio-rng" from
+# ../Vendored/drivers/char/hw_random/virtio-rng.c. The nested quoting is the
+# point: the shell has to deliver -DKBUILD_MODNAME="virtio-rng" as one argv
+# entry so clang sees a string literal, not an identifier.
+$(OBJDIR)/Vendored/%.o: ../Vendored/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -DKBUILD_MODNAME='"$(basename $(notdir $<))"' -c $< -o $@
+
+# Assemble vendored ASM source files from ../Vendored
+$(OBJDIR)/Vendored/%.o: ../Vendored/%.s
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 

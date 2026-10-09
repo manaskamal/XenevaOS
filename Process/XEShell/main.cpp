@@ -258,6 +258,26 @@ void XEShellReadLine() {
 
 	char c = buf[0];
 
+	/* Ctrl+C -- copy the line being typed. Ctrl+V is handled by the kernel
+	 * console: it types the clipboard into stdin, so no shell code sees it. */
+	if (c == 3) {
+		int clip_fd = _KeOpenFile((char*)"/dev/clipboard", FILE_OPEN_WRITE);
+		if (clip_fd >= 0) {
+			int copied = 0;
+			if (index > 0) {
+				_KeWriteFile(clip_fd, (void*)cmdBuf, index);
+				copied = index;
+			}
+			_KeCloseFile(clip_fd);
+			printf("\r\n[xeshell]: copied %d bytes\r\n", copied);
+			/* redraw prompt and the text still in the buffer */
+			XEShellWriteCurrentDir();
+			printf("%s", cmdBuf);
+			fflush(stdout);
+		}
+		return;
+	}
+
 	if (c == '\n' || c == '\r') {
 		// End of line - process the command
 		printf("\n");
@@ -534,6 +554,40 @@ void XEShellLS() {
 	free(dirent);
 }
 
+/*
+ * XEShellClipCommand -- copy text into the system clipboard, or show it
+ *
+ * `clip <text>` copies, bare `clip` reports. Paste is Ctrl+V, handled by the
+ * kernel console, which types the clipboard into whoever holds stdin -- so it
+ * works in any console program, not just this shell.
+ */
+void XEShellClipCommand() {
+	if (strncmp(cmdBuf, "clip ", 5) == 0 && cmdBuf[5] != '\0') {
+		int fd = _KeOpenFile((char*)"/dev/clipboard", FILE_OPEN_WRITE);
+		if (fd < 0) {
+			printf("\n[xeshell]: /dev/clipboard unavailable\n");
+			return;
+		}
+		int n = (int)_KeWriteFile(fd, (void*)(cmdBuf + 5), strlen(cmdBuf + 5));
+		_KeCloseFile(fd);
+		printf("\n[xeshell]: copied %d bytes\n", n);
+		return;
+	}
+	int fd = _KeOpenFile((char*)"/dev/clipboard", FILE_OPEN_READ_ONLY);
+	if (fd < 0) {
+		printf("\n[xeshell]: /dev/clipboard unavailable\n");
+		return;
+	}
+	char buf[128];
+	memset(buf, 0, sizeof buf);
+	int n = (int)_KeReadFile(fd, buf, sizeof buf - 1);
+	_KeCloseFile(fd);
+	if (n > 0)
+		printf("\n[xeshell]: clipboard (%d): %s\n", n, buf);
+	else
+		printf("\n[xeshell]: clipboard empty\n");
+}
+
 void XEShellPrintHelp() {
 	printf("\n");
 	printf("╔════════════════════════════════════════════════════════════╗\n");
@@ -552,6 +606,7 @@ void XEShellPrintHelp() {
 	printf("║ modinfo     Display DCL module status (/dev/dcl)           ║\n");
 	printf("║ rngtest     Read entropy from /dev/hwrng                   ║\n");
 	printf("║ rngguess    Guess the number virtio-rng picked             ║\n");
+	printf("║ clip [text] Copy text to clipboard, or show it             ║\n");
 	printf("║ exit        Exit the shell                                 ║\n");
 	printf("╚════════════════════════════════════════════════════════════╝\n");
 	printf("\n");
@@ -874,6 +929,9 @@ void XEShellProcessLine() {
 					msg++;
 			}
 			XEShellEcho(msg);
+			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "clip") == 0 || strncmp(cmdBuf, "clip ", 5) == 0) {
+			XEShellClipCommand();
 			_spawnable_process = false;
 		} else if (strcmp(cmdBuf, "exit") == 0) {
 			printf("[xeshell]: Exiting shell...\r\n");
