@@ -33,6 +33,11 @@ Usage:
 
 Received text goes to --out (default: stdout) and, with --to-clipboard, to
 the host's own clipboard through wl-copy/xclip/pbpaste when present.
+--dir=bi implies --to-clipboard: doing both halves means what the guest
+copies has to be allowed to reach the host clipboard, and without the flag
+the guest->host half silently stopped at stdout instead.
+In --watch mode a lost connection is re-attached rather than fatal, so a
+QEMU restart does not quietly retire the bridge.
 Exit status: 0 on success, 1 on timeout or a dead connection.
 """
 import argparse
@@ -161,6 +166,15 @@ def await_hello(sock, port, timeout, bounce):
         sock = connect(port, min(10.0, max(1.0, deadline - time.time())))
 
 
+def attach(port, timeout, hello_timeout, bounce):
+    """Connect and stay attached until the guest says hello.
+
+    Startup and a re-attach after a lost link are the same dance, so they
+    share one path: a connection that is up but mute is no use either.
+    """
+    return await_hello(connect(port, timeout), port, hello_timeout, bounce)
+
+
 def recv_frames(sock, wait):
     """Whatever is complete in the buffer after waiting up to `wait` seconds."""
     data = recv_frames.buf = getattr(recv_frames, "buf", b"")
@@ -242,12 +256,16 @@ def main():
                     help="seconds without a hello before re-attaching")
     args = ap.parse_args()
 
-    sock = connect(args.port, args.connect_timeout)
+    # "do both" only happens if what the guest copies is allowed to reach
+    # the host clipboard; without this the guest->host half ends at stdout
+    # and bidirectional looks like it only ever pushes one way.
+    if args.dir == "bi":
+        args.to_clipboard = True
 
     # Nothing is pushed before the guest speaks: the hello is the guest
     # saying a port is open on its side, and anything sent before then can
     # land where nobody will ever read it.
-    sock = await_hello(sock, args.port, args.timeout, args.bounce)
+    sock = attach(args.port, args.connect_timeout, args.timeout, args.bounce)
 
     if args.roundtrip is not None:
         push = args.roundtrip.encode()
@@ -286,6 +304,19 @@ def main():
         try:
             frames, _ = recv_frames(sock, wait)
         except (ConnectionError, OSError):
+            if args.watch and args.roundtrip is None:
+                # The link died, the job did not: QEMU restarted, or the
+                # guest came back with a freshly registered port. Re-attach
+                # the way the startup path does, and clear last_pushed so
+                # the host clipboard is pushed into the new guest rather
+                # than assumed already there.
+                emit(b"clip_bridge: connection lost, re-attaching\n", args)
+                sock.close()
+                recv_frames.buf = b""  # a partial frame belongs to the dead link
+                sock = attach(args.port, args.connect_timeout, args.timeout,
+                              args.bounce)
+                last_pushed = None
+                continue
             if args.roundtrip is None and got:
                 break
             raise SystemExit("clip_bridge: connection lost")

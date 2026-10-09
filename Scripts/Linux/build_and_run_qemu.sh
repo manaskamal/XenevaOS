@@ -55,6 +55,11 @@ set -e
 #                           test needs something to be there.
 #   --virtio-serial-port=N  Host TCP port for the virtserialport socket
 #                           (default 43211, or $VIRTIO_SERIAL_PORT).
+#   --no-clipboard          Keep the virtio-serial controller but drop its
+#                           virtserialport, so nothing opens the host socket
+#                           and clip_bridge.py has nothing to talk to. The
+#                           clipboard port is on by default.
+#   --clipboard             Force the clipboard port back on.
 #   --no-doom               Drop the Doom addon (doom.exe + doom2.wad) from
 #                           the image.
 #   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
@@ -154,6 +159,11 @@ VIRTIO_RNG=1
 # VIRTIO_RNG is: the driver under test needs something to probe.
 VIRTIO_SERIAL=1
 VIRTIO_SERIAL_PORT="${VIRTIO_SERIAL_PORT:-43211}"
+# The virtserialport endpoint is the clipboard wire: clipd holds the guest
+# end, Tests/clip_bridge.py the host end. A switch of its own so the
+# endpoint can be dropped while the controller stays for virtio_console to
+# probe -- --no-virtio-serial still takes both.
+CLIPBOARD=1
 DATA_SIZE_MB=256
 NO_DATA_DISK=0
 FORCE_DATA_DISK=0
@@ -462,6 +472,8 @@ while [ $# -gt 0 ]; do
         --virtio-serial) VIRTIO_SERIAL=1 ;;
         --no-virtio-serial) VIRTIO_SERIAL=0 ;;
         --virtio-serial-port=*) VIRTIO_SERIAL_PORT="${1#--virtio-serial-port=}" ;;
+        --clipboard) CLIPBOARD=1 ;;
+        --no-clipboard) CLIPBOARD=0 ;;
         --data-size-mb=*) DATA_SIZE_MB="${1#--data-size-mb=}" ;;
         --no-data-disk) NO_DATA_DISK=1 ;;
         --force-data-disk) FORCE_DATA_DISK=1 ;;
@@ -1061,12 +1073,18 @@ fi
 # The host end is a TCP socket with wait=off so QEMU starts whether or not a
 # client has connected; a test that wants the guest's probe to see
 # host_connected=1 connects to it first. VIRTIO_SERIAL_PORT (or
-# --virtio-serial-port=N) moves it when 43211 is taken. --axiss
+# --virtio-serial-port=N) moves it when 43211 is taken.
+# --no-clipboard keeps the controller and drops the socket plus the
+# endpoint, which only the clipboard has a user for. --axiss
 if [ "$VIRTIO_SERIAL" -eq 1 ]; then
     QEMU_ARGS+=(-device virtio-serial-pci,disable-legacy=on,id=virtio-serial0)
-    QEMU_ARGS+=(-chardev socket,id=vsp0,host=127.0.0.1,port="$VIRTIO_SERIAL_PORT",server=on,wait=off)
-    QEMU_ARGS+=(-device virtserialport,chardev=vsp0,name=org.xeneva.test)
-    echo "[+] virtio-serial: org.xeneva.test listening on 127.0.0.1:$VIRTIO_SERIAL_PORT"
+    if [ "$CLIPBOARD" -eq 1 ]; then
+        QEMU_ARGS+=(-chardev socket,id=vsp0,host=127.0.0.1,port="$VIRTIO_SERIAL_PORT",server=on,wait=off)
+        QEMU_ARGS+=(-device virtserialport,chardev=vsp0,name=org.xeneva.test)
+        echo "[+] virtio-serial: org.xeneva.test listening on 127.0.0.1:$VIRTIO_SERIAL_PORT"
+    else
+        echo "[+] virtio-serial: controller only, clipboard port omitted (--no-clipboard)"
+    fi
 else
     echo "[+] virtio-serial omitted (--no-virtio-serial)"
 fi
