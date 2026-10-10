@@ -326,7 +326,7 @@ int CreateUserThread(void (*entry)(), char* name) {
 	AA64Registers* regs = AA64GetCurrentRegCtx();
 	int idx = AuCreateUserthread(proc, entry, name, regs->x2);
 	//current_thr->sp = (uint64_t)regs;
-	AuScheduleThread(regs);
+	//AuScheduleThread(regs);
 	return idx;
 }
 

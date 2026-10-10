@@ -46,6 +46,7 @@
 #include <signal.h>
 #include <timer.h>
 #include <Sync/spinlock.h>
+#include <Serv/sysserv.h>
 
 extern void aa64_store_context(AA64Thread* thr);
 extern void store_syscall(AA64Thread* thr);
@@ -247,6 +248,8 @@ AA64Thread* AuCreateKthread(void (*entry)(uint64_t), uint64_t* pml, char* name) 
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	t->waitlist = initialize_list();
+	t->wait_ref_count = 0;
 	AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
@@ -277,6 +280,7 @@ AA64Thread* AuCreateSubKthread(void (*entry)(uint64_t), uint64_t stack, uint64_t
 	t->thread_id = thread_id++;
 	t->fpsr = 0;
 	t->fpcr = 0;
+	t->waitlist = initialize_list();
 	//AuSignalInitializeTrampoline(t);
 	AuThreadInsert(t);
 	return t;
@@ -906,4 +910,74 @@ uint64_t AuGetSystemTimerTick() {
  */
 void AuSetIdleThread(AA64Thread* thr) {
 	_idle_thr = thr;
+}
+
+/**
+ * @brief AuThreadWaitForTermination -- wait for desired thread
+ * termination
+ * @param thread_id -- desired thread id
+ */
+int AuThreadWaitForTermination(int thread_id) {
+	AA64Registers* regs = AA64GetCurrentRegCtx();
+	AA64Thread* curr = AuGetCurrentThread();
+	AA64Thread* desired = AuThreadFindByID(thread_id);
+	if (!desired) {
+		desired = AuThreadFindByIDBlockList(thread_id);
+		if (!desired)
+			desired = AuThreadFindByIDSleepList(thread_id);
+	}
+	if (!desired) {
+		return 1;
+	}
+
+	if (!desired->waitlist)
+		return 1;
+
+	AuProcess* proc = AuProcessFindThread(curr);
+	if (!proc) {
+		UARTDebugOut(
+			"[aurora]: current thread %s wait for termination failed, no process slot \r\n",
+			curr->name);
+		return 1;
+	}
+	/** we mark it's belonging process non killable because, untill the child thread
+	 * is terminated, the process should not be terminated anyhow, or else dead thread-dead
+	 * process
+	 */
+	proc->state |= PROCESS_STATE_BUSY_WAIT;
+	list_add(desired->waitlist, curr);
+	curr->wait_ref_count += 1;
+	proc->waiting_threads += 1;
+	AuBlockThread(curr);
+	AuScheduleThread(regs);
+	/** explicitly call pause thread on user space */
+	return 0;
+}
+
+/**
+ * @brief AuThreadAwakeWaiters -- unblock all awaiting
+ * threads for the current thread
+ * @praram thread -- current thread which waitlist
+ * needs to be freed
+ */
+void AuThreadAwakeWaiters(AA64Thread* thread) {
+	if (!thread)
+		return;
+	if (!thread->waitlist)
+		return;
+
+	/** remove all waiters */
+	while (thread->waitlist->pointer > 0) {
+		AA64Thread* unblockable = (AA64Thread*)list_remove(thread->waitlist, 0);
+		unblockable->wait_ref_count -= 1;
+		AuProcess* proc = AuProcessFindThread(unblockable);
+
+		/* what if process if not found, kernel will get lot's of garbage 
+		 * thread vs process allocation be carefull, it should get
+		 * on thread's procSlot -- security concern */
+		if (proc)
+			AuProcessReapWaitcount(proc, 1);
+
+		AuUnblockThread(unblockable);
+	}
 }

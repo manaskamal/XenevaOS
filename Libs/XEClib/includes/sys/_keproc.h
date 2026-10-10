@@ -218,6 +218,8 @@ XE_EXTERN {
 
 	XE_LIB int _KeExitSubThread(int thread_id);
 
+	XE_LIB int _KeThreadWaitForTermination(int thread_id);
+
 #ifdef __cplusplus
 }
 #endif

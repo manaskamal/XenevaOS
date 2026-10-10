@@ -79,3 +79,6 @@ EXPORTS
     _KeGetGlobalGroupID
     _KePowerDown
     _KePowerReset
+    _KeExitSubThread
+    _KeSendSignalToThread
+    _KeThreadWaitForTermination

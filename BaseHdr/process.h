@@ -140,6 +140,7 @@ typedef struct _au_proc_ {
 	uint32_t cpu_usage;
 	uint64_t prev_sample_runtime_us;
 	uint64_t prev_sample_time_us;
+	uint16_t waiting_threads;
 #ifdef ARCH_X64
 	/* threading section */
 	AuThread* main_thread;
@@ -366,5 +367,12 @@ extern int AuProcGetNumProcessCount();
  * @param num_proc_count -- number of process count
  */
 extern int AuProcessFetch(AuProcessList* list, int num_proc_count);
+
+/**
+ * @brief AuProcessReapWaitCount -- decrease waiting thread counts
+ * @param proc -- desired process
+ * @param num_count -- total number of threads to decrease
+ */
+extern void AuProcessReapWaitcount(AuProcess* proc, int num_count);
 
 #endif
