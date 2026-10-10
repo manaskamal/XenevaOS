@@ -38,6 +38,7 @@
 #include <string.h>
 #include <aucon.h>
 #include <_null.h>
+#include <Fs/pipe.h>
 #include <stdint.h>
 #include <Drivers/uart.h>
 
@@ -131,8 +132,14 @@ int BordoisilaCapDup(void* procptr, int oldfd, int newfd) {
 
 	proc->fds[newfd] = proc->fds[oldfd];
 
-	if (proc->fds[newfd])
+	if (proc->fds[newfd]) {
 		proc->fds[newfd]->fileCopyCount++;
+		/* pipe2 and dup share one node. Each fd owns one pipe refcount. */
+		if ((proc->fds[newfd]->flags & FS_FLAG_PIPE) && proc->fds[newfd]->device) {
+			AuPipe* pipe = (AuPipe*)proc->fds[newfd]->device;
+			pipe->refcount++;
+		}
+	}
 
 	AuCapability* dst = &proc->caps[newfd];
 

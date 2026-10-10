@@ -96,6 +96,10 @@ set -e
 #                           runs the specified app. Guest flags like ping -6
 #                           are collected; stop at the next host --option.
 #                           e.g. --term ping -6 fec0::2
+#   --test-musl             Build the musl clib guest and the rust hello
+#                           guest and pack them as /musl.elf and /hello.elf.
+#                           Without this flag both are left out of the image.
+#                           --skip-build reuses existing guest binaries.
 #   --iso[=PATH]            Package the assembled ESP (fat.img) as a UEFI
 #                           El Torito bootable ISO instead of launching QEMU.
 #                           Defaults to xeneva.iso at the repo root. Test it
@@ -139,6 +143,7 @@ XR_VNC=1
 XR_TELNET=0
 TERM=0
 TERM_CMD=""
+TEST_MUSL=0
 INITRD_SIZE_MB=""
 ISO=0
 ISO_OUTPUT=""
@@ -454,6 +459,7 @@ while [ $# -gt 0 ]; do
             done
             continue
             ;;
+        --test-musl) TEST_MUSL=1 ;;
         --initrd-size-mb=*) INITRD_SIZE_MB="${1#--initrd-size-mb=}" ;;
         --iso) ISO=1 ;;
         --iso=*) ISO=1; ISO_OUTPUT="${1#--iso=}" ;;
@@ -636,6 +642,11 @@ if [ "$OPENXR" -eq 1 ]; then
 		exit 1
 	fi
 	BUILD_USER_APPS=1
+fi
+
+if [ "$TEST_MUSL" -eq 1 ] && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --test-musl needs a freshly packed initrd; it cannot be combined with --force-legacy-build.${STY_RST}\n"
+	exit 1
 fi
 
 if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
@@ -863,6 +874,27 @@ else
     echo "[+] --skip-build passed, reusing existing build artifacts."
 fi
 
+if [ "$TEST_MUSL" -eq 1 ]; then
+    guest_dir="$REPO_ROOT/Tests/linux-musl"
+    rust_elf="$guest_dir/rust-hello/target/aarch64-xeneva/release/rust-hello"
+    if [ "$SKIP_BUILD" -eq 0 ]; then
+        echo "[+] Building musl and rust guests..."
+        ( cd "$guest_dir" && make musl rust )
+    else
+        if [ -f "$rust_elf" ]; then
+            cp -f "$rust_elf" "$REPO_ROOT/Resources/resources/hello.elf"
+        fi
+        if [ -f "$guest_dir/musl.elf" ]; then
+            cp -f "$guest_dir/musl.elf" "$REPO_ROOT/Resources/resources/musl.elf"
+        fi
+        if [ ! -f "$REPO_ROOT/Resources/resources/hello.elf" ] || [ ! -f "$REPO_ROOT/Resources/resources/musl.elf" ]; then
+            printf "${STY_RED}[$0]: --test-musl found no guest elf. Run without --skip-build.${STY_RST}\n"
+            exit 1
+        fi
+        echo "[+] --skip-build: packing hello.elf and musl.elf."
+    fi
+fi
+
 for artifact in "BootAA64/Build/EFI/BOOT/BOOTAA64.efi" "KernelAA64/KernelAA64.exe"; do
     if [ ! -f "$REPO_ROOT/$artifact" ]; then
         printf "${STY_RED}[$0]: Expected build artifact missing: $artifact${STY_RST}\n"
@@ -898,6 +930,8 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
                 [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;
             netsurf.exe)
                 [ "$NO_NETSURF" -eq 1 ] && return 0 || return 1 ;;
+            hello.elf|musl.elf)
+                [ "$TEST_MUSL" -eq 1 ] && return 1 || return 0 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
         esac
@@ -911,6 +945,9 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     fi
     if [ "$NO_AUDIO" -eq 1 ]; then
         echo "[+] Audio userspace excluded from the image (--no-audio)."
+    fi
+    if [ "$TEST_MUSL" -eq 1 ]; then
+        echo "[+] hello.elf and musl.elf added to the image (--test-musl)."
     fi
     for resource in Resources/resources/*; do
         if pack_excluded "$(basename "$resource")"; then

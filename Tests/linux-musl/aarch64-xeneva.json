@@ -1,0 +1,19 @@
+{
+  "llvm-target": "aarch64-unknown-none",
+  "arch": "aarch64",
+  "os": "none",
+  "executables": true,
+  "linker": "ld.lld",
+  "linker-flavor": "ld.lld",
+  "panic-strategy": "abort",
+  "disable-redzone": true,
+  "relocation-model": "static",
+  "code-model": "small",
+  "data-layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-Fn32",
+  "target-pointer-width": 64,
+  "max-atomic-width": 128,
+  "features": "+strict-align",
+  "pre-link-args": {
+    "ld.lld": ["-T../link.ld", "-z", "max-page-size=4096"]
+  }
+}

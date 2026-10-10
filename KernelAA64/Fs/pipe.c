@@ -273,7 +273,11 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
  * @param file -- Pointer to file, not needed
  */
 int AuPipeClose(AuVFSNode* fs, AuVFSNode* file) {
+	if (!fs || !fs->device)
+		return 1;
 	AuPipe* pipe = (AuPipe*)fs->device;
+	if (pipe->refcount == 0)
+		return 1;
 	pipe->refcount--;
 	if (pipe->refcount == 0) {
 		kfree(pipe->buffer);

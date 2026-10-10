@@ -128,11 +128,13 @@ void init_run_term_command(int ggid_misc_world, int con) {
 	if (argc == 0)
 		return;
 
-	/* build executable path: /<argv[0]>.exe */
+	/* build executable path: /<argv[0]>, plus .exe unless it is already a .elf */
 	char path[64];
 	path[0] = '/';
 	strcpy(path + 1, argv[0]);
-	strcat(path, ".exe");
+	/* A musl guest is named *.elf. Everything else is still a PE .exe. */
+	if (strlen(argv[0]) < 4 || strcmp(argv[0] + strlen(argv[0]) - 4, ".elf") != 0)
+		strcat(path, ".exe");
 
 	int proc = _KeCreateProcess(0, argv[0]);
 	_KeSetUID(proc, UAC_NORMAL_USER);

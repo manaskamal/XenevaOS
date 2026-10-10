@@ -34,7 +34,10 @@
 
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
-#include <list.h>
+/* Pointer only. The full <list.h> declares list_add(list_t*, void*), which
+ * cannot share a file with mainline list_add(list_head*, list_head*).
+ * DCL/linux_irq_shim.c includes this header and then <linux/kernel.h>. */
+typedef struct _list_ list_t;
 
 #ifdef ARCH_ARM64
 
@@ -67,6 +70,10 @@ typedef struct _uentry_ {
 	uint64_t argvkernel; /* kernel-space VA of argv[] page (for EL1 writes) */
 	char** argvs;
 	uint64_t stackBase;
+	/* PROCESS_TYPE_LINUX aux vector. Zero on a PE process. */
+	uint64_t linux_phdr;
+	uint16_t linux_phent;
+	uint16_t linux_phnum;
 } AuUserEntry;
 //#pragma pack(pop)
 
@@ -146,6 +153,12 @@ typedef struct _aa64_task_ {
 	/** waitlist */
 	list_t* waitlist;
 	uint16_t wait_ref_count;
+	/* Linux ELF pthread. Saved across switches because EL0 writes TPIDR_EL0. */
+	uint64_t linux_tls;
+	uint64_t clear_child_tid;
+	uint64_t futex_uaddr;
+	uint32_t futex_bitset;
+	uint8_t futex_waiting;
 } AA64Thread;
 
 //#pragma pack(pop)
