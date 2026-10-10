@@ -485,6 +485,7 @@ void AuScheduleThread(AA64Registers* regs) {
 	runThr->x28 = regs->x28;
 	runThr->x29 = regs->x29;
 	runThr->x30 = regs->x30;
+	runThr->linux_tls = aa64_read_tpidr_el0();
 	runThr->justStored = true;
 
 	/* The wrapper captured this state before entering C. Saving live q
@@ -539,6 +540,7 @@ void AuScheduleThread(AA64Registers* regs) {
 	}
 
 	AuSignalDeliver(current_thread);
+	aa64_set_tpidr_el0(current_thread->linux_tls);
 
 	if (!current_thread->justStored) {
 		/* first_time_sex (lol) installs the initial kernel entry, stack and

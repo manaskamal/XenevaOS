@@ -86,6 +86,8 @@
 #define PROCESS_TYPE_SYSTEM		  (1 << 1)
 #define PROCESS_TYPE_BACKGROUND	  (1 << 2)
 #define PROCESS_TYPE_NON_KILLABLE (1 << 3)
+/* Static Linux ELF. svc #0 reads x8, not x16. */
+#define PROCESS_TYPE_LINUX		  (1 << 4)
 
 #define PROCESS_BREAK_ADDRESS 0x0000003000000000
 #ifdef ARCH_X64

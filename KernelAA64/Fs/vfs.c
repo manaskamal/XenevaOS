@@ -87,12 +87,17 @@ char* AuVFSReserveMountPointLetter() {
  */
 AuVFSNode* AuVFSFind(char* path) {
 	AuVFSNode* Returnable = NULL;
+	char* next;
 	/* first of all search all file system
 	 * skipping '/' of the path
 	 */
-	char* next = strchr(path, '/');
-	if (next)
-		next++;
+	/* A path with no slash used to load byte 1 of a null pointer. */
+	if (!path)
+		return __RootFS;
+	next = strchr(path, '/');
+	if (!next)
+		return __RootFS;
+	next++;
 
 	char pathname[16];
 	int i;

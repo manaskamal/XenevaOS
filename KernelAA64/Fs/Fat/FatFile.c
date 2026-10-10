@@ -121,15 +121,13 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
 
+	/* A root path has no parent directory component. FatFileGetParent looks
+	 * the filename up as a directory and returns NULL. Same fallback as
+	 * FatCreateDir: create the entry in the root cluster. */
 	AuVFSNode* parent = FatFileGetParent(fsys, filename);
-	if (!parent) {
-		UARTDebugOut("No parent \r\n");
-		return NULL;
-	}
-
-	uint32_t parent_cluster = parent->current;
-	if (!parent_cluster)
-		parent_cluster = _fs->__RootDirFirstCluster;
+	uint32_t parent_cluster = _fs->__RootDirFirstCluster;
+	if (parent && parent->current)
+		parent_cluster = parent->current;
 
 	AuVFSNode* file = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(file, 0, sizeof(AuVFSNode));

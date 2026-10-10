@@ -37,6 +37,7 @@
 #include <_null.h>
 #include <Serv/sysserv.h>
 #include <Serv/syscall.h>
+#include <process.h>
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
 #include <aucon.h>
@@ -256,10 +257,42 @@ extern void modifyx17();
  * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
+int64_t AuLinuxSyscall(uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4,
+						uint64_t a5);
+
 void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();
 	uint64_t vector = regs->x16;
 	uint64_t retcode = 0;
+
+	/* Musl puts the Linux number in x8. PE programs still use x16. */
+	{
+		AA64Thread* linux_thr = AuGetCurrentThread();
+		AuProcess* linux_proc = NULL;
+		if (linux_thr) {
+			linux_proc = (AuProcess*)linux_thr->procSlot;
+			if (!linux_proc)
+				linux_proc = AuProcessFindThread(linux_thr);
+			if (!linux_proc)
+				linux_proc = AuProcessFindSubThread(linux_thr);
+		}
+		if (linux_proc && (linux_proc->type_flags & PROCESS_TYPE_LINUX)) {
+			linux_thr->returnFromSyscall = 1;
+			linux_thr->syscallNum = (uint32_t)regs->x8;
+			svcCurrentRegs = regs;
+			retcode = (uint64_t)AuLinuxSyscall((uint64_t)regs->x8,
+											   (uint64_t)regs->x0,
+											   (uint64_t)regs->x1,
+											   (uint64_t)regs->x2,
+											   (uint64_t)regs->x3,
+											   (uint64_t)regs->x4,
+											   (uint64_t)regs->x5);
+			regs->x0 = retcode;
+			regs->x6 = retcode;
+			linux_thr->returnFromSyscall = 0;
+			return;
+		}
+	}
 
 #ifdef __KERNEL_PROFILER_ON__
 	if (syscall_name[vector] == 0)

@@ -64,6 +64,19 @@ extern void AuProcessEntUser(uint64_t rcx);
 
 extern void AuProcessEntSubThread(uint64_t rcx);
 
+struct __mm_file_back__;
+
+/*
+ * AuLoadElfImage -- map a static aarch64 ELF from the file page cache.
+ * Offset P is P2V(cache->physicalPage) + (P % PAGE_SIZE) on the
+ * AuMMPageCache whose pageIndex is P / PAGE_SIZE. Not a PE image.
+ */
+extern int AuLoadElfImage(AuProcess* proc, struct __mm_file_back__* fb, size_t image_len,
+						  int argc, char** argv);
+
+/* Build the musl initial stack (argc, argv, envp, auxv) and return the sp. */
+extern uint64_t AuLinuxBuildUserStack(AuUserEntry* uentry);
+
 #ifdef ARCH_X64
 /*
 * AuLoaderGetMutex -- returns loader
