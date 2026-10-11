@@ -416,8 +416,10 @@ void AuHandleSleepThreads() {
 		 * here and every later sleeper misses this tick. A zero quantum
 		 * must wake, not wrap to ~forever. --axiss */
 		AA64Thread* next = sleep_thr->next;
-		if (sleep_thr->sleepQuanta > 0)
-			sleep_thr->sleepQuanta--;
+		/* sleepers wake on an absolute deadline: counting scheduler events made
+		 * a "4000 ms" sleep last anywhere from 1 s to 20 s depending on load */
+		if (sleep_thr->sleepQuanta > 0 && AuGetCurrentUS() >= sleep_thr->sleep_until_us)
+			sleep_thr->sleepQuanta = 0;
 		if (sleep_thr->sleepQuanta == 0) {
 			//settimerdebug();
 			if (sleep_thr->state != THREAD_STATE_LEFT_IN_KERNEL)
@@ -706,6 +708,7 @@ void AuSleepThread(AA64Thread* thread, uint64_t ms) {
 	uint64_t d = AuSchedLock();
 	thread->state = THREAD_STATE_SLEEP;
 	thread->sleepQuanta = ms;
+	thread->sleep_until_us = AuGetCurrentUS() + ms * 1000ULL;
 	schedUnlink(&thread_list_head, &thread_list_last, thread);
 	schedLink(&sleep_thr_head, &sleep_thr_last, thread);
 	AuSchedUnlock(d);

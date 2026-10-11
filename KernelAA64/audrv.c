@@ -30,6 +30,16 @@
 **/
 
 #include <audrv.h>
+#include <aucomponent.h>
+#include <Cred/group.h>
+#include <aubuiltin.h>
+#include <Fs/Dev/devhw.h>
+#include <Sound/sndproxy.h>
+#include <Net/netproxy.h>
+#include <austatic.h>
+#include <Ipc/auipc.h>
+#include <Fs/srvfs.h>
+#include <Hal/AA64/gic.h>
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <string.h>
@@ -63,6 +73,56 @@ static int _dev_count_;
 static uint32_t driver_class_unique_id = 0;
 static uint32_t driver_boot_unique_id = 0;
 static uint64_t driver_load_base = 0;
+
+/* Free list of unloaded driver regions (virtual extents above AU_DRIVER_BASE_START).
+ * New drivers take the first free extent that fits; otherwise the bump pointer. */
+#define AU_DRV_MAX_FREE_REGIONS 64
+static struct { uint64_t base; size_t pages; } free_regions[AU_DRV_MAX_FREE_REGIONS];
+static int free_region_count = 0;
+
+static uint64_t AuDrvRegionAlloc(size_t pages) {
+	for (int i = 0; i < free_region_count; i++) {
+		if (free_regions[i].pages < pages)
+			continue;
+		uint64_t base = free_regions[i].base;
+		free_regions[i].base += (uint64_t)pages * 4096;
+		free_regions[i].pages -= pages;
+		if (free_regions[i].pages == 0) {
+			free_regions[i] = free_regions[--free_region_count];
+		}
+		return base;
+	}
+	uint64_t base = driver_load_base;
+	driver_load_base += (uint64_t)pages * 4096;
+	return base;
+}
+
+static void AuDrvRegionFree(uint64_t base, size_t pages) {
+	uint64_t end = base + (uint64_t)pages * 4096;
+	/* give the tail back to the bump pointer if this was the last region */
+	if (end == driver_load_base) {
+		driver_load_base = base;
+		return;
+	}
+	/* merge with an adjacent free extent */
+	for (int i = 0; i < free_region_count; i++) {
+		if (free_regions[i].base + (uint64_t)free_regions[i].pages * 4096 == base) {
+			free_regions[i].pages += pages;
+			return;
+		}
+		if (end == free_regions[i].base) {
+			free_regions[i].base = base;
+			free_regions[i].pages += pages;
+			return;
+		}
+	}
+	if (free_region_count < AU_DRV_MAX_FREE_REGIONS) {
+		free_regions[free_region_count].base = base;
+		free_regions[free_region_count].pages = pages;
+		free_region_count++;
+	}
+	/* table full: the extent is leaked, never reused (safe, just wasteful) */
+}
 uint64_t* scratchBuffer;
 
 //! request an unique id for driver class
@@ -289,8 +349,26 @@ search:
 */
 void AuDriverLoad(char* filename, AuDriver* driver) {
 	int next_base_offset = 0;
-	uint64_t* virtual_base = (uint64_t*)driver_load_base;
-	AuTextOut("[aurora]: Loading driver -> %s %x\r\n", filename, driver_load_base);
+	uint64_t* virtual_base = 0;
+	uint64_t load_base = 0;
+	AuTextOut("[aurora]: Loading driver -> %s\r\n", filename);
+
+	/* unikernel profile: the driver is part of this image, there is nothing to load */
+	const AuStaticComponent* sc = AuStaticComponentFind(filename);
+	if (sc) {
+		driver->entry = sc->entry;
+		driver->unload = NULL;
+		driver->flags = 0;               /* resident: never unloadable */
+		driver->refcount = 0;
+		driver->resources = 0;
+		driver->base = driver->end = 0;
+		driver->region_pages = 0;
+		driver->present = true;
+		if (sc->console_present)
+			AuConsoleSetPresentHook((AuConsolePresentFn)sc->console_present);
+		UARTDebugOut("[audrv]: %s is a static component (linked into the kernel)\r\n", filename);
+		return;
+	}
 
 	AuVFSNode* fsys = AuVFSFind(filename);
 	AuVFSNode* file = AuVFSOpen(filename);
@@ -314,13 +392,20 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS, dos_, dos_->e_lfanew);
 	driver->original_load_base = nt->OptionalHeader.ImageBase;
 	driver->image_sz = nt->OptionalHeader.SizeOfImage;
+	driver->region_pages = (driver->image_sz + 4095) / 4096;
+	load_base = AuDrvRegionAlloc(driver->region_pages);
+	virtual_base = (uint64_t*)load_base;
+	AuTextOut("[aurora]: driver %s at %x (%d pages)\r\n", filename, load_base, (int)driver->region_pages);
 	PSECTION_HEADER sectionHeader =
 		RAW_OFFSET(PSECTION_HEADER, &nt->OptionalHeader, nt->FileHeader.SizeOfOptionaHeader);
 
 	uint64_t first_block = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
-	memset((void*)first_block, 0, 4096);
-	AuMapPage(first_block, driver_load_base, PTE_NORMAL_MEM);
-	memcpy((void*)driver_load_base, scratchBuffer, nt->OptionalHeader.SizeOfHeaders);
+	/* first_block is a PHYSICAL address: reach it through the kernel direct
+	 * map. The identity map that made the raw pointer work only exists during
+	 * early boot, so a load triggered from a user process (/dev/drvctl) faulted. */
+	memset((void*)P2V(first_block), 0, 4096);
+	AuMapPage(first_block, load_base, PTE_NORMAL_MEM);
+	memcpy((void*)load_base, scratchBuffer, nt->OptionalHeader.SizeOfHeaders);
 	next_base_offset++;
 
 	for (size_t i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
@@ -361,8 +446,9 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint64_t diff = new_addr - original_base;
 
 	AuKernelRelocatePE(relocatebuff, nt, diff);
-	void* entry_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverMain");
-	void* unload_addr = AuGetProcAddress((void*)driver_load_base, "AuDriverUnload");
+	void* entry_addr = AuGetProcAddress((void*)load_base, "AuDriverMain");
+	void* unload_addr = AuGetProcAddress((void*)load_base, "AuDriverUnload");
+	uint32_t* flags_addr = (uint32_t*)AuGetProcAddress((void*)load_base, "AuDriverFlags");
 	AuKernelLinkDLL((void*)virtual_base);
 	/* Console mirror: resolve the driver's present function through its
 	 * own export table and hand it to aucon. Done kernel-side because
@@ -378,10 +464,13 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	}
 	driver->entry = (au_drv_entry)entry_addr;
 	driver->unload = (au_drv_unload)unload_addr;
+	driver->flags = flags_addr ? *flags_addr : 0;
+	driver->refcount = 0;
+	driver->resources = 0;
 	driver->base = AU_DRIVER_BASE_START;
 	driver->end = driver->base + file->size;
 	driver->present = true;
-	driver_load_base = driver_load_base + ((uint64_t)next_base_offset * 4096);
+	(void)next_base_offset; /* mapping count is now bounded by region_pages */
 	kfree(file);
 }
 
@@ -524,6 +613,19 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		}
 	}
 
+	AuDriverCtlInitialize();
+	AuHwdevInitialize();
+	AuSndProxyInitialize();
+	AuNetProxyInitialize();
+	AuIpcInitialize();
+	AuSrvfsInitialize();
+	AuInputSrvInitialize();
+#ifdef __XENEVA_DRV_SELFTEST__
+	{
+		extern void AuDriverSelfTest(void);
+		AuDriverSelfTest();
+	}
+#endif
 	AuTextOut("[aurora]: AuDrvManager initialized successfully \r\n");
 	kfree(file);
 }
@@ -679,3 +781,405 @@ void AuDrvUnloadAll() {
 		}
 	}
 }
+
+
+/* ===================================================================
+ * Component model: lookup, refcounts, resource ledger, runtime unload
+ * =================================================================== */
+
+#include <Fs/Dev/devfs.h>
+#include <Sound/sound.h>
+
+static bool AuDriverContains(AuDriver* drv, uint64_t addr) {
+	return drv && drv->present && drv->new_load_base &&
+		   addr >= drv->new_load_base &&
+		   addr < drv->new_load_base + (uint64_t)drv->region_pages * 4096;
+}
+
+/**
+ * @brief AuDriverOwnerOf -- the loaded driver whose image contains addr
+ */
+AuDriver* AuDriverOwnerOf(uint64_t addr) {
+	for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++)
+		if (AuDriverContains(drivers[i], addr))
+			return drivers[i];
+	return 0;
+}
+
+/* exact name first, then substring ("virtsnd" finds "/virtsnd.dll") */
+static AuDriver* AuDriverLookup(const char* name, bool include_unloaded) {
+	if (!name || !*name)
+		return 0;
+	for (int pass = 0; pass < 2; pass++) {
+		for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++) {
+			AuDriver* d = drivers[i];
+			if (!d || (!d->present && !include_unloaded))
+				continue;
+			if (pass == 0 ? strcmp(d->name, name) == 0 : strstr(d->name, name) != 0)
+				return d;
+		}
+	}
+	return 0;
+}
+
+AuDriver* AuDriverFindByName(const char* name) {
+	return AuDriverLookup(name, false);
+}
+
+int AuDriverRef(AuDriver* drv) {
+	if (!drv || !drv->present)
+		return -1;
+	return ++drv->refcount;
+}
+
+void AuDriverUnref(AuDriver* drv) {
+	if (drv && drv->refcount > 0)
+		drv->refcount--;
+}
+
+void AuDriverTrack(AuDriver* drv, uint8_t kind, uint64_t value, uint64_t extra, uint64_t extra2) {
+	if (!drv)
+		return;
+	AuResource* r = (AuResource*)kmalloc(sizeof(AuResource));
+	if (!r)
+		return;
+	r->kind = kind;
+	r->value = value;
+	r->extra = extra;
+	r->extra2 = extra2;
+	r->next = (AuResource*)drv->resources;
+	drv->resources = r;
+}
+
+void AuDriverUntrack(AuDriver* drv, uint8_t kind, uint64_t value) {
+	if (!drv)
+		return;
+	AuResource** link = (AuResource**)&drv->resources;
+	while (*link) {
+		AuResource* r = *link;
+		if (r->kind == kind && r->value == value) {
+			*link = r->next;
+			kfree(r);
+			return;
+		}
+		link = &r->next;
+	}
+}
+
+void AuDriverUntrackAny(uint8_t kind, uint64_t value) {
+	for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++)
+		if (drivers[i] && drivers[i]->resources)
+			AuDriverUntrack(drivers[i], kind, value);
+}
+
+/* ---- tracking wrappers handed to drivers instead of the kernel originals ----
+ * The owner is found from the caller: a handler pointer or a return address
+ * that lies inside a loaded driver image. noinline keeps the return address
+ * pointing at the driver. */
+#define AU_CALLER_DRIVER() AuDriverOwnerOf((uint64_t)__builtin_return_address(0))
+
+/* A page the driver mapped as MMIO and is now giving back must lose that
+ * mapping first, or a stale device-memory alias would outlive the page. */
+static void AuDriverDropMmioAlias(uint64_t phys) {
+	for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++) {
+		AuDriver* d = drivers[i];
+		if (!d)
+			continue;
+		for (AuResource* r = (AuResource*)d->resources; r; r = r->next) {
+			if (r->kind == AU_RES_MMIO && r->extra == phys && r->extra2 == 1) {
+				uint64_t virt = r->value;
+				AuDriverUntrack(d, AU_RES_MMIO, virt);
+				AuFreePages(virt, false, 4096);
+				return;
+			}
+		}
+	}
+}
+
+__attribute__((noinline)) static void tracked_GICRegisterSPIHandler(void* fptr, int spi) {
+	bool was_free = (GICGetSPIHandler(spi) == 0);
+	GICRegisterSPIHandler(fptr, spi);
+	if (was_free && GICGetSPIHandler(spi) == fptr)
+		AuDriverTrack(AuDriverOwnerOf((uint64_t)fptr), AU_RES_IRQ_SPI, (uint64_t)spi, 0, 0);
+}
+
+__attribute__((noinline)) static uint64_t tracked_AuPmmngrAllocPage(uint8_t type) {
+	uint64_t p = AuPmmngrAllocPage(type);
+	if (p)
+		AuDriverTrack(AU_CALLER_DRIVER(), AU_RES_PHYS_PAGE, p, 0, 0);
+	return p;
+}
+
+__attribute__((noinline)) static uint64_t tracked_AuPmmngrAllocPages(uint32_t pages,
+	uint32_t alignment, uint64_t ceiling, uint8_t type) {
+	uint64_t p = AuPmmngrAllocPages(pages, alignment, ceiling, type);
+	if (p)
+		AuDriverTrack(AU_CALLER_DRIVER(), AU_RES_PHYS_RUN, p, pages, 0);
+	return p;
+}
+
+__attribute__((noinline)) static bool tracked_AuPmmngrReleasePage(uint64_t phys) {
+	AuDriverDropMmioAlias(phys);
+	AuDriverUntrackAny(AU_RES_PHYS_PAGE, phys);
+	return AuPmmngrReleasePage(phys);
+}
+
+__attribute__((noinline)) static bool tracked_AuPmmngrReleasePages(uint64_t phys) {
+	AuDriverUntrackAny(AU_RES_PHYS_RUN, phys);
+	return AuPmmngrReleasePages(phys);
+}
+
+__attribute__((noinline)) static void* tracked_AuMapMMIO(uint64_t phys, size_t count) {
+	void* v = AuMapMMIO(phys, count);
+	if (v)
+		AuDriverTrack(AU_CALLER_DRIVER(), AU_RES_MMIO, (uint64_t)v, phys, (uint64_t)count);
+	return v;
+}
+
+static const struct { const char* name; void* fn; } au_import_overrides[] = {
+	{"GICRegisterSPIHandler", (void*)tracked_GICRegisterSPIHandler},
+	{"AuPmmngrAllocPage",     (void*)tracked_AuPmmngrAllocPage},
+	{"AuPmmngrAllocPages",    (void*)tracked_AuPmmngrAllocPages},
+	{"AuPmmngrReleasePage",   (void*)tracked_AuPmmngrReleasePage},
+	{"AuPmmngrReleasePages",  (void*)tracked_AuPmmngrReleasePages},
+	{"AuMapMMIO",             (void*)tracked_AuMapMMIO},
+};
+
+void* AuDriverImportOverride(const char* name) {
+	for (size_t i = 0; i < sizeof(au_import_overrides) / sizeof(au_import_overrides[0]); i++)
+		if (strcmp(au_import_overrides[i].name, name) == 0)
+			return au_import_overrides[i].fn;
+	return 0;
+}
+
+/**
+ * @brief AuDriverUnload -- unload a running driver
+ *
+ * Order matters: ask the driver first (it may veto), then cut every
+ * kernel -> driver path BEFORE the image is unmapped: IRQ handlers are
+ * cleared and the driver's MMIO mappings removed. Physical pages the driver
+ * still owns are only REPORTED, never force-freed: the kernel may have taken
+ * them over without telling the ledger, and a leak is safe where a double
+ * free is not. Returns an AU_UNLOAD_* code.
+ */
+int AuDriverUnload(AuDriver* drv) {
+	if (!drv || !drv->present)
+		return AU_UNLOAD_NOT_FOUND;
+	if (!(drv->flags & AU_DRV_FLAG_UNLOADABLE) || !drv->unload) {
+		UARTDebugOut("[audrv]: %s did not opt in to unloading\r\n", drv->name);
+		return AU_UNLOAD_NOT_OPTED;
+	}
+	if (drv->refcount > 0) {
+		UARTDebugOut("[audrv]: %s busy (refcount %d)\r\n", drv->name, drv->refcount);
+		return AU_UNLOAD_BUSY;
+	}
+	if (drv->unload(drv) != 0) {
+		UARTDebugOut("[audrv]: %s vetoed unload\r\n", drv->name);
+		return AU_UNLOAD_VETOED;
+	}
+
+	int irqs = 0, mmio = 0, leaked_pages = 0;
+	AuResource* r = (AuResource*)drv->resources;
+	drv->resources = 0;
+	while (r) {
+		AuResource* next = r->next;
+		switch (r->kind) {
+		case AU_RES_IRQ_SPI:
+			GICClearSPIHandler((int)r->value);
+			irqs++;
+			break;
+		case AU_RES_MMIO:
+			AuFreePages(r->value, false, (size_t)r->extra2 * 4096);
+			mmio++;
+			break;
+		case AU_RES_PHYS_PAGE:
+			leaked_pages++;
+			break;
+		case AU_RES_PHYS_RUN:
+			leaked_pages += (int)r->extra;
+			break;
+		}
+		kfree(r);
+		r = next;
+	}
+
+	uint64_t base = drv->new_load_base;
+	size_t pages = drv->region_pages;
+	drv->present = false;
+	drv->entry = 0;
+	drv->unload = 0;
+	drv->flags = 0;
+	AuFreePages(base, true, pages * 4096);
+	AuDrvRegionFree(base, pages);
+	drv->new_load_base = 0;
+	drv->region_pages = 0;
+	UARTDebugOut("[audrv]: unloaded %s: image %x (%d pages) freed, %d irq cleared, %d mmio unmapped, %d page(s) leaked\r\n",
+				 drv->name, base, (int)pages, irqs, mmio, leaked_pages);
+	return AU_UNLOAD_OK;
+}
+
+int AuDriverUnloadByName(const char* name) {
+	return AuDriverUnload(AuDriverLookup(name, false));
+}
+
+/**
+ * @brief AuDriverLoadByName -- (re)load a driver that is not currently
+ * loaded, then run its AuDriverMain. Returns 0 on success.
+ */
+int AuDriverLoadByName(const char* name) {
+	AuDriver* drv = AuDriverLookup(name, true);
+	if (!drv)
+		return -1;
+	if (drv->present)
+		return -2;
+	AuDriverLoad(drv->name, drv);
+	if (!drv->present || !drv->entry)
+		return -3;
+	return drv->entry(drv);
+}
+
+bool AuDriverClaimsPci(int bus, int dev, int func) {
+	for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++) {
+		AuDriver* d = drivers[i];
+		if (d && d->present && d->bus == bus && d->dev == dev && d->func == func)
+			return true;
+	}
+	return AuBuiltinClaimsPci(bus, dev, func);
+}
+
+static void AuDriverCtlListBuiltin(const char* name, bool bound, int bus, int dev, int func) {
+	UARTDebugOut("[drvctl]: %s %s (built-in) %x:%x.%x\r\n", name, bound ? "bound" : "released", bus, dev, func);
+}
+
+/* ---- /dev/drvctl: write "unload NAME", "load NAME" or "list" ---- */
+static size_t AuDriverCtlWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	(void)fsys; (void)file;
+	if (!AuHwdevCallerAllowed(AuHwdevCurrentProcess())) {
+		UARTDebugOut("[drvctl]: denied (caller not in the daemons group)\r\n");
+		return 0;
+	}
+	char cmd[96];
+	size_t n = length < sizeof(cmd) - 1 ? length : sizeof(cmd) - 1;
+	memcpy(cmd, buffer, n);
+	cmd[n] = 0;
+	while (n && (cmd[n - 1] == '\n' || cmd[n - 1] == '\r' || cmd[n - 1] == ' '))
+		cmd[--n] = 0;
+
+	if (strncmp(cmd, "unload ", 7) == 0) {
+		int rc = AuDriverUnloadByName(cmd + 7);
+		if (rc == AU_UNLOAD_NOT_FOUND)               /* not a loadable driver: try the built-ins */
+			rc = AuBuiltinUnload(cmd + 7);
+		UARTDebugOut("[drvctl]: unload %s -> %d\r\n", cmd + 7, rc);
+	} else if (strncmp(cmd, "load ", 5) == 0) {
+		int rc = AuDriverLoadByName(cmd + 5);
+		if (rc == -1)
+			rc = AuBuiltinLoad(cmd + 5);
+		UARTDebugOut("[drvctl]: load %s -> %d\r\n", cmd + 5, rc);
+	} else if (strcmp(cmd, "list") == 0) {
+		for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++) {
+			AuDriver* d = drivers[i];
+			if (d)
+				UARTDebugOut("[drvctl]: %s %s base=%x ref=%d unloadable=%d\r\n", d->name,
+							 d->present ? "loaded" : "unloaded", d->new_load_base,
+							 d->refcount, (d->flags & AU_DRV_FLAG_UNLOADABLE) ? 1 : 0);
+		}
+		AuBuiltinList(AuDriverCtlListBuiltin);
+	} else {
+		UARTDebugOut("[drvctl]: unknown command '%s'\r\n", cmd);
+	}
+	return length;
+}
+
+void AuDriverCtlInitialize(void) {
+	AuVFSNode* fsys = AuVFSFind("/dev");
+	if (!fsys)
+		return;
+	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	memset(node, 0, sizeof(AuVFSNode));
+	strcpy(node->filename, "drvctl");
+	node->flags = FS_FLAG_DEVICE;
+	node->uid = 0;
+	/* privileged: the daemons group, like hwdev and sndsrv, so OpenFile refuses an
+	 * ordinary process outright instead of relying on the handler's own check */
+	node->gid = AuCredGetGroupID(AURORA_GID_MISC_DAEMONS);
+	node->device = fsys;
+	node->write = AuDriverCtlWrite;
+	AuDevFSAddFile(fsys, "/", node);
+}
+
+#ifdef __XENEVA_DRV_SELFTEST__
+extern AuSound* _cards[];
+static int AuSelftestCards(void) {
+	int n = 0;
+	for (int i = 0; i < 256; i++)
+		if (_cards[i])
+			n++;
+	return n;
+}
+
+static void AuSelftestLedger(AuDriver* d, int* irq, int* page, int* run, int* mmio) {
+	*irq = *page = *run = *mmio = 0;
+	for (AuResource* r = (AuResource*)d->resources; r; r = r->next) {
+		if (r->kind == AU_RES_IRQ_SPI) (*irq)++;
+		else if (r->kind == AU_RES_PHYS_PAGE) (*page)++;
+		else if (r->kind == AU_RES_PHYS_RUN) (*run)++;
+		else if (r->kind == AU_RES_MMIO) (*mmio)++;
+	}
+}
+
+/* Boot-time check of the whole path on a real driver (virtsnd): unload it,
+ * confirm the card is gone and its address range is free, reload it, confirm
+ * it came back at the same address. Results go to the serial log. */
+void AuDriverSelfTest(void) {
+	int failures = 0;
+	AuDriver* d = AuDriverLookup("virtsnd", false);
+	if (!d) {
+		UARTDebugOut("[drvtest] SKIP: virtsnd not loaded\r\n");
+		return;
+	}
+	uint64_t base0 = d->new_load_base;
+	size_t pages0 = d->region_pages;
+	int cards0 = AuSelftestCards();
+	UARTDebugOut("[drvtest] before: base=%x pages=%d cards=%d flags=%x\r\n", base0, (int)pages0, cards0, d->flags);
+	int li, lp, lr, lm;
+	AuSelftestLedger(d, &li, &lp, &lr, &lm);
+	UARTDebugOut("[drvtest] ledger: irq=%d page=%d run=%d mmio=%d (virtsnd allocates 3 pages + 3 mmio aliases => wrappers must be live)\r\n", li, lp, lr, lm);
+	if (lp < 3 || lm < 3) {
+		UARTDebugOut("[drvtest] FAIL: import tracking not active\r\n");
+		failures++;
+	}
+	AuDriver* nb = AuDriverLookup("virtblk", false);
+	if (nb) {
+		int nrc = AuDriverUnload(nb);
+		UARTDebugOut("[drvtest] driver without opt-in (%s) -> %d (expect %d NOT_OPTED)\r\n", nb->name, nrc, AU_UNLOAD_NOT_OPTED);
+		if (nrc != AU_UNLOAD_NOT_OPTED || !nb->present) failures++;
+	}
+
+	AuDriverRef(d);
+	int rc = AuDriverUnload(d);
+	UARTDebugOut("[drvtest] unload while referenced -> %d (expect %d BUSY)\r\n", rc, AU_UNLOAD_BUSY);
+	if (rc != AU_UNLOAD_BUSY) failures++;
+	AuDriverUnref(d);
+
+	rc = AuDriverUnload(d);
+	UARTDebugOut("[drvtest] unload -> %d (expect 0)\r\n", rc);
+	if (rc != AU_UNLOAD_OK) failures++;
+	int cards1 = AuSelftestCards();
+	UARTDebugOut("[drvtest] after unload: present=%d cards=%d (expect %d)\r\n", d->present, cards1, cards0 - 1);
+	if (d->present || cards1 != cards0 - 1) failures++;
+	if (AuGetPhysicalAddress(base0)) {
+		UARTDebugOut("[drvtest] FAIL: old image still mapped\r\n");
+		failures++;
+	}
+
+	rc = AuDriverLoadByName("virtsnd");
+	UARTDebugOut("[drvtest] reload -> %d (expect 0)\r\n", rc);
+	if (rc != 0) failures++;
+	int cards2 = AuSelftestCards();
+	UARTDebugOut("[drvtest] after reload: present=%d base=%x (was %x) cards=%d (expect %d)\r\n",
+				 d->present, d->new_load_base, base0, cards2, cards0);
+	if (!d->present || d->new_load_base != base0 || cards2 != cards0) failures++;
+
+	UARTDebugOut("[drvtest] %s (%d failure(s))\r\n", failures ? "FAIL" : "PASS", failures);
+}
+#endif

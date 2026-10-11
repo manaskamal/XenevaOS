@@ -220,6 +220,21 @@ int main(int argc, char* argv[]) {
 		_KeCloseFile(fd);
 	}
 
+	/* privileged device nodes belong to the daemons group; an ordinary process (this
+	 * one has world only) must be refused even when it asks for a write-mode open,
+	 * which used to skip the permission check entirely */
+	{
+		static const char* priv[] = {"/dev/hwdev", "/dev/drvctl", "/dev/sndsrv"};
+		for (int k = 0; k < 3; k++) {
+			char what[64];
+			sprintf(what, "%s refuses an ordinary process (write open)", priv[k]);
+			int pfd = _KeOpenFile((char*)priv[k], FILE_OPEN_WRITE);
+			report(what, pfd < 0, 1);
+			if (pfd >= 0)
+				_KeCloseFile(pfd);
+		}
+	}
+
 	{
 		char line[168];
 		sprintf(line, "[dcltest] SUMMARY %d ok, %d failed\n", g_ok, g_bad);

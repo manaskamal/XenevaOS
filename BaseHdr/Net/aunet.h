@@ -107,7 +107,13 @@ extern void AuInitialiseNet();
 * AuAddNetAdapter -- add a net adapter to the adapter
 * list
 */
-AU_EXTERN AU_EXPORT void AuAddNetAdapter(AuVFSNode* netfs,char* name);
+AU_EXTERN AU_EXPORT AuVFSNode* AuAddNetAdapter(AuVFSNode* netfs,char* name);
+
+/*
+* AuRemoveNetAdapter -- the driver behind an adapter is going away; the node
+* stays but goes dead (see aunet.c)
+*/
+AU_EXTERN AU_EXPORT int AuRemoveNetAdapter(char* name);
 /*
 * AuGetNetworkAdapter -- get a network adapter 
 * @param name -- adapter name

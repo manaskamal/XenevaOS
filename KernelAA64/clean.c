@@ -29,6 +29,7 @@
 *
 **/
 
+#include <Ipc/auipc.h>
 #include <aurora.h>
 #include <clean.h>
 #include <Drivers/uart.h>
@@ -77,6 +78,7 @@ void AuProcessClean(AuProcess* parent, AuProcess* killable) {
 	if (!AuProcessCanReap(killable))
 		return;
 	UARTDebugOut("[aurora-clean]: killing process : %s \r\n", killable->name);
+	AuIpcProcessGone(killable);
 	AuSHMUnmapAll(killable);
 	AA64Thread* main_thr = killable->main_thread;
 	for (int i = 0; i < killable->num_thread; ++i) {

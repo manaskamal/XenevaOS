@@ -23,6 +23,10 @@ set -e
 #   --unikernel             One-process XR shell: DeodhaiXR links XELnch and
 #                           Namdapha as threads instead of LoadExec. Does not
 #                           merge the kernel. Requires a userspace rebuild.
+#   --static-components     Kernel-side unikernel: the virtio drivers (net, gpu,
+#                           sound, blk) are linked into the kernel image instead
+#                           of loaded from .dll files. LLVM only. They stay
+#                           resident (no drvctl unload, no user-space servers).
 #   --openxr                DeodhaiXR emits OpenXR (QEMU SBS runtime). Pair with
 #                           Tools/xeneva-xr-view and WiVRn for Quest 2.
 #   -xr-demo, --xr-demo     Open the modular XR demo TUI. Defaults enable EGL,
@@ -123,6 +127,7 @@ DEBUG_ALLOC=0
 SOAK=0
 DIRECT_SCANOUT=0
 UNIKERNEL=0
+STATIC_COMPONENTS=${STATIC_COMPONENTS:-0}   # --static-components: virtio drivers linked into the kernel
 OPENXR=0
 XR_DEMO=0
 XR_DEMO_MENU=0
@@ -400,6 +405,7 @@ while [ $# -gt 0 ]; do
 		--soak) SOAK=1 ;;
 		--direct-scanout) DIRECT_SCANOUT=1 ;;
 		--unikernel) UNIKERNEL=1 ;;
+		--static-components) STATIC_COMPONENTS=1 ;;
 		--openxr) OPENXR=1 ;;
 		-xr-demo|--xr-demo) OPENXR=1; XR_DEMO=1; XR_DEMO_MENU=1 ;;
 		--xr-demo-defaults) OPENXR=1; XR_DEMO=1 ;;
@@ -801,7 +807,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -812,22 +818,32 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
 
     # Build external drivers (requires kernel to be built first for KernelAA64.lib)
     if [ "$TOOLCHAIN" == llvm ]; then
+        if [ "$STATIC_COMPONENTS" -eq 1 ]; then
+            # unikernel profile: virtnet/virtgpu/virtsnd/virtblk are linked into the
+            # kernel; make sure no stale .dll could shadow them in the image
+            echo "[+] Static components: virtio drivers are part of the kernel image, not packed as .dll files."
+            rm -f "$REPO_ROOT/Resources/resources/virtnet.dll" "$REPO_ROOT/Resources/resources/virtgpu.dll" \
+                  "$REPO_ROOT/Resources/resources/virtsnd.dll" "$REPO_ROOT/Resources/resources/virtblk.dll"
+        else
         echo "[+] Building external drivers..."
         ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
-        ( cd "$REPO_ROOT/Drivers/Net/wifi" && make clean && make )
-        cp -f "$REPO_ROOT/Drivers/Net/wifi/wifi.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
         ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
         cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
+        fi
+        ( cd "$REPO_ROOT/Drivers/Net/wifi" && make clean && make )
+        cp -f "$REPO_ROOT/Drivers/Net/wifi/wifi.dll" "$REPO_ROOT/Resources/resources/"
         echo "[+] External drivers built and deployed."
     fi
 
     # virtio-blk storage driver (virtblk.dll). Its Makefile is clang-only, so
     # build it whenever clang++ exists, independent of $TOOLCHAIN: without it
     # the persistent data disk attaches but is never mounted. --axiss
-    if command -v clang++ >/dev/null 2>&1; then
+    if [ "$STATIC_COMPONENTS" -eq 1 ]; then
+        echo "[+] virtblk is a static component; no virtblk.dll."
+    elif command -v clang++ >/dev/null 2>&1; then
         echo "[+] Building virtio-blk storage driver..."
         ( cd "$REPO_ROOT/Drivers/virtioblk" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/virtioblk/virtblk.dll" "$REPO_ROOT/Resources/resources/"
@@ -1041,7 +1057,7 @@ QEMU_ARGS=(
     -drive file=fat.img,format=raw,if=none,id=blk0
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0,ipv4=on,net=10.0.2.0/24,host=10.0.2.2,dhcpstart=10.0.2.15,dns=10.0.2.3,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
-    -device virtio-net-pci,netdev=net0
+    -device virtio-net-pci,netdev=net0${NETSRV:+,disable-legacy=on}     # NETSRV=1: modern-only so it is 1af4:1041 (the hwdev allowlist id)
     -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
     -monitor unix:/tmp/xeneva-mon.sock,server,nowait
     # Register virtio-gpu first so QEMU's VNC server follows the display the
@@ -1308,6 +1324,14 @@ if [ "$XR_DEMO" -eq 1 ]; then
         fi
     fi
     exit "$child_status"
+fi
+
+# Extra QEMU options, for tests that need more than the defaults, e.g. a QMP socket to
+# inject absolute pointer events from the host (the human monitor can only do relative):
+#   XENEVA_QEMU_EXTRA_ARGS='-qmp unix:/tmp/xeneva-qmp.sock,server=on,wait=off'
+if [ -n "${XENEVA_QEMU_EXTRA_ARGS:-}" ]; then
+    read -r -a extra_qemu_args <<<"${XENEVA_QEMU_EXTRA_ARGS}"
+    QEMU_ARGS+=("${extra_qemu_args[@]}")
 fi
 
 if [ "$HEADLESS" -eq 1 ]; then

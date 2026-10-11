@@ -40,6 +40,7 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
 #include <string.h>
+#include <aubuiltin.h>
 
 struct VirtioQueue* TabletQueue;
 uint16_t tabletIndex;
@@ -57,6 +58,30 @@ int buttonScrollUp;
 int buttonScrollDown;
 struct VirtioInputEvent* TabletInput;
 static struct VirtioCommonCfg* _tabletCfg;
+static int _tabletSpi = -1;
+static uint64_t _tabletDevice;
+static int _tabletBus, _tabletDev, _tabletFunc;
+void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func);
+extern void AuGICDeallocateSPI(int spiID);
+
+/* see AuVirtioKbdRelease: reset the device, drop its interrupt */
+static void AuVirtioTabletRelease(void) {
+	if (!_tabletCfg)
+		return;
+	_tabletCfg->DeviceStatus = 0;
+	isb_flush();
+	dsb_ish();
+	if (_tabletSpi >= 0) {
+		GICClearSPIHandler(_tabletSpi);
+		AuGICDeallocateSPI(_tabletSpi);
+		_tabletSpi = -1;
+	}
+	_tabletCfg = 0;
+}
+
+static void AuVirtioTabletReinit(void) {
+	AuVirtioTabletInitialize(_tabletDevice, _tabletBus, _tabletDev, _tabletFunc);
+}
 
 #define MOUSE_LEFT_CLICK		0x01
 #define MOUSE_RIGHT_CLICK		0x02
@@ -122,6 +147,13 @@ void AuVirtioTabletHandler(int spiNum) {
 				(buttonMiddle ? MOUSE_MIDDLE_CLICK : 0) |
 				(buttonScrollDown ? MOUSE_SCROLL_DOWN : 0) | (buttonScrollUp ? MOUSE_SCROLL_UP : 0);
 
+			{
+				static uint32_t dbg_ptr;
+				if (dbg_ptr < 8) {
+					dbg_ptr++;
+					UARTDebugOut("[virtio-tablet]: kernel driver pointer %d,%d buttons %x\r\n", mouseX, mouseY, newmsg.button_state);
+				}
+			}
 			AuDevWriteMice(&newmsg);
 			buttonScrollDown = buttonScrollUp = 0;
 		}
@@ -207,6 +239,11 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	dsb_ish();
 
 	int spiID = AuGICAllocateSPI();
+	_tabletSpi = spiID;
+	_tabletDevice = device;
+	_tabletBus = bus;
+	_tabletDev = dev;
+	_tabletFunc = func;
 	UARTDebugOut("VIRTIO Tablet SPI ID: %d \n", spiID);
 	if (AuPCIEAllocMSI(device, spiID, bus, dev, func)) {
 		UARTDebugOut("VIRTIO Tablet MSI allocated \n");
@@ -226,9 +263,11 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	tabletQueueSz = common->QueueSize;
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000);
-	memset((void*)queuePhys, 0, 0x1000);
 	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
 		queuePhys, 1 /*((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000*/);
+	/* zero through the kernel mapping: queuePhys is physical and is not
+	 * reachable by identity when a user process's page tables are active */
+	memset((void*)TabletQueue, 0, 0x1000);
 	UARTDebugOut("Queue Phys : %x \r\n", queuePhys);
 	UARTDebugOut("Queue Size : %d \r\n", tabletQueueSz);
 
@@ -272,4 +311,5 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	resY = AuConsoleGetScreenHeight();
 	buttonLeft = buttonMiddle = buttonRight = buttonScrollDown = buttonScrollUp = 0;
 	mouseX = mouseY = 0;
+	AuBuiltinRegister("virtio-tablet", bus, dev, func, AuVirtioTabletRelease, AuVirtioTabletReinit);
 }

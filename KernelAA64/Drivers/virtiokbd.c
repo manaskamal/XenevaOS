@@ -40,12 +40,40 @@
 #include <Mm/vmmngr.h>
 #include <Hal/AA64/sched.h>
 #include <string.h>
+#include <aubuiltin.h>
 
 struct VirtioQueue* queue;
 struct VirtioInputEvent* input;
 static uint16_t index;
 static int queueSize;
 static struct VirtioCommonCfg* _kybrdCfg;
+/* what this driver bound, so it can be released and taken back (aubuiltin.h) */
+static int _kbdSpi = -1;
+static uint64_t _kbdDevice;
+static int _kbdBus, _kbdDev, _kbdFunc;
+void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func);
+extern void AuGICDeallocateSPI(int spiID);
+
+/* Let go of the keyboard: reset the device (it stops DMA and events), stop routing
+ * its interrupt here and give the number back. The queue pages stay allocated and
+ * are not reused; a reinit makes new ones. */
+static void AuVirtioKbdRelease(void) {
+	if (!_kybrdCfg)
+		return;
+	_kybrdCfg->DeviceStatus = 0;
+	isb_flush();
+	dsb_ish();
+	if (_kbdSpi >= 0) {
+		GICClearSPIHandler(_kbdSpi);
+		AuGICDeallocateSPI(_kbdSpi);
+		_kbdSpi = -1;
+	}
+	_kybrdCfg = 0;
+}
+
+static void AuVirtioKbdReinit(void) {
+	AuVirtioKbdInitialize(_kbdDevice, _kbdBus, _kbdDev, _kbdFunc);
+}
 /* temporary input-freeze diagnostics counter */
 volatile uint32_t kbd_dbg_irqs;
 
@@ -84,6 +112,14 @@ void AuVirtioKbdHandler(int spinum) {
 		isb_flush();
 		dsb_sy_barrier();
 		if (evt.type == 1) {
+			{
+				/* a few lines, so a serial log shows which driver is handling input */
+				static uint32_t dbg_keys;
+				if (dbg_keys < 8) {
+					dbg_keys++;
+					UARTDebugOut("[virtio-keyboard]: kernel driver got key code %d value %d\r\n", evt.code, evt.value);
+				}
+			}
 			/* Linux KEY_ENTER=28, KEY_KPENTER=96 */
 			if (evt.code == 28 || evt.code == 96) {
 				uint8_t scancode = 0x1c;
@@ -188,6 +224,11 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	UARTDebugOut("VIRTIO Keyboard Name : %s \n", kbd_name);
 
 	int spiID = AuGICAllocateSPI();
+	_kbdSpi = spiID;
+	_kbdDevice = device;
+	_kbdBus = bus;
+	_kbdDev = dev;
+	_kbdFunc = func;
 	UARTDebugOut("VIRTIO Keyboard SPI ID: %d \n", spiID);
 	if (AuPCIEAllocMSI(device, spiID, bus, dev, func)) {
 		UARTDebugOut("VIRTIO Keyboard MSI allocated \n");
@@ -225,10 +266,12 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 
 	uint64_t queuePhys = (uint64_t)
 		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	memset((void*)queuePhys, 0, 0x1000);
 	
 	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
+	/* zero through the kernel mapping: queuePhys is physical and is not
+	 * reachable by identity when a user process's page tables are active */
+	memset((void*)queue, 0, 0x1000);
 
 	size_t desc_size = queueSz * sizeof(struct VirtioQueue);
 	common->QueueSelect = 0;
@@ -264,4 +307,5 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	queue->available.index = (uint16_t)queueSz;
 	isb_flush();
 	dsb_ish();
+	AuBuiltinRegister("virtio-kbd", bus, dev, func, AuVirtioKbdRelease, AuVirtioKbdReinit);
 }
