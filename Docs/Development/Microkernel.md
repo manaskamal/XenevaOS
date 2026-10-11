@@ -110,6 +110,31 @@ Each item is its own multi-stage project:
 * Server wake-up latency is up to one scheduler tick.
 * One IRQ per hwdev handle.
 
+## Demo: kill a driver, watch it come back
+
+```
+NETSRV=1 SVCTEST=netrestart QEMU_TIMEOUT=150 \
+  Scripts/Linux/build_and_run_qemu.sh --llvm --bleed --headless | grep -a -E '>>>|nettest|svcmgr'
+```
+
+`netsrv` (the virtio-net driver, a user-space process) crashes on purpose after a
+few seconds while `nettest` keeps pinging the gateway. `svcmgr` prints what it is
+doing, each stage marked `>>>`:
+
+```
+[svcmgr] netsrv (pid 7) is gone after 18643 ms
+[svcmgr] >>> netsrv is DOWN, the rest of the system keeps running; supervisor is recovering it
+[svcmgr] >>> netsrv will RESTART automatically in 200 ms (attempt 1 of 3)
+[svcmgr] started netsrv pid=13 (start #2)
+[svcmgr] >>> netsrv is BACK (pid 13), service restored after 206 ms of downtime
+```
+
+Variants: `SVCTEST=netfallback` (crash loop, then the driver is handed back to the
+in-kernel `virtnet.dll` and traffic still flows), `SVCTEST=restart|fallback` for
+the sound server, `SRVTEST=1` for a user-space file system that survives its
+server dying. The reported downtime runs from noticing the death to launching the
+new process; it does not include the new server's own device setup.
+
 ## Testing
 
 `Scripts/Linux/build_and_run_qemu.sh --llvm --bleed --headless` with:

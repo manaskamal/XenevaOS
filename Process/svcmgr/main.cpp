@@ -279,6 +279,7 @@ static void service_loop(Service* s) {
 	}
 	s->window_start = _KeGetCurrentMS();
 	s->cooldown_cur_ms = s->cooldown_ms;
+	uint64_t down_at = 0;
 
 	for (;;) {
 		uint64_t up_since = _KeGetCurrentMS();
@@ -287,6 +288,9 @@ static void service_loop(Service* s) {
 		uint64_t now = _KeGetCurrentMS();
 		sprintf(line, "[svcmgr] %s (pid %d) is gone after %u ms\n", s->name, s->pid, (unsigned)(now - up_since));
 		emit(line);
+		sprintf(line, "[svcmgr] >>> %s is DOWN, the rest of the system keeps running; supervisor is recovering it\n", s->name);
+		emit(line);
+		down_at = now;
 
 		if (now - up_since >= s->stable_ms) {       /* it ran long enough to be forgiven */
 			s->crashes = 0;
@@ -303,6 +307,8 @@ static void service_loop(Service* s) {
 					s->name, s->crashes, (unsigned)(s->window_ms / 1000));
 			emit(line);
 			if (s->handback[0]) {
+				sprintf(line, "[svcmgr] >>> %s keeps failing: FALLING BACK to the in-kernel driver so the device stays usable\n", s->name);
+				emit(line);
 				char cmds[72];
 				strncpy(cmds, s->handback, sizeof cmds - 1);
 				cmds[sizeof cmds - 1] = 0;
@@ -331,12 +337,21 @@ static void service_loop(Service* s) {
 			emit(line);
 		} else {
 			unsigned delay = BACKOFF_BASE_MS << (s->crashes - 1);
-			sprintf(line, "[svcmgr] %s: restart %u/%u in %u ms\n", s->name, s->crashes, s->max_restarts, delay);
+			sprintf(line, "[svcmgr] >>> %s will RESTART automatically in %u ms (attempt %u of %u)\n",
+					s->name, delay, s->crashes, s->max_restarts);
 			emit(line);
 			sleep_ms(delay);
 		}
-		if (start_service(s) < 0)
-			s->pid = -1, sleep_ms(1000);
+		if (start_service(s) < 0) {
+			s->pid = -1;
+			sprintf(line, "[svcmgr] >>> %s restart FAILED, retrying in 1000 ms\n", s->name);
+			emit(line);
+			sleep_ms(1000);
+		} else {
+			sprintf(line, "[svcmgr] >>> %s is BACK (pid %d), service restored after %u ms of downtime\n",
+					s->name, s->pid, (unsigned)(_KeGetCurrentMS() - down_at));
+			emit(line);
+		}
 	}
 }
 
