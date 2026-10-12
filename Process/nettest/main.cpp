@@ -11,6 +11,7 @@
 #include <_xeneva.h>
 #include <stdio.h>
 #include <sys/_keproc.h>
+#include <sys/_kefile.h>
 #include <sys/_ketime.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -51,11 +52,6 @@ int main(int argc, char* argv[]) {
 			_KePrint("[nettest] sleep(%d ms) took %d ms\r\n", (int)ms[i], (int)dt);
 		}
 	}
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
-	if (sock < 0) {
-		_KePrint("[nettest] cannot create an ICMP socket\r\n");
-		return 1;
-	}
 	sockaddr_in dest;
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
@@ -64,6 +60,15 @@ int main(int argc, char* argv[]) {
 	char* data = (char*)malloc(4096);
 	_KePrint("[nettest] started, probing 10.0.2.2\r\n");
 	for (unsigned seq = 1;; seq++) {
+		/* the kernel has exactly one ICMP socket for the whole system, so I only hold it
+		 * for the length of one probe; a long-lived socket here makes the shell's own
+		 * ping fail with "failed to create socket" --axiss */
+		int sock = socket(AF_INET, SOCK_DGRAM, IPPROTOCOL_ICMP);
+		if (sock < 0) {
+			_KePrint("[nettest] seq %d busy (ICMP socket in use)\r\n", (int)seq);
+			sleep(2);
+			continue;
+		}
 		memset(ping, 0, ECHO_BYTES);
 		ping->type = 8;
 		ping->identifier = htons(0x4E54);
@@ -87,6 +92,7 @@ int main(int argc, char* argv[]) {
 					_KeProcessSleep(1);
 			}
 		}
+		_KeCloseFile(sock);
 		_KePrint("[nettest] seq %d %s\r\n", (int)seq, got ? "reply" : (sent < 0 ? "send-failed" : "timeout"));
 		sleep(2);
 	}
