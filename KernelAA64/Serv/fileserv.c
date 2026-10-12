@@ -436,6 +436,19 @@ int CloseFile(int fd) {
 		return 0;
 	}
 
+	if (file->flags & FS_FLAG_SOCKET) {
+		/* close() on a socket fd used to fall through to the -1 below, so a socket
+		 * lived until its process exited. That matters for ICMP, where the whole
+		 * system has one socket slot: a process that closed its socket never gave
+		 * the slot back. The close hooks free the node themselves (process exit
+		 * relies on the same), so I clear the fd first and never touch file again --axiss */
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		if (file->close)
+			file->close(file, file);
+		return 0;
+	}
+
 	/* flags matched none of the known types above, this used to just
 	 * fall off the end of the function with no return --axiss */
 	return -1;
