@@ -30,6 +30,7 @@
 **/
 
 #include <pcie.h>
+#include <audrv.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/gic.h>
 #include <Fs/Dev/devinput.h>
@@ -413,7 +414,7 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 	nic->write = AuVirtioWrite;
 	nic->iocontrol = AuVirtioNetIOCtl;
 	nic->device = ndev;
-	AuAddNetAdapter(nic, "e1000");
+	nic = AuAddNetAdapter(nic, "e1000");
 	{
 		AuVFSNode* alias = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		memset(alias, 0, sizeof(AuVFSNode));
@@ -422,7 +423,7 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 		alias->write = AuVirtioWrite;
 		alias->iocontrol = AuVirtioNetIOCtl;
 		alias->device = ndev;
-		AuAddNetAdapter(alias, "virtio-net");
+		alias = AuAddNetAdapter(alias, "virtio-net");
 		AuNetAddConnectedRoute4(alias, "virtio-net");
 		AuNetAddDefaultRoute4(alias, "virtio-net");
 		AuNetAddConnectedRoute6(alias, "virtio-net");
@@ -436,9 +437,29 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 * AuDriverUnload -- deattach the driver from
 * aurora system
 */
+AU_DRIVER_FLAGS(AU_DRV_FLAG_UNLOADABLE);
+
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	/* 1. stop the kernel from calling into this image */
+	AuNetRegisterRxPoll(0);
+	AuWifiPortalSetTx(0);
+	AuRemoveNetAdapter((char*)"virtio-net");     /* frees the node */
+	AuRemoveNetAdapter((char*)"e1000");
+	nic = 0;
+	/* 2. reset the device so it stops touching our buffers */
 	if (netDev.common)
 		netDev.common->DeviceStatus = 0;
+	isb_flush();
+	dsb_ish();
+	/* queue memory and the interrupt are released by the loader's ledger */
+	rx_qsize = tx_qsize = 0;
+	rx_used = 0; rx_avail = 0; rx_desc = 0; rx_buf_virt = 0;
+	tx_used = 0; tx_avail = 0; tx_desc = 0; tx_buf_virt = 0;
+	if (ndev) {
+		kfree(ndev);
+		ndev = 0;
+	}
+	memset(&netDev, 0, sizeof(netDev));
 	return 0;
 }
 

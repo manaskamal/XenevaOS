@@ -333,7 +333,13 @@ static int snd_tx(uint32_t len) {
 	dsb_ish();
 	AuVirtioPCINotifyQueue(&snd_dev, 2);
 	/* QEMU returns the buffer only after the host has played one period. */
-	return queue_wait(tx_used, tx_qsz, &tx_used_idx, 200000000);
+	int wrc = queue_wait(tx_used, tx_qsz, &tx_used_idx, 200000000);
+	static bool first_tx_logged = false;
+	if (!wrc && !first_tx_logged) {
+		first_tx_logged = true;
+		UARTDebugOut("[virtio-snd]: first tx status %x (8000 = OK) \r\n", st->status);
+	}
+	return wrc;
 }
 
 static int snd_pcm_set_params(void) {
@@ -358,14 +364,34 @@ static int snd_pcm_simple(uint32_t code) {
 	return snd_ctrl(sizeof(*pcm), sizeof(virtio_snd_hdr));
 }
 
+/* Opt in to runtime unloading (see audrv.h): AuDriverUnload below undoes every
+ * kernel-visible registration this driver makes. */
+AU_DRIVER_FLAGS(AU_DRV_FLAG_UNLOADABLE);
+
+static AuSound* g_ausnd = 0;
+
 /*
 * AuDriverUnload -- deattach the driver from
-* aurora system
+* aurora system. Returning non-zero vetoes the unload. Bound audio clients
+* are detached by AuSoundUnregisterCard, not treated as a reason to refuse.
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	/* 1. stop the kernel from calling into this image */
+	if (g_ausnd) {
+		if (AuSoundUnregisterCard(g_ausnd) != 0)
+			return 1;
+		kfree(g_ausnd);
+		g_ausnd = 0;
+	}
+	dev_ready = false;
+	_output_running = false;
+	/* 2. reset the device so it stops touching our buffers */
 	if (snd_dev.common)
 		snd_dev.common->DeviceStatus = 0;
-	dev_ready = false;
+	/* 3. give back the command pages (the kernel also drops their MMIO alias) */
+	if (cmd_phys)  { AuPmmngrReleasePage(cmd_phys);  cmd_phys = 0;  cmd_virt = 0; }
+	if (resp_phys) { AuPmmngrReleasePage(resp_phys); resp_phys = 0; resp_virt = 0; }
+	if (pcm_phys)  { AuPmmngrReleasePage(pcm_phys);  pcm_phys = 0;  pcm_virt = 0; }
 	return 0;
 }
 
@@ -517,7 +543,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	output_stream = 0;
 	for (i = 0; i < (int)n_streams; i++) {
 		UARTDebugOut("[virtio-snd]: stream %d dir %d \r\n", i, pcm[i].directions);
-		if (pcm[i].directions & 1) {
+		/* virtio-snd spec: this field is a direction ENUM (D_OUTPUT = 0,
+		 * D_INPUT = 1), not a bitmask. `& 1` selected the INPUT stream, and
+		 * the device rejected every playback buffer with BAD_MSG. */
+		if (pcm[i].directions == 0) {
 			output_stream = (uint32_t)i;
 			break;
 		}
@@ -552,6 +581,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 		dev_ready = false;
 		return 1;
 	}
+	g_ausnd = ausnd;
 	UARTDebugOut("[virtio-snd]: initialized successfully \r\n");
 	return 0;
 }

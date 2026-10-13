@@ -2,6 +2,11 @@
 #define __LINUX_LIST_H__
 
 #include <_null.h>
+#if !defined(__cplusplus)
+/* Xeneva's list_add(list_t*, void*) must be declared before the list_add
+ * dispatch macro below, whichever header a file includes first. */
+#include <list.h>
+#endif
 
 struct list_head {
 	struct list_head *next, *prev;
@@ -84,10 +89,20 @@ static inline void INIT_LIST_HEAD(struct list_head* list)
 	list->prev = list;
 }
 
-static inline void list_add(struct list_head* new, struct list_head* head)
+static inline void linux_list_add(struct list_head* new, struct list_head* head)
 {
 	__list_add(new, head, head->next);
 }
+
+/*
+ * Xeneva's own BaseHdr/list.h already exports list_add(list_t*, void*). Keep
+ * both APIs: dispatch on the second argument's type. Inside the macro body the
+ * name list_add is not re-expanded, so the default branch is the real function.
+ */
+#if !defined(__cplusplus)
+#define list_add(new, head) \
+	_Generic((head), struct list_head*: linux_list_add, default: list_add)((new), (head))
+#endif
 
 static inline void list_add_tail(struct list_head* new, struct list_head* head)
 {

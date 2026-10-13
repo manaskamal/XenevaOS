@@ -159,6 +159,8 @@ typedef struct _aa64_task_ {
 	uint64_t futex_uaddr;
 	uint32_t futex_bitset;
 	uint8_t futex_waiting;
+	/** absolute wake-up time (system us) of a sleeping thread; see AuSleepThread */
+	uint64_t sleep_until_us;
 } AA64Thread;
 
 //#pragma pack(pop)

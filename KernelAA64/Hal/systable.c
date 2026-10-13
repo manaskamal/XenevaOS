@@ -38,6 +38,7 @@
 #include <Serv/sysserv.h>
 #include <Serv/syscall.h>
 #include <process.h>
+#include <Fs/srvfs.h>
 #include <Mm/shm.h>
 #include <Mm/mmap.h>
 #include <aucon.h>
@@ -101,7 +102,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	[SYS_READ_FILE] = ReadFile,
 	[SYS_WRITE_FILE] = WriteFile,
 	[SYS_CREATE_DIR] = 0,
-	[SYS_REMOVE_FILE] = 0,
+	[SYS_REMOVE_FILE] = RemoveFile,
 	[SYS_CLOSE_FILE] = CloseFile,
 	[SYS_FILE_IO_CONTROL] = FileIoControl,
 	[SYS_FILE_STAT] = FileStat,
@@ -328,7 +329,9 @@ skip_1:
 		UARTDebugOut("Enterring function x0: %x, x1 : %x \r\n", regs->x0, regs->x1);
 		UARTDebugOut("Current sp : %x \r\n", read_sp());
 	}
+	AuSrvfsSyscallEnter(currThr);
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
+	AuSrvfsSyscallExit(currThr);
 	regs->x0 = retcode;
 	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;
