@@ -52,35 +52,51 @@ extern AuVFSNode* __RootFS;
  * @param filename -- file path and name to look upon
  */
 AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
-	if (!fsys)
+	if (!fsys || !filename)
 		return NULL;
 	FatFS* _fs = (FatFS*)fsys->device;
-	AuVFSNode* parent = NULL;
-
-	AuVFSNode* retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	/* retfile gets memcpy'd into and dereferenced below with no NULL check,
-	 * on kmalloc exhaustion that was a guaranteed NULL deref and a
-	 * system crash --axiss */
-	if (!retfile)
+	if (!_fs)
 		return NULL;
 
-	char* path = (char*)filename;
-	char* p = strchr(path, '/');
+	AuVFSNode* retfile = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	if (!retfile)
+		return NULL;
+	memset(retfile, 0, sizeof(AuVFSNode));
+
+	/* Find last slash to separate parent directory from filename */
+	const char* last_slash = strrchr(filename, '/');
+	if (!last_slash || last_slash == filename) {
+		/* File is in root directory */
+		retfile->current = _fs->__RootDirFirstCluster;
+		retfile->first_block = _fs->__RootDirFirstCluster;
+		retfile->flags = FS_FLAG_DIRECTORY;
+		retfile->device = fsys;
+		return retfile;
+	}
+
+	/* Copy directory portion into dirpath buffer */
+	char dirpath[128];
+	size_t dirlen = (size_t)(last_slash - filename);
+	if (dirlen >= sizeof(dirpath)) {
+		kfree(retfile);
+		return NULL;
+	}
+	memcpy(dirpath, filename, dirlen);
+	dirpath[dirlen] = '\0';
+
+	char* p = strchr(dirpath, '/');
 	if (p)
 		p++;
 	bool is_root = true;
 
-	/* skip alphabet label. this ran unconditionally, so on a filename with
-	 * no '/' at all (p == NULL here) it walked p up to (char*)0x2 and the
-	 * while(p) loop below happily treated that garbage as a valid pointer
-	 * and dereferenced it --axiss */
 	if (fsys != __RootFS && p)
 		p += 2;
 
-	while (p) {
+	AuVFSNode* parent = NULL;
+	while (p && *p) {
 		char pathname[16];
 		int i = 0;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 			if (p[i] == '/' || p[i] == '\0')
 				break;
 			pathname[i] = p[i];
@@ -91,23 +107,38 @@ AuVFSNode* FatFileGetParent(AuVFSNode* fsys, const char* filename) {
 			parent = FatLocateDir(fsys, pathname);
 			if (!parent) {
 				kfree(retfile);
-				break;
+				return NULL;
 			}
 			is_root = false;
 		} else {
-			memcpy(retfile, parent, sizeof(AuVFSNode));
-			parent = FatLocateSubDir(fsys, parent, pathname);
-			if (!parent) {
-				parent = retfile;
-				parent->current = parent->first_block;
-				break;
+			AuVFSNode* next_dir = FatLocateSubDir(fsys, parent, pathname);
+			if (!next_dir) {
+				kfree(retfile);
+				return NULL;
 			}
+			parent = next_dir;
 		}
-		p = strchr(p + 1, '/');
-		if (p)
-			p++;
+
+		char* next_p = strchr(p, '/');
+		if (next_p)
+			p = next_p + 1;
+		else
+			break;
 	}
-	return parent;
+
+	if (parent) {
+		memcpy(retfile, parent, sizeof(AuVFSNode));
+		retfile->current = retfile->first_block;
+		kfree(parent);
+		return retfile;
+	}
+
+	/* Default fallback to root directory */
+	retfile->current = _fs->__RootDirFirstCluster;
+	retfile->first_block = _fs->__RootDirFirstCluster;
+	retfile->flags = FS_FLAG_DIRECTORY;
+	retfile->device = fsys;
+	return retfile;
 }
 /*
  * FatCreateFile -- Creates a blank file
@@ -187,6 +218,7 @@ AuVFSNode* FatCreateFile(AuVFSNode* fsys, char* filename) {
 
 					uint64_t sector = FatClusterToSector32(_fs, parent_cluster);
 
+					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, sector + j, 1, buff);
 
 					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
@@ -259,6 +291,7 @@ void FatFileUpdateSize(AuVFSNode* fsys, AuVFSNode* file, size_t size) {
 				 * and matches only by luck --axiss */
 				if (memcmp(fname, name, 11) == 0) {
 					dirent->file_size += size;
+					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_cluster) + j, 1, buff);
 					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					return;
@@ -367,6 +400,7 @@ void FatFileWriteContent(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer) {
 	 * alone misses the 0x0FFFFFFF terminator mkfs/mtools write --axiss */
 	if (!FAT_IS_EOC(cluster) && (cluster != (FAT_BAD_CLUSTER & 0x0fffffff))) {
 		memcpy(buff, buffer, PAGE_SIZE);
+		aa64_data_cache_clean_range(buff, PAGE_SIZE);
 		AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, cluster), _fs->__SectorPerCluster, buff);
 		file->pos++;
 	}
@@ -428,42 +462,55 @@ size_t FatWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t len
  * @param file -- Pointer to file
  */
 int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
-	if (!fsys)
-		return -1;
-	if (!file)
+	if (!fsys || !file)
 		return -1;
 
 	FatFS* _fs = (FatFS*)fsys->device;
+	if (!_fs || !_fs->vdisk)
+		return -1;
 
 	uint32_t dir_clust = file->parent_block;
 	if (!dir_clust) {
-		// If no parent directory, we can't clear the entry
 		UARTDebugOut("FatFileClearDirEntry: no parent directory %x \r\n", dir_clust);
-		return 1;
+		return -1;
 	}
+
+	const char* base = file->filename;
+	char* slash = strrchr(base, '/');
+	if (slash)
+		base = slash + 1;
 
 	char fname[11];
 	memset(fname, 0, 11);
-	FatToDOSFilename(file->filename, fname, 11);
-	//fname[11] = 0;
-	//SeTextOut("Dir clust -> %x \r\n", dir_clust);
-	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
-	memset(buff, 0, PAGE_SIZE);
+	FatToDOSFilename(base, fname, 11);
 
-	while (1) {
+	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	if (!buff)
+		return -1;
+
+	while (dir_clust >= 2 && (!(_fs->__TotalClusters) || dir_clust < _fs->__TotalClusters) && !FAT_IS_EOC(dir_clust)) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 			memset(buff, 0, PAGE_SIZE);
 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, buff);
 
 			FatDir* dirent = (FatDir*)buff;
 			for (int i = 0; i < 16; i++) {
-				char name[11];
-				memcpy(name, dirent->filename, 11);
-				//name[11] = 0;
-				if (strcmp(name, fname) == 0) {
-					memset(dirent, 0, sizeof(FatDir));
-					//SeTextOut("Dir clearing found \r\n");
+				if (dirent->filename[0] == 0x00) {
+					// End of directory entries
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
+					return -1;
+				}
+				if ((uint8_t)dirent->filename[0] == 0xE5) {
+					dirent++;
+					continue;
+				}
+				if ((dirent->attrib & FAT_ATTRIBUTE_LONG_NAME) == FAT_ATTRIBUTE_LONG_NAME) {
+					dirent++;
+					continue;
+				}
+				if (memcmp(dirent->filename, fname, 11) == 0) {
 					dirent->filename[0] = 0xE5;
+					aa64_data_cache_clean_range(buff, PAGE_SIZE);
 					AuVDiskWrite(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, buff);
 					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 					return 0;
@@ -472,47 +519,47 @@ int FatFileClearDirEntry(AuVFSNode* fsys, AuVFSNode* file) {
 			}
 		}
 
-		dir_clust = FatReadFAT(fsys, dir_clust);
-		if (FAT_IS_EOC(dir_clust))
+		uint32_t next_dir_clust = FatReadFAT(fsys, dir_clust);
+		if (FAT_IS_EOC(next_dir_clust) || next_dir_clust < 2)
 			break;
+		dir_clust = next_dir_clust;
 	}
+
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 	return -1;
 }
+
 /**
  * @brief FatFileRemove -- remove a file
  * @param fsys -- Pointer to file
  * @param file -- file to remove
  */
 int FatFileRemove(AuVFSNode* fsys, AuVFSNode* file) {
-	if (!fsys)
-		return 1;
-	if (!file)
-		return 1;
+	if (!fsys || !file)
+		return -1;
 
-	uint32_t parent_clust = file->parent_block;
-	if (!parent_clust)
-		return 1;
+	FatFS* _fs = (FatFS*)fsys->device;
+	if (!_fs || !_fs->vdisk)
+		return -1;
 
-	/* because we will iterate all clusters from
-	 * first one
-	 */
-	if (file->current != file->first_block)
-		file->current = file->first_block;
-
-	uint32_t cluster = file->current;
-	while (1) {
-		uint32_t next_cluster = FatReadFAT(fsys, cluster);
-		if (FAT_IS_EOC(next_cluster)) {
-			UARTDebugOut("EOC mark found in cluster -> %x \n", cluster);
-			FatAllocCluster(fsys, cluster, 0x00);
-			break;
-		} else {
-			FatAllocCluster(fsys, cluster, 0x00);
-		}
-		cluster = next_cluster;
+	/* First, clear the directory entry from the parent directory */
+	int status = FatFileClearDirEntry(fsys, file);
+	if (status != 0) {
+		UARTDebugOut("FatFileRemove: failed to clear directory entry for %s\r\n", file->filename);
+		return -1;
 	}
 
-	/* clear the dir entry */
-	FatFileClearDirEntry(fsys, file);
+	/* Deallocate cluster chain in FAT table */
+	uint32_t cluster = file->first_block;
+	if (cluster >= 2 && (!(_fs->__TotalClusters) || cluster < _fs->__TotalClusters) && !FAT_IS_EOC(cluster)) {
+		while (cluster >= 2 && (!(_fs->__TotalClusters) || cluster < _fs->__TotalClusters) && !FAT_IS_EOC(cluster)) {
+			uint32_t next_cluster = FatReadFAT(fsys, cluster);
+			FatAllocCluster(fsys, cluster, 0x00);
+			if (FAT_IS_EOC(next_cluster) || next_cluster < 2 || (_fs->__TotalClusters && next_cluster >= _fs->__TotalClusters))
+				break;
+			cluster = next_cluster;
+		}
+	}
+
 	return 0;
 }

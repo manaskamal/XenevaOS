@@ -7,7 +7,10 @@
 #include <ctype.h>
 
 void NotesInitFS() {
+	static bool initialized = false;
+	if (initialized) return;
 	_KeCreateDir((char*)"/note");
+	initialized = true;
 }
 
 /*
