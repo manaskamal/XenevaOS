@@ -32,14 +32,14 @@ EXP_ASM_H=6        # BaseHdr/asm/*.h
 EXP_DCL_C=16       # DCL/*.c   (dcl_va_trampoline.s adds the 17th object)
 EXP_DCL_O=17       # KernelAA64/obj/DCL/*.o
 EXP_VEND_O=9       # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial, virtio_console)
-EXP_ALL_O=147      # everything under KernelAA64/obj
+EXP_ALL_O=155      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=33
+EXP_DCLTEST=36
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"

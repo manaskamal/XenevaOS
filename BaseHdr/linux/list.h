@@ -2,40 +2,53 @@
 #define __LINUX_LIST_H__
 
 #include <_null.h>
+#if !defined(__cplusplus)
+/* Xeneva's list_add(list_t*, void*) must be declared before the list_add
+ * dispatch macro below, whichever header a file includes first. */
+#include <list.h>
+#endif
 
 struct list_head {
 	struct list_head *next, *prev;
 };
 
-#define LIST_HEAD_INIT(name) {&(name), &(name)}
-#define LIST_HEAD(name)		 struct list_head name = LIST_HEAD_INIT(name)
+#define LIST_HEAD_INIT(name) { &(name), &(name) }
+#define LIST_HEAD(name) struct list_head name = LIST_HEAD_INIT(name)
 
-#define list_entry(ptr, type, member) container_of(ptr, type, member)
+#define list_entry(ptr, type, member) \
+	container_of(ptr, type, member)
 
-#define list_first_entry(ptr, type, member) list_entry((ptr)->next, type, member)
+#define list_first_entry(ptr, type, member) \
+	list_entry((ptr)->next, type, member)
 
-#define list_last_entry(ptr, type, member) list_entry((ptr)->prev, type, member)
+#define list_last_entry(ptr, type, member) \
+	list_entry((ptr)->prev, type, member)
 
-#define list_next_entry(pos, member) list_entry((pos)->member.next, typeof(*(pos)), member)
+#define list_next_entry(pos, member) \
+	list_entry((pos)->member.next, typeof(*(pos)), member)
 
-#define list_for_each(pos, head) for (pos = (head)->next; pos != (head); pos = pos->next)
+#define list_for_each(pos, head) \
+	for (pos = (head)->next; pos != (head); pos = pos->next)
 
-#define list_for_each_safe(pos, n, head)                                                           \
-	for (pos = (head)->next, n = pos->next; pos != (head); pos = n, n = pos->next)
+#define list_for_each_safe(pos, n, head) \
+	for (pos = (head)->next, n = pos->next; pos != (head); \
+	     pos = n, n = pos->next)
 
-#define list_for_each_entry(pos, head, member)                                                     \
-	for (pos = list_entry((head)->next, typeof(*pos), member); &pos->member != (head);             \
-		 pos = list_entry(pos->member.next, typeof(*pos), member))
+#define list_for_each_entry(pos, head, member) \
+	for (pos = list_entry((head)->next, typeof(*pos), member); \
+	     &pos->member != (head); \
+	     pos = list_entry(pos->member.next, typeof(*pos), member))
 
-#define list_for_each_entry_safe(pos, n, head, member)                                             \
-	for (pos = list_entry((head)->next, typeof(*pos), member),                                     \
-		n = list_entry(pos->member.next, typeof(*pos), member);                                    \
-		 &pos->member != (head);                                                                   \
-		 pos = n, n = list_entry(n->member.next, typeof(*pos), member))
+#define list_for_each_entry_safe(pos, n, head, member) \
+	for (pos = list_entry((head)->next, typeof(*pos), member), \
+	     n   = list_entry(pos->member.next, typeof(*pos), member); \
+	     &pos->member != (head); \
+	     pos = n, n = list_entry(n->member.next, typeof(*pos), member))
 
-#define list_for_each_entry_reverse(pos, head, member)                                             \
-	for (pos = list_entry((head)->prev, typeof(*pos), member); &pos->member != (head);             \
-		 pos = list_entry(pos->member.prev, typeof(*pos), member))
+#define list_for_each_entry_reverse(pos, head, member) \
+	for (pos = list_entry((head)->prev, typeof(*pos), member); \
+	     &pos->member != (head); \
+	     pos = list_entry(pos->member.prev, typeof(*pos), member))
 
 /*
  * Mutation -- added for <linux/wait.h>, which keeps its queues in these
@@ -61,30 +74,43 @@ struct list_head {
  * else is checking, on a system with no lock protecting it either way.
  */
 
-static inline void
-__list_add(struct list_head* new, struct list_head* prev, struct list_head* next) {
+static inline void __list_add(struct list_head* new,
+				struct list_head* prev, struct list_head* next)
+{
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
 	prev->next = new;
 }
 
-static inline void INIT_LIST_HEAD(struct list_head* list) {
+static inline void INIT_LIST_HEAD(struct list_head* list)
+{
 	list->next = list;
 	list->prev = list;
 }
 
-static inline void linux_list_add(struct list_head* new, struct list_head* head) {
+static inline void linux_list_add(struct list_head* new, struct list_head* head)
+{
 	__list_add(new, head, head->next);
 }
 
-#define list_add linux_list_add
+/*
+ * Xeneva's own BaseHdr/list.h already exports list_add(list_t*, void*). Keep
+ * both APIs: dispatch on the second argument's type. Inside the macro body the
+ * name list_add is not re-expanded, so the default branch is the real function.
+ */
+#if !defined(__cplusplus)
+#define list_add(new, head) \
+	_Generic((head), struct list_head*: linux_list_add, default: list_add)((new), (head))
+#endif
 
-static inline void list_add_tail(struct list_head* new, struct list_head* head) {
+static inline void list_add_tail(struct list_head* new, struct list_head* head)
+{
 	__list_add(new, head->prev, head);
 }
 
-static inline void list_del(struct list_head* entry) {
+static inline void list_del(struct list_head* entry)
+{
 	if (entry->next) {
 		entry->next->prev = entry->prev;
 		entry->prev->next = entry->next;
@@ -93,12 +119,14 @@ static inline void list_del(struct list_head* entry) {
 	}
 }
 
-static inline void list_del_init(struct list_head* entry) {
+static inline void list_del_init(struct list_head* entry)
+{
 	list_del(entry);
 	INIT_LIST_HEAD(entry);
 }
 
-static inline int list_empty(const struct list_head* head) {
+static inline int list_empty(const struct list_head* head)
+{
 	return head->next == head;
 }
 
@@ -127,16 +155,21 @@ static inline int list_empty(const struct list_head* head) {
  *
  * mainline: include/linux/list.h:480-522.
  */
-static inline int list_is_head(const struct list_head* list, const struct list_head* head) {
+static inline int list_is_head(const struct list_head* list,
+			       const struct list_head* head)
+{
 	return list == head;
 }
 
-static inline int list_is_singular(const struct list_head* head) {
+static inline int list_is_singular(const struct list_head* head)
+{
 	return !list_empty(head) && (head->next == head->prev);
 }
 
-static inline void
-__list_cut_position(struct list_head* list, struct list_head* head, struct list_head* entry) {
+static inline void __list_cut_position(struct list_head* list,
+				       struct list_head* head,
+				       struct list_head* entry)
+{
 	struct list_head* new_first = entry->next;
 
 	list->next = head->next;
@@ -147,11 +180,14 @@ __list_cut_position(struct list_head* list, struct list_head* head, struct list_
 	new_first->prev = head;
 }
 
-static inline void
-list_cut_position(struct list_head* list, struct list_head* head, struct list_head* entry) {
+static inline void list_cut_position(struct list_head* list,
+				     struct list_head* head,
+				     struct list_head* entry)
+{
 	if (list_empty(head))
 		return;
-	if (list_is_singular(head) && !list_is_head(entry, head) && (entry != head->next))
+	if (list_is_singular(head) && !list_is_head(entry, head) &&
+	    (entry != head->next))
 		return;
 	if (list_is_head(entry, head))
 		INIT_LIST_HEAD(list);

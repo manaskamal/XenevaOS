@@ -60,6 +60,10 @@ typedef struct __au_dsp__ {
 	bool available;
 	struct __au_dsp__ *next;
 	struct __au_dsp__ *prev;
+	/* name of the card this client chose; kept when the card is removed so the
+	 * client reattaches by itself when a card with that name comes back (driver
+	 * restart or failover to the in-kernel driver) */
+	char card_name[32];
 }AuDSP;
 
 #ifdef ARCH_X64
@@ -109,6 +113,12 @@ AU_EXTERN AU_EXPORT void AuSoundRemoveDSP(uint16_t id);
  * @param snd -- pointer to sound card
  */
 AU_EXTERN AU_EXPORT int AuSoundRegisterCard(AuSound* snd);
+
+/**
+ * @brief AuSoundUnregisterCard -- remove a sound card (hot-unplug); DSP clients
+ * bound to it are detached. Non-zero only if the card was not registered.
+ */
+AU_EXTERN AU_EXPORT int AuSoundUnregisterCard(AuSound* snd);
 
 /**
  * @brief au_sound_last_id -- card index assigned by last AuSoundRegisterCard call

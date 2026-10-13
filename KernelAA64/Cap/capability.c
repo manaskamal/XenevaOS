@@ -81,11 +81,14 @@ int BordoisilaCapCreate(void* procptr, int fd, void* object, uint8_t type, CapRi
 	 * in a bogus/garbage mask and getting more than the model allows */
 	if (type == CAP_OBJ_FILE)
 		cap->rights = rights & CAP_FILE_RIGHTS_MASK;
+	else if (type == CAP_OBJ_PCIDEV)
+		cap->rights = rights & CAP_HW_RIGHTS_MASK;
 	else
 		cap->rights = CAP_RIGHTS_NONE;
 
 	cap->owner = proc->creds.uid;
-	cap->flags = CAP_FLAG_NONE;
+	/* hardware handles belong to the process that opened them */
+	cap->flags = (type == CAP_OBJ_PCIDEV) ? CAP_FLAG_NO_INHERIT : CAP_FLAG_NONE;
 	cap->valid = true;
 	return CAP_OK;
 }
@@ -166,6 +169,8 @@ void BordoisilaCapDestroy(void* procptr, int fd) {
 	if (!cap || !cap->valid)
 		return;
 
+	if (cap->object_type == CAP_OBJ_PCIDEV)
+		AuHwdevCapReleased(proc, cap);
 	cap->object = NULL;
 	cap->object_type = 0;
 	cap->rights = CAP_RIGHTS_NONE;
@@ -181,6 +186,8 @@ void BordoisilaCapCleanupProcess(void* procptr) {
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuCapability* cap = &proc->caps[i];
 		if (cap->valid) {
+			if (cap->object_type == CAP_OBJ_PCIDEV)
+				AuHwdevCapReleased(proc, cap);
 			cap->object = NULL;
 			cap->object_type = 0;
 			cap->rights = CAP_RIGHTS_NONE;
