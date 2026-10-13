@@ -59,7 +59,18 @@ extern int k_exports_count;
  * @param procname -- procedure name
  * @return return the procedure address in memory
  */
+extern void* AuDriverImportOverride(const char* name);
+
 void* AuGetProcAddress(void* image, const char* procname) {
+	/* Kernel symbols a driver imports can be swapped for tracking wrappers
+	 * (component model). Checked first so it works for the allowlist path
+	 * below AND for the PE export-table path used by the LLVM/Windows build,
+	 * where __GNUC__ is not defined. */
+	if (image == (void*)0xFFFFC00000000000) {
+		void* override = AuDriverImportOverride(procname);
+		if (override)
+			return override;
+	}
 #ifdef __GNUC__
 	if (image == (void*)0xFFFFC00000000000) {
 		for (int i = 0; i < k_exports_count; i++) {

@@ -42,8 +42,10 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <Cred/cred.h>
+#include <Cred/group.h>
 #include <aucon.h>
 #include <Log/klog.h>
+#include <Fs/srvfs.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -79,11 +81,20 @@ int OpenFile(char* filename, int mode) {
 	strcpy(fname, filename);
 	AuVFSNode* fsys = AuVFSFind(fname);
 	int fd = AuProcessGetFileDesc(current_proc);
+	AuSrvfsNoteOpenMode(mode);
 	AuVFSNode* file = AuVFSOpen(fname);
 
 	/** check permissions before procedding **/
+	/* A write or create mode used to skip the permission check altogether, so any
+	 * process could open any existing node for writing. Device nodes now always
+	 * get the check, whatever the mode: they are interfaces to hardware and to
+	 * kernel services. Ordinary files keep the old rule, because creating or
+	 * rewriting files on the boot volume depends on the FAT layer's ownership
+	 * defaults, which are not a security boundary. A device node that ordinary
+	 * applications must open is owned by the world group (see Fs/Dev/*). */
+	bool privileged_node = file && (file->flags & FS_FLAG_DEVICE);
 	if (AuCredCheckPermissions(file, &current_proc->creds) &&
-		!((mode & FILE_OPEN_CREAT) || (mode & FILE_OPEN_WRITE))) {
+		(privileged_node || !((mode & FILE_OPEN_CREAT) || (mode & FILE_OPEN_WRITE)))) {
 		if (!file) {
 			UARTDebugOut("[fserv]: open '%s' denied: no node\r\n", fname);
 			return -1;
@@ -287,6 +298,21 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	* file system node as device */
 	AuVFSNode* fsys = (AuVFSNode*)file->device;
 
+	if (AuSrvfsOwns(fsys)) {
+		/* /srv is served by a user-space process: its write may have to wait for
+		 * the server and restart this syscall, which would leak a staging page
+		 * every time, so hand it the caller's own buffer one page at a time */
+		size_t done = 0;
+		while (done < length) {
+			size_t chunk = length - done > PAGE_SIZE ? PAGE_SIZE : length - done;
+			size_t w = fsys->write ? fsys->write(fsys, file, (uint64_t*)(aligned_buffer + done), chunk) : 0;
+			if (!w)
+				break;
+			done += w;
+		}
+		return done;
+	}
+
 	if (file->flags & FS_FLAG_GENERAL && !(file->flags & FS_FLAG_TTY)) {
 		/* the staging buffer is one physical page and FatWrite only ever
 		 * sees that single page, but this used to hand it the *full*
@@ -407,6 +433,19 @@ int CloseFile(int fd) {
 			file->close(file, file);
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
+		return 0;
+	}
+
+	if (file->flags & FS_FLAG_SOCKET) {
+		/* close() on a socket fd used to fall through to the -1 below, so a socket
+		 * lived until its process exited. That matters for ICMP, where the whole
+		 * system has one socket slot: a process that closed its socket never gave
+		 * the slot back. The close hooks free the node themselves (process exit
+		 * relies on the same), so I clear the fd first and never touch file again --axiss */
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		if (file->close)
+			file->close(file, file);
 		return 0;
 	}
 
@@ -579,4 +618,18 @@ int ProcessGetFileDesc(const char* filename) {
 	}
 
 	return -1;
+}
+
+/**
+ * @brief RemoveFile -- remove a file. Only file systems that implement removal
+ * through a server (/srv) support it; anything else fails, as it always effectively did.
+ * @param pathname -- path to remove
+ */
+int RemoveFile(char* pathname) {
+	if (!pathname || strlen(pathname) >= 128)
+		return -1;
+	AuVFSNode* fsys = AuVFSFind(pathname);
+	if (!AuSrvfsOwns(fsys))
+		return -1;
+	return AuSrvfsRemove(pathname);
 }

@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <sys/iocodes.h>
 #include <sys/_kecred.h>
+#include <sys/_ketime.h>
 
 /** Let's hardcode,credentials
  * untill we get proper login manager
@@ -322,6 +323,67 @@ void _init_handle_request(InitRequestMsg* msg) {
 /*
  * _main -- main entry point
  */
+/* ---- supervising the supervisor ------------------------------------------
+ * init is the process reaper, so it cannot block on one pid; instead it checks
+ * from inside its reaper loop whether svcmgr still exists and relaunches it
+ * (at most 5 times in 60 s). A relaunched svcmgr adopts the services that are
+ * still running, so nothing it supervised is disturbed. */
+static int g_svcmgr_pid = -1;
+static unsigned g_svcmgr_restarts;
+static uint64_t g_svcmgr_window, g_svcmgr_last_check;
+
+static int launch_svcmgr() {
+	int daemons = _KeGetGlobalGroupID(AURORA_GID_MISC_DAEMONS);
+	int world = _KeGetGlobalGroupID(AURORA_GID_MISC_WORLD);
+	int p = _KeCreateProcess(0, "svcmgr");
+	if (p < 0)
+		return -1;
+	_KeSetUID(p, UAC_NORMAL_USER);
+	_KeSetGID(p, UAC_NORMAL_USER);
+	_KeCredAddSGroup(p, daemons);
+	_KeCredAddSGroup(p, world);                  /* to read /services.cnf and /svctest.cnf */
+	_KeCredSetCap(p, 0x23);                      /* CRED_CAP_SETUID | SETGID | SETCAP */
+	if (_KeProcessLoadExec(p, "/svcmgr.exe", 0, NULL) == -1)
+		return -1;
+	return p;
+}
+
+static bool init_pid_present(int pid) {
+	static XEProcessList list[96];
+	int n = _KeGetNumProcessCount();
+	if (n > 96)
+		n = 96;
+	memset(list, 0, sizeof list);
+	if (_KeProcessFetch(list, n) != 0)
+		return true;                             /* cannot tell: assume it is there */
+	for (int i = 0; i < n; i++)
+		if (list[i].proc_id == pid)
+			return true;
+	return false;
+}
+
+static void init_watch_svcmgr() {
+	if (g_svcmgr_pid <= 0)
+		return;
+	uint64_t now = _KeGetCurrentMS();
+	if (now - g_svcmgr_last_check < 500)
+		return;
+	g_svcmgr_last_check = now;
+	if (init_pid_present(g_svcmgr_pid))
+		return;
+	if (now - g_svcmgr_window > 60000) {
+		g_svcmgr_window = now;
+		g_svcmgr_restarts = 0;
+	}
+	if (++g_svcmgr_restarts > 5) {
+		_KePrint("[init]: svcmgr keeps dying, no longer restarting it\r\n");
+		g_svcmgr_pid = -1;
+		return;
+	}
+	_KePrint("[init]: svcmgr is gone, restarting it\r\n");
+	g_svcmgr_pid = launch_svcmgr();
+}
+
 extern "C" void main(int argc, char* argv[]) {
 	int pid = _KeGetProcessID();
 
@@ -390,6 +452,125 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeProcessLoadExec(proc, "/dcltest.exe", 0, NULL);
 	} else {
 		_KePrint("[init]: dcltest.exe absent, skipping DCL self-test\r\n");
+	}
+
+	/* hwtest: user-space driver access test for /dev/hwdev. Only present when
+	 * the image was built with HWTEST=1. It is the one process that gets the
+	 * MISC_DAEMONS group, which is what /dev/hwdev and /dev/drvctl require --
+	 * dcltest and clipd above deliberately do not have it. */
+	int htest = _KeOpenFile("/hwtest.exe", FILE_OPEN_READ_ONLY);
+	if (htest != -1) {
+		_KeCloseFile(htest);
+		int ggid_daemons = _KeGetGlobalGroupID(AURORA_GID_MISC_DAEMONS);
+		proc = _KeCreateProcess(0, "hwtest");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_daemons);
+		_KeProcessLoadExec(proc, "/hwtest.exe", 0, NULL);
+	}
+
+	/* sndsrv: user-space virtio-sound driver, and sndplay: a client that plays a
+	 * tone through it. Both absent unless the image was built with SNDSRV=1.
+	 * sndsrv is the daemons-group process; sndplay is an ordinary application. */
+	/* With svcmgr present, the supervisor owns sndsrv: it restarts it when it
+	 * dies and hands the device back to the in-kernel driver if it keeps
+	 * crashing. svcmgr gets only the credential capabilities it needs to set a
+	 * child up (setuid | setgid | setcap) and strips them from every child. */
+	int svc = _KeOpenFile("/svcmgr.exe", FILE_OPEN_READ_ONLY);
+	if (svc != -1) {
+		_KeCloseFile(svc);
+		g_svcmgr_pid = launch_svcmgr();
+		g_svcmgr_window = _KeGetCurrentMS();
+	}
+	int ssrv = (svc == -1) ? _KeOpenFile("/sndsrv.exe", FILE_OPEN_READ_ONLY) : -1;
+	if (ssrv != -1) {
+		_KeCloseFile(ssrv);
+		int ggid_daemons = _KeGetGlobalGroupID(AURORA_GID_MISC_DAEMONS);
+		proc = _KeCreateProcess(0, "sndsrv");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_daemons);
+		_KeProcessLoadExec(proc, "/sndsrv.exe", 0, NULL);
+	}
+	int splay = _KeOpenFile("/sndplay.exe", FILE_OPEN_READ_ONLY);
+	if (splay != -1) {
+		_KeCloseFile(splay);
+		proc = _KeCreateProcess(0, "sndplay");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/sndplay.exe", 0, NULL);
+	}
+
+	/* ipcsrv + ipctest: the generic IPC test (/dev/ipc). Present only when the image
+	 * was built with IPCTEST=1. The server is a daemons-group process (it creates
+	 * endpoints) that also holds the world group the /dev/ipc node requires; the
+	 * client is an ordinary application and must be refused everything privileged. */
+	int isrv = _KeOpenFile("/ipcsrv.exe", FILE_OPEN_READ_ONLY);
+	if (isrv != -1) {
+		_KeCloseFile(isrv);
+		int ggid_daemons = _KeGetGlobalGroupID(AURORA_GID_MISC_DAEMONS);
+		proc = _KeCreateProcess(0, "ipcsrv");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_daemons);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/ipcsrv.exe", 0, NULL);
+	}
+	int itest = _KeOpenFile("/ipctest.exe", FILE_OPEN_READ_ONLY);
+	if (itest != -1) {
+		_KeCloseFile(itest);
+		proc = _KeCreateProcess(0, "ipctest");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/ipctest.exe", 0, NULL);
+	}
+
+	/* fssrv + srvtest: a user-space file system on /srv. fssrv is a daemons-group
+	 * process (it owns the "fs" IPC endpoint the kernel forwards /srv requests to);
+	 * two srvtest instances run as different users to exercise server-side
+	 * permissions. All three exist only when the image was built with SRVTEST=1. */
+	/* with svcmgr present it owns fssrv (restarts it); otherwise start it directly */
+	int fsrv = (svc == -1) ? _KeOpenFile("/fssrv.exe", FILE_OPEN_READ_ONLY) : -1;
+	if (fsrv != -1) {
+		_KeCloseFile(fsrv);
+		int ggid_daemons = _KeGetGlobalGroupID(AURORA_GID_MISC_DAEMONS);
+		proc = _KeCreateProcess(0, "fssrv");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_daemons);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/fssrv.exe", 0, NULL);
+	}
+	int stest = _KeOpenFile("/srvtest.exe", FILE_OPEN_READ_ONLY);
+	if (stest != -1) {
+		_KeCloseFile(stest);
+		proc = _KeCreateProcess(0, "srvtest");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/srvtest.exe", 0, NULL);
+		static char arg_other[] = "other";
+		static char* argv_other[] = {arg_other};
+		proc = _KeCreateProcess(0, "srvtest2");
+		_KeSetUID(proc, UAC_NORMAL_USER + 1);
+		_KeSetGID(proc, UAC_NORMAL_USER + 1);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeProcessLoadExec(proc, "/srvtest.exe", 1, argv_other);
+	}
+
+	/* nettest: pings the gateway every 2 s and logs each result; only present
+	 * when the image was built with NETSRV=1. An ordinary networked app. */
+	int ntest = _KeOpenFile("/nettest.exe", FILE_OPEN_READ_ONLY);
+	if (ntest != -1) {
+		_KeCloseFile(ntest);
+		proc = _KeCreateProcess(0, "nettest");
+		_KeSetUID(proc, UAC_NORMAL_USER);
+		_KeSetGID(proc, UAC_NORMAL_USER);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+		_KeProcessLoadExec(proc, "/nettest.exe", 0, NULL);
 	}
 
 	/* clipd: the guest half of the host<->VM clipboard. Same absence rule
@@ -528,6 +709,7 @@ extern "C" void main(int argc, char* argv[]) {
 			if (_KeProcessWaitForTermination(-1) == -1) {
 				_KeProcessSleep(1000);
 			}
+		init_watch_svcmgr();
 	}
 
 	///* just load all the background services */
@@ -559,5 +741,7 @@ extern "C" void main(int argc, char* argv[]) {
 		if (pid == 1) {
 			_KeProcessWaitForTermination(-1);
 		}
+		init_watch_svcmgr();
+		_KeProcessSleep(100);
 	}
 }

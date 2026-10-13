@@ -146,6 +146,8 @@ typedef struct _aa64_task_ {
 	/** waitlist */
 	list_t* waitlist;
 	uint16_t wait_ref_count;
+	/** absolute wake-up time (system us) of a sleeping thread; see AuSleepThread */
+	uint64_t sleep_until_us;
 } AA64Thread;
 
 //#pragma pack(pop)

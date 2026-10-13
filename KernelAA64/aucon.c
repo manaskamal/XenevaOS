@@ -583,6 +583,11 @@ void AuPutPixel(size_t x, size_t y, uint32_t col) {
 		((BLUE(col) << low_set_bit(bluemask)) & bluemask) |
 		(*pixelloc & resvmask);
 	*pixelloc = pixel;*/
+	/* A glyph drawn below the last row (the console can do this when a message
+	 * lands on the bottom row) used to write past the end of the framebuffer and
+	 * fault the whole kernel. Drop pixels that are off screen. */
+	if (x >= aucon->width || y >= aucon->height)
+		return;
 	framebuffer[y * aucon->width + x] = col;
 }
 

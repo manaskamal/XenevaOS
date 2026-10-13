@@ -161,9 +161,13 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 		dsp->sleep_time = _ioctl->uint_1;
 		dsp->available = true;
 		UARTDebugOut("UINT_2 value : %d \r\n", _ioctl->uint_2);
-		if (_ioctl->uint_2 != UINT32_MAX)
+		if (_ioctl->uint_2 != UINT32_MAX) {
 			dsp->_cardID = _ioctl->uint_2;
-		else
+			if (dsp->_cardID >= 0 && dsp->_cardID < AURORA_MAX_SOUND_CARDS && _cards[dsp->_cardID]) {
+				strncpy(dsp->card_name, _cards[dsp->_cardID]->name, sizeof(dsp->card_name) - 1);
+				dsp->card_name[sizeof(dsp->card_name) - 1] = 0;
+			}
+		} else
 			dsp->_cardID = -1;
 		UARTDebugOut("Sound registered successfully \r\n");
 		AuSoundAddDSP(dsp);
@@ -334,6 +338,33 @@ void AuSoundRemoveDSP(uint16_t id) {
  * to sound layer
  * @param snd -- pointer to sound card
  */
+/**
+ * @brief AuSoundUnregisterCard -- remove a card from the registry (hot-unplug).
+ * DSP clients bound to the card are detached (_cardID = -1) rather than the
+ * removal being refused: a client such as init holds its binding for the whole
+ * uptime, so refusing would make a sound driver permanently un-unloadable.
+ * Detached clients fall back to the software buffer path and must re-select a
+ * card after the driver is loaded again. Every user of _cards[] already
+ * tolerates an empty slot. Returns 0, or non-zero if snd was not registered.
+ */
+int AuSoundUnregisterCard(AuSound* snd) {
+	for (int i = 0; i < AURORA_MAX_SOUND_CARDS; i++) {
+		if (_cards[i] != snd)
+			continue;
+		_cards[i] = 0;
+		int detached = 0;
+		for (AuDSP* dsp = dsp_first; dsp; dsp = dsp->next) {
+			if (dsp->_cardID == i) {
+				dsp->_cardID = -1;
+				detached++;
+			}
+		}
+		UARTDebugOut("[sound]: card %d removed, %d client(s) detached\r\n", i, detached);
+		return 0;
+	}
+	return 2; /* not registered */
+}
+
 int AuSoundRegisterCard(AuSound* snd) {
 	int index = _AuSoundGetFreeID();
 	if (index == -1) {
@@ -342,5 +373,15 @@ int AuSoundRegisterCard(AuSound* snd) {
 	}
 	_cards[index] = snd;
 	au_sound_last_id = index;
+	/* clients that lost a card of this name come back to it */
+	int rebound = 0;
+	for (AuDSP* dsp = dsp_first; dsp; dsp = dsp->next) {
+		if (dsp->_cardID == -1 && dsp->card_name[0] && strcmp(dsp->card_name, snd->name) == 0) {
+			dsp->_cardID = index;
+			rebound++;
+		}
+	}
+	if (rebound)
+		UARTDebugOut("[sound]: card %d (%s) registered, %d client(s) rebound\r\n", index, snd->name, rebound);
 	return 0;
 }
