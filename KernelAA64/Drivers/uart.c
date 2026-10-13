@@ -168,6 +168,8 @@ void UARTDebugOut_Call(const char* format, void* reg_save_area, void* entry_sp) 
 				uartPuts(buffer);
 			} else if (*format == 's') {
 				char* x = AU_VA_ARG(char*);
+				if (!x)
+					return;
 				uartPuts(x);
 			} else if (*format == 'f') {
 				double x = AU_VA_ARG(double);
