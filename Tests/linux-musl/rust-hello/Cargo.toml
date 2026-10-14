@@ -1,0 +1,13 @@
+[package]
+name = "rust-hello"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rust-hello"
+path = "src/main.rs"
+
+[profile.release]
+lto = false
+panic = "abort"
+codegen-units = 1

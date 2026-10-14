@@ -164,7 +164,9 @@ void XEShellSpawn(char* string) {
 			strcat(filename, "/");
 
 		strcat(filename, execname);
-		strcat(filename, ".exe");
+		/* A musl guest is named *.elf. Everything else is still a PE .exe. */
+		if (strlen(execname) < 4 || strcmp(execname + strlen(execname) - 4, ".elf") != 0)
+			strcat(filename, ".exe");
 
 		/* before spawning the process, make an entry to
 		 * shell's file descriptors */
