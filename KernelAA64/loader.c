@@ -83,6 +83,24 @@ void AuProcessEntUser(uint64_t rcx) {
 	PUSHALIGN(uentry->rsp, 16);
 	t->first_run = 1;
 
+	/* musl reads argc from [sp]. The PE crt0 pair stays on the other path. */
+	{
+		AuProcess* linux_proc = (AuProcess*)t->procSlot;
+		if (!linux_proc)
+			linux_proc = AuProcessFindThread(t);
+		if (linux_proc && (linux_proc->type_flags & PROCESS_TYPE_LINUX)) {
+			AuLinuxBuildUserStack(uentry);
+			if (uentry->argvs) {
+				for (int i = 0; i < uentry->num_args; i++)
+					kfree(uentry->argvs[i]);
+				kfree(uentry->argvs);
+				uentry->argvs = 0;
+			}
+			aa64_enter_user(uentry->rsp, uentry->entrypoint, 0);
+			while (1) {}
+		}
+	}
+
 	/*
 	 * ARM64 ABI: argc and argv must be placed on the user stack so that
 	 * crt0arm64.s can pop them via: ldp x0, x1, [sp], #16
@@ -230,7 +248,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 	char* v_ = strchr(filename, '.');
 	if (v_)
 		v_++;
-	if (strcmp(v_, "exe") != 0) {
+	if (strcmp(v_, "exe") != 0 && strcmp(v_, "elf") != 0) {
 		UARTDebugOut("[aurora]: non-executable process \r\n");
 		return -1;
 	}
@@ -262,22 +280,42 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		UARTDebugOut("No File found -> %s \r\n", filename);
 		return -1;
 	}
-	AuMMPageCache* pcache = fb->pageCache;
+	size_t scratch_bytes = 0;
 
 	if (file->eof == 1 && fb->readComplete == 1)
 		file->eof = 0;
 
 	if (fb->readComplete == false) {
 		size_t file_offset = 0;
+		int elf_file = 0;
+		const size_t scratch_limit = 1024 * 1024;
 		while (file->eof != 1) {
+			/* Leave a margin so a block read cannot run off the 1MiB window.
+			 * The rest of an ELF is stored in the page cache, not scratch. */
+			if (elf_file && file_offset + (256 * 1024) > scratch_limit)
+				break;
+			if (file_offset >= scratch_limit) {
+				UARTDebugOut("[loader]: file exceeds 1MiB scratch\r\n");
+				break;
+			}
 			uint64_t block = ((uint64_t)_ldr_scratchBuffer + file_offset);
 			size_t bytes_read = AuVFSNodeReadBlock(fsys, file, (uint64_t*)block);
 			if (bytes_read == 0)
 				break;
 			file_offset += bytes_read;
+			if (!elf_file && file_offset >= 4) {
+				uint8_t* mag = (uint8_t*)_ldr_scratchBuffer;
+				if (mag[0] == 0x7f && mag[1] == 'E' && mag[2] == 'L' && mag[3] == 'F')
+					elf_file = 1;
+			}
 		}
 
-		size_t total_pages = file_offset / PAGE_SIZE + ((file_offset % PAGE_SIZE) ? 1 : 0);
+		size_t scratch_filled = file_offset;
+		if (scratch_filled > scratch_limit)
+			scratch_filled = scratch_limit;
+
+		size_t total_pages =
+			scratch_filled / PAGE_SIZE + ((scratch_filled % PAGE_SIZE) ? 1 : 0);
 		for (size_t i = 0; i < total_pages; i++) {
 			uint64_t physcache = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			AuMMPageCache* cache = AuMmngrPageCacheCreate();
@@ -288,26 +326,94 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 			memset((void*)P2V(physcache), 0, PAGE_SIZE);
 			size_t copy_sz = PAGE_SIZE;
-			if (i == total_pages - 1 && (file_offset % PAGE_SIZE) != 0)
-				copy_sz = file_offset % PAGE_SIZE;
+			if (i == total_pages - 1 && (scratch_filled % PAGE_SIZE) != 0)
+				copy_sz = scratch_filled % PAGE_SIZE;
 			memcpy((void*)P2V(physcache),
 				   (void*)((uint64_t)_ldr_scratchBuffer + i * PAGE_SIZE),
 				   copy_sz);
 		}
-		fb->readComplete = true;
-	} else {
-		AuMMPageCache* pcache = fb->pageCache;
-		size_t file_offset = 0;
-		while (pcache != NULL) {
-			memcpy((void*)((uint64_t)_ldr_scratchBuffer + file_offset),
-				   (void*)P2V(pcache->physicalPage),
-				   PAGE_SIZE);
-			file_offset += PAGE_SIZE;
-			pcache = pcache->next;
+
+		/* ELF past the scratch window: one block at a time into page cache. */
+		if (elf_file && file->eof != 1) {
+			while (file->eof != 1) {
+				size_t bytes_read =
+					AuVFSNodeReadBlock(fsys, file, (uint64_t*)_ldr_scratchBuffer);
+				if (bytes_read == 0)
+					break;
+				size_t copied = 0;
+				while (copied < bytes_read) {
+					size_t page_index = (file_offset + copied) / PAGE_SIZE;
+					size_t page_off = (file_offset + copied) % PAGE_SIZE;
+					size_t chunk = PAGE_SIZE - page_off;
+					if (chunk > (bytes_read - copied))
+						chunk = bytes_read - copied;
+					AuMMPageCache* cache = NULL;
+					if (fb->pageCacheLast && fb->pageCacheLast->pageIndex == page_index)
+						cache = fb->pageCacheLast;
+					if (!cache) {
+						uint64_t physcache = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+						memset((void*)P2V(physcache), 0, PAGE_SIZE);
+						cache = AuMmngrPageCacheCreate();
+						cache->physicalPage = physcache;
+						cache->diskBlock = 0;
+						cache->pageIndex = page_index;
+						AuMmngrFileBackAddPageCache(fb, cache);
+					}
+					memcpy((uint8_t*)P2V(cache->physicalPage) + page_off,
+						   (uint8_t*)_ldr_scratchBuffer + copied,
+						   chunk);
+					copied += chunk;
+				}
+				file_offset += bytes_read;
+			}
 		}
+
+		fb->readComplete = true;
+		if (file->size)
+			scratch_bytes = file->size;
+		else
+			scratch_bytes = file_offset;
+	} else {
+		AuMMPageCache* page = fb->pageCache;
+		size_t copied = 0;
+		size_t cached_end = 0;
+		while (page != NULL) {
+			size_t end = (size_t)((page->pageIndex + 1) * PAGE_SIZE);
+			if (end > cached_end)
+				cached_end = end;
+			if (copied < (1024 * 1024)) {
+				memcpy((void*)((uint64_t)_ldr_scratchBuffer + copied),
+					   (void*)P2V(page->physicalPage),
+					   PAGE_SIZE);
+				copied += PAGE_SIZE;
+			}
+			page = page->next;
+		}
+		scratch_bytes = file->size ? file->size : cached_end;
 	}
 
 	fb->readComplete = 1;
+
+	/* Magic lives on page-cache page 0. The tail read reuses scratch, so the
+	 * scratch prefix is not the ELF header once the file passes that window. */
+	int is_elf = 0;
+	if (scratch_bytes >= 4 && fb->pageCache) {
+		AuMMPageCache* mag_page = fb->pageCache;
+		while (mag_page && mag_page->pageIndex != 0)
+			mag_page = mag_page->next;
+		if (mag_page) {
+			uint8_t* mag = (uint8_t*)P2V(mag_page->physicalPage);
+			if (mag[0] == 0x7f && mag[1] == 'E' && mag[2] == 'L' && mag[3] == 'F')
+				is_elf = 1;
+		}
+	}
+	if (is_elf) {
+		int elf_rc = AuLoadElfImage(proc, fb, scratch_bytes, argc, argv);
+#ifdef __KERNEL_PROFILER_ON__
+		PROFILE_END("AuLoadExecToProcess");
+#endif
+		return elf_rc;
+	}
 
 	IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)_ldr_scratchBuffer;
 	PIMAGE_NT_HEADERS nt = RAW_OFFSET(PIMAGE_NT_HEADERS, dos, dos->e_lfanew);

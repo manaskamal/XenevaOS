@@ -317,6 +317,16 @@ restore_daif:
    ret
 
 .extern testFunc
+.global aa64_read_tpidr_el0
+aa64_read_tpidr_el0:
+   mrs x0, tpidr_el0
+   ret
+
+.global aa64_set_tpidr_el0
+aa64_set_tpidr_el0:
+   msr tpidr_el0, x0
+   ret
+
 .global aa64_enter_user
 aa64_enter_user:
    /* Here, we also mask the IRQ bit for now, else IRQ get fired

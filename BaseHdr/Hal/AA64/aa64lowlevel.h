@@ -162,6 +162,8 @@ extern uint64_t read_spsel();
  * @param arg -- argument only valid for sub threads
  */
 extern void aa64_enter_user(uint64_t stack, uint64_t entryAddr, uint64_t arg);
+extern uint64_t aa64_read_tpidr_el0(void);
+extern void aa64_set_tpidr_el0(uint64_t tls);
 extern void aa64_svc_test();
 extern void aa64_utest();
 /* was a plain extern with no AU_EXPORT, so driver DLLs importing it got an
