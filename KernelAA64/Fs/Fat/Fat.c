@@ -172,7 +172,8 @@ uint32_t FatReadFAT(AuVFSNode* node, uint64_t cluster_index) {
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / fs->__BytesPerSector);
 
 	size_t ent_offset = fat_offset % fs->__BytesPerSector;
-	uint64_t* BuffArea = (uint64_t*)fs->_scratchBuffer; //P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	uint64_t* BuffArea =
+		(uint64_t*)fs->_scratchBuffer; //P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	//memset(BuffArea, 0, 512);
 	AuVDiskRead(vdisk, fat_sector, 1, BuffArea);
 	unsigned char* buf = (unsigned char*)BuffArea;
@@ -581,12 +582,31 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 	FatFS* fatfs = (FatFS*)fs->device;
 	size_t index = offset / fatfs->cluster_sz_in_bytes;
-	uint32_t cluster = file->first_block;
-	for (int i = 0; i < index; i++)
+
+	/** previously get_cluster_for was iterating from first block instead
+	 * of caching the last cluster read, this increased read time latency
+	 * in larger files
+	 */
+	size_t start_index;
+	uint32_t cluster;
+
+	/** use the last resolved cluster as base and start iterating from here */
+	if (file->last_resolved_cluster != 0 && index >= file->last_resolved_index) {
+		start_index = file->last_resolved_index;
+		cluster = file->last_resolved_cluster;
+	} else {
+		/** fallback to first cluster, if index < last_resolved_index */
+		start_index = 0;
+		cluster = file->first_block;
+	}
+
+	for (int i = start_index; i < index; i++)
 		cluster = FatReadFAT(fs, cluster);
 	if (!FAT_IS_EOC(cluster) && file->eof == 1)
 		file->eof = 0;
 	file->pos = offset;
+	file->last_resolved_index = index;
+	file->last_resolved_cluster = cluster;
 	return cluster;
 }
 
