@@ -9,6 +9,7 @@ Use the Table of Contents below to navigate through the project's documentation.
 ##  Getting Started
 - [**Introduction**](Introduction.md) — An overview of XenevaOS, its architecture, and its primary goals.
 - [**Contributing Guidelines**](Contributing.md) — Rules and procedures for contributing to the repository.
+- [**AI Policy**](AIPolicy.md) — Policy and requirements for AI-assisted contributions and code generation.
 - [**Preprocessor Macros**](Development/PreprocessorMacros.md) — Important compiler flags and definitions used across the codebase.
 
 ## ️ Build & Setup
