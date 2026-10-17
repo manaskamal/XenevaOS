@@ -9,6 +9,7 @@
 #include <Mm/kmalloc.h>
 #include <_null.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <linux/build_bug.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -115,8 +116,14 @@ typedef unsigned long kernel_ulong_t;
 #define container_of(ptr, type, member) \
      ((type*)((char*)(ptr)- offsetof(type,member)))
 
+#ifndef offsetof
+#if defined(__GNUC__) || defined(__clang__)
+#define offsetof(type, member) __builtin_offsetof(type, member)
+#else
 #define offsetof(type, member) \
      ((size_t)&((type*)0)->member)
+#endif
+#endif
 
 /*
  * IS_ENABLED() is a lookup into the CONFIG_ table, so the table has to be in
