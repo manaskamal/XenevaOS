@@ -24,36 +24,52 @@
 #include <hwdev.h>
 #include <sndsrv.h>
 
-#define PERIOD_BYTES   4096
-#define BUFFER_BYTES   (PERIOD_BYTES * 2)
-#define RING_DATA      65536
-#define SND_VENDOR     0x1AF4
-#define SND_DEVICE     0x1059
+#define PERIOD_BYTES 4096
+#define BUFFER_BYTES (PERIOD_BYTES * 8)
+#define RING_DATA	 65536
+#define SND_VENDOR	 0x1AF4
+#define SND_DEVICE	 0x1059
 
 /* ---- virtio constants (virtio 1.0 spec, pci transport + sound device) ---- */
-#define VIRTIO_STATUS_ACK        1
-#define VIRTIO_STATUS_DRIVER     2
-#define VIRTIO_STATUS_DRIVER_OK  4
+#define VIRTIO_STATUS_ACK		  1
+#define VIRTIO_STATUS_DRIVER	  2
+#define VIRTIO_STATUS_DRIVER_OK	  4
 #define VIRTIO_STATUS_FEATURES_OK 8
-#define VIRTIO_STATUS_FAILED     0x80
-#define VIRTQ_DESC_F_NEXT        1
-#define VIRTQ_DESC_F_WRITE       2
+#define VIRTIO_STATUS_FAILED	  0x80
+#define VIRTQ_DESC_F_NEXT		  1
+#define VIRTQ_DESC_F_WRITE		  2
 
-#define SND_R_PCM_INFO        0x0100
-#define SND_R_PCM_SET_PARAMS  0x0101
-#define SND_R_PCM_PREPARE     0x0102
-#define SND_R_PCM_RELEASE     0x0103
-#define SND_R_PCM_START       0x0104
-#define SND_R_PCM_STOP        0x0105
-#define SND_S_OK              0x8000
-#define SND_FMT_S16           5
-#define SND_RATE_48000        7
+#define SND_R_PCM_INFO		 0x0100
+#define SND_R_PCM_SET_PARAMS 0x0101
+#define SND_R_PCM_PREPARE	 0x0102
+#define SND_R_PCM_RELEASE	 0x0103
+#define SND_R_PCM_START		 0x0104
+#define SND_R_PCM_STOP		 0x0105
+#define SND_S_OK			 0x8000
+#define SND_FMT_S16			 5
+#define SND_RATE_48000		 7
 
-struct VqDesc  { uint64_t addr; uint32_t len; uint16_t flags; uint16_t next; };
-struct VqAvail { uint16_t flags; uint16_t idx; uint16_t ring[1]; };
-struct VqUsed  { uint16_t flags; uint16_t idx; struct { uint32_t id; uint32_t len; } ring[1]; };
+struct VqDesc {
+	uint64_t addr;
+	uint32_t len;
+	uint16_t flags;
+	uint16_t next;
+};
+struct VqAvail {
+	uint16_t flags;
+	uint16_t idx;
+	uint16_t ring[1];
+};
+struct VqUsed {
+	uint16_t flags;
+	uint16_t idx;
+	struct {
+		uint32_t id;
+		uint32_t len;
+	} ring[1];
+};
 
-struct PcmInfo {                       /* virtio_snd_pcm_info, 32 bytes */
+struct PcmInfo { /* virtio_snd_pcm_info, 32 bytes */
 	uint32_t hda_fn_nid;
 	uint32_t features;
 	uint64_t formats;
@@ -83,8 +99,12 @@ static void logf3(const char* fmt, unsigned a, unsigned b, unsigned c) {
 	emit(line);
 }
 
-static inline void dmb(void) { __asm__ volatile("dmb ish" ::: "memory"); }
-static inline void dsb(void) { __asm__ volatile("dsb sy" ::: "memory"); }
+static inline void dmb(void) {
+	__asm__ volatile("dmb ish" ::: "memory");
+}
+static inline void dsb(void) {
+	__asm__ volatile("dsb sy" ::: "memory");
+}
 
 /* ---- device state ---- */
 static int g_ctl = -1, g_h = -1;
@@ -94,9 +114,9 @@ static volatile uint8_t* g_notify;
 static volatile uint8_t* g_devcfg;
 static uint32_t g_notify_mult;
 
-#define C8(o)   (*(volatile uint8_t*)(g_common + (o)))
-#define C16(o)  (*(volatile uint16_t*)(g_common + (o)))
-#define C32(o)  (*(volatile uint32_t*)(g_common + (o)))
+#define C8(o)  (*(volatile uint8_t*)(g_common + (o)))
+#define C16(o) (*(volatile uint16_t*)(g_common + (o)))
+#define C32(o) (*(volatile uint32_t*)(g_common + (o)))
 
 struct Vq {
 	uint16_t size;
@@ -108,13 +128,16 @@ struct Vq {
 };
 static Vq g_q[4];
 
-static uint8_t* g_cmd;  static uint64_t g_cmd_phys;      /* requests, xfer header */
-static uint8_t* g_resp; static uint64_t g_resp_phys;     /* responses, tx status */
-static uint8_t* g_pcm;  static uint64_t g_pcm_phys;      /* one period */
+static uint8_t* g_cmd;
+static uint64_t g_cmd_phys; /* requests, xfer header */
+static uint8_t* g_resp;
+static uint64_t g_resp_phys; /* responses, tx status */
+static uint8_t* g_pcm;
+static uint64_t g_pcm_phys; /* one period */
 static uint32_t g_stream;
-static bool g_irq;                    /* completions arrive as interrupts, not by polling */
+static bool g_irq; /* completions arrive as interrupts, not by polling */
 static unsigned g_irq_events, g_irq_waits, g_irq_spurious;
-static unsigned g_last_status;        /* last TX status word the device returned */
+static unsigned g_last_status; /* last TX status word the device returned */
 static SndRingHdr* g_ring;
 static uint8_t* g_ring_data;
 
@@ -209,17 +232,20 @@ static int vq_setup(unsigned q, uint8_t* mem, uint64_t phys) {
 	v->used = (VqUsed*)(mem + 8192);
 	v->last_used = 0;
 	uint64_t pd = phys, pa = phys + 4096, pu = phys + 8192;
-	C32(0x20) = (uint32_t)pd; C32(0x24) = (uint32_t)(pd >> 32);
-	C32(0x28) = (uint32_t)pa; C32(0x2C) = (uint32_t)(pa >> 32);
-	C32(0x30) = (uint32_t)pu; C32(0x34) = (uint32_t)(pu >> 32);
+	C32(0x20) = (uint32_t)pd;
+	C32(0x24) = (uint32_t)(pd >> 32);
+	C32(0x28) = (uint32_t)pa;
+	C32(0x2C) = (uint32_t)(pa >> 32);
+	C32(0x30) = (uint32_t)pu;
+	C32(0x34) = (uint32_t)(pu >> 32);
 	/* control (0) and tx (2) complete via interrupt when available; the unused
 	 * event (1) and rx (3) queues raise none */
 	unsigned vec = (g_irq && (q == 0 || q == 2)) ? 0 : 0xFFFF;
 	C16(0x1A) = (uint16_t)vec;
 	dsb();
-	if (vec != 0xFFFF && C16(0x1A) != vec)    /* device could not allocate the vector */
+	if (vec != 0xFFFF && C16(0x1A) != vec) /* device could not allocate the vector */
 		g_irq = false;
-	C16(0x1C) = 1;                            /* queue_enable */
+	C16(0x1C) = 1; /* queue_enable */
 	dsb();
 	v->notify = (volatile uint16_t*)(g_notify + (uint32_t)C16(0x1E) * g_notify_mult);
 	return 0;
@@ -247,7 +273,7 @@ static int vq_submit_wait(unsigned q, unsigned limit_ms) {
 			dmb();
 			if (v->used->idx == v->last_used) {
 				if (ack.pending)
-					g_irq_spurious++;     /* interrupt arrived but this queue had nothing yet */
+					g_irq_spurious++; /* interrupt arrived but this queue had nothing yet */
 				if (_KeGetCurrentMS() - t0 > limit_ms)
 					return 1;
 			}
@@ -272,8 +298,14 @@ static int snd_ctrl(unsigned req_len, unsigned resp_len) {
 	Vq* v = &g_q[0];
 	memset(g_resp, 0, resp_len);
 	dmb();
-	v->desc[0].addr = g_cmd_phys;  v->desc[0].len = req_len;  v->desc[0].flags = VIRTQ_DESC_F_NEXT;  v->desc[0].next = 1;
-	v->desc[1].addr = g_resp_phys; v->desc[1].len = resp_len; v->desc[1].flags = VIRTQ_DESC_F_WRITE; v->desc[1].next = 0;
+	v->desc[0].addr = g_cmd_phys;
+	v->desc[0].len = req_len;
+	v->desc[0].flags = VIRTQ_DESC_F_NEXT;
+	v->desc[0].next = 1;
+	v->desc[1].addr = g_resp_phys;
+	v->desc[1].len = resp_len;
+	v->desc[1].flags = VIRTQ_DESC_F_WRITE;
+	v->desc[1].next = 0;
 	if (vq_submit_wait(0, 2000))
 		return 1;
 	return *(volatile uint32_t*)g_resp == SND_S_OK ? 0 : 1;
@@ -293,8 +325,8 @@ static int pcm_set_params(void) {
 	p[1] = g_stream;
 	p[2] = BUFFER_BYTES;
 	p[3] = PERIOD_BYTES;
-	p[4] = 0;                                  /* features */
-	g_cmd[20] = 2;                             /* channels */
+	p[4] = 0;	   /* features */
+	g_cmd[20] = 2; /* channels */
 	g_cmd[21] = SND_FMT_S16;
 	g_cmd[22] = SND_RATE_48000;
 	return snd_ctrl(24, 4);
@@ -307,15 +339,24 @@ static int tx_period(uint8_t* data, unsigned len) {
 	memcpy(g_pcm, data, len);
 	if (len < PERIOD_BYTES)
 		memset(g_pcm + len, 0, PERIOD_BYTES - len);
-	*(volatile uint32_t*)g_cmd = g_stream;                   /* xfer header */
-	memset(g_resp, 0, 8);                                    /* status + latency */
+	*(volatile uint32_t*)g_cmd = g_stream; /* xfer header */
+	memset(g_resp, 0, 8);				   /* status + latency */
 	dmb();
-	v->desc[0].addr = g_cmd_phys;  v->desc[0].len = 4;            v->desc[0].flags = VIRTQ_DESC_F_NEXT;  v->desc[0].next = 1;
-	v->desc[1].addr = g_pcm_phys;  v->desc[1].len = PERIOD_BYTES; v->desc[1].flags = VIRTQ_DESC_F_NEXT;  v->desc[1].next = 2;
-	v->desc[2].addr = g_resp_phys; v->desc[2].len = 8;            v->desc[2].flags = VIRTQ_DESC_F_WRITE; v->desc[2].next = 0;
+	v->desc[0].addr = g_cmd_phys;
+	v->desc[0].len = 4;
+	v->desc[0].flags = VIRTQ_DESC_F_NEXT;
+	v->desc[0].next = 1;
+	v->desc[1].addr = g_pcm_phys;
+	v->desc[1].len = PERIOD_BYTES;
+	v->desc[1].flags = VIRTQ_DESC_F_NEXT;
+	v->desc[1].next = 2;
+	v->desc[2].addr = g_resp_phys;
+	v->desc[2].len = 8;
+	v->desc[2].flags = VIRTQ_DESC_F_WRITE;
+	v->desc[2].next = 0;
 	if (vq_submit_wait(2, 1000))
 		return 1;
-	g_last_status = *(volatile uint32_t*)g_resp;                   /* status word of the xfer */
+	g_last_status = *(volatile uint32_t*)g_resp; /* status word of the xfer */
 	return g_last_status == SND_S_OK ? 0 : 2;
 }
 
@@ -373,20 +414,22 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* ---- virtio 1.0 handshake ---- */
-	C8(0x14) = 0;                                               /* reset */
+	C8(0x14) = 0; /* reset */
 	dsb();
 	C8(0x14) = VIRTIO_STATUS_ACK;
 	C8(0x14) = C8(0x14) | VIRTIO_STATUS_DRIVER;
 	dsb();
-	C32(0x00) = 1;                                              /* device_feature_select = 1 */
+	C32(0x00) = 1; /* device_feature_select = 1 */
 	dsb();
 	unsigned feat_hi = C32(0x04);
-	if (!(feat_hi & 1)) {                                       /* VIRTIO_F_VERSION_1 = bit 32 */
+	if (!(feat_hi & 1)) { /* VIRTIO_F_VERSION_1 = bit 32 */
 		give_back("device lacks VIRTIO_F_VERSION_1");
 		return 1;
 	}
-	C32(0x08) = 0; C32(0x0C) = 0;                               /* no low features */
-	C32(0x08) = 1; C32(0x0C) = 1;                               /* VERSION_1 only */
+	C32(0x08) = 0;
+	C32(0x0C) = 0; /* no low features */
+	C32(0x08) = 1;
+	C32(0x0C) = 1; /* VERSION_1 only */
 	dsb();
 	C8(0x14) = C8(0x14) | VIRTIO_STATUS_FEATURES_OK;
 	dsb();
@@ -399,8 +442,10 @@ int main(int argc, char* argv[]) {
 	{
 		HwdevIrq irq = {0, 0};
 		g_irq = (_KeFileIoControl(g_h, HWDEV_IOC_IRQ_SETUP, &irq) == HWDEV_OK);
-		logf1(g_irq ? "[sndsrv] interrupt delivery on (spi %u)\n" : "[sndsrv] no interrupts, polling (%u)\n", irq.spi);
-		C16(0x10) = 0xFFFF;                   /* no config-change vector */
+		logf1(g_irq ? "[sndsrv] interrupt delivery on (spi %u)\n"
+					: "[sndsrv] no interrupts, polling (%u)\n",
+			  irq.spi);
+		C16(0x10) = 0xFFFF; /* no config-change vector */
 	}
 
 	/* ---- DMA: queues (4 x 3 pages) + command/response/period buffers ---- */
@@ -415,13 +460,18 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 	}
-	g_cmd  = (uint8_t*)mem.uaddr + 12 * 4096; g_cmd_phys  = mem.phys + 12 * 4096;
-	g_resp = (uint8_t*)mem.uaddr + 13 * 4096; g_resp_phys = mem.phys + 13 * 4096;
-	g_pcm  = (uint8_t*)mem.uaddr + 14 * 4096; g_pcm_phys  = mem.phys + 14 * 4096;
+	g_cmd = (uint8_t*)mem.uaddr + 12 * 4096;
+	g_cmd_phys = mem.phys + 12 * 4096;
+	g_resp = (uint8_t*)mem.uaddr + 13 * 4096;
+	g_resp_phys = mem.phys + 13 * 4096;
+	g_pcm = (uint8_t*)mem.uaddr + 14 * 4096;
+	g_pcm_phys = mem.phys + 14 * 4096;
 	C8(0x14) = C8(0x14) | VIRTIO_STATUS_DRIVER_OK;
 	dsb();
 	logf3("[sndsrv] virtio up: queues=%u status=%x q2size=%u\n", C16(0x12), C8(0x14), g_q[2].size);
-	logf1(g_irq ? "[sndsrv] completions by interrupt (queue vectors confirmed %u)\n" : "[sndsrv] completions by polling (%u)\n", g_irq ? 1u : 0u);
+	logf1(g_irq ? "[sndsrv] completions by interrupt (queue vectors confirmed %u)\n"
+				: "[sndsrv] completions by polling (%u)\n",
+		  g_irq ? 1u : 0u);
 
 	/* ---- virtio-snd: find the output stream, configure, start ---- */
 	unsigned n_streams = *(volatile uint32_t*)(g_devcfg + 4);
@@ -431,7 +481,10 @@ int main(int argc, char* argv[]) {
 	}
 	uint32_t* q = (uint32_t*)g_cmd;
 	memset(g_cmd, 0, 16);
-	q[0] = SND_R_PCM_INFO; q[1] = 0; q[2] = n_streams; q[3] = sizeof(PcmInfo);
+	q[0] = SND_R_PCM_INFO;
+	q[1] = 0;
+	q[2] = n_streams;
+	q[3] = sizeof(PcmInfo);
 	if (snd_ctrl(16, 4 + sizeof(PcmInfo) * n_streams)) {
 		give_back("pcm info failed");
 		return 1;
@@ -442,7 +495,10 @@ int main(int argc, char* argv[]) {
 	 * and the device answers every playback buffer with BAD_MSG. */
 	g_stream = 0xFFFFFFFFu;
 	for (unsigned i = 0; i < n_streams; i++) {
-		logf3("[sndsrv] stream %u direction=%u channels=%u\n", i, info[i].directions, info[i].channels_max);
+		logf3("[sndsrv] stream %u direction=%u channels=%u\n",
+			  i,
+			  info[i].directions,
+			  info[i].channels_max);
 		if (info[i].directions == 0 && g_stream == 0xFFFFFFFFu)
 			g_stream = i;
 	}
@@ -450,12 +506,18 @@ int main(int argc, char* argv[]) {
 		give_back("device has no output stream");
 		return 1;
 	}
-	logf3("[sndsrv] output stream %u formats=%x rates=%x\n", g_stream, (unsigned)info[g_stream].formats, (unsigned)info[g_stream].rates);
+	logf3("[sndsrv] output stream %u formats=%x rates=%x\n",
+		  g_stream,
+		  (unsigned)info[g_stream].formats,
+		  (unsigned)info[g_stream].rates);
 	if (pcm_set_params() || pcm_simple(SND_R_PCM_PREPARE) || pcm_simple(SND_R_PCM_START)) {
 		give_back("could not start the output stream");
 		return 1;
 	}
-	logf3("[sndsrv] output stream %u started (streams=%u period=%u)\n", g_stream, n_streams, PERIOD_BYTES);
+	logf3("[sndsrv] output stream %u started (streams=%u period=%u)\n",
+		  g_stream,
+		  n_streams,
+		  PERIOD_BYTES);
 
 	/* ---- ring shared with the kernel sound card ---- */
 	HwdevDma ring = {SNDSRV_DATA_OFFSET + RING_DATA, 0, 0};
@@ -488,8 +550,12 @@ int main(int argc, char* argv[]) {
 	for (;;) {
 		uint32_t run = g_ring->running;
 		if (run != was_running) {
-			if (run) { pcm_simple(SND_R_PCM_PREPARE); pcm_simple(SND_R_PCM_START); }
-			else     { pcm_simple(SND_R_PCM_STOP); }
+			if (run) {
+				pcm_simple(SND_R_PCM_PREPARE);
+				pcm_simple(SND_R_PCM_START);
+			} else {
+				pcm_simple(SND_R_PCM_STOP);
+			}
 			was_running = run;
 		}
 		uint32_t head = g_ring->head;
@@ -500,7 +566,7 @@ int main(int argc, char* argv[]) {
 		if (avail >= PERIOD_BYTES)
 			take = PERIOD_BYTES;
 		else if (avail > 0 && ++idle > 10)
-			take = avail;                         /* flush a partial period after a short idle */
+			take = avail; /* flush a partial period after a short idle */
 		if (take) {
 			idle = 0;
 			uint32_t off = tail & (RING_DATA - 1);
@@ -509,7 +575,7 @@ int main(int argc, char* argv[]) {
 			if (first < take)
 				memcpy(buf + first, g_ring_data, take - first);
 			for (unsigned i = 0; i < take; i++)
-				sum += buf[i];                    /* additive checksum of the PCM actually consumed */
+				sum += buf[i]; /* additive checksum of the PCM actually consumed */
 			if (tx_period(buf, take))
 				errors++;
 			reported = false;
@@ -523,7 +589,7 @@ int main(int argc, char* argv[]) {
 #ifdef __XENEVA_SVC_TEST__
 			if (crash_after && periods >= crash_after) {
 				logf1("[sndsrv] test hook: crashing on purpose after %u periods\n", periods);
-				*(volatile int*)0 = 1;                 /* EL0 data abort: the kernel kills only this process */
+				*(volatile int*)0 = 1; /* EL0 data abort: the kernel kills only this process */
 			}
 #endif
 		} else {
@@ -533,11 +599,22 @@ int main(int argc, char* argv[]) {
 			/* a burst has ended after ~1 s of silence: report totals once */
 			if (!avail && !reported && ++quiet > 500) {
 				char line[200];
-				sprintf(line, "[sndsrv] burst done: periods=%u bytes=%u sum=%x dropped=%u errors=%u last_status=%x\n",
-						periods, bytes, sum, (unsigned)g_ring->dropped, errors, g_last_status);
+				sprintf(line,
+						"[sndsrv] burst done: periods=%u bytes=%u sum=%x dropped=%u errors=%u "
+						"last_status=%x\n",
+						periods,
+						bytes,
+						sum,
+						(unsigned)g_ring->dropped,
+						errors,
+						g_last_status);
 				emit(line);
-				sprintf(line, "[sndsrv] irq: events=%u waits=%u spurious=%u mode=%s\n",
-						g_irq_events, g_irq_waits, g_irq_spurious, g_irq ? "interrupt" : "poll");
+				sprintf(line,
+						"[sndsrv] irq: events=%u waits=%u spurious=%u mode=%s\n",
+						g_irq_events,
+						g_irq_waits,
+						g_irq_spurious,
+						g_irq ? "interrupt" : "poll");
 				emit(line);
 				reported = true;
 			}

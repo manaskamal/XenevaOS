@@ -47,8 +47,9 @@
 #include <nanojpg.h>
 #include <string.h>
 #include <stdlib.h>
+
+#define MINIMP3_IMPLEMENTATION
 #include "minimp3.h"
-#include "minimp4.h"
 
 ChitralekhaApp* app;
 ChWindow* mainWin;
@@ -66,9 +67,11 @@ int _file;
 bool _start_player;
 void* soundbuff;
 void* filebuff;
-static mp3_decoder_t mp3;
-static mp3_info_t info;
+//static mp3_decoder_t mp3;
+//static mp3_info_t info;
 bool _auto_start;
+
+void play_mp3(const char* path);
 /*
 * RegisterSound -- create a new instance of sound
 */
@@ -102,18 +105,25 @@ void PlayerThread() {
 	XEFileStatus stat;
 	memset(&stat, 0, sizeof(XEFileStatus));
 	while (1) {
-		/*
-		 * _start_player expects its sound file to be
-		 * ready i.e its already opened 
-		 */
-		if (_start_player) {
-			_KeFileStat(_file, &stat);
-			if (stat.eof) {
-				_KeCloseFile(_file);
-				_start_player = false;
+		if (selectedFile) {
+			if (strcat(selectedFile, ".mp3")) {
+				printf("playing mp3 -- %s \r\n", selectedFile);
+				play_mp3(selectedFile);
 			} else {
-				_KeReadFile(_file, soundbuff, 4096);
-				_KeWriteFile(snd, soundbuff, 4096);
+				/*
+		         * _start_player expects its sound file to be
+		         * ready i.e its already opened 
+		         */
+				if (_start_player) {
+					_KeFileStat(_file, &stat);
+					if (stat.eof) {
+						_KeCloseFile(_file);
+						_start_player = false;
+					} else {
+						_KeReadFile(_file, soundbuff, 4096);
+						_KeWriteFile(snd, soundbuff, 4096);
+					}
+				}
 			}
 		}
 
@@ -173,7 +183,8 @@ void AboutClicked(ChWidget* wid, ChWindow* win) {
  * @param win -- Pointer to main Window
  */
 void ExitItemClicked(ChWidget* wid, ChWindow* win) {
-	if (mainWin) ChWindowCloseWindow(mainWin);
+	if (mainWin)
+		ChWindowCloseWindow(mainWin);
 }
 
 /* DrawWallpaper -- code copied from deodhai wallpaper
@@ -345,6 +356,163 @@ void AudioPlayerClose(ChWindow* win) {
 	free(browserCanvas);
 }
 
+#define CHUNK	4096
+#define WINDOW	(16 * 1024)
+#define BUF_CAP (WINDOW + CHUNK)
+
+static uint32_t synchsafe(const uint8_t* p) {
+	return (p[0] << 21) | (p[1] << 14) | (p[2] << 7) | p[3];
+}
+
+static int refill(FILE* f, uint8_t* buf, size_t* pos, size_t* have, int* eof) {
+	if (*pos) {
+		memmove(buf, buf + *pos, *have - *pos);
+		*have -= *pos;
+		*pos = 0;
+	}
+	while (!*eof && *have < WINDOW) {
+		size_t n = fread(buf + *have, 1, CHUNK, f);
+		if (n == 0) {
+			*eof = 1;
+			break;
+		}
+		*have += n;
+	}
+	return (int)*have;
+}
+
+#define AUDIO_BLOCK 4096
+#define NBUF		8
+static uint8_t stage[NBUF][AUDIO_BLOCK];
+static int cur = 0;
+static size_t stage_len = 0;
+
+static void audio_push(int audio_fd, const void* data, size_t len) {
+	const uint8_t* src = (const uint8_t*)data;
+	while (len) {
+		size_t n = AUDIO_BLOCK - stage_len;
+		if (n > len)
+			n = len;
+		memcpy(stage[cur] + stage_len, (void*)src, n);
+		stage_len += n;
+		src += n;
+		len -= n;
+
+		if (stage_len == AUDIO_BLOCK) {
+			_KeWriteFile(snd, stage[cur], AUDIO_BLOCK);
+			cur = (cur + 1) % NBUF;
+			stage_len = 0;
+			_KeProcessSleep(4);
+		}
+	}
+}
+
+static void audio_flush(int audio_fd) {
+	if (stage_len) {
+		memset(stage + stage_len, 0, AUDIO_BLOCK - stage_len);
+		_KeWriteFile(audio_fd, stage, AUDIO_BLOCK);
+		stage_len = 0;
+	}
+}
+
+typedef struct {
+	uint32_t step;
+	uint32_t pos;
+	int16_t prev[2];
+	int init;
+} Resampler;
+
+static void rs_init(Resampler* r, uint32_t in_hz, uint32_t out_hz) {
+	r->step = (uint32_t)(((uint64_t)in_hz << 16) / out_hz);
+	r->pos = 0;
+	r->init = 0;
+}
+
+static size_t rs_process(Resampler* r, const int16_t* in, size_t n, int16_t* out) {
+	if (!n)
+		return 0;
+	if (!r->init) {
+		r->prev[0] = in[0];
+		r->prev[1] = in[1];
+		r->init = 1;
+	}
+
+	size_t o = 0;
+	while (((r->pos >> 16) + 1) <= n) {
+		uint32_t i = r->pos >> 16;
+		int32_t f = r->pos & 0xFFFF;
+		for (int c = 0; c < 2; c++) {
+			int32_t a = (i == 0) ? r->prev[c] : in[(i - 1) * 2 + c];
+			int32_t b = in[i * 2 + c];
+			out[o * 2 + c] = (int16_t)(a + (((b - a) * f) >> 16));
+		}
+		o++;
+		r->pos += r->step;
+	}
+	r->pos -= (uint32_t)n << 16;
+	r->prev[0] = in[(n - 1) * 2];
+	r->prev[1] = in[(n - 1) * 2 + 1];
+	return o;
+}
+
+static Resampler rs;
+static int16_t rs_out[1300 * 2];
+static int cur_hz = 0;
+
+void play_mp3(const char* path) {
+	FILE* f = fopen(path, "rb");
+	if (!f)
+		return;
+
+	RegisterSound();
+
+	static mp3dec_t dec;
+	static mp3d_sample_t pcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+	uint8_t* buf = (uint8_t*)malloc(BUF_CAP);
+	uint8_t* hw_buf = (uint8_t*)malloc(4096);
+	size_t pos = 0, have = 0;
+	int eof = 0;
+	mp3dec_init(&dec);
+
+	for (;;) {
+		if (have - pos < WINDOW && !eof)
+			refill(f, buf, &pos, &have, &eof);
+
+		if (have - pos == 0)
+			break;
+
+		mp3dec_frame_info_t info;
+		int samples = mp3dec_decode_frame(&dec, buf + pos, (int)(have - pos), pcm, &info);
+		if (info.frame_bytes == 0) {
+			if (eof)
+				break;
+			pos = have;
+			continue;
+		}
+
+		pos += info.frame_bytes;
+		if (samples) {
+			if (info.hz != 48000) {
+				if (info.hz != cur_hz) {
+					rs_init(&rs, info.hz, 48000);
+					cur_hz = info.hz;
+				}
+				size_t n = rs_process(&rs, pcm, samples, rs_out);
+				_KeWriteFile(snd, rs_out, n * 4);
+				_KeProcessSleep(2);
+			} else {
+				//audio_push(snd, pcm, samples * info.channels * sizeof(int16_t));
+				_KeWriteFile(snd, pcm, samples * info.channels * sizeof(int16_t));
+				_KeProcessSleep(2);
+			}
+		}
+		//	audio_flush(snd);
+	}
+
+	free(buf);
+	fclose(f);
+}
+
 /*
 * main -- main entry
 */
@@ -412,12 +580,13 @@ int main(int argc, char* argv[]) {
 	/* prepare the browser UI*/
 	PrepareBrowserUI();
 
-	//int threadIdx = _KeCreateThread(PlayerThread,"accent");
+	ChWindowBroadcastIcon(app, "/icons/media.bmp");
+
+	play_mp3("/music/asilu.mp3");
+	//int threadIdx = _KeCreateThread(PlayerThread, "accent");
 
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
-
-	ChWindowBroadcastIcon(app, "/icons/media.bmp");
 
 	setjmp(mainWin->jump);
 	while (1) {
