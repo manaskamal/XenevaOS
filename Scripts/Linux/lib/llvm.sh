@@ -20,6 +20,9 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
     ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
     ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        ( cd ../../Ports/mbedtls && make clean && make llvm )
+    fi
 
     # All AArch64 user-space applications. Microkernel rule: --no-network
     # and --no-audio drop their whole userspace (daemons and tools) so a
@@ -179,8 +182,6 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         cp -f ../../Process/Finger/finger.exe         ../../Resources/resources/
         cp -f ../../Process/Gopher/gopher.exe         ../../Resources/resources/
         cp -f ../../Process/Ntpd/ntpd.exe             ../../Resources/resources/
-        ( cd ../../Ports/mbedtls && make llvm )
-        ( cd ../../Process/http && make clean && make llvm )
         cp -f ../../Process/http/curl.exe             ../../Resources/resources/
         cp -f ../../Process/wifictl/wifictl.exe       ../../Resources/resources/
         if [ "${NO_NETSURF:-0}" -eq 0 ]; then
