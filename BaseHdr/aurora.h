@@ -38,7 +38,7 @@
 #define AU_IMPORT
 #define AU_ALIGN(x) __attribute__((aligned(x)))
 #else
-#define AU_EXPORT  __declspec(dllexport) __declspec(noinline)
+#define AU_EXPORT  __declspec(dllexport) __attribute__((__noinline__))
 #define AU_IMPORT  __declspec(dllimport)
 #define AU_ALIGN(x) __declspec(align(x))
 #endif

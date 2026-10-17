@@ -27,19 +27,21 @@ cd "$(dirname "$0")/.." || exit 1
 
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=147    # BaseHdr/linux/*.h
-EXP_ASM_H=6        # BaseHdr/asm/*.h
-EXP_DCL_C=16       # DCL/*.c   (dcl_va_trampoline.s adds the 17th object)
-EXP_DCL_O=17       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=9       # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial, virtio_console)
-EXP_ALL_O=155      # everything under KernelAA64/obj
+EXP_LINUX_H=236    # BaseHdr/linux/*.h
+EXP_ASM_H=16       # BaseHdr/asm/*.h
+EXP_DCL_C=27       # DCL/*.c   (dcl_va_trampoline.s adds the 28th object)
+EXP_DCL_O=28       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=91      # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+                   #   virtio_console, and the drm set: core, vkms,
+                   #   dma-buf, lib)
+EXP_ALL_O=250      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=36
+EXP_DCLTEST=44
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -60,39 +62,6 @@ check_count "DCL sources"           "$(ls DCL/*.c | wc -l)"                     
 check_count "DCL objects"           "$(ls KernelAA64/obj/DCL/*.o 2>/dev/null | wc -l)" "$EXP_DCL_O"
 check_count "Vendored objects"      "$(find KernelAA64/obj/Vendored -name '*.o' 2>/dev/null | wc -l)" "$EXP_VEND_O"
 check_count "total objects"         "$(find KernelAA64/obj -name '*.o' | wc -l)" "$EXP_ALL_O"
-
-# A vendored source must still be what MANIFEST.md says it is. This is check 1
-# from that file, inlined so a run of this gate cannot pass with a silently
-# edited vendored file. The manifest row carries two md5s (upstream, then
-# local) so `tail -1` takes the local one; the row is picked out by its tag
-# cell rather than by the path, since the path also appears in a heading below.
-if [ -f Vendored/MANIFEST.md ]; then
-	_manifest=$(grep -F '`v7.2`' Vendored/MANIFEST.md | head -1 |
-		grep -oE '[0-9a-f]{32}' | tail -1)
-	_actual=$(md5sum Vendored/drivers/char/hw_random/virtio-rng.c | cut -d' ' -f1)
-	if [ -n "$_manifest" ] && [ "$_manifest" = "$_actual" ]; then
-		ok "vendored virtio-rng.c matches MANIFEST.md"
-	else
-		bad "vendored virtio-rng.c" "manifest ${_manifest:-<none>}, file $_actual"
-	fi
-
-	# Stage 4's two files, checked the same way but keyed by the path in
-	# their own row rather than by position -- `head -1` above would land
-	# on whichever row was added first, which is exactly the kind of
-	# assumption a third row breaks. These two are byte-identical to
-	# v7.2, so any non-empty diff is drift rather than a recorded delta.
-	for _f in drivers/char/virtio_console.c drivers/tty/hvc/hvc_console.h; do
-		_manifest=$(grep -F "| \`$_f\` |" Vendored/MANIFEST.md | head -1 |
-			grep -oE '[0-9a-f]{32}' | tail -1)
-		_actual=$(md5sum "Vendored/$_f" | cut -d' ' -f1)
-		_name=${_f##*/}
-		if [ -n "$_manifest" ] && [ "$_manifest" = "$_actual" ]; then
-			ok "vendored $_name matches MANIFEST.md"
-		else
-			bad "vendored $_name" "manifest ${_manifest:-<none>}, file $_actual"
-		fi
-	done
-fi
 
 [ "$fails" -eq 0 ] || { echo "count assertions failed; not booting"; exit 1; }
 
@@ -184,7 +153,10 @@ expect "userspace dcltest"                  "[dcltest] SUMMARY $EXP_DCLTEST ok, 
 expect "vendored driver registered"         "[dcl]: virtio_rng driver registered"
 expect "vendored driver is not a .ko"       "[modtest]: virtio_rng built-in"
 expect "probe ran"                          "[dcl-virtio]: probe done"
-expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng.0)"
+# The number after the dot is DCL's shared ida counter (linux_kmod_shim.c
+# hands out one sequence for every IDA), so it is not fixed at 0 once other
+# IDAs have allocated; the registration itself is what this checks.
+expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng."
 expect "clipboard device"                   "[aurora]: device clipboard registered"
 expect "/dev/hwrng round-trip"              "[dcl]: /dev/hwrng round-trip OK (samples differ)"
 

@@ -39,6 +39,7 @@
 #include <linux/io.h>
 #include <linux/shmem_fs.h>
 #include <linux/pagemap.h>	/* struct page and the page_* decls below */
+#include <linux/dma-mapping.h>	/* dma_map_sg()/dma_unmap_sg() below */
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>	/* kmalloc/kfree -- alloc_page()'s block */
 #include <Drivers/uart.h>
@@ -386,6 +387,148 @@ void unlock_page(struct page* page) {
 	(void)page;
 }
 
+/* ── dma streaming mapping: identity, because there is nothing else ────── */
+
+/*
+ * dma_map_sg() / dma_unmap_sg() -- declared in <linux/dma-mapping.h>, which
+ * carries the reasoning for the answer in full.
+ *
+ * The short version: no IOMMU and no bounce buffer, so an sg entry is already
+ * contiguous and already addressable, and "map" here is the identity.
+ * Returning `nents` unchanged is what makes dma_map_sgtable()'s
+ * `sgt->nents = nents` a no-op, and what lets drm_prime_get_contiguous_size()
+ * (drm_prime.c:893) walk the list and terminate on the length it was handed.
+ *
+ * dma_unmap_sg() is empty for the mirror reason: with nothing mapped there is
+ * nothing to invalidate, and the CPU never stopped seeing these buffers. The
+ * parameters are all mainline's, including the direction, which describes a
+ * mapping this does not perform.
+ */
+int dma_map_sg(struct device* dev, struct scatterlist* sg, int nents,
+	       enum dma_data_direction dir)
+{
+	(void)dev;
+	(void)sg;
+	(void)dir;
+	return nents;
+}
+
+void dma_unmap_sg(struct device* dev, struct scatterlist* sg, int nents,
+		  enum dma_data_direction dir)
+{
+	(void)dev;
+	(void)sg;
+	(void)nents;
+	(void)dir;
+}
+
+/*
+ * dma_max_mapping_size() -- mainline's "largest length the device can map in
+ * one segment", declared in <linux/dma-mapping.h>.  drm_prime.c:862
+ * (drm_prime_pages_to_sg) uses the answer to cap the segment size it passes
+ * to sg_alloc_table_from_pages_segment(), and turns 0 into UINT_MAX itself
+ * (`if (max_segment == 0) max_segment = UINT_MAX`).  Zero is also mainline's
+ * answer when there are no DMA ops to ask (its !CONFIG_HAS_DMA arm of this
+ * function), and with no IOMMU and no bounce buffer there is no segment
+ * limit to report: any contiguous run is directly addressable.
+ */
+size_t dma_max_mapping_size(struct device* dev)
+{
+	(void)dev;
+	return 0;
+}
+
+/*
+ * dma_coerce_mask_and_coherent() -- mainline sets dev->dma_mask from
+ * dev->coherent_dma_mask and then asks the DMA layer to accept the mask
+ * (<linux/dma-mapping.h>).  Two things it needs are absent here: struct
+ * device (fs.h) is pinned to mainline's 800-byte layout with no named mask
+ * fields, and there is no DMA layer that would ever read one.  The only
+ * observable part of the call is its verdict -- vkms_create()
+ * (vkms_drv.c:187) takes a non-zero return as "DMA support could not be
+ * initialized" and unwinds -- so the answer is the success mainline would
+ * have produced for a device with no constraints.
+ */
+int dma_coerce_mask_and_coherent(struct device* dev, u64 mask)
+{
+	(void)dev;
+	(void)mask;
+	return 0;
+}
+
+/* ── scatterlists over pages: the one constructor drm_prime needs ─────── */
+
+/*
+ * sg_alloc_table_from_pages_segment() -- declared in <linux/scatterlist.h>,
+ * which carries the full why-comment.  One entry per page for the byte range
+ * [offset, offset + size) the caller names, from the native allocator; the
+ * matching release is sg_free_table() below.  max_segment and gfp_mask are
+ * accepted and dropped for the reasons the header note gives: nothing here
+ * squashes runs, and the native allocator takes no flags.
+ *
+ * The entry count is the pages the range touches, clamped to the caller's
+ * array length -- the same bound mainline ends up with after squashing, and
+ * the reason the caller's own `nr_pages` is still the authority.
+ */
+int sg_alloc_table_from_pages_segment(struct sg_table* sgt,
+				      struct page** pages,
+				      unsigned int n_pages, unsigned int offset,
+				      unsigned long size,
+				      unsigned int max_segment, gfp_t gfp_mask)
+{
+	unsigned int nents, i;
+	struct scatterlist* sgl;
+
+	(void)max_segment;
+	(void)gfp_mask;
+
+	if (!sgt || !pages || !n_pages || !size)
+		return -EINVAL;
+
+	nents = (unsigned int)((offset + size + PAGE_SIZE - 1) >> PAGE_SHIFT);
+	if (nents > n_pages)
+		nents = n_pages;
+
+	sgl = (struct scatterlist*)kcalloc(nents, sizeof(struct scatterlist));
+	if (!sgl)
+		return -ENOMEM;
+
+	for (i = 0; i < nents; i++) {
+		unsigned int pg_off = (i == 0) ? offset : 0;
+		unsigned long len = PAGE_SIZE - pg_off;
+
+		if (size < len)
+			len = size;
+
+		/* sg_set_page() lives in DCL/linux_kmod_shim.c beside
+		 * sg_init_one(); it is what fills ->page as well as ->buf,
+		 * which the page-walking writers in drm_prime.c read. */
+		sg_set_page(&sgl[i], pages[i], (unsigned int)len, pg_off);
+		size -= len;
+	}
+
+	sgt->sgl = sgl;
+	sgt->nents = nents;
+	sgt->orig_nents = nents;
+	return 0;
+}
+
+/*
+ * sg_free_table() -- declared in <linux/scatterlist.h>, where the note over
+ * it explains why this stopped being an inline no-op: the constructor above
+ * is now a real allocation, and kfree() is the body it needs.  The reset
+ * afterwards keeps a freed table from being walked a second time.
+ */
+void sg_free_table(struct sg_table* sgt)
+{
+	if (!sgt)
+		return;
+	kfree(sgt->sgl);
+	sgt->sgl = NULL;
+	sgt->nents = 0;
+	sgt->orig_nents = 0;
+}
+
 /* ── initcall runner ───────────────────────────────────────────────────── */
 
 /*
@@ -396,6 +539,8 @@ void unlock_page(struct page* page) {
 extern int (*const __dcl_initcall_chr_dev_init)(void);
 extern int (*const __dcl_initcall_virtio_rng_driver_init)(void);
 extern int (*const __dcl_initcall_virtio_console_init)(void);
+extern int (*const __dcl_initcall_drm_core_init)(void);
+extern int (*const __dcl_initcall_vkms_init)(void);
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -471,5 +616,33 @@ void DclRunInitcalls(void) {
 			UARTDebugOut("[dcl]: virtio_console driver registered\r\n");
 	} else {
 		UARTDebugOut("[dcl]: virtio_console initcall not linked\r\n");
+	}
+
+	/*
+	 * drm core, then vkms -- module_init() in each vendored file stamps
+	 * the DCL_INITCALL() pointer, and this is where the two get named.
+	 * Order between them is not arbitrary: drm_core_init() registers
+	 * major 226 and the minor idrs that vkms_init() allocates into when
+	 * it creates the device, registers its connector, and calls
+	 * drm_dev_register() -- which is what publishes /dev/dri/card0.
+	 */
+	if (__dcl_initcall_drm_core_init) {
+		int rc = __dcl_initcall_drm_core_init();
+		if (rc)
+			UARTDebugOut("[dcl]: drm_core_init failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: drm core initialized\r\n");
+	} else {
+		UARTDebugOut("[dcl]: drm core initcall not linked\r\n");
+	}
+
+	if (__dcl_initcall_vkms_init) {
+		int rc = __dcl_initcall_vkms_init();
+		if (rc)
+			UARTDebugOut("[dcl]: vkms_init failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: vkms registered\r\n");
+	} else {
+		UARTDebugOut("[dcl]: vkms initcall not linked\r\n");
 	}
 }

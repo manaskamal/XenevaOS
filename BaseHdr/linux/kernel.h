@@ -56,12 +56,39 @@ typedef uint32_t nlink_t;
 typedef unsigned int gfp_t;
 typedef unsigned int fmode_t;
 typedef unsigned int umode_t;
-typedef int irqreturn_t;
+/*
+ * irqreturn_t and the IRQ_NONE/IRQ_HANDLED/IRQ_WAKE_THREAD enumerators live
+ * in <linux/irqreturn.h>, which is mainline's byte-port of that header and
+ * spells the type as `enum irqreturn` rather than int.  This used to be a
+ * `typedef int irqreturn_t;` here plus three `#define IRQ_*` macros further
+ * down, and both halves collide with the port: the enum members get macro
+ * expansion in their own declaration list ("expected identifier" at
+ * irqreturn.h:12) and the second typedef is a redefinition with different
+ * types.  Taking the header keeps the enumerators as enumerators, which is
+ * what makes a handler's return value checkable at all -- with
+ * IRQ_RETVAL(x) as `((x) != IRQ_NONE)` an int answer would compare, but a
+ * typo'd one would too.
+ */
+#include <linux/irqreturn.h>
 typedef unsigned long irq_hw_number_t;
 typedef unsigned long pgoff_t;
 typedef unsigned long kernel_ulong_t;
 
 #include <linux/compiler.h>
+/*
+ * log2.h and math.h sit here because mainline's <linux/kernel.h> includes both
+ * and a ported source reaches is_power_of_2(), roundup_pow_of_two() and the
+ * DIV_ROUND_* family that way, never by naming either header. hexdump.c
+ * (is_power_of_2 at :103), drm_mm.c (roundup_pow_of_two at :1096) and
+ * drm_rect.c (DIV_ROUND_UP_ULL) are the current instances.
+ *
+ * The failure without them is quiet: the call is implicitly declared, which
+ * compiles -- this tree downgrades -Wimplicit-function-declaration -- and the
+ * definition is a header-side static inline that emitted its body into some
+ * other translation unit. The reference survives to the link and stops there.
+ */
+#include <linux/log2.h>
+#include <linux/math.h>
 /*
  * minmax.h comes before bitmap/list/module so that min/max/min_t/max_t land
  * in the same place mainline puts them -- mainline's <linux/kernel.h>
@@ -113,6 +140,33 @@ typedef unsigned long kernel_ulong_t;
 #define GFP_ATOMIC 1
 #define GFP_DMA 2
 
+/*
+ * The two xarray.c names that are not among those three.  lib/xarray.c
+ * includes <linux/slab.h>, and mainline's slab.h pulls <linux/gfp.h> in for
+ * exactly these; DCL's does not, so they live beside the rest of the gfp
+ * surface here rather than in a header xarray never reads.
+ *
+ * GFP_NOWAIT is "allocate without waiting", which in DCL's two-value scheme
+ * is the same answer GFP_ATOMIC already gives: the allocator neither blocks
+ * nor refuses, so the flag changes no path -- it has to *parse*, and 1 says
+ * what the caller meant.  __GFP_ACCOUNT is memcg accounting, which this tree
+ * does not have; 0 is not a placeholder but the whole of what accounting is
+ * worth here, and it is written as a flag-shaped 0 so that
+ * `GFP_NOWAIT | __GFP_ACCOUNT` (xarray.c:308, :338, :376) folds to GFP_NOWAIT
+ * instead of to an undeclared identifier.
+ */
+#define GFP_NOWAIT 1
+#define __GFP_ACCOUNT 0
+
+/*
+ * __GFP_BITS_SHIFT -- first bit above the gfp word, which is where xarray
+ * keeps its three mark bits (XA_FLAGS_MARK, xarray.h:277).  mainline takes
+ * it from the end of gfp_types.h's flag list; DCL's flags are the three
+ * sentinels above, and the xa_flags low bits (4/8/16/32) claim 2..5, so 26
+ * is mainline's clear high ground rather than a next-to-nothing guess.
+ */
+#define __GFP_BITS_SHIFT 26
+
 #define container_of(ptr, type, member) \
      ((type*)((char*)(ptr)- offsetof(type,member)))
 
@@ -126,39 +180,27 @@ typedef unsigned long kernel_ulong_t;
 #endif
 
 /*
- * IS_ENABLED() is a lookup into the CONFIG_ table, so the table has to be in
- * scope wherever this header is -- otherwise the macro silently reads an
- * undeclared identifier and the error lands in the *driver*, three includes
- * away, as "use of undeclared identifier 'CONFIG_SERIAL_8250_CONSOLE'" at
- * 8250_port.c:3197 while the definition sits correctly in autoconf.h:42.
+ * IS_ENABLED(), IS_BUILTIN(), IS_MODULE(), IS_REACHABLE() and the CONFIG_
+ * table they read are <linux/kconfig.h>'s -- mainline's kernel.h defines none
+ * of them.  They are reached here rather than in kconfig.h's own callers
+ * because this is the include DCL's drivers already carry, so hanging it on
+ * the header they all take is what keeps the table in scope wherever the
+ * macro is.  Without that the macro silently reads an undeclared identifier
+ * and the error lands in the *driver*, three includes away, as "use of
+ * undeclared identifier 'CONFIG_SERIAL_8250_CONSOLE'" at 8250_port.c:3197
+ * while the definition sits correctly in autoconf.h:42.
  *
- * mainline routes this through linux/kconfig.h -> generated/autoconf.h, which
- * is why every file gets it; DCL has no kconfig.h, and hanging the include on
- * the one macro that needs it is the same guarantee with one line. autoconf.h
- * has no includes of its own, so it cannot cycle.
+ * kconfig.h pulls <linux/autoconf.h> in itself (mainline: generated/
+ * autoconf.h) and asks nothing else of the tree, so it cannot cycle.
  *
- * Deliberately undefined CONFIG_* names still work: IS_ENABLED(undefined)
- * expands to `!!(0)` once the table has been read and chosen not to define
- * them, which is exactly the "arm drops out" behaviour autoconf.h documents.
+ * What goes with the old `!!(opt)` spelling is the rule it forced:
+ * "define every option, even at 0".  mainline's token paste never names the
+ * identifier, so an absent CONFIG_* reads as 0 in a #if *and* in a function
+ * body -- while an option present at 0 is still present to an #ifdef, which
+ * is how a defined-but-false option would have answered #ifdef CONFIG_CPU_BIG
+ * _ENDIAN with "yes".  autoconf.h keeps only what is on, mainline's rule.
  */
-#include <linux/autoconf.h>
-
-#define IS_ENABLED(opt) (!!(opt))
-
-/*
- * IS_BUILTIN(opt) -- 1 if the option is built into this image, 0 if it is a
- * loadable module or absent.  mainline spells it out of token-pasting that
- * tolerates the option being undefined; DCL's IS_ENABLED cannot, so both take
- * the same argument rule (define it, even at 0 -- see autoconf.h).
- *
- * The two differ only for a `=m` option, and DCL has no `=m`: every
- * CONFIG_* in autoconf.h is 0 or 1, so builtin and enabled are the same
- * question here and `!!(opt)` answers both.  The one live caller is
- * tty_ldisc.c:119, `tty_ldisc_autoload = IS_BUILTIN(CONFIG_LDISC_AUTOLOAD)`,
- * which is 0 -- DCL cannot go looking for tty-ldisc-1 by name, and saying so
- * at compile time is better than saying it at load.
- */
-#define IS_BUILTIN(opt) (!!(opt))
+#include <linux/kconfig.h>
 
 /*
  * might_sleep() -- "this function may schedule, so do not call it from a
@@ -187,16 +229,28 @@ typedef unsigned long kernel_ulong_t;
 #define mutex_lock(m)  do{}while(0)
 #define mutex_unlock(m)  do{} while(0)
 
-#define IRQ_NONE 0
-#define IRQ_HANDLED 1
-#define IRQ_WAKE_THREAD 2
+/* IRQ_NONE / IRQ_HANDLED / IRQ_WAKE_THREAD were defined here as 0/1/2 and
+ * are now <linux/irqreturn.h>'s enumerators, included with the typedef
+ * above. See the note there. */
 
+#ifndef __iomem
 #define __iomem
+#endif
+#ifndef __user
 #define __user
+#endif
+#ifndef __kernel
 #define __kernel
+#endif
+#ifndef __force
 #define __force
+#endif
+#ifndef __nocast
 #define __nocast
+#endif
+#ifndef __safe
 #define __safe
+#endif
 /*
  * __aligned(x) is NOT an empty annotation, unlike the ones around it.
  * struct tty_buffer ends in `u8 data[] __aligned(sizeof(unsigned long))`
@@ -453,6 +507,28 @@ static inline ktime_t ktime_get_mono_fast_ns(void) {
     return ktime_get();
 }
 
+/*
+ * struct timespec64 / ktime_to_timespec64() -- the calendar split of a
+ * ktime_t.  mainline has both in <linux/ktime.h>; they live here because
+ * this is where DCL keeps ktime_t and its arithmetic, and drm_vblank.c's
+ * timestamp paths (vblank.c:818/1057/1730) reach this header first.  The
+ * nanosecond field is `long long` rather than mainline's `long` because
+ * this target is LLP64 and `long` is 4 bytes -- tv_nsec only ever holds a
+ * sub-second remainder, but a type that is right by coincidence is a trap
+ * the first time someone adds tv_nsec arithmetic.
+ */
+struct timespec64 {
+    int64_t tv_sec;
+    long long tv_nsec;
+};
+
+static inline struct timespec64 ktime_to_timespec64(const ktime_t kt) {
+    struct timespec64 ts;
+    ts.tv_sec = (int64_t)(kt / NSEC_PER_SEC);
+    ts.tv_nsec = (long long)(kt % NSEC_PER_SEC);
+    return ts;
+}
+
 static inline uint64_t ktime_get_ns(void) {
     return (uint64_t)ktime_get();
 }
@@ -646,10 +722,10 @@ extern int oops_in_progress;
 #define BUG_ON(condition) do { if (condition) { BUG(); } } while (0)
 
 /*
- * strscpy(dst, src, count) -- copy a NUL-terminated string into a bounded
- * buffer.  The one caller (serial_core.c:2485) discards the result, but the
- * contract still has to be mainline's, because it is the *return* that tells
- * a future caller whether the string fit:
+ * sized_strscpy(dst, src, count) -- copy a NUL-terminated string into a
+ * bounded buffer.  The result is discarded by every caller in the tree, but
+ * the contract still has to be mainline's, because it is the *return* that
+ * tells a future caller whether the string fit:
  *
  *   >= 0   bytes copied, excluding the terminator
  *   -E2BIG src did not fit in count bytes; dst is still NUL-terminated
@@ -660,10 +736,13 @@ extern int oops_in_progress;
  * whose mainline comment says the same thing in more words.  count == 0 is
  * -E2BIG because nothing could be stored, matching upstream.
  *
+ * The name is mainline's for this spelling: mainline v7.2 has the 3-argument
+ * form here and builds strscpy() on top of it -- see the macros below.
+ *
  * mainline: include/linux/string.h -> lib/string.c; see the note above this
  * block for why the definition sits in this file instead.
  */
-static inline long strscpy(char* dst, const char* src, size_t count)
+static inline long sized_strscpy(char* dst, const char* src, size_t count)
 {
 	size_t i;
 
@@ -682,5 +761,52 @@ static inline long strscpy(char* dst, const char* src, size_t count)
 	dst[i] = '\0';
 	return (long)i;
 }
+
+/*
+ * strscpy(dst, src[, count]) -- mainline's two-form spelling of the above.
+ *
+ * mainline dispatches on the argument count rather than overloading, because
+ * C cannot overload and this tree has both shapes in it at once:
+ *
+ *   virtio_console.c:1635   strscpy(port->name, ..., sizeof(port->name));
+ *   serial_core.c:2485      strscpy(address, "*unknown*", sizeof(address));
+ *   drm_client.c:253        strscpy(fb->comm, client->name, TASK_COMM_LEN);
+ *   drm_modes.c:2322        strscpy(cmdline_mode->name, mode->name,
+ *                                   sizeof(cmdline_mode->name));
+ *   drm_framebuffer.c:886   strscpy(fb->comm, current->comm);
+ *
+ * The last line is what made this necessary. Against the plain 3-argument
+ * function this file used to carry, it reported "too few arguments to
+ * function call, expected 3, have 2" -- and adding a default parameter was
+ * not the fix, because mainline's rule is that the 2-argument form is only
+ * valid when dst *is* an array whose size is known, and the count then comes
+ * from sizeof(dst). The four 3-argument sites pass a count that is not the
+ * whole array (a TASK_COMM_LEN into a longer field), which is the other half
+ * of why the argument cannot simply be dropped.
+ *
+ * The dispatch is mainline's in shape and different in mechanism, and the
+ * difference is worth recording: mainline selects with COUNT_ARGS() over a
+ * padded argument list, which needs the __ARG_PLACEHOLDER machinery for the
+ * empty case. Checked rather than assumed, clang counts an empty __VA_ARGS__
+ * as *one* empty argument, so the padded-list version selects the 3-argument
+ * arm for a 2-argument call and then complains that its size argument is
+ * missing.
+ *
+ * __VA_OPT__ is direct about the same question. __strscpy_sel returns its
+ * middle argument; the first __VA_OPT__ supplies "the count, then the
+ * 3-argument arm" only when a count was actually written, and when it was
+ * not, the slot that __VA_OPT__ left empty is precisely the middle one --
+ * which lands on __strscpy_2. __strscpy_2 is variadic so the trailing empty
+ * __VA_ARGS__ that strscpy() passes has somewhere to go.
+ *
+ * Both arms are always parsed, so dst is sizeof'd even on the 3-argument
+ * path; that is harmless and is the price of picking the arm after expansion
+ * rather than before.
+ */
+#define __strscpy_2(dst, src, ...)	sized_strscpy(dst, src, sizeof(dst))
+#define __strscpy_3(dst, src, size)	sized_strscpy(dst, src, size)
+#define __strscpy_sel(_1, N, ...)	N
+#define __strscpy_args(...)		__strscpy_sel(__VA_OPT__(__VA_ARGS__, __strscpy_3) , __strscpy_2)
+#define strscpy(dst, src, ...)		__strscpy_args(__VA_ARGS__)(dst, src, __VA_ARGS__)
 #endif
 

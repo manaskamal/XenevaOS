@@ -99,6 +99,37 @@
 #define DEFINE_SPINLOCK(name) spinlock_t name = 0
 
 /*
+ * __SPIN_LOCK_UNLOCKED(lockname) -- the static initialiser, the spelling a
+ * file-scope struct field needs where DEFINE_SPINLOCK's `name = 0` cannot be
+ * used. Two consumers, both struct members rather than objects:
+ *
+ *     xarray.h:308   .xa_lock = __SPIN_LOCK_UNLOCKED(name.xa_lock)
+ *     seqlock.h:809  .lock =    __SPIN_LOCK_UNLOCKED(lockname)
+ *
+ * Neither existed here until drm_drv.c:65 expanded DEFINE_XARRAY_ALLOC()
+ * (drm_minors_xa, the minor-number allocator). Undeclared, the token reads as
+ * an implicit int function call inside a static initialiser, and clang reports
+ * "initializer element is not a compile-time constant" at the *declaration* --
+ * a message that never mentions __SPIN_LOCK_UNLOCKED, so the missing name is
+ * only findable by expanding the macro by hand.
+ *
+ * mainline's is a typeof() cast over a brace initialiser carrying the arch
+ * unlock value, lockdep maps and debug fields. None of that has a referent:
+ * spinlock_t is an int (kernel.h:43) and every lock operation is a no-op, so
+ * the lock starts unlocked by having no other state to start in. `{ 0 }`
+ * rather than `0` because the context is an initialiser for a struct member
+ * and braced is what the other two initialisers in XARRAY_INIT spell.
+ *
+ * The argument is dropped, not expanded -- callers pass an lvalue (an
+ * existing lock, or a field of the object being defined) and evaluating it
+ * during its own initialisation would be a read of an object not yet
+ * complete.
+ */
+#ifndef __SPIN_LOCK_UNLOCKED
+#define __SPIN_LOCK_UNLOCKED(lockname) { 0 }
+#endif
+
+/*
  * cpu_relax() -- the "I am spinning, back off" hint. virtio_console.c:563 and
  * :638 sit in loops that poll a virtqueue for a reply.
  *
@@ -158,5 +189,26 @@ DCL_LOCK_GUARD(spinlock, spinlock_t, spin_lock(_T), spin_unlock(_T))
 DCL_LOCK_GUARD(spinlock_irq, spinlock_t, spin_lock_irq(_T), spin_unlock_irq(_T))
 DCL_LOCK_GUARD(spinlock_irqsave, spinlock_t,
 		dcl_spin_lock_irqsave(_T), dcl_spin_unlock_irqrestore(_T))
+
+/*
+ * seqlock.h instantiates seqcount variants named over raw_spinlock_t,
+ * spinlock_t, rwlock_t and struct mutex.  DCL has exactly one lock flavour
+ * (an int), so the other three spellings alias it; the seqcount bodies only
+ * ever store the pointer, they never take the lock.
+ */
+typedef spinlock_t raw_spinlock_t;
+typedef spinlock_t rwlock_t;
+
+/*
+ * struct raw_spinlock -- the *type*, which drm_mode_config.h:501 embeds by
+ * value in `panic_lock`.  mainline's holds an arch spinlock, a magic, a
+ * waiter list and lockdep state; here the type exists to be a field, and
+ * nothing locks through it (raw_spin_lock_* above are macros that never look
+ * at their argument).  One int, so a `struct raw_spinlock` costs what the
+ * int it stands in for does.
+ */
+struct raw_spinlock {
+	unsigned int rlock;
+};
 
 #endif /* __LINUX_SPINLOCK_H__ */

@@ -286,6 +286,42 @@ void dcl_wait_event_timeout(const char* func);
 			? _dcl_t : 0;						\
 	})
 
+/*
+ * wait_event_timeout(wq_head, condition, timeout) -- the two drm vblank
+ * waits, drm_atomic_helper.c:1916 and drm_vblank.c:1325.
+ *
+ * Same bounded poll and the same result convention as
+ * wait_event_interruptible_timeout() above: the caller's timeout back when
+ * the condition came true, 0 when the budget expired first.  Both call
+ * sites test only `!ret` / `ret == 0` -- drm_crtc_wait_one_vblank() maps the
+ * 0 onto -ETIMEDOUT -- so no remainder is ever read.  mainline floors a
+ * success at 1 (`timeout ?: 1`); returning the input unchanged is what the
+ * sibling macro above chose, so this one follows it rather than giving two
+ * answers for one argument in the same header.
+ */
+#define wait_event_timeout(wq_head, condition, timeout)			\
+	({									\
+		long _dcl_t = (timeout);					\
+		_dcl_wait_core(wq_head, condition)				\
+			? _dcl_t : 0;						\
+	})
+
+/*
+ * wait_event_lock_irq(wq_head, condition, lock) -- drm_vblank_work.c:229
+ * and :250, which hold dev->event_lock across the wait and pass it to the
+ * macro so mainline's __wait_event_lock_irq() can drop it around each
+ * schedule() and take it again on wake.  DCL's spinlocks are no-ops with
+ * nothing to drop (see <linux/spinlock.h>), so `lock` is unused; what
+ * remains is wait_event()'s bounded poll.  The contract mainline states --
+ * the lock is held on entry and still held on return -- is then trivially
+ * kept, because the lock was never actually released.
+ */
+#define wait_event_lock_irq(wq_head, condition, lock)			\
+	do {									\
+		(void)(lock);						\
+		(void)_dcl_wait_core(wq_head, condition);			\
+	} while (0)
+
 
 /*
  * DEFINE_WAIT(name) -- mainline's spelling for the waiter declared *inside*

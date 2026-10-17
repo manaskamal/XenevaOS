@@ -28,6 +28,7 @@ struct file_lock;
 struct pipe_inode_info;
 struct seq_file;
 struct io_uring_cmd;
+struct address_space;
 struct io_comp_batch;
 struct vm_area_desc;
 struct inode;
@@ -71,14 +72,31 @@ struct file_operations {
 	__poll_t (*poll)(struct file*, struct poll_table_struct*);  /* 72 */
 	void* unlocked_ioctl;                   /* 80 */
 	void* compat_ioctl;                     /* 88 */
-	void* mmap;                             /* 96 */
+	/*
+	 * mmap and get_unmapped_area are the third deviation from this
+	 * header's pinned rule, and the reason is the same one as i_mapping's
+	 * below: the drm core *calls* them, and a call through a void* is
+	 * not a call at all -- clang reports "called object type 'void *' is
+	 * not a function or function pointer". Two sites, drm_gem.c:1353
+	 * (get_unmapped_area) and drm_prime.c:798 (mmap), both through a
+	 * `const struct file_operations *` that is this struct.
+	 *
+	 * Both are given mainline's own signatures and both keep their slot:
+	 * a function pointer is 8 bytes, a void* is 8 bytes, so offset 96 and
+	 * offset 152 and sizeof(struct file_operations) are all unchanged.
+	 * Every existing assignment still fits, since it was already assigning
+	 * a function to these fields -- DEFINE_DRM_GEM_FOPS at drm_gem.h:472-473
+	 * and DCL/mem.c:641 and :675 all spell the same 5-argument
+	 * unsigned-long-returning get_unmapped_area mainline does.
+	 */
+	int (*mmap)(struct file*, struct vm_area_struct*);         /* 96 */
 	int (*open)(struct inode*, struct file*);                   /* 104 */
 	void* flush;                            /* 112 */
 	int (*release)(struct inode*, struct file*);                /* 120 */
 	void* fsync;                            /* 128 */
 	int (*fasync)(int, struct file*, int);                      /* 136 */
 	void* lock;                             /* 144 */
-	void* get_unmapped_area;                /* 152 */
+	unsigned long (*get_unmapped_area)(struct file*, unsigned long, unsigned long, unsigned long, unsigned long);  /* 152 */
 	void* check_flags;                      /* 160 */
 	void* flock;                            /* 168 */
 	void* splice_write;                     /* 176 */
@@ -94,6 +112,18 @@ struct file_operations {
 	void* uring_cmd_iopoll;                 /* 256 */
 	void* mmap_prepare;                     /* 264 */
 };
+
+/*
+ * mmap and get_unmapped_area are the two slots the drm core *calls* through
+ * this struct (drm_prime.c:798, drm_gem.c:1353 -- the note inside the struct
+ * explains why they carry real signatures).  The asserts pin the offsets that
+ * comment claims, so a member inserted above them is a compile error here
+ * rather than a call to an 8-byte field that is no longer a function.
+ */
+_Static_assert(__builtin_offsetof(struct file_operations, mmap) == 96,
+               "fs.h: f_op->mmap is pinned at 96 (drm_prime.c:798 calls it)");
+_Static_assert(__builtin_offsetof(struct file_operations, get_unmapped_area) == 152,
+               "fs.h: f_op->get_unmapped_area is pinned at 152 (drm_gem.c:1353 calls it)");
 
 /*
  * linux-7.2.6 struct file: f_lock 0, f_mode 4, f_op 8, f_mapping 16,
@@ -124,14 +154,47 @@ struct file {
  * linux-7.2.6 struct inode: i_rdev 76, i_cdev 528, size 560.
  * The module reads only i_cdev (port_fops_open resolves its port from
  * inode->i_cdev->dev); i_rdev is kept for the bridge's own bookkeeping.
+ *
+ * i_mapping is the second deviation from the "pinned, do not edit" rule for
+ * this header, and it is the same shape as the first: a member the drm core
+ * cannot work without, taken out of padding rather than added at the end.
+ *
+ * Four sites read it -- drm_file.c:386 and :1074, drm_gem.c:747 and
+ * drm_prime.c:251 -- all of them `...->i_mapping` on a struct inode *, which
+ * is the one form a macro cannot fix: the token is to the right of `->`, and
+ * a member that does not exist cannot be named, aliased or discarded from the
+ * outside. Every consumer is an address-and-store (`filp->f_mapping =
+ * dev->anon_inode->i_mapping`), so the object it points at is never touched
+ * through this header -- an opaque pointer is enough.
+ *
+ * It is placed at offset 80, the first byte of what used to be _mid[448],
+ * and _mid is shortened to 440 to keep every other offset where it was:
+ * i_rdev still at 76, i_cdev still at 528, sizeof still 560. Nothing is
+ * persisted, but the ABI these offsets describe belongs to code this header
+ * does not own, and a blob whose padding moved would be a blob whose one
+ * readable member landed somewhere else.
  */
 struct inode {
 	unsigned char _head[76];                /* 0..75 */
 	unsigned int i_rdev;                    /* 76 */
-	unsigned char _mid[448];               /* 80..527 */
+	struct address_space* i_mapping;        /* 80 */
+	unsigned char _mid[440];               /* 88..527 */
 	struct cdev* i_cdev;                    /* 528 */
-	unsigned char _tail[24];                /* 532..559 */
+	unsigned char _tail[24];                /* 536..559 */
 };
+
+/*
+ * i_cdev is the member the module actually reads -- cdev_shim's open resolves
+ * a port from inode->i_cdev->dev -- and the size is pinned because the
+ * module's own struct inode is 560 bytes: a blob whose padding moved would be
+ * a blob whose one readable member landed somewhere else.  Both numbers are
+ * mainline's, as the comment above the struct records; the asserts are what
+ * keeps them that way.
+ */
+_Static_assert(sizeof(struct inode) == 560,
+               "fs.h: struct inode is pinned to 560B (linux-7.2.6 arm64)");
+_Static_assert(__builtin_offsetof(struct inode, i_cdev) == 528,
+               "fs.h: i_cdev is pinned at 528 (the module resolves its port from it)");
 
 /*
  * linux-7.2.6 struct cdev: kobj 0 (64B), owner 64, ops 72, list 80,
@@ -211,5 +274,30 @@ static inline int dcl_is_err(const void* ptr) {
 #define ERR_PTR(err) ((void*)(long)(err))
 #define PTR_ERR(ptr) ((long)(ptr))
 #define IS_ERR(ptr)  dcl_is_err(ptr)
+
+/*
+ * fops_get() / replace_fops() -- mainline's two <linux/fs.h> helpers for
+ * rebinding a file's operations from ->open(); drm_stub_open() (drm_drv.c
+ * :1203, :1209) is the tree's only caller and includes this header directly.
+ *
+ * Both keep mainline's signature and its effect, not its implementation:
+ * mainline's fops_get() is a macro over try_module_get() and its
+ * replace_fops() a macro pairing fops_put() with a BUG_ON() on the new
+ * pointer. DCL modules are compiled into the image and never unloaded, so
+ * holding a reference is keeping the pointer -- the same trade get_file()
+ * makes next door in <linux/file.h> -- and neither module_put() nor BUG_ON()
+ * is reachable from this header. A NULL fops still answers NULL.
+ */
+static inline const struct file_operations*
+fops_get(const struct file_operations* fops)
+{
+	return fops;
+}
+
+static inline void replace_fops(struct file* filp,
+								const struct file_operations* fops)
+{
+	filp->f_op = fops;
+}
 
 #endif /* __LINUX_FS_H__ */

@@ -22,17 +22,38 @@
  * may be empty -- virtio-rng.c:34 and :38 write `__dma_from_device_group_begin();`
  * with nothing inside the parens. See the note in <linux/cache.h>.
  *
- * ARCH_DMA_MINALIGN is not defined for this target, so
+ * ARCH_HAS_DMA_MINALIGN is not defined for this target, so
  * ____dma_from_device_aligned is the empty spelling mainline falls back to
  * too -- no extra alignment. That is not an oversight: virtio-rng.c guards
  * its buffer with `#if SMP_CACHE_BYTES < 32` and sizes it itself, so the
- * cacheline (64) already governs the layout.
+ * cacheline (64) already governs the layout. ARCH_DMA_MINALIGN itself is
+ * defined now, in <asm/cache.h>, for drm_managed.c's struct drmres -- but it
+ * is ARCH_HAS_DMA_MINALIGN that the #ifdef below tests, and that one stays
+ * undefined, so the layout here does not move.
  */
 
 #include <linux/cache.h>	/* __cacheline_group_begin/end, SMP_CACHE_BYTES */
 #include <linux/kernel.h>	/* gfp_t, dma_addr_t, size_t */
+/* mainline's first include: enum dma_data_direction, which this header's
+ * dma_sync_* prototypes and everything downstream (dma-buf.h) name. */
+#include <linux/dma-direction.h>
+#include <linux/scatterlist.h>	/* struct scatterlist, struct sg_table -- dma_map_sg* */
 
 struct device;
+
+/*
+ * DMA_BIT_MASK(n) -- mainline defines it here, and vkms_drv.c:188
+ * (vkms_create) is this tree's only use: dma_coerce_mask_and_coherent(dev,
+ * DMA_BIT_MASK(64)).  Without the macro the argument compiles as an implicit
+ * call to a function named DMA_BIT_MASK returning int -- no compile error,
+ * because -Wno-implicit-function-declaration is on -- and the mask would be
+ * a 32-bit value from a function that does not exist.  The #ifndef is
+ * belt-and-braces for a second definition arriving with some other port; the
+ * spelling is mainline's.
+ */
+#ifndef DMA_BIT_MASK
+#define DMA_BIT_MASK(n)	(((n) == 64) ? ~0ULL : ((1ULL << (n)) - 1))
+#endif
 
 /*
  * dma_alloc_coherent() / dma_free_coherent() -- the one pair the fence macros
@@ -80,5 +101,107 @@ void dma_free_coherent(struct device* dev, size_t size, void* vaddr,
 /* Mark the end of a DMA buffer. */
 #define __dma_from_device_group_end(GROUP)	\
 	__cacheline_group_end(GROUP) ____dma_from_device_aligned
+
+/*
+ * DMA_ATTR_* -- the streaming-mapping attribute bits, of which
+ * DMA_ATTR_SKIP_CPU_SYNC is the only one this tree uses (drm_prime.c:684 and
+ * :710, in the prime export path). Defined as mainline's values rather than
+ * renumbered, so a later port that carries two of them does not have to
+ * reconcile two schemes; the rest are carried for the same reason, and none
+ * of them is read anywhere.
+ *
+ * mainline: include/linux/dma-mapping.h.
+ */
+#define DMA_ATTR_WRITE_BARRIER		(1UL << 0)
+#define DMA_ATTR_WEAK_ORDERING		(1UL << 1)
+#define DMA_ATTR_WRITE_COMBINE		(1UL << 2)
+#define DMA_ATTR_NON_CONSISTENT		(1UL << 3)
+#define DMA_ATTR_NO_KERNEL_MAPPING	(1UL << 4)
+#define DMA_ATTR_SKIP_CPU_SYNC		(1UL << 5)
+#define DMA_ATTR_FORCE_CONTIGUOUS	(1UL << 6)
+#define DMA_ATTR_ALLOC_SINGLE_PAGES	(1UL << 7)
+#define DMA_ATTR_NO_WARN		(1UL << 8)
+#define DMA_ATTR_MERGEABLE		(1UL << 9)
+#define DMA_ATTR_CPU_MAPPABLE		(1UL << 10)
+#define DMA_ATTR_FORCE_DMA32		(1UL << 11)
+#define DMA_ATTR_ALLOC_PAGES		(1UL << 12)
+
+/*
+ * dma_map_sg() -- map `nents` sg entries for the device and report how many
+ * DMA segments they became.
+ *
+ * The answer is `nents` unchanged, which is the identity mapping: with no
+ * IOMMU and no bounce buffers, an entry is already contiguous and already
+ * addressable, so nothing coalesces. That is the same reasoning
+ * dma_alloc_coherent() above uses for handing the virtual address back as the
+ * dma_addr_t -- and drm_need_swiotlb() in drm_cache.c answering false is the
+ * other half of it. The @attrs word is mainline's and, at this mapping
+ * granularity, has nothing to act on: DMA_ATTR_SKIP_CPU_SYNC in particular
+ * only defers a sync that never happens here.
+ *
+ * Declared here, defined in DCL/linux_mm_shim.c beside the two allocators.
+ */
+int dma_map_sg(struct device* dev, struct scatterlist* sg, int nents,
+	       enum dma_data_direction dir);
+void dma_unmap_sg(struct device* dev, struct scatterlist* sg, int nents,
+		  enum dma_data_direction dir);
+
+/*
+ * dma_map_sgtable() -- mainline's wrapper, and mainline's body verbatim: map
+ * the list, and on success rewrite nents to the count that survived. The
+ * -EINVAL arm is mainline's for the "mapped to nothing" case, which cannot
+ * happen against the dma_map_sg() above but is kept so a real mapper could
+ * be dropped in without the contract changing.
+ *
+ * Inline rather than a shim because the whole of it is the wrapper -- there is
+ * no state of its own, and mainline keeps it in the header too.
+ */
+static inline int dma_map_sgtable(struct device* dev, struct sg_table* sgt,
+				  enum dma_data_direction dir,
+				  unsigned long attrs)
+{
+	int nents;
+
+	(void)attrs;	/* see the note above: nothing here reads it */
+
+	nents = dma_map_sg(dev, sgt->sgl, sgt->nents, dir);
+	if (nents <= 0)
+		return nents < 0 ? nents : -EINVAL;
+
+	sgt->nents = (unsigned int)nents;
+	return 0;
+}
+
+/*
+ * dma_unmap_sgtable() -- mainline's wrapper, and mainline's body verbatim
+ * (include/linux/dma-mapping.h): unmap the table's *original* entries.
+ * drm_prime.c:710 (drm_gem_unmap_dma_buf) is the only caller.  Inline for the
+ * same reason dma_map_sgtable() above is -- the whole of it is the call --
+ * and `attrs` has nothing left to act on because dma_unmap_sg() below
+ * performs no unmapping (see the note over dma_map_sg).
+ *
+ * orig_nents rather than nents is mainline's choice and matters to the
+ * contract even here: dma_map_sgtable() rewrites nents to the post-map
+ * count, while unmapping must cover what was handed in.
+ */
+static inline void dma_unmap_sgtable(struct device* dev, struct sg_table* sgt,
+				     enum dma_data_direction dir,
+				     unsigned long attrs)
+{
+	(void)attrs;
+	dma_unmap_sg(dev, sgt->sgl, (int)sgt->orig_nents, dir);
+}
+
+/*
+ * dma_coerce_mask_and_coherent() / dma_max_mapping_size() -- the two
+ * remaining DMA operations a vendored caller names as symbols.  Both are
+ * mainline declarations in this header; the callers reach it directly
+ * (vkms_drv.c:187, drm_prime.c:862), and both bodies are in
+ * DCL/linux_mm_shim.c beside dma_map_sg() above.  The reasons they cannot be
+ * inlines are there: one would dereference dev->dma_mask fields that fs.h's
+ * pinned struct device does not name, the other has a value to answer with.
+ */
+int dma_coerce_mask_and_coherent(struct device* dev, u64 mask);
+size_t dma_max_mapping_size(struct device* dev);
 
 #endif /* __LINUX_DMA_MAPPING_H */

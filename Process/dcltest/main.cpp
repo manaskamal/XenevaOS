@@ -220,6 +220,66 @@ int main(int argc, char* argv[]) {
 		_KeCloseFile(fd);
 	}
 
+	/* /dev/dri/card0 -- the vkms DRM device. Two ioctls, and both go the
+	 * whole way: devfs -> fileserv -> the DCL cdev bridge -> mainline's
+	 * file_operations->unlocked_ioctl -> drm_ioctl() -> vkms.
+	 *
+	 * The ioctl numbers are spelled out because this file cannot include
+	 * kernel headers. Both are _IOWR('d', nr, type): direction 3 in the
+	 * top two bits, sizeof(type) in bits 16..29, 'd' = 0x64 below that and
+	 * nr in the low byte. struct drm_version is 64 bytes (three ints, then
+	 * three length/pointer pairs) and struct drm_get_cap is 16, which is
+	 * where 0x40 and 0x10 come from.
+	 *
+	 * The lengths are size_t -- 8 bytes here -- because the kernel's are
+	 * __kernel_size_t, which BaseHdr/linux/types.h defines as size_t.
+	 * `unsigned long` would be 4 bytes (this app and the kernel are both
+	 * aarch64-unknown-windows, which is LLP64), which shifts the three
+	 * pointers to offsets 16, 32 and 48; the kernel then reads `desc` from
+	 * past the end of this struct and copy_to_user()s the driver string
+	 * into stack garbage.
+	 */
+	{
+		struct drm_version_arg {
+			int major, minor, patchlevel;
+			size_t name_len;
+			char* name;
+			size_t date_len;
+			char* date;
+			size_t desc_len;
+			char* desc;
+		} ver;
+		struct drm_get_cap_arg {
+			unsigned long long capability;
+			unsigned long long value;
+		} cap;
+		char vname[32], vdesc[64];
+		int vfd = opendev("/dev/dri/card0",
+				  FILE_OPEN_READ_ONLY | FILE_OPEN_WRITE);
+
+		if (vfd >= 0) {
+			memset(&ver, 0, sizeof ver);
+			memset(vname, 0, sizeof vname);
+			memset(vdesc, 0, sizeof vdesc);
+			ver.name = vname;
+			ver.name_len = sizeof vname;
+			ver.desc = vdesc;
+			ver.desc_len = sizeof vdesc;
+			report("drm VERSION", _KeFileIoControl(vfd, 0xC0406400, &ver), 0);
+			report("drm version major", ver.major, 1);
+			report("drm name length", (int)ver.name_len, 4);
+			report("drm name is vkms", (int)memcmp(vname, "vkms", 4), 0);
+			report("drm desc length", (int)ver.desc_len,
+				   (int)strlen("Virtual Kernel Mode Setting"));
+
+			memset(&cap, 0, sizeof cap);
+			cap.capability = 0x1;	/* DRM_CAP_DUMB_BUFFER */
+			report("drm GET_CAP", _KeFileIoControl(vfd, 0xC010640C, &cap), 0);
+			report("drm dumb-buffer cap", (int)cap.value, 1);
+			_KeCloseFile(vfd);
+		}
+	}
+
 	/* privileged device nodes belong to the daemons group; an ordinary process (this
 	 * one has world only) must be refused even when it asks for a write-mode open,
 	 * which used to skip the permission check entirely */

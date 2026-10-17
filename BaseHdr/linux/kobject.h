@@ -234,12 +234,16 @@ extern struct kobject *firmware_kobj;
  * behaviour is unchanged -- the shim's body is empty. DCL has no udev, so the
  * event had nowhere to go either way.
  *
- * kobject_uevent_env() keeps its declaration: nothing calls it, and an
- * unreferenced declaration costs no symbol.
+ * kobject_uevent_env() joined it when drm_drv.c:599
+ *
+ *     return kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
+ *
+ * became the first caller: same absent member, and this one uses the
+ * return value, so the macro answers (0) -- "event delivered", the answer
+ * that keeps drm_dev_wedged_event() on its success path.
  */
 #define kobject_uevent(kobj, action)  ((void)0)
-int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
-			char *envp[]);
+#define kobject_uevent_env(kobj, action, envp)  (0)
 int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count);
 
 __printf(2, 3)

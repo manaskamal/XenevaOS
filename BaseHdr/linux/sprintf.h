@@ -54,7 +54,14 @@
  * the caller's size and _print.c's MAX_STRING_LENGTH -- so this is a
  * declaration and a spelling, with no new formatter behind it.  vsnprintf and
  * vscnprintf are still absent: no caller yet, and each would need
- * <linux/stdarg.h> plumbing that the one user did not.
+ * <linux/stdarg.h> plumbing that the one user did not.  vsnprintf is here
+ * now, because seq_buf.c:74 needs it: `len = vsnprintf(s->buffer + s->len,
+ * s->size - s->len, fmt, args);` is a *bounded* format into a caller-owned
+ * buffer, which is exactly what <Log/_print.h>'s _vsnprintf already does --
+ * the two signatures are the same three arguments plus a va_list, in the same
+ * order, so this is the same decision as snprintf() above: a spelling, with
+ * no second formatter behind it.  vscnprintf is still absent, which is
+ * consistent -- nothing has asked for it.
  */
 extern int _sprintf(char* output, const char* format, ...);
 #define sprintf _sprintf
@@ -62,4 +69,12 @@ extern int _sprintf(char* output, const char* format, ...);
 
 extern int _snprintf(char* output, size_t sz, const char* format, ...);
 #define snprintf _snprintf
+
+/*
+ * A macro rather than a static inline, for the same reason the comment at the
+ * top gives for sprintf(): the compiler checks the call site against
+ * _vsnprintf's real signature, and no forwarding function has to restate the
+ * va_list parameter.
+ */
+#define vsnprintf _vsnprintf
 #endif /* __LINUX_SPRINTF_H */

@@ -59,9 +59,14 @@ ifeq ($(TOOLCHAIN), llvm)
     
     LLVM_TARGET = -target aarch64-unknown-windows
     
+    # __KERNEL__: mainline's build always has it, and the headers gate on it
+    # -- compiler_types.h:85 opens on the attribute battery (__noreturn,
+    # __counted_by, __always_inline proper) that ports of kthread.h,
+    # dma-fence-array.h and the drm set assume, and uapi/linux/stddef.h:5
+    # pulls compiler_types in first so its fallbacks never shadow them.
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -92,7 +97,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
               $(INCLUDES)
 endif
 

@@ -1,0 +1,476 @@
+/* SPDX-License-Identifier: MIT */
+/*
+ * Copyright © 2014-2018 Broadcom
+ * Copyright © 2019 Collabora ltd.
+ */
+#ifndef _PANFROST_DRM_H_
+#define _PANFROST_DRM_H_
+
+#include "drm.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#define DRM_PANFROST_SUBMIT			0x00
+#define DRM_PANFROST_WAIT_BO			0x01
+#define DRM_PANFROST_CREATE_BO			0x02
+#define DRM_PANFROST_MMAP_BO			0x03
+#define DRM_PANFROST_GET_PARAM			0x04
+#define DRM_PANFROST_GET_BO_OFFSET		0x05
+#define DRM_PANFROST_PERFCNT_ENABLE		0x06
+#define DRM_PANFROST_PERFCNT_DUMP		0x07
+#define DRM_PANFROST_MADVISE			0x08
+#define DRM_PANFROST_SET_LABEL_BO		0x09
+#define DRM_PANFROST_JM_CTX_CREATE		0x0a
+#define DRM_PANFROST_JM_CTX_DESTROY		0x0b
+#define DRM_PANFROST_SYNC_BO			0x0c
+#define DRM_PANFROST_QUERY_BO_INFO		0x0d
+
+#define DRM_IOCTL_PANFROST_SUBMIT		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_SUBMIT, struct drm_panfrost_submit)
+#define DRM_IOCTL_PANFROST_WAIT_BO		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_WAIT_BO, struct drm_panfrost_wait_bo)
+#define DRM_IOCTL_PANFROST_CREATE_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_CREATE_BO, struct drm_panfrost_create_bo)
+#define DRM_IOCTL_PANFROST_MMAP_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MMAP_BO, struct drm_panfrost_mmap_bo)
+#define DRM_IOCTL_PANFROST_GET_PARAM		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_PARAM, struct drm_panfrost_get_param)
+#define DRM_IOCTL_PANFROST_GET_BO_OFFSET	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_GET_BO_OFFSET, struct drm_panfrost_get_bo_offset)
+#define DRM_IOCTL_PANFROST_MADVISE		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_MADVISE, struct drm_panfrost_madvise)
+#define DRM_IOCTL_PANFROST_SET_LABEL_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_SET_LABEL_BO, struct drm_panfrost_set_label_bo)
+#define DRM_IOCTL_PANFROST_JM_CTX_CREATE	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_JM_CTX_CREATE, struct drm_panfrost_jm_ctx_create)
+#define DRM_IOCTL_PANFROST_JM_CTX_DESTROY	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_JM_CTX_DESTROY, struct drm_panfrost_jm_ctx_destroy)
+#define DRM_IOCTL_PANFROST_SYNC_BO		DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_SYNC_BO, struct drm_panfrost_sync_bo)
+#define DRM_IOCTL_PANFROST_QUERY_BO_INFO	DRM_IOWR(DRM_COMMAND_BASE + DRM_PANFROST_QUERY_BO_INFO, struct drm_panfrost_query_bo_info)
+
+/*
+ * Unstable ioctl(s): only exposed when the unsafe unstable_ioctls module
+ * param is set to true.
+ * All these ioctl(s) are subject to deprecation, so please don't rely on
+ * them for anything but debugging purpose.
+ */
+#define DRM_IOCTL_PANFROST_PERFCNT_ENABLE	DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_ENABLE, struct drm_panfrost_perfcnt_enable)
+#define DRM_IOCTL_PANFROST_PERFCNT_DUMP		DRM_IOW(DRM_COMMAND_BASE + DRM_PANFROST_PERFCNT_DUMP, struct drm_panfrost_perfcnt_dump)
+
+#define PANFROST_JD_REQ_FS (1 << 0)
+#define PANFROST_JD_REQ_CYCLE_COUNT (1 << 1)
+/**
+ * struct drm_panfrost_submit - ioctl argument for submitting commands to the 3D
+ * engine.
+ *
+ * This asks the kernel to have the GPU execute a render command list.
+ */
+struct drm_panfrost_submit {
+	/**
+	 * @jc: Address to GPU mapping of job descriptor
+	 */
+	__u64 jc;
+	/**
+	 * @in_syncs: An optional array of sync objects to wait on
+	 * before starting this job.
+	 */
+	__u64 in_syncs;
+	/**
+	 * @in_sync_count: Number of sync objects to wait on before
+	 * starting this job.
+	 */
+	__u32 in_sync_count;
+	/**
+	 * @out_sync: An optional sync object to place the completion fence in.
+	 */
+	__u32 out_sync;
+	/**
+	 * @bo_handles: Pointer to a u32 array of the BOs that are
+	 * referenced by the job.
+	 */
+	__u64 bo_handles;
+	/**
+	 * @bo_handle_count: Number of BO handles passed in (size is
+	 * that times 4).
+	 */
+	__u32 bo_handle_count;
+	/**
+	 * @requirements: A combination of PANFROST_JD_REQ_*
+	 */
+	__u32 requirements;
+	/**
+	 * @jm_ctx_handle: JM context handle. Zero if you want to use the
+	 * default context.
+	 */
+	__u32 jm_ctx_handle;
+	/**
+	 * @pad: Padding field. Must be zero.
+	 */
+	__u32 pad;
+};
+
+/**
+ * struct drm_panfrost_wait_bo - ioctl argument for waiting for
+ * completion of the last DRM_PANFROST_SUBMIT on a BO.
+ *
+ * This is useful for cases where multiple processes might be
+ * rendering to a BO and you want to wait for all rendering to be
+ * completed.
+ */
+struct drm_panfrost_wait_bo {
+	/**
+	 * @handle: Handle for the object to wait for.
+	 */
+	__u32 handle;
+	/**
+	 * @pad: Padding, must be zero-filled.
+	 */
+	__u32 pad;
+	/**
+	 * @timeout_ns: absolute number of nanoseconds to wait.
+	 */
+	__s64 timeout_ns;
+};
+
+/* Valid flags to pass to drm_panfrost_create_bo.
+ * PANFROST_BO_WB_MMAP can't be set if PANFROST_BO_HEAP is.
+ */
+#define PANFROST_BO_NOEXEC	1
+#define PANFROST_BO_HEAP	2
+#define PANFROST_BO_WB_MMAP	4
+
+/**
+ * struct drm_panfrost_create_bo - ioctl argument for creating Panfrost BOs.
+ *
+ * The flags argument is a bit mask of PANFROST_BO_* flags.
+ */
+struct drm_panfrost_create_bo {
+	/**
+	 * @size: size of shmem/BO area to create (bytes)
+	 */
+	__u32 size;
+	/**
+	 * @flags: see PANFROST_BO_* flags
+	 */
+	__u32 flags;
+	/**
+	 * @handle: Returned GEM handle for the BO.
+	 */
+	__u32 handle;
+	/**
+	 * @pad: Padding, must be zero-filled.
+	 */
+	__u32 pad;
+	/**
+	 * @offset: Returned offset for the BO in the GPU address space.
+	 * This offset is private to the DRM fd and is valid for the
+	 * lifetime of the GEM handle.
+	 *
+	 * This offset value will always be nonzero, since various HW
+	 * units treat 0 specially.
+	 */
+	__u64 offset;
+};
+
+/**
+ * struct drm_panfrost_mmap_bo - ioctl argument for mapping Panfrost BOs.
+ *
+ * This doesn't actually perform an mmap.  Instead, it returns the
+ * offset you need to use in an mmap on the DRM device node.  This
+ * means that tools like valgrind end up knowing about the mapped
+ * memory.
+ *
+ * There are currently no values for the flags argument, but it may be
+ * used in a future extension.
+ */
+struct drm_panfrost_mmap_bo {
+	/**
+	 * @handle: Handle for the object being mapped.
+	 */
+	__u32 handle;
+	/**
+	 * @flags: currently not used (should be zero)
+	 */
+	__u32 flags;
+	/**
+	 * @offset: offset into the drm node to use for subsequent mmap call.
+	 */
+	__u64 offset;
+};
+
+enum drm_panfrost_param {
+	DRM_PANFROST_PARAM_GPU_PROD_ID,
+	DRM_PANFROST_PARAM_GPU_REVISION,
+	DRM_PANFROST_PARAM_SHADER_PRESENT,
+	DRM_PANFROST_PARAM_TILER_PRESENT,
+	DRM_PANFROST_PARAM_L2_PRESENT,
+	DRM_PANFROST_PARAM_STACK_PRESENT,
+	DRM_PANFROST_PARAM_AS_PRESENT,
+	DRM_PANFROST_PARAM_JS_PRESENT,
+	DRM_PANFROST_PARAM_L2_FEATURES,
+	DRM_PANFROST_PARAM_CORE_FEATURES,
+	DRM_PANFROST_PARAM_TILER_FEATURES,
+	DRM_PANFROST_PARAM_MEM_FEATURES,
+	DRM_PANFROST_PARAM_MMU_FEATURES,
+	DRM_PANFROST_PARAM_THREAD_FEATURES,
+	DRM_PANFROST_PARAM_MAX_THREADS,
+	DRM_PANFROST_PARAM_THREAD_MAX_WORKGROUP_SZ,
+	DRM_PANFROST_PARAM_THREAD_MAX_BARRIER_SZ,
+	DRM_PANFROST_PARAM_COHERENCY_FEATURES,
+	DRM_PANFROST_PARAM_TEXTURE_FEATURES0,
+	DRM_PANFROST_PARAM_TEXTURE_FEATURES1,
+	DRM_PANFROST_PARAM_TEXTURE_FEATURES2,
+	DRM_PANFROST_PARAM_TEXTURE_FEATURES3,
+	DRM_PANFROST_PARAM_JS_FEATURES0,
+	DRM_PANFROST_PARAM_JS_FEATURES1,
+	DRM_PANFROST_PARAM_JS_FEATURES2,
+	DRM_PANFROST_PARAM_JS_FEATURES3,
+	DRM_PANFROST_PARAM_JS_FEATURES4,
+	DRM_PANFROST_PARAM_JS_FEATURES5,
+	DRM_PANFROST_PARAM_JS_FEATURES6,
+	DRM_PANFROST_PARAM_JS_FEATURES7,
+	DRM_PANFROST_PARAM_JS_FEATURES8,
+	DRM_PANFROST_PARAM_JS_FEATURES9,
+	DRM_PANFROST_PARAM_JS_FEATURES10,
+	DRM_PANFROST_PARAM_JS_FEATURES11,
+	DRM_PANFROST_PARAM_JS_FEATURES12,
+	DRM_PANFROST_PARAM_JS_FEATURES13,
+	DRM_PANFROST_PARAM_JS_FEATURES14,
+	DRM_PANFROST_PARAM_JS_FEATURES15,
+	DRM_PANFROST_PARAM_NR_CORE_GROUPS,
+	DRM_PANFROST_PARAM_THREAD_TLS_ALLOC,
+	DRM_PANFROST_PARAM_AFBC_FEATURES,
+	DRM_PANFROST_PARAM_SYSTEM_TIMESTAMP,
+	DRM_PANFROST_PARAM_SYSTEM_TIMESTAMP_FREQUENCY,
+	DRM_PANFROST_PARAM_ALLOWED_JM_CTX_PRIORITIES,
+	DRM_PANFROST_PARAM_SELECTED_COHERENCY,
+};
+
+enum drm_panfrost_gpu_coherency {
+	DRM_PANFROST_GPU_COHERENCY_ACE_LITE = 0,
+	DRM_PANFROST_GPU_COHERENCY_ACE = 1,
+	DRM_PANFROST_GPU_COHERENCY_NONE = 31,
+};
+
+struct drm_panfrost_get_param {
+	__u32 param;
+	__u32 pad;
+	__u64 value;
+};
+
+/*
+ * Returns the offset for the BO in the GPU address space for this DRM fd.
+ * This is the same value returned by drm_panfrost_create_bo, if that was called
+ * from this DRM fd.
+ */
+struct drm_panfrost_get_bo_offset {
+	__u32 handle;
+	__u32 pad;
+	__u64 offset;
+};
+
+struct drm_panfrost_perfcnt_enable {
+	__u32 enable;
+	/*
+	 * On bifrost we have 2 sets of counters, this parameter defines the
+	 * one to track.
+	 */
+	__u32 counterset;
+};
+
+struct drm_panfrost_perfcnt_dump {
+	__u64 buf_ptr;
+};
+
+/* madvise provides a way to tell the kernel in case a buffers contents
+ * can be discarded under memory pressure, which is useful for userspace
+ * bo cache where we want to optimistically hold on to buffer allocate
+ * and potential mmap, but allow the pages to be discarded under memory
+ * pressure.
+ *
+ * Typical usage would involve madvise(DONTNEED) when buffer enters BO
+ * cache, and madvise(WILLNEED) if trying to recycle buffer from BO cache.
+ * In the WILLNEED case, 'retained' indicates to userspace whether the
+ * backing pages still exist.
+ */
+#define PANFROST_MADV_WILLNEED 0	/* backing pages are needed, status returned in 'retained' */
+#define PANFROST_MADV_DONTNEED 1	/* backing pages not needed */
+
+struct drm_panfrost_madvise {
+	__u32 handle;         /* in, GEM handle */
+	__u32 madv;           /* in, PANFROST_MADV_x */
+	__u32 retained;       /* out, whether backing store still exists */
+};
+
+/**
+ * struct drm_panfrost_set_label_bo - ioctl argument for labelling Panfrost BOs.
+ */
+struct drm_panfrost_set_label_bo {
+	/**
+	 * @handle: Handle of the buffer object to label.
+	 */
+	__u32 handle;
+	/**
+	 * @pad: Must be zero.
+	 */
+	__u32 pad;
+	/**
+	 * @label: User pointer to a NUL-terminated string
+	 *
+	 * Length cannot be greater than 4096.
+	 * NULL is permitted and means clear the label.
+	 */
+	__u64 label;
+};
+
+/* Valid flags to pass to drm_panfrost_bo_sync_op */
+#define PANFROST_BO_SYNC_CPU_CACHE_FLUSH			0
+#define PANFROST_BO_SYNC_CPU_CACHE_FLUSH_AND_INVALIDATE		1
+
+/**
+ * struct drm_panthor_bo_flush_map_op - BO map sync op
+ */
+struct drm_panfrost_bo_sync_op {
+	/** @handle: Handle of the buffer object to sync. */
+	__u32 handle;
+
+	/** @type: Type of sync operation. */
+	__u32 type;
+
+	/**
+	 * @offset: Offset into the BO at which the sync range starts.
+	 *
+	 * This will be rounded down to the nearest cache line as needed.
+	 */
+	__u32 offset;
+
+	/**
+	 * @size: Size of the range to sync
+	 *
+	 * @size + @offset will be rounded up to the nearest cache line as
+	 * needed.
+	 */
+	__u32 size;
+};
+
+/**
+ * struct drm_panfrost_sync_bo - ioctl argument for syncing BO maps
+ */
+struct drm_panfrost_sync_bo {
+	/** Array of struct drm_panfrost_bo_sync_op */
+	__u64 ops;
+
+	/** Number of BO sync ops */
+	__u32 op_count;
+
+	__u32 pad;
+};
+
+/** BO comes from a different subsystem. */
+#define DRM_PANFROST_BO_IS_IMPORTED (1 << 0)
+
+struct drm_panfrost_query_bo_info {
+	/** Handle of the object being queried. */
+	__u32 handle;
+
+	/** Extra flags that are not coming from the BO_CREATE ioctl(). */
+	__u32 extra_flags;
+
+	/** Flags passed at creation time. */
+	__u32 create_flags;
+
+	/** Will be zero on return. */
+	__u32 pad;
+};
+
+/* Definitions for coredump decoding in user space */
+#define PANFROSTDUMP_MAJOR 1
+#define PANFROSTDUMP_MINOR 0
+
+#define PANFROSTDUMP_MAGIC 0x464E4150 /* PANF */
+
+#define PANFROSTDUMP_BUF_REG 0
+#define PANFROSTDUMP_BUF_BOMAP (PANFROSTDUMP_BUF_REG + 1)
+#define PANFROSTDUMP_BUF_BO (PANFROSTDUMP_BUF_BOMAP + 1)
+#define PANFROSTDUMP_BUF_TRAILER (PANFROSTDUMP_BUF_BO + 1)
+
+/*
+ * This structure is the native endianness of the dumping machine, tools can
+ * detect the endianness by looking at the value in 'magic'.
+ */
+struct panfrost_dump_object_header {
+	__u32 magic;
+	__u32 type;
+	__u32 file_size;
+	__u32 file_offset;
+
+	union {
+		struct {
+			__u64 jc;
+			__u32 gpu_id;
+			__u32 major;
+			__u32 minor;
+			__u64 nbos;
+		} reghdr;
+
+		struct {
+			__u32 valid;
+			__u64 iova;
+			__u32 data[2];
+		} bomap;
+
+		/*
+		 * Force same size in case we want to expand the header
+		 * with new fields and also keep it 512-byte aligned
+		 */
+
+		__u32 sizer[496];
+	};
+};
+
+/* Registers object, an array of these */
+struct panfrost_dump_registers {
+	__u32 reg;
+	__u32 value;
+};
+
+enum drm_panfrost_jm_ctx_priority {
+	/**
+	 * @PANFROST_JM_CTX_PRIORITY_LOW: Low priority context.
+	 */
+	PANFROST_JM_CTX_PRIORITY_LOW = 0,
+
+	/**
+	 * @PANFROST_JM_CTX_PRIORITY_MEDIUM: Medium priority context.
+	 */
+	PANFROST_JM_CTX_PRIORITY_MEDIUM,
+
+	/**
+	 * @PANFROST_JM_CTX_PRIORITY_HIGH: High priority context.
+	 *
+	 * Requires CAP_SYS_NICE or DRM_MASTER.
+	 */
+	PANFROST_JM_CTX_PRIORITY_HIGH,
+};
+
+struct drm_panfrost_jm_ctx_create {
+	/**
+	 * @handle: Handle of the created JM context
+	 */
+	__u32 handle;
+	/**
+	 * @priority: Context priority (see enum drm_panfrost_jm_ctx_priority).
+	 */
+	__u32 priority;
+};
+
+struct drm_panfrost_jm_ctx_destroy {
+	/**
+	 * @handle: Handle of the JM context to destroy.
+	 *
+	 * Must be a valid context handle returned by DRM_IOCTL_PANTHOR_JM_CTX_CREATE.
+	 */
+	__u32 handle;
+	/**
+	 * @pad: Padding field, must be zero.
+	 */
+	__u32 pad;
+};
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* _PANFROST_DRM_H_ */

@@ -74,6 +74,57 @@ struct scatterlist {
 	void* buf;
 	unsigned int len;
 	struct page* page;
+	/*
+	 * mainline's two DMA fields, carried in full even though nothing
+	 * fills them: there is no DMA mapping layer in this kernel, so
+	 * dma_address is never written and always reads 0. drm_prime.c:889
+	 * still walks it (`sg_dma_address(sgt->sgl)`) and drm_prime.c:893
+	 * walks sg_dma_len(), so the *reads* have to be well-formed even
+	 * where the writes never happen -- which is the same situation as
+	 * iomem_resource in <linux/ioport.h>: an empty but correctly shaped
+	 * answer, rather than a missing member.
+	 *
+	 * mainline makes these conditional on CONFIG_NEED_SG_DMA_LENGTH; here
+	 * they are unconditional, so sg_dma_len() below has one arm instead
+	 * of two.
+	 */
+	dma_addr_t dma_address;
+	unsigned int dma_length;
+};
+
+/*
+ * struct sg_table -- the *list* of scatterlists, and the reason this header
+ * had to grow it is a C scoping rule rather than a missing field.
+ *
+ * drm_cache.h:41 declares `void drm_clflush_sg(struct sg_table *st);` and
+ * drm_cache.c:127 defines the same function. Both spell the parameter
+ * identically, and clang still reports "conflicting types for
+ * 'drm_clflush_sg'" -- because nothing named `struct sg_table` at file scope
+ * before those lines. C scopes a struct tag that is *first* mentioned inside a
+ * function prototype's parameter list to that declaration alone, so the two
+ * lines name two unrelated incomplete types and the signatures genuinely do
+ * differ. clang warns about the rule first ("declaration of 'struct sg_table'
+ * will not be visible outside of this function", -Wvisibility) and errors
+ * after, and reading only the error sends you hunting for a difference
+ * between two spellings that are byte-identical.
+ *
+ * mainline does not hit this because mainline's <linux/scatterlist.h>
+ * *defines* struct sg_table, so the tag is at file scope before any drm
+ * header is parsed. A forward declaration already exists here in drm_drv.h:67,
+ * but drm_cache.h does not include it -- and moving the decl there would fix
+ * only this consumer, leaving the next header that names the type to
+ * rediscover the same rule.
+ *
+ * All three of mainline's fields, whole, though nothing in this tree fills one
+ * yet: `sgl` is the array, `nents` the entries that were mapped, and
+ * `orig_nents` the entries that were handed in. A two-field version would be
+ * worse than carrying all three -- see the note on struct vm_area_struct in
+ * <linux/mm.h> for why.
+ */
+struct sg_table {
+	struct scatterlist* sgl;
+	unsigned int nents;
+	unsigned int orig_nents;
 };
 
 /*
@@ -128,5 +179,182 @@ static inline unsigned int sg_len(const struct scatterlist* sg)
 {
 	return sg->len;
 }
+
+/*
+ * struct sg_page_iter and the for_each_sg*_page family -- the page-granular
+ * walk over an sg list, needed by drm_prime.c:1059 (a local
+ * `struct sg_page_iter page_iter`, so the type has to be complete, not merely
+ * forward-declared) and by its for_each_sgtable_page() loop at :1061.
+ *
+ * mainline's five fields are all here. The sixth, __sg_page_nents, is not
+ * mainline's and exists because of a difference this header documents above:
+ * mainline's scatterlist carries chain and terminate *bits* in page_link, so
+ * __sg_page_iter_next() finds the end of the list with sg_is_last(). DCL's
+ * scatterlist is {buf, len, page} with no bits to spare and no terminator,
+ * so the bound has to be carried alongside the walk instead. It is added
+ * rather than substituted: every mainline field keeps its name and meaning,
+ * and one more records what sg_is_last() would have.
+ *
+ * __sg_page_index stays 0 for every entry, because an sg entry here maps one
+ * buffer and nth_page() would have nothing to index into. It is kept so that
+ * sg_page_iter_page() can be spelled mainline's way.
+ */
+struct sg_page_iter {
+	struct scatterlist* sg;
+	unsigned int __sg_page_accum;
+	unsigned int __sg_page_index;
+	unsigned int entry;
+	unsigned int offset;
+	unsigned int __sg_page_nents;
+};
+
+static inline struct page* sg_page_iter_page(struct sg_page_iter* pgi)
+{
+	return sg_page(pgi->sg);
+}
+
+/*
+ * Both static inline rather than shim functions: neither touches shared
+ * state, and the header already answers the other accessors that way
+ * (sg_virt(), sg_len() above). mainline declares them extern because
+ * mainline's bodies walk compound pages through nth_page(); there is no
+ * compound page here to walk.
+ */
+static inline void __sg_page_iter_start(struct sg_page_iter* pgi,
+					struct scatterlist* sglist,
+					unsigned int nents, unsigned int pgoff)
+{
+	pgi->sg = sglist;
+	pgi->entry = 0;
+	pgi->offset = pgoff;
+	pgi->__sg_page_accum = 0;
+	pgi->__sg_page_index = 0;
+	pgi->__sg_page_nents = nents;
+}
+
+static inline int __sg_page_iter_next(struct sg_page_iter* pgi)
+{
+	if (pgi->entry >= pgi->__sg_page_nents)
+		return 0;
+	pgi->sg += 1;
+	pgi->entry += 1;
+	return 1;
+}
+
+#define for_each_sg_page(sglist, pgi, nents, pgoff)			\
+	for (__sg_page_iter_start(pgi, sglist, nents, pgoff);		\
+	     __sg_page_iter_next(pgi);)
+
+#define for_each_sgtable_page(sgt, pgi, pgoff)				\
+	for_each_sg_page((sgt)->sgl, pgi, (sgt)->orig_nents, pgoff)
+
+/*
+ * The DMA-address walk, and the accessors behind it -- drm_prime.c:889 and
+ * :893 (sg_dma_address, sg_dma_len) and :894 (for_each_sgtable_dma_sg).
+ *
+ * Both accessors are field reads off the two members added to struct
+ * scatterlist above. sg_dma_len() has one arm because dma_length is
+ * unconditional here; mainline's second arm reads ->length when
+ * CONFIG_NEED_SG_DMA_LENGTH is off, and there is no config to be off.
+ */
+#define sg_dma_address(sg)	((sg)->dma_address)
+#define sg_dma_len(sg)		((sg)->dma_length)
+
+/*
+ * Argument order is mainline's -- (sglist, i, nents) -- and the loop
+ * variable is mainline's too: `sg` is hardcoded, which is why
+ * for_each_sgtable_dma_sg() below takes it as an argument and then passes
+ * only `i` down. drm_prime.c:894 spells it that way.
+ */
+#define for_each_sg_dma(sglist, i, nents)				\
+	for ((i) = 0; (i) < (nents) && ((sg) = &(sglist)[(i)]); (i)++)
+
+#define for_each_sgtable_dma_sg(sgt, sg, i)				\
+	for_each_sg_dma((sgt)->sgl, i, (sgt)->nents)
+
+/*
+ * struct sg_dma_page_iter and its walk -- the address-granular counterpart,
+ * asked for by drm_prime.c:1085 (a local `struct sg_dma_page_iter dma_iter`,
+ * so the type has to be complete) and its for_each_sgtable_dma_page() loop
+ * and sg_page_iter_dma_address() call at :1088.
+ *
+ * Two spellings there are worth recording, because both look wrong and are
+ * not. First, sg_page_iter_dma_address() is named for the *page* iter but is
+ * called with a `struct sg_dma_page_iter *`; it takes that type, which is
+ * the only spelling under which mainline's own call site compiles. Second,
+ * for_each_sgtable_dma_page() hands `&(pgi)->base` to the page walk rather
+ * than driving the outer struct -- the dma iteration *is* the page iteration
+ * with a dma address read alongside it, so there is one advance step and not
+ * two to keep in sync.
+ *
+ * mainline: include/linux/scatterlist.h.
+ *
+ * sg_page_iter_dma_len() is the one shape that differs: mainline caps it at
+ * PAGE_SIZE, because mainline's iterator yields one page per step and the
+ * remainder of a larger entry belongs to the next step. Here
+ * __sg_page_iter_next() above advances one whole sg entry at a time, so
+ * there is no next step to hand the remainder to and the cap would truncate
+ * the answer to a value no caller could use to cover the entry. The rest --
+ * sg_dma_len minus the offset -- is the length that actually stands.
+ */
+struct sg_dma_page_iter {
+	struct sg_page_iter base;
+	dma_addr_t dma_address;
+	unsigned int __sg_dma_page_accum;
+};
+
+static inline dma_addr_t
+sg_page_iter_dma_address(struct sg_dma_page_iter* pgi)
+{
+	return sg_dma_address(pgi->base.sg) + pgi->base.offset;
+}
+
+static inline unsigned int
+sg_page_iter_dma_len(struct sg_dma_page_iter* pgi)
+{
+	return sg_dma_len(pgi->base.sg) - pgi->base.offset;
+}
+
+#define for_each_sgtable_dma_page(sgt, pgi, pgoff)			\
+	for_each_sg_page((sgt)->sgl, &(pgi)->base, (sgt)->nents, pgoff)
+
+/*
+ * sg_alloc_table_from_pages_segment() -- build an sg_table over an array of
+ * pages, mainline's lib/scatterlist.c helper.  The one caller is
+ * drm_prime_pages_to_sg() (drm_prime.c:865), the generic
+ * drm_gem_object_funcs.get_sg_table implementation: it has already allocated
+ * the struct sg_table and hands over the page array plus the byte range the
+ * buffer covers.  The body is in DCL/linux_mm_shim.c and allocates one entry
+ * per page, which is the granularity DCL's iterators above walk
+ * (__sg_page_iter_next() advances by entry) rather than mainline's squashing
+ * of physically contiguous runs.
+ *
+ * `offset` is the byte offset into the first page, `size` the valid byte
+ * count after it, `max_segment` mainline's cap on a squashed run; that cap
+ * has nothing to apply to here and is accepted and ignored (as the call
+ * site's UINT_MAX-derived value already implies).  `gfp_mask` likewise: the
+ * array comes from the native allocator, which takes no flags.
+ */
+int sg_alloc_table_from_pages_segment(struct sg_table* sgt,
+				      struct page** pages, unsigned int n_pages,
+				      unsigned int offset, unsigned long size,
+				      unsigned int max_segment, gfp_t gfp_mask);
+
+/*
+ * sg_free_table() -- release the scatterlist array behind a table.
+ *
+ * This was a static-inline no-op as long as every table in the tree was
+ * filled in place: sg_init_table() above allocates nothing.  The allocator
+ * above is the first producer whose array is on the heap, so its release has
+ * to be real; the two callers are both in drm_prime.c (:686 on the map
+ * failure path, :711 on unmap), and both tables got there through a
+ * get_sg_table() helper, i.e. through that allocator.  A caller holding its
+ * own array still has sg_init_table() and no release to call.
+ *
+ * Declared here, defined in DCL/linux_mm_shim.c: the body is kfree(), and
+ * this header deliberately does not include <linux/slab.h> to name it.
+ * mainline declares the same function in this header.
+ */
+void sg_free_table(struct sg_table* sgt);
 
 #endif /* __LINUX_SCATTERLIST_H__ */
