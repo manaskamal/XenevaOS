@@ -1371,6 +1371,36 @@ if [ -n "${XENEVA_QEMU_EXTRA_ARGS:-}" ]; then
     QEMU_ARGS+=("${extra_qemu_args[@]}")
 fi
 
+# Host end of the clipboard. connect() retries until QEMU's socket binds,
+# so starting before QEMU is fine; one started by hand is left alone --
+# two bi bridges would relay each other's output. Torn down with the
+# session so nothing outlives the guest it copies for.
+CLIP_BRIDGE_PID=""
+clip_bridge_stop() {
+    trap - EXIT INT TERM
+    if kill -0 "$CLIP_BRIDGE_PID" 2>/dev/null; then
+        kill "$CLIP_BRIDGE_PID" 2>/dev/null || true
+        wait "$CLIP_BRIDGE_PID" 2>/dev/null || true
+    fi
+}
+if [ "$VIRTIO_SERIAL" -eq 1 ] && [ "$CLIPBOARD" -eq 1 ]; then
+    if pgrep -f "[c]lip_bridge" >/dev/null 2>&1; then
+        echo "[+] clipboard bridge: already running, left alone"
+    else
+        mkdir -p /tmp/xeneva
+        # 300s of hello patience: an interactive boot can sit at the menu
+        # well past the 60s default, and a bridge that gives up there is
+        # the clipboard off again without anyone asking for that.
+        "$REPO_ROOT/Tests/clip_bridge.py" --dir=bi --watch --timeout 300 \
+            >/tmp/xeneva/bridge.log 2>&1 &
+        CLIP_BRIDGE_PID=$!
+        trap clip_bridge_stop EXIT
+        trap 'clip_bridge_stop; exit 130' INT
+        trap 'clip_bridge_stop; exit 143' TERM
+        echo "[+] clipboard bridge: pid $CLIP_BRIDGE_PID (log /tmp/xeneva/bridge.log)"
+    fi
+fi
+
 if [ "$HEADLESS" -eq 1 ]; then
     QEMU_ARGS+=(-display none -no-reboot)
     # Ordinary builds still block at the interactive resolution menu. Bleed
