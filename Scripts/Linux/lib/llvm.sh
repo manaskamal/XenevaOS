@@ -29,7 +29,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # removed component is never built, deployed, or packed. --axiss
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
-        Calender Calculator Files Control XEShell btctl XENotes
+        Calender Calculator Files Control XEShell btctl XENotes XEPaints
         Clipd dcltest
     )
     # hwtest unloads the in-kernel sound driver and claims its PCI function from
@@ -73,7 +73,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd http wifictl)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd wifictl)
     else
         echo "[llvm] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
@@ -103,6 +103,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
+    cp -f ../../Process/XEPaints/xepaints.exe     ../../Resources/resources/
     cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
     cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
     if [ "${HWTEST:-0}" -eq 1 ]; then
