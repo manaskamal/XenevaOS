@@ -34,25 +34,29 @@
 
 #include <stdint.h>
 #include <Hal/AA64/aa64cpu.h>
+/* Pointer only. The full <list.h> declares list_add(list_t*, void*), which
+ * cannot share a file with mainline list_add(list_head*, list_head*).
+ * DCL/linux_irq_shim.c includes this header and then <linux/kernel.h>. */
+typedef struct _list_ list_t;
 
 #ifdef ARCH_ARM64
 
-#define  THREAD_STATE_READY     1
-#define  THREAD_STATE_BLOCKED   3
-#define  THREAD_STATE_SLEEP     4
-#define  THREAD_STATE_KILLABLE  5
-#define  THREAD_STATE_LEFT_IN_KERNEL 6
-#define  THREAD_STATE_PENDING_SIGNAL 7
-#define  THREAD_STATE_RUNNING 8
+#define THREAD_STATE_READY			1
+#define THREAD_STATE_BLOCKED		3
+#define THREAD_STATE_SLEEP			4
+#define THREAD_STATE_KILLABLE		5
+#define THREAD_STATE_LEFT_IN_KERNEL 6
+#define THREAD_STATE_PENDING_SIGNAL 7
+#define THREAD_STATE_RUNNING		8
 
 //! Thread levels =========================================================
 //! THREAD_LEVEL_KERNEL -- This bit is set when the thread given is kernel mode
 //! THREAD_LEVEL_USER -- This bit is set when the thread given is user mode
 
-#define  THREAD_LEVEL_KERNEL (1<<0)
-#define  THREAD_LEVEL_USER (1<<1)
-#define  THREAD_LEVEL_SUBTHREAD (1<<2)
-#define  THREAD_LEVEL_MAIN_THREAD (1<<3)
+#define THREAD_LEVEL_KERNEL		 (1 << 0)
+#define THREAD_LEVEL_USER		 (1 << 1)
+#define THREAD_LEVEL_SUBTHREAD	 (1 << 2)
+#define THREAD_LEVEL_MAIN_THREAD (1 << 3)
 
 //#pragma pack(push,1)
 /* AuUserEntry structure */
@@ -62,65 +66,66 @@ typedef struct _uentry_ {
 	uint64_t cs;
 	uint64_t ss;
 	int num_args;
-	uint64_t argvaddr;    /* user-space VA of argv[] page (for crt0 via stack) */
-	uint64_t argvkernel;  /* kernel-space VA of argv[] page (for EL1 writes) */
+	uint64_t argvaddr;	 /* user-space VA of argv[] page (for crt0 via stack) */
+	uint64_t argvkernel; /* kernel-space VA of argv[] page (for EL1 writes) */
 	char** argvs;
 	uint64_t stackBase;
-}AuUserEntry;
+	/* PROCESS_TYPE_LINUX aux vector. Zero on a PE process. */
+	uint64_t linux_phdr;
+	uint16_t linux_phent;
+	uint16_t linux_phnum;
+} AuUserEntry;
 //#pragma pack(pop)
 
-
-#define MAX_SIGNAL_ENTRY  10
-
+#define MAX_SIGNAL_ENTRY 10
 
 typedef struct _gp_context_ {
 	uint64_t x[31];
 	uint64_t sp_el0;
 	uint64_t elr_el1;
 	uint64_t spsr_el1;
-}_gp_context_t;
+} _gp_context_t;
 
 typedef struct _signal_frame_ {
 	AA64Registers regs;
 	uint64_t elr_el1;
 	uint64_t sigret_address;
-}_signal_frame_t;
-
+} _signal_frame_t;
 
 //#pragma pack(push,1)
 typedef struct _aa64_task_ {
-	uint64_t x19; //0
-	uint64_t x20; //8
-	uint64_t x21; //16
-	uint64_t x22; //24
-	uint64_t x23; //32
-	uint64_t x24; //40
-	uint64_t x25; //48
-	uint64_t x26; //56
-	uint64_t x27; //64
-	uint64_t x28; //72
-	uint64_t x29; //80
-	uint64_t x30; //88
-	uint64_t sp; //96
-	uint64_t elr_el1; //104
-	uint64_t spsr_el1;//112
-	uint64_t x0; //120
-	uint64_t x1; //128
-	uint64_t x2; //136
-	uint64_t x3; //144
-	uint64_t x4; //152
-	uint64_t x5; //160
-	uint64_t x6; //168
-	uint64_t x7; //176
-	uint64_t x8; //184
-	uint8_t state; //192
-	uint8_t threadType; //193
-	uint64_t pml;  //186
-	char name[8];   //130
-	void *procSlot; //138
-	AuUserEntry* uentry; //146
-	bool first_run; //206
-	uint64_t thread_id; //207
+	uint64_t x19;		  //0
+	uint64_t x20;		  //8
+	uint64_t x21;		  //16
+	uint64_t x22;		  //24
+	uint64_t x23;		  //32
+	uint64_t x24;		  //40
+	uint64_t x25;		  //48
+	uint64_t x26;		  //56
+	uint64_t x27;		  //64
+	uint64_t x28;		  //72
+	uint64_t x29;		  //80
+	uint64_t x30;		  //88
+	uint64_t sp;		  //96
+	uint64_t elr_el1;	  //104
+	uint64_t spsr_el1;	  //112
+	uint64_t x0;		  //120
+	uint64_t x1;		  //128
+	uint64_t x2;		  //136
+	uint64_t x3;		  //144
+	uint64_t x4;		  //152
+	uint64_t x5;		  //160
+	uint64_t x6;		  //168
+	uint64_t x7;		  //176
+	uint64_t x8;		  //184
+	uint8_t state;		  //192
+	uint8_t threadType;	  //193
+	uint64_t pml;		  //186
+	char name[8];		  //130
+	void* procSlot;		  //138
+	AuUserEntry* uentry;  //146
+	bool first_run;		  //206
+	uint64_t thread_id;	  //207
 	uint64_t sleepQuanta; //215
 	uint64_t originalKSp; //223
 	bool returnFromSyscall;
@@ -145,13 +150,23 @@ typedef struct _aa64_task_ {
 	uint64_t edf_deadline_us;
 	uint64_t edf_release_us;
 	uint64_t edf_misses;
-}AA64Thread;
-
+	/** waitlist */
+	list_t* waitlist;
+	uint16_t wait_ref_count;
+	/* Linux ELF pthread. Saved across switches because EL0 writes TPIDR_EL0. */
+	uint64_t linux_tls;
+	uint64_t clear_child_tid;
+	uint64_t futex_uaddr;
+	uint32_t futex_bitset;
+	uint8_t futex_waiting;
+	/** absolute wake-up time (system us) of a sleeping thread; see AuSleepThread */
+	uint64_t sleep_until_us;
+} AA64Thread;
 
 //#pragma pack(pop)
 extern void AuSchedulerInitialize();
 extern uint64_t AuCreateKernelStack(uint64_t* pml);
-AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t* pml, char* name);
+AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void (*entry)(uint64_t), uint64_t* pml, char* name);
 /**
  * @brief AuCreateSubKthread -- create sub kernel thread of parent
  * kthread
@@ -160,9 +175,10 @@ AU_EXTERN AU_EXPORT AA64Thread* AuCreateKthread(void(*entry) (uint64_t),uint64_t
  * @param name -- Name of the thread
  * @return Pointer to newly created thread
  */
-AU_EXTERN AU_EXPORT AA64Thread* AuCreateSubKthread(void(*entry) (uint64_t), uint64_t stack, uint64_t* pml, char* name);
+AU_EXTERN AU_EXPORT AA64Thread*
+AuCreateSubKthread(void (*entry)(uint64_t), uint64_t stack, uint64_t* pml, char* name);
 
-extern void AuScheduleThread(AA64Registers*regs);
+extern void AuScheduleThread(AA64Registers* regs);
 extern void AuScheduleNext();
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
@@ -207,6 +223,12 @@ AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByID(uint64_t id);
  */
 AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDBlockList(uint64_t id);
 
+/**
+ * @brief AuThreadFindByIDSleepList -- finds a thread by its id from
+ * the sleep queue
+ * @param id -- thread id
+ */
+AU_EXTERN AU_EXPORT AA64Thread* AuThreadFindByIDSleepList(uint64_t id);
 /**
  * @brief AuThreadMoveToTrash -- move given thread to
  * trash
@@ -256,6 +278,20 @@ extern AA64Thread* AuEDFPickNext(void);
 extern uint64_t AuEDFGetMisses(AA64Thread* thread);
 extern void AuEDFSelfTestStart(void);
 extern void AuSoakStart(void);
+
+/**
+ * @brief AuThreadWaitForTermination -- wait for desired thread
+ * termination
+ * @param thread_id -- desired thread id
+ */
+extern int AuThreadWaitForTermination(int thread_id);
+/**
+ * @brief AuThreadAwakeWaiters -- unblock all awaiting
+ * threads for the current thread
+ * @praram thread -- current thread which waitlist
+ * needs to be freed
+ */
+extern void AuThreadAwakeWaiters(AA64Thread* thread);
 
 #endif
 

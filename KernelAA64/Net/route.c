@@ -147,6 +147,28 @@ void AuRouteTableDelete(AuRouteEntry* entry) {
 	}
 }
 
+int AuRouteSetFlag4(const char* ifname, uint32_t dest, uint32_t netmask, int up) {
+	int i;
+
+	if (!ifname || !_kernelRouteList)
+		return -1;
+	for (i = 0; i < _kernelRouteList->pointer; i++) {
+		AuRouteEntry* entry = (AuRouteEntry*)list_get_at(_kernelRouteList, i);
+		if (!entry || !entry->ifname)
+			continue;
+		if (entry->dest != dest || entry->netmask != netmask)
+			continue;
+		if (strcmp(entry->ifname, ifname) != 0)
+			continue;
+		if (up)
+			entry->flags = (uint8_t)(entry->flags | RTF_UP);
+		else
+			entry->flags = (uint8_t)(entry->flags & (uint8_t)~RTF_UP);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @brief AuRouteTableGetNumEntry -- returns the number
  * route entry present in the system

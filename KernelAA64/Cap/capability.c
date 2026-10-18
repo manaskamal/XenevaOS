@@ -38,6 +38,7 @@
 #include <string.h>
 #include <aucon.h>
 #include <_null.h>
+#include <Fs/pipe.h>
 #include <stdint.h>
 #include <Drivers/uart.h>
 
@@ -81,11 +82,14 @@ int BordoisilaCapCreate(void* procptr, int fd, void* object, uint8_t type, CapRi
 	 * in a bogus/garbage mask and getting more than the model allows */
 	if (type == CAP_OBJ_FILE)
 		cap->rights = rights & CAP_FILE_RIGHTS_MASK;
+	else if (type == CAP_OBJ_PCIDEV)
+		cap->rights = rights & CAP_HW_RIGHTS_MASK;
 	else
 		cap->rights = CAP_RIGHTS_NONE;
 
 	cap->owner = proc->creds.uid;
-	cap->flags = CAP_FLAG_NONE;
+	/* hardware handles belong to the process that opened them */
+	cap->flags = (type == CAP_OBJ_PCIDEV) ? CAP_FLAG_NO_INHERIT : CAP_FLAG_NONE;
 	cap->valid = true;
 	return CAP_OK;
 }
@@ -131,8 +135,14 @@ int BordoisilaCapDup(void* procptr, int oldfd, int newfd) {
 
 	proc->fds[newfd] = proc->fds[oldfd];
 
-	if (proc->fds[newfd])
+	if (proc->fds[newfd]) {
 		proc->fds[newfd]->fileCopyCount++;
+		/* pipe2 and dup share one node. Each fd owns one pipe refcount. */
+		if ((proc->fds[newfd]->flags & FS_FLAG_PIPE) && proc->fds[newfd]->device) {
+			AuPipe* pipe = (AuPipe*)proc->fds[newfd]->device;
+			pipe->refcount++;
+		}
+	}
 
 	AuCapability* dst = &proc->caps[newfd];
 
@@ -166,6 +176,8 @@ void BordoisilaCapDestroy(void* procptr, int fd) {
 	if (!cap || !cap->valid)
 		return;
 
+	if (cap->object_type == CAP_OBJ_PCIDEV)
+		AuHwdevCapReleased(proc, cap);
 	cap->object = NULL;
 	cap->object_type = 0;
 	cap->rights = CAP_RIGHTS_NONE;
@@ -181,6 +193,8 @@ void BordoisilaCapCleanupProcess(void* procptr) {
 	for (int i = 0; i < FILE_DESC_PER_PROCESS; i++) {
 		AuCapability* cap = &proc->caps[i];
 		if (cap->valid) {
+			if (cap->object_type == CAP_OBJ_PCIDEV)
+				AuHwdevCapReleased(proc, cap);
 			cap->object = NULL;
 			cap->object_type = 0;
 			cap->rights = CAP_RIGHTS_NONE;

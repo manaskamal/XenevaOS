@@ -24,7 +24,11 @@ typedef struct PmmPageDesc {
 	int64_t backing_block;
 	uint32_t requested_pages, validation_epoch;
 	uint16_t refcount;
-	uint8_t order, state, page_type, padding[3];
+	uint8_t order, state, page_type, reserved;
+	/* Stage 1: index into pmm_owner_table for the block head that owns
+	 * this frame (tails carry a stale copy, never read). Reuses two
+	 * bytes of the old padding, so sizeof stays 48. */
+	uint16_t owner_slot;
 } PmmPageDesc;
 typedef struct PmmRange { uint64_t first, last; } PmmRange;
 typedef struct LBMemoryRegion { uint64_t base, size, pageCount; } LBMemoryRegion;
@@ -37,6 +41,55 @@ static Spinlock* pmm_lock;
 static PmmRange usable[PMM_MAX_REGIONS], reserved[PMM_MAX_RESERVATIONS];
 static uint32_t usable_count, reserved_count, validation_epoch;
 static bool higher_half;
+
+/* ---- Stage 1: per-owner page accounting ----
+ * Slot 0+ keyed by owner id (0 = kernel, >0 = proc_id). The free path
+ * reads the slot back from the block head, so attribution is exact no
+ * matter which context frees. All updates happen under pmm_lock, inside
+ * the existing alloc/release critical sections: no new lock, no new
+ * contention domain. (Uniprocessor today; the locks already serialize
+ * every mutation, so plain ops stay correct if SMP ever lands.) */
+#define PMM_OWNER_SLOTS 256
+#define PMM_NO_OWNER_SLOT UINT16_MAX
+typedef struct PmmOwnerEntry { int32_t id; uint64_t pages; uint8_t in_use; } PmmOwnerEntry;
+static PmmOwnerEntry pmm_owner_table[PMM_OWNER_SLOTS];
+
+/* pmm_lock must be held. */
+static uint16_t pmm_owner_slot_locked(int32_t id) {
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (pmm_owner_table[i].in_use && pmm_owner_table[i].id == id)
+			return i;
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (!pmm_owner_table[i].in_use) {
+			pmm_owner_table[i].in_use = 1;
+			pmm_owner_table[i].id = id;
+			pmm_owner_table[i].pages = 0;
+			return i;
+		}
+	/* Table full: fold into the kernel bucket. Global stats stay exact;
+	 * per-owner attribution degrades. Teardown never asserts on id 0,
+	 * so this cannot cause a false leak report. */
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (pmm_owner_table[i].id == PMM_OWNER_KERNEL)
+			return i;
+	return 0;
+}
+
+/* pmm_lock must be held. */
+static void pmm_owner_add_locked(uint16_t slot, uint64_t count) {
+	if (slot < PMM_OWNER_SLOTS && pmm_owner_table[slot].in_use)
+		pmm_owner_table[slot].pages += count;
+}
+
+/* pmm_lock must be held. Saturating: never wraps on caller bugs. */
+static void pmm_owner_del_locked(uint16_t slot, uint64_t count) {
+	if (slot < PMM_OWNER_SLOTS && pmm_owner_table[slot].in_use) {
+		if (pmm_owner_table[slot].pages >= count)
+			pmm_owner_table[slot].pages -= count;
+		else
+			pmm_owner_table[slot].pages = 0;
+	}
+}
 
 static inline uint64_t align_up(uint64_t v, uint64_t a) { return (v + a - 1) & ~(a - 1); }
 static inline bool valid_page(uint64_t p) { return p < total_pages; }
@@ -86,7 +139,7 @@ static void mark_free_block(uint64_t head, uint8_t order) {
 	for (uint64_t i = 0; i < count; ++i) {
 		PmmPageDesc* d = &page_desc[head + i];
 		d->next = d->prev = PMM_NO_PAGE; d->owner = head; d->requested_pages = 0;
-		d->refcount = 0; d->order = order;
+		d->refcount = 0; d->order = order; d->owner_slot = PMM_NO_OWNER_SLOT;
 		d->state = i ? PMM_PAGE_FREE_TAIL : PMM_PAGE_FREE_HEAD; d->page_type = 0;
 	}
 }
@@ -144,7 +197,7 @@ static void add_usable_minus_reservations(uint64_t first, uint64_t last) {
 	if (current < last) add_free_range(current, last);
 }
 
-static void mark_allocated(uint64_t head, uint8_t order, uint32_t requested, uint8_t type) {
+static void mark_allocated(uint64_t head, uint8_t order, uint32_t requested, uint8_t type, uint16_t slot) {
 	uint64_t count = 1ULL << order;
 	for (uint64_t i = 0; i < count; ++i) {
 		PmmPageDesc* d = &page_desc[head + i];
@@ -157,6 +210,10 @@ static void mark_allocated(uint64_t head, uint8_t order, uint32_t requested, uin
 		d->page_type = type;
 	}
 	page_desc[head].requested_pages = requested;
+	/* Only the head's slot is ever read (release paths resolve the
+	 * block by its head page). Tails keep whatever mark_free_block
+	 * left, i.e. PMM_NO_OWNER_SLOT. */
+	page_desc[head].owner_slot = slot;
 }
 
 static uint64_t take_block(uint8_t wanted, uint32_t alignment, uint64_t ceiling) {
@@ -366,6 +423,79 @@ bool AuPmmngrValidate(void) {
 }
 
 #ifndef __XENEVA_BLEED__
+static void owner_self_test(void) {
+	/* Deliberate-bug test for the Stage 1 owner counters and the
+	 * teardown check. Scratch owner id is negative (subsystem space),
+	 * so it can never collide with a real proc_id. */
+	const int32_t test_owner = -9871;
+	AuPmmStats before, after;
+	AuPmmngrGetStats(&before);
+
+	uint64_t run = AuPmmngrAllocPagesForOwner(4, 1, 0, AURORA_PAGE_KERNEL, test_owner);
+	if (run == PMM_INVALID_PHYS)
+		fatal("owner self-test alloc", PMM_NO_PAGE, 4);
+	/* 4 requested pages = order 2 = 4 counted pages. */
+	if (AuPmmOwnerPages(test_owner) != 4)
+		fatal("owner self-test count", run >> PAGE_SHIFT, AuPmmOwnerPages(test_owner));
+	if (!AuPmmngrReleasePages(run))
+		fatal("owner self-test release", run >> PAGE_SHIFT, 0);
+	if (AuPmmOwnerPages(test_owner) != 0)
+		fatal("owner self-test drain", PMM_NO_PAGE, AuPmmOwnerPages(test_owner));
+
+	/* Deliberate leak: the teardown check must fire on the live page. */
+	uint64_t leaked = AuPmmngrAllocPageForOwner(AURORA_PAGE_KERNEL, test_owner);
+	if (leaked == PMM_INVALID_PHYS)
+		fatal("owner self-test leak alloc", PMM_NO_PAGE, 1);
+	AuPmmOwnerTeardownCheck(test_owner, "selftest");
+	if (!AuPmmngrReleasePage(leaked))
+		fatal("owner self-test leak release", leaked >> PAGE_SHIFT, 0);
+	AuPmmOwnerTeardownCheck(test_owner, "selftest");
+
+	AuPmmngrGetStats(&after);
+	if (memcmp(&before, &after, sizeof(before)))
+		fatal("owner self-test restore", PMM_NO_PAGE, after.allocated_pages);
+
+	AuTextOut("[pmm]: owner accounting self-test passed\r\n");
+}
+#endif
+
+#ifdef __XENEVA_DEBUG_ALLOC__
+#ifndef __XENEVA_BLEED__
+/* Stage 3 deliberate-bug test: leak two blocks for a scratch owner,
+ * watch the teardown check fire AND the frame-table scan name them,
+ * then release everything so the boot state restores exactly. */
+static void owner_scan_self_test(void) {
+	const int32_t test_owner = -9870;
+	AuPmmStats before, after;
+	AuPmmngrGetStats(&before);
+
+	/* One single page plus one 5-page run (order 3 = 8 counted pages):
+	 * 9 pages the scan must find. */
+	uint64_t single = AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, test_owner);
+	uint64_t run = AuPmmngrAllocPagesForOwner(5, 1, 0, AURORA_PAGE_NORMAL, test_owner);
+	if (single == PMM_INVALID_PHYS || run == PMM_INVALID_PHYS)
+		fatal("owner scan self-test alloc", PMM_NO_PAGE, 0);
+	if (AuPmmOwnerPages(test_owner) != 9)
+		fatal("owner scan self-test count", run >> PAGE_SHIFT,
+			AuPmmOwnerPages(test_owner));
+
+	AuTextOut("[pmm]: owner scan self-test: 2 leaked blocks, teardown check + scan:\r\n");
+	AuPmmOwnerTeardownCheck(test_owner, "scanself");
+
+	if (!AuPmmngrReleasePage(single) || !AuPmmngrReleasePages(run))
+		fatal("owner scan self-test release", single >> PAGE_SHIFT, run >> PAGE_SHIFT);
+	AuPmmOwnerTeardownCheck(test_owner, "scanself");
+
+	AuPmmngrGetStats(&after);
+	if (memcmp(&before, &after, sizeof(before)))
+		fatal("owner scan self-test restore", PMM_NO_PAGE, after.allocated_pages);
+
+	AuTextOut("[pmm]: owner scan self-test passed\r\n");
+}
+#endif
+#endif /* __XENEVA_DEBUG_ALLOC__ */
+
+#ifndef __XENEVA_BLEED__
 static void boot_self_test(void) {
 	AuPmmStats before, after; 
 	uint64_t singles[384], runs[6];
@@ -488,10 +618,14 @@ void AuPmmngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuTextOut("[pmm]: buddy online, free=%d pages reserved=%d pages\r\n", pmm_stats.free_pages, pmm_stats.reserved_pages);
 #ifndef __XENEVA_BLEED__
 	boot_self_test();
+	owner_self_test();
+#ifdef __XENEVA_DEBUG_ALLOC__
+	owner_scan_self_test();
+#endif
 #endif
 }
 
-uint64_t AuPmmngrAllocPages(uint32_t pages, uint32_t alignment, uint64_t ceiling, uint8_t type) {
+uint64_t AuPmmngrAllocPagesForOwner(uint32_t pages, uint32_t alignment, uint64_t ceiling, uint8_t type, int32_t owner) {
 	if (!pages) 
 	    return PMM_INVALID_PHYS; 
 	if (!alignment) alignment = 1;
@@ -504,14 +638,101 @@ uint64_t AuPmmngrAllocPages(uint32_t pages, uint32_t alignment, uint64_t ceiling
 	uint64_t head = take_block(order, alignment, ceiling);
 	if (head != PMM_NO_PAGE) {
 		uint64_t count = 1ULL << order; 
-		mark_allocated(head, order, pages, type ? type : AURORA_PAGE_NORMAL);
+		uint16_t slot = pmm_owner_slot_locked(owner);
+		mark_allocated(head, order, pages, type ? type : AURORA_PAGE_NORMAL, slot);
+		pmm_owner_add_locked(slot, count);
 		pmm_stats.free_pages -= count; 
 		pmm_stats.allocated_pages += count;
 	}
 	unlock(); return head == PMM_NO_PAGE ? PMM_INVALID_PHYS : head << PAGE_SHIFT;
 }
 
-uint64_t AuPmmngrAllocPage(uint8_t type) { return AuPmmngrAllocPages(1, 1, 0, type); }
+uint64_t AuPmmngrAllocPages(uint32_t pages, uint32_t alignment, uint64_t ceiling, uint8_t type) {
+	return AuPmmngrAllocPagesForOwner(pages, alignment, ceiling, type, PMM_OWNER_KERNEL);
+}
+
+uint64_t AuPmmngrAllocPageForOwner(uint8_t type, int32_t owner) {
+	return AuPmmngrAllocPagesForOwner(1, 1, 0, type, owner);
+}
+
+uint64_t AuPmmngrAllocPage(uint8_t type) { return AuPmmngrAllocPagesForOwner(1, 1, 0, type, PMM_OWNER_KERNEL); }
+
+uint64_t AuPmmOwnerPages(int32_t owner) {
+	uint64_t pages = 0;
+	lock();
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (pmm_owner_table[i].in_use && pmm_owner_table[i].id == owner) {
+			pages = pmm_owner_table[i].pages;
+			break;
+		}
+	unlock();
+	return pages;
+}
+
+/* Stage 1 teardown assertion helper. clean.c calls this after releasing
+ * private mappings and page tables, while the process tag is still live. */
+void AuPmmOwnerTeardownCheck(int32_t owner, const char* tag) {
+	uint64_t pages = AuPmmOwnerPages(owner);
+	/* NOTE: AuTextOut only implements %d/%x/%s/%c (anything else is
+	 * echoed literally *without consuming the arg*, which misaligns
+	 * every specifier after it). Owner id prints in hex so negative
+	 * subsystem ids stay exact. */
+	if (pages) {
+		AuTextOut("[pmm]: LEAK owner=%s id=%x still owns %d pages at teardown\r\n",
+			tag ? tag : "?", (size_t)owner, pages);
+#ifdef __XENEVA_DEBUG_ALLOC__
+		/* Stage 3: say exactly which frames are still tagged. */
+		AuPmmOwnerScan(owner);
+#endif
+	} else
+		AuTextOut("[pmm]: owner=%s id=%x teardown clean (0 pages)\r\n",
+			tag ? tag : "?", (size_t)owner);
+}
+
+#ifdef __XENEVA_DEBUG_ALLOC__
+/* Stage 3: frame-table owner scan. Heads only (one line per block;
+ * tails are implied by the order). Output capped so a big leak can't
+ * flood the serial console. pmm_lock is held for the whole walk, same
+ * as recount()/Validate(). */
+#define PMM_OWNER_SCAN_MAXLINES 16
+void AuPmmOwnerScan(int32_t owner) {
+	uint64_t found_blocks = 0, found_pages = 0, hidden = 0;
+	uint16_t slot = PMM_NO_OWNER_SLOT;
+	lock();
+	for (uint16_t i = 0; i < PMM_OWNER_SLOTS; ++i)
+		if (pmm_owner_table[i].in_use && pmm_owner_table[i].id == owner) {
+			slot = i;
+			break;
+		}
+	if (slot == PMM_NO_OWNER_SLOT) {
+		unlock();
+		AuTextOut("[pmm]: scan owner id=%x: no frames (untracked owner)\r\n",
+			(size_t)owner);
+		return;
+	}
+	for (uint64_t p = 0; p < total_pages; ++p) {
+		PmmPageDesc* d = &page_desc[p];
+		if (d->state != PMM_PAGE_ALLOC_HEAD || d->owner != p || d->owner_slot != slot)
+			continue;
+		/* Casts: AuTextOut's %d/%x read size_t-wide; narrow C
+		 * promotions must not leak stack garbage into the print. */
+		uint64_t block_pages = 1ULL << d->order;
+		if (found_blocks < PMM_OWNER_SCAN_MAXLINES)
+			AuTextOut("[pmm]: scan frame=%x order=%d req=%d type=%x refs=%d\r\n",
+				p << PAGE_SHIFT, (size_t)d->order,
+				(size_t)d->requested_pages, (size_t)d->page_type,
+				(size_t)d->refcount);
+		else
+			++hidden;
+		++found_blocks;
+		found_pages += block_pages;
+	}
+	unlock();
+	AuTextOut("[pmm]: scan done: %d blocks %d pages owned by id=%x%s\r\n",
+		found_blocks, found_pages, (size_t)owner,
+		hidden ? " (truncated)" : "");
+}
+#endif /* __XENEVA_DEBUG_ALLOC__ */
 
 bool AuPmmngrReleasePage(uint64_t phys) {
 	if ((phys & (PAGE_SIZE - 1)) || !valid_page(phys >> PAGE_SHIFT))
@@ -522,7 +743,9 @@ bool AuPmmngrReleasePage(uint64_t phys) {
 	PmmPageDesc* d = &page_desc[page];
 	if (d->state == PMM_PAGE_ALLOC_HEAD && d->owner == page && d->order == 0 && d->requested_pages == 1 && d->refcount) {
 		if (--d->refcount == 0) { 
+			uint16_t slot = d->owner_slot;
 			release_block(page, 0); 
+			pmm_owner_del_locked(slot, 1);
 			++pmm_stats.free_pages; 
 			--pmm_stats.allocated_pages; }
 		released = true;
@@ -549,7 +772,9 @@ bool AuPmmngrReleasePages(uint64_t phys) {
 		}
 		if (released) {
 			 uint8_t order = d->order;
+			 uint16_t slot = d->owner_slot;
 			release_block(head, order); 
+			pmm_owner_del_locked(slot, count);
 			pmm_stats.free_pages += count; 
 			pmm_stats.allocated_pages -= count; 
 		}

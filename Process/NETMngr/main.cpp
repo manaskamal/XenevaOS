@@ -270,6 +270,10 @@ int main(int argc, char* argv[]) {
 	 * we will use that
 	 */
 	int e1000 = _KeOpenFile("/dev/net/virtio-net", FILE_OPEN_READ_ONLY);
+	if (e1000 < 0) {
+		printf("netmngr: virtio-net is not open\n");
+		return 1;
+	}
 
 	_KeFileIoControl(e1000, NET_GET_HARDWARE_ADDRESS, mac);
 

@@ -36,6 +36,7 @@
     <ClCompile Include="dirty.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rect.cpp" />
+    <ClCompile Include="resize.cpp" />
     <ClCompile Include="surface.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
@@ -56,6 +57,7 @@
     <ClInclude Include="deodxr.h" />
     <ClInclude Include="dirty.h" />
     <ClInclude Include="rect.h" />
+    <ClInclude Include="resize.h" />
     <ClInclude Include="surface.h" />
     <ClInclude Include="window.h" />
     <ClInclude Include="_fastcpy.h" />

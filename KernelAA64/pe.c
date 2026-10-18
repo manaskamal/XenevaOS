@@ -59,7 +59,18 @@ extern int k_exports_count;
  * @param procname -- procedure name
  * @return return the procedure address in memory
  */
+extern void* AuDriverImportOverride(const char* name);
+
 void* AuGetProcAddress(void* image, const char* procname) {
+	/* Kernel symbols a driver imports can be swapped for tracking wrappers
+	 * (component model). Checked first so it works for the allowlist path
+	 * below AND for the PE export-table path used by the LLVM/Windows build,
+	 * where __GNUC__ is not defined. */
+	if (image == (void*)0xFFFFC00000000000) {
+		void* override = AuDriverImportOverride(procname);
+		if (override)
+			return override;
+	}
 #ifdef __GNUC__
 	if (image == (void*)0xFFFFC00000000000) {
 		for (int i = 0; i < k_exports_count; i++) {
@@ -232,7 +243,7 @@ void AuKernelLinkImports(void* image) {
 * @param nt -- nt headers
 * @param diff -- difference from its original
 */
-void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
+void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, uint64_t diff) {
 	if (!diff)
 		return;
 	if ((nt->OptionalHeader.DllCharacteristics & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE) == 0)
@@ -269,8 +280,9 @@ void AuKernelRelocatePE(void* image, PIMAGE_NT_HEADERS nt, int diff) {
 				return;
 				break;
 			case IMAGE_REL_BASED_DIR64:
-				*(uint64_t*)relocitem += (diff & UINT32_MAX);
-				//SeTextOut("Relocating executable dir64 %x\r\n", *reinterpret_cast<uint64_t*>(relocitem));
+				/* Full 64-bit delta. Masking to 32 bits maps a preferred
+				 * address such as 0x1800050d0 onto 0x200A140D0. */
+				*(uint64_t*)relocitem += diff;
 				break;
 			default:
 				return;

@@ -290,11 +290,54 @@ void AuInitialiseNet() {
  * @brief AuAddNetAdapter -- add a net adapter to the adapter
  * list
  */
-void AuAddNetAdapter(AuVFSNode* netfs, char* name) {
+AuVFSNode* AuAddNetAdapter(AuVFSNode* netfs, char* name) {
+	AuVFSNode* old = (AuVFSNode*)AuHashmapGet(netadapters, name);
+	if (old) {
+		/* Adapter nodes are persistent: processes hold them open and the route
+		 * table is keyed by name, so a new driver for the same name takes the
+		 * existing node over instead of replacing it. The caller's node is
+		 * left allocated (it may still be referenced) and the canonical one is
+		 * returned. */
+		old->flags = netfs->flags;
+		old->write = netfs->write;
+		old->iocontrol = netfs->iocontrol;
+		old->device = netfs->device;
+		UARTDebugOut("NetAdapter taking over : %x \r\n", name);
+		return old;
+	}
 	AuHashmapSet(netadapters, name, netfs);
 	UARTDebugOut("NetAdapter adding : %x \r\n", name);
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSAddFile(fs, "/dev/net", netfs);
+	return netfs;
+}
+
+static AuNetworkDevice g_dead_ndev;
+static size_t AuDeadAdapterWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	(void)node; (void)file; (void)buffer;
+	return length;                       /* link down: frames go nowhere */
+}
+static int AuDeadAdapterIoctl(AuVFSNode* file, int code, void* arg) {
+	(void)file; (void)code; (void)arg;
+	return 1;
+}
+
+/**
+ * @brief AuRemoveNetAdapter -- the driver behind an adapter is going away. The
+ * node itself stays (open handles and the stack may still point at it) but
+ * becomes a dead interface: writes are dropped, the link is down, and nothing
+ * points into the departing driver any more. A later AuAddNetAdapter with the
+ * same name revives it.
+ * @return 0 if it existed, -1 otherwise
+ */
+int AuRemoveNetAdapter(char* name) {
+	AuVFSNode* node = (AuVFSNode*)AuHashmapGet(netadapters, name);
+	if (!node)
+		return -1;
+	node->write = AuDeadAdapterWrite;
+	node->iocontrol = AuDeadAdapterIoctl;
+	node->device = &g_dead_ndev;
+	return 0;
 }
 
 /**
@@ -339,6 +382,8 @@ int AuAddrIsLocal4(uint32_t address) {
 	if (AuCheckNicLocal4("virtio-net", address))
 		return 1;
 	if (AuCheckNicLocal4("e1000", address))
+		return 1;
+	if (AuCheckNicLocal4("wlan0", address))
 		return 1;
 	return 0;
 }

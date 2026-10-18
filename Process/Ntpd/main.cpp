@@ -118,13 +118,13 @@ static void ntp_ts_to_timespec(uint32_t sec_be, uint32_t frac_be, timespec* ts) 
 static bool ntp_sync_once() {
 	hostent* he = gethostbyname(NTP_SERVER);
 	if (!he || !he->h_addr_list[0]) {
-		printf("ntpd: failed to resolve %s \n", NTP_SERVER);
+		_KePrint("ntpd: failed to resolve %s \n", NTP_SERVER);
 		return false;
 	}
 
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
-		printf("ntpd: failed to create socket \n");
+		_KePrint("ntpd: failed to create socket \n");
 		return false;
 	}
 
@@ -138,7 +138,7 @@ static bool ntp_sync_once() {
 	ntp_build_request(&req);
 
 	if (sendto(sock, &req, sizeof(req), 0, (sockaddr*)&dest, sizeof(dest)) < 0) {
-		printf("ntpd: sendto failed \n");
+		_KePrint("ntpd: sendto failed \n");
 		_KeCloseFile(sock);
 		return false;
 	}
@@ -161,14 +161,14 @@ static bool ntp_sync_once() {
 	_KeCloseFile(sock);
 
 	if (!got_reply) {
-		printf("ntpd: no valid reply from %s \n", NTP_SERVER);
+		_KePrint("ntpd: no valid reply from %s \n", NTP_SERVER);
 		return false;
 	}
 
 	timespec ts;
 	ntp_ts_to_timespec(resp.transmit_ts_sec, resp.transmit_ts_frac, &ts);
 	_KeSetWalltime(ts.tv_sec, ts.tv_nsec);
-	printf("ntpd: synced walltime to %d sec (unix) \n", (int)ts.tv_sec);
+	_KePrint("ntpd: synced walltime to %d sec (unix) \n", (int)ts.tv_sec);
 	return true;
 }
 
@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	printf("ntpd: starting, target=%s \n", NTP_SERVER);
+	_KePrint("ntpd: starting, target=%s \n", NTP_SERVER);
 
 	while (1) {
 		bool ok = ntp_sync_once();

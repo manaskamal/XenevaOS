@@ -134,26 +134,26 @@ uint8_t FatCheckDotCount(char* filename) {
  * to human readable filename
  */
 void FatFromDosToFilename(char* filename, char* dirfname) {
-	memset(filename, 0, 11);
+	if (!filename || !dirfname)
+		return;
+	memset(filename, 0, 16);
 	int index = 0;
 	for (int i = 0; i < 8; i++) {
 		if (dirfname[i] != 0x20 && dirfname[i] > 0x20) {
-			filename[i] = dirfname[i];
-			index++;
+			filename[index++] = dirfname[i];
 		}
 	}
-	int extension = index;
-	filename[index] = '.';
-	index++;
-	bool _contain_ext = false;
+	bool contain_ext = false;
 	for (int i = 0; i < 3; i++) {
-		if (dirfname[8 + i] != 0x20) {
-			_contain_ext = true;
-			filename[index + i] = dirfname[8 + i];
+		if (dirfname[8 + i] != 0x20 && dirfname[8 + i] > 0x20) {
+			if (!contain_ext) {
+				filename[index++] = '.';
+				contain_ext = true;
+			}
+			filename[index++] = dirfname[8 + i];
 		}
 	}
-	if (!_contain_ext)
-		filename[extension] = '\0';
+	filename[index] = '\0';
 }
 
 /*
@@ -172,7 +172,8 @@ uint32_t FatReadFAT(AuVFSNode* node, uint64_t cluster_index) {
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / fs->__BytesPerSector);
 
 	size_t ent_offset = fat_offset % fs->__BytesPerSector;
-	uint64_t* BuffArea = (uint64_t*)fs->_scratchBuffer; //P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	uint64_t* BuffArea =
+		(uint64_t*)fs->_scratchBuffer; //P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	//memset(BuffArea, 0, 512);
 	AuVDiskRead(vdisk, fat_sector, 1, BuffArea);
 	unsigned char* buf = (unsigned char*)BuffArea;
@@ -238,11 +239,16 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 	if (!vdisk)
 		return;
 
+	/* Never allow writing into reserved FAT clusters 0 or 1 */
+	if (position < 2 || (fs->__TotalClusters && (uint32_t)position >= fs->__TotalClusters))
+		return;
+
 	uint32_t pos = position;
 	uint64_t fat_offset = (uint64_t)pos * 4;
+	uint32_t bytes_per_sector = fs->__BytesPerSector ? fs->__BytesPerSector : 512;
 
-	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / 512);
-	size_t ent_offset = fat_offset % 512;
+	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / bytes_per_sector);
+	size_t ent_offset = fat_offset % bytes_per_sector;
 
 	uint32_t* buffer = (uint32_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	memset(buffer, 0, PAGE_SIZE);
@@ -251,8 +257,9 @@ void FatAllocCluster(AuVFSNode* fsys, int position, uint32_t n_value) {
 
 	uint32_t value = *(uint32_t*)&buf[ent_offset];
 
-	*(uint32_t*)&buf[ent_offset] = n_value & 0x0FFFFFFF;
+	*(uint32_t*)&buf[ent_offset] = (value & 0xF0000000) | (n_value & 0x0FFFFFFF);
 
+	aa64_data_cache_clean_range(buffer, PAGE_SIZE);
 	AuVDiskWrite(vdisk, fat_sector, 1, (uint64_t*)buffer);
 	AuPmmngrReleasePage((uint64_t)V2P((size_t)buffer));
 }
@@ -575,12 +582,31 @@ AuVFSNode* FatOpen(AuVFSNode* fsys, char* filename) {
 size_t FatGetClusterFor(AuVFSNode* fs, AuVFSNode* file, uint64_t offset) {
 	FatFS* fatfs = (FatFS*)fs->device;
 	size_t index = offset / fatfs->cluster_sz_in_bytes;
-	uint32_t cluster = file->first_block;
-	for (int i = 0; i < index; i++)
+
+	/** previously get_cluster_for was iterating from first block instead
+	 * of caching the last cluster read, this increased read time latency
+	 * in larger files
+	 */
+	size_t start_index;
+	uint32_t cluster;
+
+	/** use the last resolved cluster as base and start iterating from here */
+	if (file->last_resolved_cluster != 0 && index >= file->last_resolved_index) {
+		start_index = file->last_resolved_index;
+		cluster = file->last_resolved_cluster;
+	} else {
+		/** fallback to first cluster, if index < last_resolved_index */
+		start_index = 0;
+		cluster = file->first_block;
+	}
+
+	for (int i = start_index; i < index; i++)
 		cluster = FatReadFAT(fs, cluster);
 	if (!FAT_IS_EOC(cluster) && file->eof == 1)
 		file->eof = 0;
 	file->pos = offset;
+	file->last_resolved_index = index;
+	file->last_resolved_cluster = cluster;
 	return cluster;
 }
 
@@ -693,8 +719,8 @@ AuVFSNode* FatInitialise(AuVDisk* vdisk, char* mountname) {
 	fsys->device = fs;
 	fsys->read = FatReadFile;
 	fsys->read_block = FatRead;
-	fsys->remove_dir = 0;  //FatRemoveDir;
-	fsys->remove_file = 0; // FatFileRemove;
+	fsys->remove_dir = FatRemoveDir;
+	fsys->remove_file = FatFileRemove;
 	fsys->write = FatWrite;
 	fsys->create_dir = FatCreateDir;
 	fsys->create_file = FatCreateFile;

@@ -87,8 +87,15 @@ void AuroraTimerInitialize() {
 		uint64_t raw = AuAA64BoardGetBootEpoch();
 		if (raw > 1000000000000ULL)
 			AuSetWalltime((int64_t)(raw / 1000000000ULL), (int64_t)(raw % 1000000000ULL));
-		else if (raw > 1500000000ULL)
+		/* 2020-01-01: anything older is an unset RTC, leave the clock at epoch 0
+		 * so TLS cert checks fail closed instead of trusting a bogus date --axiss */
+		else if (raw > 1577836800ULL)
 			AuSetWalltime((int64_t)raw, 0);
+	}
+	{
+		int64_t sec = 0, nsec = 0;
+		AuGetWalltime(&sec, &nsec);
+		UARTDebugOut("[aurora]: wall clock seeded at %d sec (unix) \r\n", (int)sec);
 	}
 }
 

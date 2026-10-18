@@ -38,34 +38,34 @@
 #include <Cred/group.h>
 #include <Cred/user.h>
 
-#define FS_FLAG_DIRECTORY  (1<<1) //temporary/freeable  
-#define FS_FLAG_GENERAL    (1<<2)  //tempoary/freeable
-#define FS_FLAG_DEVICE     (1<<3)  //permanent/non-freeable
-#define FS_FLAG_DELETED    (1<<4)  //state
-#define FS_FLAG_INVALID    (1<<5)  //state
-#define FS_FLAG_FILE_SYSTEM (1<<6) //parment/non-freeable
-#define FS_FLAG_PIPE        (1<<7) //temporary/freeable
-#define FS_FLAG_TTY         (1<<8) //temporary/freeable with count
-#define FS_FLAG_SOCKET      (1<<9) //temporary/freeable
-#define FS_FLAG_FILE_SYSTEM_GENERAL (1<<10) //general file system
-#define FS_FLAG_CACHED      (1<<11) //file is being cached
+#define FS_FLAG_DIRECTORY			(1 << 1)  //temporary/freeable
+#define FS_FLAG_GENERAL				(1 << 2)  //tempoary/freeable
+#define FS_FLAG_DEVICE				(1 << 3)  //permanent/non-freeable
+#define FS_FLAG_DELETED				(1 << 4)  //state
+#define FS_FLAG_INVALID				(1 << 5)  //state
+#define FS_FLAG_FILE_SYSTEM			(1 << 6)  //parment/non-freeable
+#define FS_FLAG_PIPE				(1 << 7)  //temporary/freeable
+#define FS_FLAG_TTY					(1 << 8)  //temporary/freeable with count
+#define FS_FLAG_SOCKET				(1 << 9)  //temporary/freeable
+#define FS_FLAG_FILE_SYSTEM_GENERAL (1 << 10) //general file system
+#define FS_FLAG_CACHED				(1 << 11) //file is being cached
 
-#define FS_STATUS_FOUND  0x1
-#define FS_STATUS_NF     0x0
+#define FS_STATUS_FOUND 0x1
+#define FS_STATUS_NF	0x0
 
-#define VFS_MEDIA_TYPE_AHCI   0x1
-#define VFS_MEDIA_TYPE_IDE    0x2
-#define VFS_MEDIA_TYPE_OTHER  0x3
+#define VFS_MEDIA_TYPE_AHCI	 0x1
+#define VFS_MEDIA_TYPE_IDE	 0x2
+#define VFS_MEDIA_TYPE_OTHER 0x3
 
 /* file open modes*/
-#define FILE_OPEN_READ_ONLY  (1<<1)
-#define FILE_OPEN_WRITE (1<<2)
-#define FILE_OPEN_CREAT (1<<3)
+#define FILE_OPEN_READ_ONLY (1 << 1)
+#define FILE_OPEN_WRITE		(1 << 2)
+#define FILE_OPEN_CREAT		(1 << 3)
 
 struct __VFS_NODE__;
 
 #ifdef ARCH_X64
-#pragma pack(push,1)
+#pragma pack(push, 1)
 #endif
 typedef struct _AuDirectoryEnty_ {
 	char filename[32];
@@ -74,42 +74,58 @@ typedef struct _AuDirectoryEnty_ {
 	int date;
 	int time;
 	uint8_t flags;
-}AuDirectoryEntry;
+} AuDirectoryEntry;
 #ifdef ARCH_X64
 #pragma pack(pop)
 #endif
 
-typedef struct __VFS_NODE__* (*open_callback) (struct __VFS_NODE__* node, char* path);
-typedef size_t(*read_callback) (struct __VFS_NODE__* node, struct  __VFS_NODE__* file, uint64_t* buffer, uint32_t length);
-typedef size_t(*read_block_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file, uint64_t* buffer);
-typedef size_t(*write_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file, uint64_t* buffer, uint32_t length);
-typedef struct __VFS_NODE__* (*create_dir_callback) (struct __VFS_NODE__* node, char* dirname);
-typedef struct __VFS_NODE__* (*create_file_callback) (struct __VFS_NODE__* node, char* filename);
-typedef int (*remove_dir_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file);
-typedef int (*remove_file_callback)(struct __VFS_NODE__* node, struct  __VFS_NODE__* file);
-typedef int(*close_callback) (struct __VFS_NODE__* node, struct __VFS_NODE__* file);
-typedef int(*iocontrol_callback) (struct __VFS_NODE__* file, int code, void* arg);
-typedef struct __VFS_NODE__* (*opendir_callback) (struct __VFS_NODE__* fs, char* dirname);
-typedef int(*readdir_callback)(struct __VFS_NODE__* fs, struct __VFS_NODE__* dir, AuDirectoryEntry* dirent);
-typedef uint32_t(*get_disk_block)(struct __VFS_NODE__* fs, struct __VFS_NODE__* file, uint64_t fs_block);
-typedef size_t(*fs_getblockfor) (struct __VFS_NODE__* fs, struct  __VFS_NODE__* file, uint64_t offset);
+typedef struct __VFS_NODE__* (*open_callback)(struct __VFS_NODE__* node, char* path);
+typedef size_t (*read_callback)(struct __VFS_NODE__* node,
+								struct __VFS_NODE__* file,
+								uint64_t* buffer,
+								uint32_t length);
+typedef size_t (*read_block_callback)(struct __VFS_NODE__* node,
+									  struct __VFS_NODE__* file,
+									  uint64_t* buffer);
+typedef size_t (*write_callback)(struct __VFS_NODE__* node,
+								 struct __VFS_NODE__* file,
+								 uint64_t* buffer,
+								 uint32_t length);
+typedef struct __VFS_NODE__* (*create_dir_callback)(struct __VFS_NODE__* node, char* dirname);
+typedef struct __VFS_NODE__* (*create_file_callback)(struct __VFS_NODE__* node, char* filename);
+typedef int (*remove_dir_callback)(struct __VFS_NODE__* node, struct __VFS_NODE__* file);
+typedef int (*remove_file_callback)(struct __VFS_NODE__* node, struct __VFS_NODE__* file);
+typedef int (*close_callback)(struct __VFS_NODE__* node, struct __VFS_NODE__* file);
+typedef int (*iocontrol_callback)(struct __VFS_NODE__* file, int code, void* arg);
+typedef struct __VFS_NODE__* (*opendir_callback)(struct __VFS_NODE__* fs, char* dirname);
+typedef int (*readdir_callback)(struct __VFS_NODE__* fs,
+								struct __VFS_NODE__* dir,
+								AuDirectoryEntry* dirent);
+typedef uint32_t (*get_disk_block)(struct __VFS_NODE__* fs,
+								   struct __VFS_NODE__* file,
+								   uint64_t fs_block);
+typedef size_t (*fs_getblockfor)(struct __VFS_NODE__* fs,
+								 struct __VFS_NODE__* file,
+								 uint64_t offset);
 
 //#pragma pack(push,1)
 typedef struct __VFS_NODE__ {
 	char filename[32];
 	uint32_t size;
-	uint8_t  eof;
+	uint8_t eof;
 	uint32_t pos;
 	uint32_t parent_block;
 	uint32_t first_block;
 	uint64_t current;
-	uint16_t  flags;
+	uint16_t flags;
 	uint8_t status;
 	UID_NUM uid;
 	GID_NUM gid;
 	void* device;
 	void* private_data;
 	uint16_t fileCopyCount; //important for tty files
+	uint64_t last_resolved_index;
+	uint32_t last_resolved_cluster;
 	/* callback specific */
 	open_callback open;
 	opendir_callback opendir;
@@ -125,22 +141,21 @@ typedef struct __VFS_NODE__ {
 	get_disk_block get_disk_block;
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
-}AuVFSNode;
+} AuVFSNode;
 //#pragma pack(pop)
 
 //#pragma pack(push,1)
 typedef struct _AuFileStatus_ {
 	uint8_t filemode; //mode of the file
-	size_t size;  //size in bytes
+	size_t size;	  //size in bytes
 	uint32_t current_block;
 	uint32_t start_block;
-	uint32_t user_id; //for future use
+	uint32_t user_id;  //for future use
 	uint32_t group_id; //for future use
 	uint32_t num_links;
 	uint8_t eof;
-}AuFileStatus;
+} AuFileStatus;
 //#pragma pack(pop)
-
 
 typedef struct _FileControl_ {
 	int syscall_magic;
@@ -152,8 +167,7 @@ typedef struct _FileControl_ {
 	uint32_t uint_2;
 	uint64_t ulong_1;
 	uint64_t ulong_2;
-}AuFileIOControl;
-
+} AuFileIOControl;
 
 /**
  * @brief AuVFSContainer -- is a container
@@ -163,9 +177,7 @@ typedef struct _FileControl_ {
  */
 typedef struct __VFS_Container__ {
 	list_t* childs;
-}AuVFSContainer;
-
-
+} AuVFSContainer;
 
 /**
 * @brief AuVFSInitialise -- initialise the virtual
@@ -225,7 +237,10 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSFind(char* path);
  * @param length -- length of the file
  * @return amount of data being read in bytes
  */
-AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length);
+AU_EXTERN AU_EXPORT size_t AuVFSNodeRead(AuVFSNode* node,
+										 AuVFSNode* file,
+										 uint64_t* buffer,
+										 uint32_t length);
 
 /**
  * @brief AuVFSNodeReadBlock -- read a block size data from file system
@@ -275,7 +290,8 @@ extern int AuVFSRemoveDir(AuVFSNode* fsys, AuVFSNode* file);
  * @param buffer -- buffer to write
  * @param length -- length of the data
  */
-AU_EXTERN AU_EXPORT void AuVFSNodeWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length);
+AU_EXTERN AU_EXPORT void
+AuVFSNodeWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t length);
 
 /**
  * @brief AuVFSNodeClose -- close a file system or file
@@ -302,6 +318,5 @@ AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, ui
  * @return zero on success, one on failure
  */
 AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node, UID_NUM uid, GID_NUM gid);
-
 
 #endif

@@ -6,6 +6,9 @@ The AArch64 LLVM/Clang work below is recorded alongside the previously documente
 
 ### Added
 
+- Added a persistent `data.img` virtio-blk disk to `build_and_run_qemu.sh` (`--data-size-mb`, `--no-data-disk`, `--force-data-disk`), mounted by the guest at `/data` via volume label; `virtblk.dll` is now built and handles multiple block devices per driver load.
+- Added `--term -- <cmd>` passthrough so guest flags that look like host options (e.g. `--selftest`) reach the TERM command line.
+- Added `ntpd.exe` to the GCC user-space build, and `init` only spawns it when `/ntpd.exe` exists; the kernel seeds wall time from the board RTC only when it reads later than 2020-01-01.
 - Added LLVM build support for the AArch64 user-space runtime, graphics library, and the supported applications used by the QEMU image workflow.
 - Added `--llvm` toolchain selection to `Scripts/Linux/build_and_run_qemu.sh`; LLVM is the script default.
 - Added the AArch64 LLVM `--bleed` streamlined build, a low-memory profile that boots today's desktop with trimmed compositor overhead and a smaller guest footprint.
@@ -27,6 +30,8 @@ The AArch64 LLVM/Clang work below is recorded alongside the previously documente
 
 ### Fixed
 
+- **fix(virtionet)**: the TX path round-robined 8 buffers without ever consuming completions, so bursts rewrote descriptors QEMU had not finished with and the wire saw spliced frames. Transmit now reclaims `tx_used` before reusing a slot (bounded spin, drop-and-retry past it) and propagates the result through the NIC write callback.
+- **fix(XEClib)**: removed per-call serial debug prints from `fopen`/`fwrite`/`puts` that flooded the console during TLS handshakes and distorted timing.
 - **fix(BootAA64)**: `ExitBootServices` retry loop maybe livelock through all 16 retries and hang before the kernel ever ran — the `EFI_BUFFER_TOO_SMALL`
   reallocation path gave the memory-map buffer zero headroom, unlike the
   initial allocation, so the `FreePool`/`AllocatePool` churn could itself

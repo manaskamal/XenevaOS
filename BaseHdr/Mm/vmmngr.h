@@ -230,6 +230,19 @@ AU_EXTERN AU_EXPORT uint64_t* AuGetFreePage(bool user, void* ptr);
  */
 AU_EXTERN AU_EXPORT void AuFreePages(uint64_t virt_addr, bool free_physical, size_t s);
 
+#ifdef ARCH_ARM64
+/* Whether the direct-mapped process root is installed in TTBR0. */
+extern bool AuIsVirtualAddressSpaceActive(uint64_t* root);
+
+/* Unmap a byte range from an explicit, direct-mapped page-table root. */
+extern void AuFreePagesEx(uint64_t* root, uint64_t virt_addr, bool free_physical, size_t size);
+
+/* Destroy an inactive process's private lower-half mappings and tables.
+ * Cached/device pages and inherited upper-half kernel tables are preserved.
+ * Shared-memory mappings must be detached by the SHM manager first. */
+extern bool AuDestroyVirtualAddressSpace(uint64_t* root);
+#endif
+
 /**
  * @brief AuFreePages -- frees up contiguous pages
  * @param virt_addr -- starting virtual address

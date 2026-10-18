@@ -30,12 +30,14 @@
 **/
 
 #include <pcie.h>
+#include <audrv.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/gic.h>
 #include <Fs/Dev/devinput.h>
 #include <Fs/vfs.h>
 #include <Drivers/virtio.h>
 #include <Drivers/uart.h>
+#include <Net/wifi.h>
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>
 #include <aucon.h>
@@ -68,7 +70,9 @@ static uint16_t tx_nbuf;
 static uint64_t tx_buf_phys;
 static uint8_t* tx_buf_virt;
 static uint16_t rx_index;
-static uint16_t tx_index;
+/* TX completion cursor: how far through tx_used the driver has consumed.
+ * Transmit must never lap it (see AuVirtioTransmit). */
+static uint16_t tx_done;
 static AuVFSNode* nic;
 static AuNetworkDevice* ndev;
 
@@ -130,8 +134,10 @@ static void AuVirtioNetRxPoll(void) {
 		isb_flush();
 		if (ethlen)
 			virt_cache_inv(buffer, totlen);
-		if (nic && ethlen)
-			AuEthernetHandle(eth, (int)ethlen, nic);
+		if (nic && ethlen) {
+			if (!AuWifiPortalRx(eth, (int)ethlen))
+				AuEthernetHandle(eth, (int)ethlen, nic);
+		}
 	}
 	in_poll = 0;
 }
@@ -211,15 +217,35 @@ static void AuVirtioNetTxinitialize(void) {
  * @brief AuVirtioTransmit -- send one Ethernet frame on virtio-net
  * @param packet -- frame bytes
  * @param len -- length in bytes
+ * @return 0 on kick, -1 when the TX ring stays full (caller retries)
+ *
+ * The 8 TX buffers round-robin, so a slot may only be reused once the
+ * device reports its previous use complete. Without this gate, bursts
+ * rewrite descriptors QEMU has not consumed yet and the wire sees
+ * spliced/corrupt frames (TCP stalls that never recover).
  */
-static void AuVirtioTransmit(void* packet, uint16_t len) {
+static int AuVirtioTransmit(void* packet, uint16_t len) {
 	uint16_t idx;
 	uint8_t* buff;
 	virtio_net_hdr_t* hdr;
 	uint16_t total;
-	if (!tx_desc || !tx_avail || !tx_qsize || !tx_nbuf || !tx_buf_virt)
-		return;
-	idx = tx_index % tx_nbuf;
+	if (!tx_desc || !tx_avail || !tx_used || !tx_qsize || !tx_nbuf || !tx_buf_virt)
+		return -1;
+	/* Reclaim completions first; then require a free slot. The used
+	 * ring lives in device memory like the RX path's, so a plain read
+	 * is coherent. Bounded spin: a wedged device must not hang the
+	 * caller forever. */
+	uint64_t spins = 0;
+	for (;;) {
+		uint16_t done = tx_used->idx;
+		while (tx_done != done)
+			tx_done++;
+		if ((uint16_t)(tx_avail->idx - tx_done) < tx_nbuf)
+			break;
+		if (++spins > 2000000)
+			return -1;
+	}
+	idx = tx_avail->idx % tx_nbuf;
 	buff = tx_buf_virt + (idx * TX_BUFFER_SIZE);
 	memset(buff, 0, TX_BUFFER_SIZE);
 	hdr = (virtio_net_hdr_t*)buff;
@@ -238,7 +264,11 @@ static void AuVirtioTransmit(void* packet, uint16_t len) {
 	dsb_ish();
 	isb_flush();
 	AuVirtioPCINotifyQueue(&netDev, 1);
-	tx_index++;
+	return 0;
+}
+
+extern "C" void AuVirtioNetPortalTx(void* packet, uint16_t len) {
+	AuVirtioTransmit(packet, len);
 }
 
 /**
@@ -251,7 +281,8 @@ static void AuVirtioTransmit(void* packet, uint16_t len) {
 static size_t AuVirtioWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	(void)node;
 	(void)file;
-	AuVirtioTransmit(buffer, (uint16_t)len);
+	if (AuVirtioTransmit(buffer, (uint16_t)len) != 0)
+		return 0;
 	return len;
 }
 
@@ -331,7 +362,7 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 	if (device == 0xFFFFFFFF)
 		return;
 	rx_index = 0;
-	tx_index = 0;
+	tx_done = 0;
 
 	if (!AuVirtioPCIInit(device, bus, dev, func, (uint32_t)VIRTIO_NET_F_MAC, &netDev)) {
 		UARTDebugOut("[aurora]: virtio-net PCI init failed\r\n");
@@ -383,7 +414,7 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 	nic->write = AuVirtioWrite;
 	nic->iocontrol = AuVirtioNetIOCtl;
 	nic->device = ndev;
-	AuAddNetAdapter(nic, "e1000");
+	nic = AuAddNetAdapter(nic, "e1000");
 	{
 		AuVFSNode* alias = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 		memset(alias, 0, sizeof(AuVFSNode));
@@ -392,12 +423,13 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 		alias->write = AuVirtioWrite;
 		alias->iocontrol = AuVirtioNetIOCtl;
 		alias->device = ndev;
-		AuAddNetAdapter(alias, "virtio-net");
+		alias = AuAddNetAdapter(alias, "virtio-net");
 		AuNetAddConnectedRoute4(alias, "virtio-net");
 		AuNetAddDefaultRoute4(alias, "virtio-net");
 		AuNetAddConnectedRoute6(alias, "virtio-net");
 		AuNetAddDefaultRoute6(alias, "virtio-net");
 		AuNetRegisterRxPoll(AuVirtioNetRxPoll);
+		AuWifiPortalSetTx(AuVirtioNetPortalTx);
 	}
 }
 
@@ -405,9 +437,29 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 * AuDriverUnload -- deattach the driver from
 * aurora system
 */
+AU_DRIVER_FLAGS(AU_DRV_FLAG_UNLOADABLE);
+
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	/* 1. stop the kernel from calling into this image */
+	AuNetRegisterRxPoll(0);
+	AuWifiPortalSetTx(0);
+	AuRemoveNetAdapter((char*)"virtio-net");     /* frees the node */
+	AuRemoveNetAdapter((char*)"e1000");
+	nic = 0;
+	/* 2. reset the device so it stops touching our buffers */
 	if (netDev.common)
 		netDev.common->DeviceStatus = 0;
+	isb_flush();
+	dsb_ish();
+	/* queue memory and the interrupt are released by the loader's ledger */
+	rx_qsize = tx_qsize = 0;
+	rx_used = 0; rx_avail = 0; rx_desc = 0; rx_buf_virt = 0;
+	tx_used = 0; tx_avail = 0; tx_desc = 0; tx_buf_virt = 0;
+	if (ndev) {
+		kfree(ndev);
+		ndev = 0;
+	}
+	memset(&netDev, 0, sizeof(netDev));
 	return 0;
 }
 

@@ -829,6 +829,8 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 								   bool _window_moving_,
 								   WinSharedInfo* info,
 								   Window* rootWin) {
+	(void)_window_moving_;
+	(void)rootWin;
 	if ((win != NULL && _always_on_top_update) ||
 		(info->rect_count == 0 && WinSharedFlagLoad(&info->updateEntireWindow))) {
 		int winx = info->x;
@@ -849,37 +851,8 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 			glass_invalidate(win);
 		}
 
-		Rect r1;
-		Rect r2;
-		r1.x = winx;
-		r1.y = winy;
-		r1.w = width;
-		r1.h = height;
-
-		Rect clip[100];
-		int clipCount = 0;
-		Window* clipWin = NULL;
-		WinSharedInfo* clipInfo = NULL;
-		bool _intersected_ = false;
-
-		for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
-			clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-			if (clipWin == win)
-				continue;
-			if (clipInfo->hide)
-				continue;
-			r2.x = clipInfo->x;
-			r2.y = clipInfo->y;
-			r2.w = clipInfo->width;
-			r2.h = clipInfo->height;
-
-			if (ClipCheckIntersect(&r1, &r2)) {
-				_intersected_ = true;
-			}
-		}
 		uint32_t* surfaceBuffer = DeoGetBackSurface();
-		if ((info->alpha && WinSharedFlagLoad(&info->updateEntireWindow)) ||
-			(info->alpha && _intersected_)) {
+		if (info->alpha) {
 			int dst_x = winx, dst_y = winy, w = width, h = height, sx = 0, sy = 0;
 			if (clip_compose_rect(&dst_x,
 								  &dst_y,
@@ -905,53 +878,13 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 				AddDirtyClip(dst_x, dst_y, w, h);
 			}
 		} else {
-			bool force_full = WinSharedFlagLoad(&info->updateEntireWindow) || !_window_moving_;
-			for (clipWin = rootWin; clipWin != NULL; clipWin = clipWin->next) {
-				clipInfo = (WinSharedInfo*)clipWin->sharedInfo;
-				if (clipWin == win)
-					continue;
-				if (clipInfo->hide)
-					continue;
-				r2.x = clipInfo->x;
-				r2.y = clipInfo->y;
-				r2.w = clipInfo->width;
-				r2.h = clipInfo->height;
-
-				if (ClipCheckIntersect(&r1, &r2)) {
-					ClipGetBehindRect(&r1, &r2, clip, &clipCount);
-
-					int ix = r2.x > info->x ? r2.x : info->x;
-					int iy = r2.y > info->y ? r2.y : info->y;
-					int ix2 = (r2.x + r2.w < info->x + info->width) ? (r2.x + r2.w)
-																	: (info->x + info->width);
-					int iy2 = (r2.y + r2.h < info->y + info->height) ? (r2.y + r2.h)
-																	 : (info->y + info->height);
-					if (ix2 > ix && iy2 > iy && info->rect_count < 256) {
-						info->rect[info->rect_count].x = ix - info->x;
-						info->rect[info->rect_count].y = iy - info->y;
-						info->rect[info->rect_count].w = ix2 - ix;
-						info->rect[info->rect_count].h = iy2 - iy;
-						info->rect_count++;
-						WinSharedFlagStore(&info->dirty, true);
-					}
-				}
-			}
-
-			if (force_full) {
-				compose_window_rect(
-					canvas, win, info, winx, winy, width, height, 0, 0, clip_bottom);
-			} else {
-				for (int m = 0; m < clipCount; m++) {
-					int k_x = clip[m].x;
-					int k_y = clip[m].y;
-					int k_w = clip[m].w;
-					int k_h = clip[m].h;
-					int diffx = k_x - info->x;
-					int diffy = k_y - info->y;
-					compose_window_rect(
-						canvas, win, info, k_x, k_y, k_w, k_h, diffx, diffy, clip_bottom);
-				}
-			}
+			/* Moving a lower window restores wallpaper at its old position.
+			 * Redraw the entire overlay, not just its new overlap: otherwise
+			 * the old dock/clock pixels remain erased or fragmented. Normal
+			 * windows cannot occlude this layer, and the compositor must not
+			 * append damage into the client's shared rectangle queue. */
+			compose_window_rect(
+				canvas, win, info, winx, winy, width, height, 0, 0, clip_bottom);
 		}
 
 		if (win->animFrameCount == 0)

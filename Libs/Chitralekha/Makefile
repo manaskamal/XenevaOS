@@ -101,7 +101,9 @@ CPP_SRCS = audio/audio.cpp \
            widgets/textbox.cpp \
            widgets/toolbar.cpp \
            widgets/view.cpp \
-           widgets/window.cpp
+           widgets/window.cpp \
+		   widgets/layout/border_layout.cpp \
+		   widgets/layout/box_layout.cpp
 
 S_SRCS = _fastcpy_arm64.s
 

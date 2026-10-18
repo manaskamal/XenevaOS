@@ -61,6 +61,19 @@
 typedef int(*au_drv_entry)(void* drv);
 typedef int(*au_drv_unload)(void* drv);
 
+/* A driver opts in to runtime unloading by exporting `uint32_t AuDriverFlags`
+ * with AU_DRV_FLAG_UNLOADABLE set AND an AuDriverUnload() that undoes every
+ * kernel-visible registration it made (devices, VFS nodes, callbacks, hooks).
+ * Drivers without the flag are never unloaded. */
+#define AU_DRV_FLAG_UNLOADABLE  0x1
+
+/* In a driver:  AU_DRIVER_FLAGS(AU_DRV_FLAG_UNLOADABLE);  exports AuDriverFlags */
+#ifdef __GNUC__
+#define AU_DRIVER_FLAGS(f) AU_EXTERN AU_EXPORT uint32_t AuDriverFlags = (f)
+#else
+#define AU_DRIVER_FLAGS(f) AU_EXTERN __declspec(dllexport) uint32_t AuDriverFlags = (f)
+#endif
+
 
 #pragma pack(push,1)
 typedef struct _aurora_driver_ {
@@ -83,6 +96,11 @@ typedef struct _aurora_driver_ {
 	uint64_t original_load_base;
 	uint64_t new_load_base;
 	size_t image_sz;
+	/* component model: set by the driver manager, never by drivers */
+	uint32_t flags;            /* AU_DRV_FLAG_* , read from the driver's AuDriverFlags export */
+	int32_t  refcount;         /* >0 blocks unload */
+	size_t   region_pages;     /* pages reserved in the driver region */
+	void*    resources;        /* AuResource list, see aucomponent.h */
 }AuDriver;
 #pragma pack(pop)
 

@@ -477,3 +477,4 @@ aa64_signal_return:
     svc #0
     mov x0, x6
     ret
+

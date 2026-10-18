@@ -127,7 +127,7 @@ uint64_t GetProcessHeapMem(size_t sz) {
 
 	uint64_t start_addr = (uint64_t)AuGetFreePage(false, (void*)proc->proc_mem_heap);
 	for (int i = 0; i < sz / PAGE_SIZE; i++) {
-		uint64_t phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		uint64_t phys = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 		if (!AuMapPage(phys, start_addr + i * PAGE_SIZE, PTE_AP_RW_USER | PTE_NORMAL_MEM)) {
 			UARTDebugOut("already present %x \r\n", (start_addr + i * 0x1000));
 			AuPmmngrReleasePage((uint64_t)phys);

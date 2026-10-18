@@ -9,6 +9,7 @@
     <ClCompile Include="window.cpp" />
     <ClCompile Include="clip.cpp" />
     <ClCompile Include="rect.cpp" />
+    <ClCompile Include="resize.cpp" />
     <ClCompile Include="animation.cpp" />
     <ClCompile Include="alpha.cpp" />
     <ClCompile Include="compose.cpp" />
@@ -27,6 +28,7 @@
     <ClInclude Include="window.h" />
     <ClInclude Include="clip.h" />
     <ClInclude Include="rect.h" />
+    <ClInclude Include="resize.h" />
     <ClInclude Include="animation.h" />
     <ClInclude Include="alpha.h" />
     <ClInclude Include="compose.h" />

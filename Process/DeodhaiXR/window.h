@@ -114,6 +114,12 @@ typedef struct _win_ {
 	int resz_b;
 	int originalW;
 	int originalH;
+	bool resizePending;
+	uint64_t resizeDeadline;
+	int resizeX;
+	int resizeY;
+	int resizeW;
+	int resizeH;
 	bool markForClose;
 	uint8_t animFrameCount;
 	int animAlphaVal;
@@ -140,6 +146,8 @@ extern uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId);
 * @param key -- location where to store the buffer key
 */
 extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t* key);
+extern bool ResizeWindowBackBuffer(Window* win, int width, int height);
+extern void ReleaseWindowEffects(Window* win);
 /**
 * @brief CreateWindow -- create a new window
 * @param x -- X position of the window

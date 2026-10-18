@@ -43,12 +43,12 @@
 #include <Sound/sound.h>
 #include <Mm/kmalloc.h>
 
-#define VIRTIO_F_VERSION_1 (1ull << 32)
-#define VIRTIO_PCI_CAP_ID 0x09
+#define VIRTIO_F_VERSION_1		  (1ull << 32)
+#define VIRTIO_PCI_CAP_ID		  0x09
 #define VIRTIO_PCI_CAP_COMMON_CFG 1
 #define VIRTIO_PCI_CAP_DEVICE_CFG 4
-#define VIRTQ_DESC_F_NEXT  1
-#define VIRTQ_DESC_F_WRITE 2
+#define VIRTQ_DESC_F_NEXT		  1
+#define VIRTQ_DESC_F_WRITE		  2
 
 struct virtio_snd_config {
 	uint32_t jacks;
@@ -114,7 +114,7 @@ enum {
 /* supported PCM sample formats */
 enum {
 	/* analog formats (width/ physical width) */
-	VIRTIO_SND_PCM_FMT_IMA_ADPCM = 0,  // 4 / 4 bits
+	VIRTIO_SND_PCM_FMT_IMA_ADPCM = 0, // 4 / 4 bits
 	VIRTIO_SND_PCM_FMT_MU_LAW,
 	VIRTIO_SND_PCM_FMT_A_LAW,
 	VIRTIO_SND_PCM_FMT_S8,
@@ -167,12 +167,12 @@ struct virtio_snd_info {
 	uint32_t hda_fn_nid;
 };
 
-typedef struct _virtio_snd_query_info_{
+typedef struct _virtio_snd_query_info_ {
 	virtio_snd_hdr hdr;
 	uint32_t start_id;
 	uint32_t count;
 	uint32_t size;
-}virtio_snd_query_info;
+} virtio_snd_query_info;
 
 struct virtio_snd_event {
 	struct virtio_snd_hdr;
@@ -187,7 +187,7 @@ typedef struct {
 	uint32_t features;
 	uint8_t conected;
 	uint8_t padding[7];
-}virtio_snd_jack_info;
+} virtio_snd_jack_info;
 
 struct virtio_snd_pcm_hdr {
 	struct virtio_snd_hdr hdr;
@@ -196,9 +196,9 @@ struct virtio_snd_pcm_hdr {
 
 struct virtio_snd_pcm_info {
 	struct virtio_snd_info info_hdr;
-	uint32_t features;  // 1 << VIRTIO_SND_PCM_F_XXX 
-	uint64_t formats;   // 1 << VIRTIO_SND_PCM_FMT_XXX
-	uint64_t rates;     // 1 << VIRTIO_SND_PCM_RATE_XXX
+	uint32_t features; // 1 << VIRTIO_SND_PCM_F_XXX
+	uint64_t formats;  // 1 << VIRTIO_SND_PCM_FMT_XXX
+	uint64_t rates;	   // 1 << VIRTIO_SND_PCM_RATE_XXX
 	uint8_t directions;
 	uint8_t channels_min;
 	uint8_t channels_max;
@@ -219,16 +219,46 @@ struct virtio_snd_pcm_set_params {
 typedef struct _snd_xfer_ {
 	//virtio_snd_hdr hdr;
 	uint32_t stream_id;
-}virtio_snd_pcm_xfer;
+} virtio_snd_pcm_xfer;
 
 typedef struct {
 	//virtio_snd_hdr hdr;
 	uint32_t status;
 	uint32_t latency_bytes;
-}virtio_snd_pcm_status;
+} virtio_snd_pcm_status;
 
-#define VIRTIO_PCM_PERIOD 4096
-#define VIRTIO_PCM_BUFFER (VIRTIO_PCM_PERIOD * 2)
+/** ------------------------------------------------------------------------------------
+ * | Low Latency  |  128 frame | 3 Period | 512 (period_bytes) | 1,536 (buffer_bytes)
+ * | General      |  512 frame | 4 period | 2048 (period_bytes) | 8,192 (buffer_bytes) 
+ * | Media/Battery| 2048 frame | 3 period | 8,192 (period_byte) | 24,576 (buffer_bytes)
+ * --------------------------------------------------------------------------------------
+ * 
+ * Latency profiles
+ * |--------------------------------
+ * | Low latency | 8ms    | 1 Page
+ * | General     | 43 ms  | 2 page
+ * |Media/Battery| 128 ms | 6 Pages
+ * |---------------------------------
+ * 
+ * Formulas:
+ * frame_bytes = channels (2=stereo) x bytes_per_sample
+ * period_bytes = period_frames x frame_bytes
+ * byffer_bytes = period_bytes x N_periods
+ * latency = buffer_bytes / (rate x frame_bytes) = N x period_frames / rate)
+ * period_frames = rate x target_latency / N
+ * 
+ * Sample bytes value
+ * U8/S8 = 1 bytes
+ * S16 = 2 bytes
+ * S24 = 3 bytes
+ * S24 in 32_BIT Container = 4 bytes
+ * S32/FLOAT32 = 4 bytes
+ * FLOAT64 = 8 bytes 
+ * 
+ * Let's choose General profile 
+ */
+#define VIRTIO_PCM_PERIOD 2048 //4608
+#define VIRTIO_PCM_BUFFER (VIRTIO_PCM_PERIOD * 4)
 
 static struct VirtioPCIDevice snd_dev;
 static struct VirtqDesc* ctrl_desc;
@@ -333,7 +363,13 @@ static int snd_tx(uint32_t len) {
 	dsb_ish();
 	AuVirtioPCINotifyQueue(&snd_dev, 2);
 	/* QEMU returns the buffer only after the host has played one period. */
-	return queue_wait(tx_used, tx_qsz, &tx_used_idx, 200000000);
+	int wrc = queue_wait(tx_used, tx_qsz, &tx_used_idx, 200000000);
+	static bool first_tx_logged = false;
+	if (!wrc && !first_tx_logged) {
+		first_tx_logged = true;
+		UARTDebugOut("[virtio-snd]: first tx status %x (8000 = OK) \r\n", st->status);
+	}
+	return wrc;
 }
 
 static int snd_pcm_set_params(void) {
@@ -358,25 +394,57 @@ static int snd_pcm_simple(uint32_t code) {
 	return snd_ctrl(sizeof(*pcm), sizeof(virtio_snd_hdr));
 }
 
+/* Opt in to runtime unloading (see audrv.h): AuDriverUnload below undoes every
+ * kernel-visible registration this driver makes. */
+AU_DRIVER_FLAGS(AU_DRV_FLAG_UNLOADABLE);
+
+static AuSound* g_ausnd = 0;
+
 /*
 * AuDriverUnload -- deattach the driver from
-* aurora system
+* aurora system. Returning non-zero vetoes the unload. Bound audio clients
+* are detached by AuSoundUnregisterCard, not treated as a reason to refuse.
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
+	/* 1. stop the kernel from calling into this image */
+	if (g_ausnd) {
+		if (AuSoundUnregisterCard(g_ausnd) != 0)
+			return 1;
+		kfree(g_ausnd);
+		g_ausnd = 0;
+	}
+	dev_ready = false;
+	_output_running = false;
+	/* 2. reset the device so it stops touching our buffers */
 	if (snd_dev.common)
 		snd_dev.common->DeviceStatus = 0;
-	dev_ready = false;
+	/* 3. give back the command pages (the kernel also drops their MMIO alias) */
+	if (cmd_phys) {
+		AuPmmngrReleasePage(cmd_phys);
+		cmd_phys = 0;
+		cmd_virt = 0;
+	}
+	if (resp_phys) {
+		AuPmmngrReleasePage(resp_phys);
+		resp_phys = 0;
+		resp_virt = 0;
+	}
+	if (pcm_phys) {
+		AuPmmngrReleasePage(pcm_phys);
+		pcm_phys = 0;
+		pcm_virt = 0;
+	}
 	return 0;
 }
 
 int virtio_snd_write(uint8_t* buffer, size_t len) {
 	if (!dev_ready || !buffer)
 		return 1;
-	if (len > VIRTIO_PCM_PERIOD)
-		len = VIRTIO_PCM_PERIOD;
-	memset(pcm_virt, 0, VIRTIO_PCM_PERIOD);
+	if (len > 8192)
+		len = 8192;
+	memset(pcm_virt, 0, 8192);
 	memcpy(pcm_virt, buffer, len);
-	return snd_tx(VIRTIO_PCM_PERIOD);
+	return snd_tx(len);
 }
 
 int virtio_snd_read(uint8_t* buffer, size_t len) {
@@ -403,8 +471,7 @@ int virtio_snd_output_start() {
 		return 1;
 	if (_output_running)
 		return 0;
-	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) ||
-	    snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
+	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) || snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
 		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
 		return 1;
 	}
@@ -428,6 +495,22 @@ static int snd_alloc_page(uint64_t* phys, void** virt) {
 	return 0;
 }
 
+static int snd_alloc_pages(uint64_t* phys, void** virt, int num_pages) {
+	uint64_t p1 = 0;
+	for (int i = 0; i < num_pages; i++) {
+		uint64_t p = AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+		void* v = AuMapMMIO(p, 1);
+		if (p1 == 0) {
+			p1 = p;
+			*virt = v;
+		}
+	}
+	if (p1 == 0)
+		return 1;
+	*phys = p1;
+	memset(*virt, 0, PAGE_SIZE * num_pages);
+	return 0;
+}
 /*
 * AuDriverMain -- virtio-sound entry
 */
@@ -467,11 +550,11 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 		UARTDebugOut("[virtio-snd]: feature negotiation failed \r\n");
 		return 1;
 	}
-	ctrl_qsz = AuVirtioPCISetupQueue(&snd_dev, 0, &ctrl_desc, &ctrl_avail, &ctrl_used,
-									 VIRTIO_MSI_NO_VECTOR);
+	ctrl_qsz = AuVirtioPCISetupQueue(
+		&snd_dev, 0, &ctrl_desc, &ctrl_avail, &ctrl_used, VIRTIO_MSI_NO_VECTOR);
 	q = AuVirtioPCISetupQueue(&snd_dev, 1, &d, &a, &u, VIRTIO_MSI_NO_VECTOR);
-	tx_qsz = AuVirtioPCISetupQueue(&snd_dev, 2, &tx_desc, &tx_avail, &tx_used,
-								   VIRTIO_MSI_NO_VECTOR);
+	tx_qsz =
+		AuVirtioPCISetupQueue(&snd_dev, 2, &tx_desc, &tx_avail, &tx_used, VIRTIO_MSI_NO_VECTOR);
 	q = AuVirtioPCISetupQueue(&snd_dev, 3, &d, &a, &u, VIRTIO_MSI_NO_VECTOR);
 	(void)q;
 	if (!ctrl_qsz || !tx_qsz || !snd_dev.deviceCfg) {
@@ -483,11 +566,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	isb_flush();
 	dsb_ish();
 
-	if (snd_alloc_page(&cmd_phys, &cmd_virt) ||
-	    snd_alloc_page(&resp_phys, &resp_virt) ||
-	    snd_alloc_page(&pcm_phys, &pcm_virt)) {
+	if (snd_alloc_page(&cmd_phys, &cmd_virt) || snd_alloc_page(&resp_phys, &resp_virt)) {
 		UARTDebugOut("[virtio-snd]: buffer allocation failed \r\n");
 		return 1;
+	}
+
+	if (snd_alloc_pages(&pcm_phys, &pcm_virt, 2)) {
+		UARTDebugOut("[virtio-snd]: failed to allocate PCM buffer \r\n");
 	}
 	dev_ready = true;
 
@@ -517,7 +602,10 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	output_stream = 0;
 	for (i = 0; i < (int)n_streams; i++) {
 		UARTDebugOut("[virtio-snd]: stream %d dir %d \r\n", i, pcm[i].directions);
-		if (pcm[i].directions & 1) {
+		/* virtio-snd spec: this field is a direction ENUM (D_OUTPUT = 0,
+		 * D_INPUT = 1), not a bitmask. `& 1` selected the INPUT stream, and
+		 * the device rejected every playback buffer with BAD_MSG. */
+		if (pcm[i].directions == 0) {
 			output_stream = (uint32_t)i;
 			break;
 		}
@@ -528,8 +616,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 		dev_ready = false;
 		return 1;
 	}
-	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) ||
-	    snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
+	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) || snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
 		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
 		dev_ready = false;
 		return 1;
@@ -552,6 +639,7 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 		dev_ready = false;
 		return 1;
 	}
+	g_ausnd = ausnd;
 	UARTDebugOut("[virtio-snd]: initialized successfully \r\n");
 	return 0;
 }

@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include "calculator.h"
 #include <sys/mman.h>
+#include <pthread.h>
 
 ChitralekhaApp* app;
 ChWindow* mainWin;
@@ -415,11 +416,7 @@ void WindowHandleMessage(PostEvent* e) {
 	}
 
 	case DEODHAI_REPLY_DESTROY_BUFFER: {
-		_KeUnmapSharedMem(mainWin->app->backbufkey);
-		PostEvent e1;
-		e1.type = DEODHAI_MESSAGE_BUFFER_DESTROYED;
-		e1.to_id = POSTBOX_ROOT_ID;
-		_KeFileIoControl(mainWin->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
+		ChWindowHandleDestroyBuffer(mainWin);
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}

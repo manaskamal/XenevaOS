@@ -209,7 +209,8 @@ void IPV4SendPacket(IPv4Header* packet, AuVFSNode* nic) {
 	if (AuRouteLookup4(ip_dest, &rr) == 0 && (rr.flags & RTF_GATEWAY) && rr.nexthop)
 		ip_dest = rr.nexthop;
 
-	if (ndev->type == NETDEV_TYPE_ETHERNET) {
+	/* 802.11 station presents Ethernet frames; the driver translates them. */
+	if (ndev->type == NETDEV_TYPE_ETHERNET || ndev->type == NETDEV_TYPE_802_11) {
 		cache = AuARPResolve(nic, ip_dest);
 		if (!cache)
 			return;

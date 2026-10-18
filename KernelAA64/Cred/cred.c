@@ -198,6 +198,9 @@ GID_NUM AuCredGetGroupID(uint8_t category) {
 int AuCredChangeID(int fd, UID_NUM uid, GID_NUM gid) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
+	/* a secondary thread is not its process's main thread */
+	if (!proc)
+		proc = AuProcessFindSubThread(current_thr);
 
 	if (!proc)
 		return 1;
@@ -207,6 +210,9 @@ int AuCredChangeID(int fd, UID_NUM uid, GID_NUM gid) {
 		!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETGID))
 		return 1;
 
+	/* fd is a raw user value: it indexed fds[] with no bounds check */
+	if (fd < 0 || fd >= FILE_DESC_PER_PROCESS)
+		return 1;
 	AuVFSNode* file = proc->fds[fd];
 	if (!file)
 		return 1;
@@ -225,6 +231,9 @@ int AuCredChangeID(int fd, UID_NUM uid, GID_NUM gid) {
 int AuCredAddSGroup(int proc_id, int sgid) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
+	/* a secondary thread is not its process's main thread */
+	if (!proc)
+		proc = AuProcessFindSubThread(current_thr);
 
 	if (!proc)
 		return 1;
@@ -235,6 +244,11 @@ int AuCredAddSGroup(int proc_id, int sgid) {
 
 	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
+	if (!proc)
+		return 1;
+	/* sgid[] holds AURORA_MAX_GROUPS entries; the index was never checked */
+	if (proc->creds.num_sgid >= AURORA_MAX_GROUPS)
+		return 1;
 
 	proc->creds.sgid[proc->creds.num_sgid] = sgid;
 	proc->creds.num_sgid++;
@@ -250,6 +264,9 @@ int AuCredAddSGroup(int proc_id, int sgid) {
 int AuCredSetCap(int proc_id, int cap) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
+	/* a secondary thread is not its process's main thread */
+	if (!proc)
+		proc = AuProcessFindSubThread(current_thr);
 
 	if (!proc)
 		return 1;
@@ -260,6 +277,8 @@ int AuCredSetCap(int proc_id, int cap) {
 
 	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
+	if (!proc)
+		return 1;
 
 	proc->creds.caps = cap;
 	return 0;
@@ -272,6 +291,9 @@ int AuCredSetCap(int proc_id, int cap) {
 int AuCredGetCap(int proc_id) {
 	AA64Thread* current_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(current_thr);
+	/* a secondary thread is not its process's main thread */
+	if (!proc)
+		proc = AuProcessFindSubThread(current_thr);
 
 	if (!proc)
 		return 1;
@@ -280,8 +302,11 @@ int AuCredGetCap(int proc_id) {
 	if (!CRED_IS_CAPABLE(proc->creds.caps, CRED_CAP_SETCAP))
 		return 1;
 
-	if (proc_id == 0)
+	/* zero means "this process"; the test was inverted and looked up pid 0 */
+	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
+	if (!proc)
+		return 1;
 
 	return proc->creds.caps;
 }
@@ -351,6 +376,8 @@ int AuSetUID(int proc_id, UID_NUM uid) {
 
 	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
+	if (!proc)
+		return 1;
 
 	proc->creds.uid = uid;
 	return 0;
@@ -385,6 +412,8 @@ int AuSetGID(int proc_id, GID_NUM gid) {
 
 	if (proc_id != 0)
 		proc = AuProcessFindPID(proc_id);
+	if (!proc)
+		return 1;
 
 	proc->creds.gid = gid;
 	return 0;

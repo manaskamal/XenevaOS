@@ -706,6 +706,34 @@ void GICCallSPIHandler(int spi) {
 }
 
 /**
+ * Read back what is registered for an spi; 0 when the slot is free.
+ *
+ * Added for DCL's request_irq(): GICRegisterSPIHandler() is first-writer-wins
+ * and gives no feedback, so a caller that registers over an occupied slot
+ * would be told "yes" while the interrupt still routes to whoever claimed it
+ * first. Reading the slot back is the only way for request_irq() to report
+ * -EBUSY instead of handing a driver a line that will never arrive.
+ */
+void* GICGetSPIHandler(int spi) {
+	if (spi < 0 || spi >= MAX_SPIS)
+		return 0;
+	return callbacks[spi];
+}
+
+/**
+ * Release a slot this caller owns.
+ *
+ * Only called by free_irq() after GICGetSPIHandler() confirmed the slot holds
+ * DCL's own dispatcher, so a native driver's registration is never cleared
+ * out from under it.
+ */
+void GICClearSPIHandler(int spi) {
+	if (spi < 0 || spi >= MAX_SPIS)
+		return;
+	callbacks[spi] = 0;
+}
+
+/**
  * @brief GICDisable -- disable the GIC 
  */
 void GICDisable() {

@@ -69,6 +69,7 @@ Useful options for the LLVM workflow are:
 - `--force-legacy-build` reuses an existing `initrd2.img`.
 - `--initrd-size-mb=N` overrides the automatically calculated ramdisk size.
 - `--headless` disables the display and bounds the QEMU run with `QEMU_TIMEOUT` (120 seconds by default).
+- `--data-size-mb=N` sizes the persistent `data.img` virtio-blk disk (default 256, minimum 64). It is created once and reused, and the guest mounts it at `/data` (FAT label `XENEVADATA`), so files written there survive across runs. `--force-data-disk` recreates it, wiping persisted files; `--no-data-disk` detaches it.
 
 `--direct-scanout` cannot be combined with `--skip-build` or `--force-legacy-build`, because the selected compositor must be rebuilt and packed into a fresh initrd. The script includes direct scanout in the user-space profile stamp so switching it on or off triggers a clean rebuild.
 
