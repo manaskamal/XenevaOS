@@ -47,6 +47,20 @@ To keep XenevaOS portable across MSVC, Clang/LLVM, and GCC environments, all con
 
 Code modifications must be verified for GCC compatibility before being merged.
 
+### *AI-Assisted Contributions*
+XenevaOS permits AI-assisted development (such as LLMs and automated tools), subject to transparent disclosure, human verification, and accountability:
+- **Human Accountability:** The human contributor is solely responsible for the entire submission. Contributors must understand, explain, and defend all submitted code and changes. Never submit unverified AI output.
+- **Mandatory Disclosure:** Any substantial AI assistance must be disclosed in the pull request description and attributed in git commit messages using the standardized trailer:
+  ```text
+  Assisted-by: LLM <tool name(s)>
+  ```
+  *(Example: `Assisted-by: LLM ChatGPT, Claude`)*
+- **Tiered Component Verification:** 
+  - **Level 1 (Critical Low-Level):** Boot, kernel, memory, interrupts, drivers, and VFS. AI usage is strictly restricted: permitted solely for research and comprehension; direct AI code creation, modification, or patch generation is prohibited without close human supervision and strict maintainer review.
+  - **Level 2 (System Services):** Runtimes, IPC, graphics composition, and dynamic loaders require verified builds, tests, and security scrutiny.
+  - **Level 3 (Applications, Tools & Docs):** Permitted with review for correctness, formatting, and conventions.
+- For full guidelines and review criteria, refer to the [Policy on AI-Assisted Contributions](AIPolicy.md).
+
 ### *Bug Reports & Feature Requests*
 - Open an issue to report bugs or suggest new features using the provided GitHub Issue templates.
 - When reporting a bug, provide clear details about the issue, including system debug messages from the serial terminal, the processor state, and register values. If possible, describe the conditions under which the bug occurs.
@@ -58,7 +72,8 @@ To ensure code quality and maintainability, all contributors must format their P
 1. **Summary:** A concise explanation of the PR's high-level objectives.
 2. **Changes:** A detailed bulleted list of modified modules, specifying exactly **Before** (previous behavior or issue), **What** changed, and **Why** it was changed.
 3. **Compatibility:** Verification checkboxes indicating that the changes do not break MSVC/Windows and GCC/Linux builds or cause runtime regressions.
-4. **Related:** Reference to any corresponding issue numbers (e.g., `Part of #44`).
+4. **AI Assistance:** Mandatory disclosure of any AI assistance utilized, tools used, and confirmation that the contributor understands and has verified the changes.
+5. **Related:** Reference to any corresponding issue numbers (e.g., `Part of #44`).
 
 ### *Conclusion*
 Thank you for your interest in contributing to XenevaOS! Your contributions — whether in code, documentation, bug reports, or discussions — help shape the future of this project. If you have any questions or need guidance, feel free to open an issue or join the discussions on GitHub or Discord. Let's work together to make a powerful and efficient operating system!

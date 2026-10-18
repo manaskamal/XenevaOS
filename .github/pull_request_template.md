@@ -13,5 +13,15 @@
 - [ ] GCC/Linux build toolchain remains fully compatible.
 - [ ] No regression in bootloader, kernel, or user-space runtime logic.
 
+## AI Assistance
+<!--
+Disclose substantial AI assistance used in this PR as per Docs/AIPolicy.md.
+If no AI tools were used, specify "None".
+-->
+- **AI Tools Used:** None / <!-- e.g., ChatGPT, Claude, Copilot -->
+- **Assisted Areas:** <!-- e.g., Implementation, Refactoring, Tests, Documentation -->
+- [ ] I understand and can defend every change submitted in this PR.
+- [ ] All code and logic has been verified and tested (no unverified AI output).
+
 ## Related
 <!-- Link to the issue or ticket this PR belongs to (e.g., Part of #44). -->
