@@ -33,6 +33,10 @@
 #include <linux/ww_mutex.h>	/* the four ww_mutex externs */
 #include <video/cmdline.h>	/* video_get_options */
 #include <drm/drm_gem_shmem_helper.h>	/* the two ops of DRM_GEM_SHMEM_DRIVER_OPS */
+#include <drm/drm.h>		/* DRM_IOCTL_MODE_MAP_DUMB, drm_mode_map_dumb */
+#include <drm/drm_dumb_buffers.h>	/* drm_mode_size_dumb */
+#include <Mm/pmmngr.h>		/* P2V, AuPmmngrAllocPages/ReleasePages */
+#include <Mm/vmmngr.h>		/* PAGE_SIZE, AuMapPage, AuFreePages, PTE bits */
 
 /* Vendored vkms/vkms_configfs.h -- that header sits beside its .c in
  * Vendored/, which is not an include path for DCL sources. */
@@ -43,23 +47,125 @@ void vkms_configfs_unregister(void);
 extern struct kmem_cache *radix_tree_node_cachep;
 extern void radix_tree_node_rcu_free(struct rcu_head *head);
 
-/* ── shmem: declared in <linux/shmem_fs.h>, Stage 2 replaces this block ── */
+/* ── shmem and dumb buffers: the Stage 2 replacement ────────────────────── */
 
 /*
- * drm_gem_object_init() is the only producer and it does
- * `if (IS_ERR(filp)) return PTR_ERR(filp)` -- so -ENOSYS reaches the driver
- * as a failed GEM init and vkms dumb-buffer creation fails cleanly until a
- * real shmem file exists.  The *_with_mnt arm sits behind
- * CONFIG_TRANSPARENT_HUGEPAGE in drm_gem.c and is unreachable here; it is
- * linked for symmetry with its declaration rather than any current caller.
+ * Xeneva has no shmem filesystem, so there are no page-cache folios to
+ * back a GEM object with; and no file-backed mmap, so a fake mmap offset
+ * has nothing to be handed to.  Both halves of mainline's design are
+ * rebuilt here from the primitives this target does have.
+ *
+ * The backing range is one contiguous buddy allocation: physically
+ * contiguous means the kernel linear map (P2V) already is the single
+ * contiguous mapping drm_gem_fb_vmap() asks for -- no vmap() of a page
+ * array, no struct page bookkeeping.  The "shmem file" is a kmalloc'd
+ * struct file that exists only to be obj->filp; its private_data carries
+ * the allocation base across drm_gem_object_init() (the only producer,
+ * and it does `if (IS_ERR(filp)) return PTR_ERR(filp)`).  fput() here is
+ * a no-op (linux_cdev_shim.c explains the absent file table), so the GEM
+ * object's .free owns everything: frames, user mapping, file, itself.
+ *
+ * Userspace reaches the frames through MAP_DUMB: mainline's handler runs
+ * first and produces the uapi's fake offset, then dcl_drm_ioctl_post()
+ * below maps the same frames with PTE_AP_RW_USER and overwrites
+ * args->offset with that address, so a client dereferences it directly.
+ * When file-backed mmap arrives (the Linux-client layer) the fake offset
+ * becomes usable as-is and this hook is where its implementation goes.
+ *
+ * drm_gem_shmem_helper.c itself stays unvendored: these are the two
+ * symbols DRM_GEM_SHMEM_DRIVER_OPS links against, not the helper.  Prime
+ * import stays a checked -ENOSYS -- there is no dma-buf exporter half.
+ */
+
+#define DCL_DRM_BUF_VA ((uint64_t)0x00007F0100000000ULL)
+
+struct dcl_gem_dumb {
+	struct drm_gem_object base;	/* first member: the cast needs it */
+	uint64_t phys;			/* buddy allocation base */
+	size_t size;			/* page aligned; obj->size */
+	uint64_t uva;			/* user mapping; 0 until MAP_DUMB */
+};
+
+static struct dcl_gem_dumb *to_dcl_dumb(struct drm_gem_object *obj)
+{
+	return (struct dcl_gem_dumb *)obj;
+}
+
+/*
+ * Where the next MAP_DUMB lands.  A monotonic cursor, not a free list:
+ * buffers are address-cheap, nothing asks an address back yet, and the
+ * band is 2^47 bytes wide.  Per-kernel is correct -- these are user
+ * addresses, and every process has its own tables.
+ */
+static uint64_t dcl_drm_buf_va = DCL_DRM_BUF_VA;
+
+static int dcl_gem_dumb_vmap(struct drm_gem_object *obj, struct iosys_map *map)
+{
+	struct dcl_gem_dumb *d = to_dcl_dumb(obj);
+
+	iosys_map_set_vaddr(map, (void *)(uintptr_t)P2V(d->phys));
+	return 0;
+}
+
+static void dcl_gem_dumb_vunmap(struct drm_gem_object *obj,
+				struct iosys_map *map)
+{
+	(void)obj;
+	iosys_map_clear(map);
+}
+
+static void dcl_gem_dumb_free(struct drm_gem_object *obj)
+{
+	struct dcl_gem_dumb *d = to_dcl_dumb(obj);
+	struct file *filp = obj->filp;
+
+	if (d->uva)
+		AuFreePages(d->uva, false, d->size);
+	if (d->phys)
+		AuPmmngrReleasePages(d->phys);
+	drm_gem_object_release(obj);
+	kfree(filp);
+	kfree(d);
+}
+
+static const struct drm_gem_object_funcs dcl_gem_dumb_funcs = {
+	.free = dcl_gem_dumb_free,
+	.vmap = dcl_gem_dumb_vmap,
+	.vunmap = dcl_gem_dumb_vunmap,
+};
+
+/*
+ * The size arrives PAGE_SIZE aligned (drm_mode_size_dumb guarantees it),
+ * which is what makes the eager buddy allocation possible at all.  The
+ * *_with_mnt arm sits behind CONFIG_TRANSPARENT_HUGEPAGE and is
+ * unreachable; it stays -ENOSYS.
  */
 struct file *shmem_file_setup(const char *name, loff_t size,
 			      vma_flags_t vm_flags)
 {
+	struct file *filp;
+	uint64_t phys;
+
 	(void)name;
-	(void)size;
 	(void)vm_flags;
-	return ERR_PTR(-ENOSYS);
+
+	if (size <= 0 || (size & (PAGE_SIZE - 1)))
+		return ERR_PTR(-EINVAL);
+
+	filp = kzalloc(sizeof(*filp), GFP_KERNEL);
+	if (!filp)
+		return ERR_PTR(-ENOMEM);
+
+	phys = AuPmmngrAllocPages((uint32_t)((uint64_t)size / PAGE_SIZE), 1, 0,
+				  AURORA_PAGE_NORMAL);
+	if (phys == PMM_INVALID_PHYS) {
+		kfree(filp);
+		return ERR_PTR(-ENOMEM);
+	}
+	memset((void *)(uintptr_t)P2V(phys), 0, (size_t)size);
+	filp->private_data = (void *)(uintptr_t)phys;
+
+	return filp;
 }
 
 struct file *shmem_file_setup_with_mnt(struct vfsmount *mnt, const char *name,
@@ -97,30 +203,39 @@ struct page *shmem_read_mapping_page_gfp(struct address_space *mapping,
 }
 
 /*
- * The two functions DRM_GEM_SHMEM_DRIVER_OPS expands to, which vkms_drv.c:96
- * puts in its driver struct. They are the whole of mainline's
- * drm_gem_shmem_helper.c that this tree links: the file itself is not vendored
- * (Vendored/README.md records why), and these two symbols are what is left of
- * it -- a function pointer in a static initialiser is a link-time reference,
- * so they must exist even though Stage 1 never calls them. Nothing reaches
- * dumb_create or prime import from VERSION or GET_CAP; the paths that do are
- * drm_ioctl.c:263 and drm_prime.c:313, both behind ioctls a Stage 1 client
- * does not issue.
- *
- * -ENOSYS is the same answer shmem_file_setup() above gives, and for the same
- * reason rather than a coincidence: mainline's dumb_create forwards to
- * drm_gem_shmem_create_with_handle(), which is drm_gem_object_init(), which
- * calls shmem_file_setup(). A faithful implementation would arrive at that
- * call and return this errno. The stub is that call, minus the code that
- * cannot run before it.
+ * dumb_create: mainline's size bookkeeping (drm_mode_size_dumb, from
+ * drm_dumb_buffers.c) over the backing above, in the shape of mainline's
+ * create-with-handle -- allocate the object, take the handle, then drop the
+ * creation reference: the handle holds its own, and on handle failure that
+ * same put is what frees the frames again.
  */
 int drm_gem_shmem_dumb_create(struct drm_file *file, struct drm_device *dev,
 			      struct drm_mode_create_dumb *args)
 {
-	(void)file;
-	(void)dev;
-	(void)args;
-	return -ENOSYS;
+	struct dcl_gem_dumb *d;
+	int ret;
+
+	ret = drm_mode_size_dumb(dev, args, 0, 0);
+	if (ret)
+		return ret;
+
+	d = kzalloc(sizeof(*d), GFP_KERNEL);
+	if (!d)
+		return -ENOMEM;
+
+	ret = drm_gem_object_init(dev, &d->base, args->size);
+	if (ret) {
+		kfree(d);
+		return ret;
+	}
+
+	d->base.funcs = &dcl_gem_dumb_funcs;
+	d->phys = (uint64_t)(uintptr_t)d->base.filp->private_data;
+	d->size = args->size;
+
+	ret = drm_gem_handle_create(file, &d->base, &args->handle);
+	drm_gem_object_put(&d->base);
+	return ret;
 }
 
 struct drm_gem_object *
@@ -130,6 +245,62 @@ drm_gem_shmem_prime_import_no_map(struct drm_device *dev,
 	(void)dev;
 	(void)dma_buf;
 	return ERR_PTR(-ENOSYS);
+}
+
+/*
+ * dcl_drm_ioctl_post -- what DCL adds after a DRM ioctl has succeeded.
+ *
+ * The cdev bridge (linux_cdev_shim.c) calls this once mainline's handler
+ * returned 0.  Only MAP_DUMB has a second half: mainline put the fake mmap
+ * offset in args->offset, and this maps the object's frames into the
+ * calling process as user pages and replaces the offset with that address.
+ * AuMapPage() refuses a leaf that is already valid, so a colliding address
+ * fails the ioctl instead of aliasing memory.
+ */
+long dcl_drm_ioctl_post(struct file *filp, unsigned int cmd, void *arg)
+{
+	struct drm_mode_map_dumb *maparg = arg;
+	struct drm_gem_object *obj;
+	struct dcl_gem_dumb *d;
+	uint64_t va;
+	size_t i, npages;
+	int ret = 0;
+
+	if (cmd != DRM_IOCTL_MODE_MAP_DUMB || !filp)
+		return 0;
+
+	obj = drm_gem_object_lookup(filp->private_data, maparg->handle);
+	if (!obj)
+		return -ENOENT;
+	if (obj->funcs != &dcl_gem_dumb_funcs) {
+		/* Not a buffer this file knows how to map: leave mainline's
+		 * fake offset, which is what a client with mmap consumes. */
+		drm_gem_object_put(obj);
+		return 0;
+	}
+	d = to_dcl_dumb(obj);
+
+	if (!d->uva) {
+		va = dcl_drm_buf_va;
+		npages = d->size / PAGE_SIZE;
+
+		for (i = 0; i < npages; i++) {
+			if (!AuMapPage(d->phys + (uint64_t)i * PAGE_SIZE,
+				       va + (uint64_t)i * PAGE_SIZE,
+				       PTE_NORMAL_MEM | PTE_AP_RW_USER)) {
+				if (i)
+					AuFreePages(va, false, i * PAGE_SIZE);
+				ret = -ENOMEM;
+				goto out;
+			}
+		}
+		dcl_drm_buf_va += (uint64_t)d->size;
+		d->uva = va;
+	}
+	maparg->offset = d->uva;
+out:
+	drm_gem_object_put(obj);
+	return ret;
 }
 
 /* ── drm's internal pseudo fs (drm_drv.c:620-660) ─────────────────────── */
@@ -430,12 +601,21 @@ void dma_buf_vunmap(struct dma_buf *dma_buf, struct iosys_map *map)
 /*
  * DCL's mutex is `do {} while (0)` (kernel.h:179-181): there is one
  * execution context and no contention for the slowpath to resolve, so the
- * whole ww protocol collapses to recording which context holds the lock.
+ * ww protocol collapses to recording which context holds the lock -- plus
+ * the -EALREADY answer mainline gives a context that already holds it.
+ * That second half is load-bearing for drm: modeset_lock() keeps every lock
+ * it takes on ctx->locked and drm_modeset_drop_locks() walks that list back,
+ * and drm_helper_probe_detect() re-locks the connection mutex in the ctx its
+ * caller already holds it in (drm_probe_helper.c:407).  Without -EALREADY
+ * the second list_add() of the same node self-links the list and
+ * drop_locks() never empties.
  * lock_slow/lock_slow_interruptible need no body here -- ww_mutex.h inlines
  * both over trylock plus these two (ww_mutex.h:313, :350).
  */
 int ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
 {
+	if (ctx && lock->ctx == ctx)
+		return -EALREADY;
 	mutex_lock(&lock->base);
 	lock->ctx = ctx;
 	return 0;
@@ -444,6 +624,8 @@ int ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
 int ww_mutex_lock_interruptible(struct ww_mutex *lock,
 				struct ww_acquire_ctx *ctx)
 {
+	if (ctx && lock->ctx == ctx)
+		return -EALREADY;
 	lock->ctx = ctx;
 	return 0;
 }
@@ -456,6 +638,8 @@ void ww_mutex_unlock(struct ww_mutex *lock)
 
 int ww_mutex_trylock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
 {
+	if (ctx && lock->ctx == ctx)
+		return -EALREADY;
 	if (mutex_trylock(&lock->base)) {
 		lock->ctx = ctx;
 		return 1;

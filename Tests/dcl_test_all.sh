@@ -41,7 +41,7 @@ EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=44
+EXP_DCLTEST=108   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"

@@ -141,15 +141,13 @@ void __init_swait_queue_head(void* q, const char* name, void* key) {
 }
 
 int ida_alloc_range(struct ida* ida, unsigned int min, unsigned int max, gfp_t gfp) {
-	(void)ida;
 	(void)gfp;
-	static unsigned int next_id = 0;
-	unsigned int id = next_id;
+	unsigned int id = ida->next_id;
 	if (id < min)
 		id = min;
 	if (id > max)
 		return -28;
-	next_id = id + 1;
+	ida->next_id = id + 1;
 	return (int)id;
 }
 

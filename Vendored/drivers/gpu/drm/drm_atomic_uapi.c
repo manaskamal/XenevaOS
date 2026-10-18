@@ -1602,10 +1602,10 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
 			  void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_atomic *arg = data;
-	uint32_t __user *objs_ptr = (uint32_t __user *)(unsigned long)(arg->objs_ptr);
-	uint32_t __user *count_props_ptr = (uint32_t __user *)(unsigned long)(arg->count_props_ptr);
-	uint32_t __user *props_ptr = (uint32_t __user *)(unsigned long)(arg->props_ptr);
-	uint64_t __user *prop_values_ptr = (uint64_t __user *)(unsigned long)(arg->prop_values_ptr);
+	uint32_t __user *objs_ptr = (uint32_t __user *)(uintptr_t)(arg->objs_ptr);
+	uint32_t __user *count_props_ptr = (uint32_t __user *)(uintptr_t)(arg->count_props_ptr);
+	uint32_t __user *props_ptr = (uint32_t __user *)(uintptr_t)(arg->props_ptr);
+	uint64_t __user *prop_values_ptr = (uint64_t __user *)(uintptr_t)(arg->prop_values_ptr);
 	unsigned int copied_objs, copied_props;
 	struct drm_atomic_commit *state;
 	struct drm_modeset_acquire_ctx ctx;

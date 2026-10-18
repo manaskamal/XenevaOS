@@ -19,6 +19,12 @@
  *     extern mainline declares (idr.h:113) with an empty body.
  *   - idr_find() under rcu_read_lock(): single-threaded, so the lockless
  *     lookup mainline documents is simply a lookup.
+ *   - reserved ids: mainline's idr_alloc() can hand out an id whose value is
+ *     NULL -- drm reserves connector ids and GEM handles that way and fills
+ *     the object in later via idr_replace().  The slot table keeps "taken"
+ *     and "what it holds" apart (idr.h's `used` and `slots`), so a
+ *     reservation is neither handed out twice nor invisible to
+ *     idr_replace().
  */
 #include <linux/idr.h>
 
@@ -28,10 +34,12 @@ void idr_preload(gfp_t gfp)
 }
 
 /*
- * idr_alloc(): first free slot at or above `start`, clamped to this idr's
- * base.  end == 0 is mainline's "no upper bound", which here means the last
- * slot; a bounded end (drm_gem.c:1051 allocates exactly new_handle) is
- * honoured as the exclusive limit mainline spells it.
+ * idr_alloc(): first unreserved slot at or above `start`, clamped to this
+ * idr's base.  end == 0 is mainline's "no upper bound", which here means the
+ * last slot; a bounded end (drm_gem.c:1051 allocates exactly new_handle) is
+ * honoured as the exclusive limit mainline spells it.  The slot is reserved
+ * whether or not `ptr` is NULL -- mainline's contract too, and drm leans on
+ * the NULL half of it (drm_gem.c:499, connector ids).
  */
 int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
 {
@@ -46,8 +54,9 @@ int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
 		last = idr->base + DCL_IDR_SLOTS;
 
 	for (; id < last; id++) {
-		if (!idr->slots[id - idr->base]) {
+		if (!idr->used[id - idr->base]) {
 			idr->slots[id - idr->base] = ptr;
+			idr->used[id - idr->base] = 1;
 			return (int)id;
 		}
 	}
@@ -60,8 +69,11 @@ void *idr_remove(struct idr *idr, unsigned long id)
 
 	if (id < idr->base || id >= idr->base + DCL_IDR_SLOTS)
 		return NULL;
+	if (!idr->used[id - idr->base])
+		return NULL;
 	old = idr->slots[id - idr->base];
 	idr->slots[id - idr->base] = NULL;
+	idr->used[id - idr->base] = 0;
 	return old;
 }
 
@@ -78,9 +90,9 @@ void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
 
 	if (id < idr->base || id >= idr->base + DCL_IDR_SLOTS)
 		return NULL;
-	old = idr->slots[id - idr->base];
-	if (!old)
+	if (!idr->used[id - idr->base])
 		return NULL;
+	old = idr->slots[id - idr->base];
 	idr->slots[id - idr->base] = ptr;
 	return old;
 }
@@ -123,6 +135,8 @@ void idr_destroy(struct idr *idr)
 
 	/* Stored pointers are the callers' (drm frees objects itself); this
 	 * only drops the table, as mainline's does. */
-	for (i = 0; i < DCL_IDR_SLOTS; i++)
+	for (i = 0; i < DCL_IDR_SLOTS; i++) {
 		idr->slots[i] = NULL;
+		idr->used[i] = 0;
+	}
 }

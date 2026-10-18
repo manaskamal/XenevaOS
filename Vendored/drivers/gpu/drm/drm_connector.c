@@ -3352,7 +3352,7 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 
 	if ((out_resp->count_encoders >= encoders_count) && encoders_count) {
 		copied = 0;
-		encoder_ptr = (uint32_t __user *)(unsigned long)(out_resp->encoders_ptr);
+		encoder_ptr = (uint32_t __user *)(uintptr_t)(out_resp->encoders_ptr);
 
 		drm_connector_for_each_possible_encoder(connector, encoder) {
 			if (put_user(encoder->base.id, encoder_ptr + copied)) {
@@ -3403,7 +3403,7 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	 */
 	if ((out_resp->count_modes >= mode_count) && mode_count) {
 		copied = 0;
-		mode_ptr = (struct drm_mode_modeinfo __user *)(unsigned long)out_resp->modes_ptr;
+		mode_ptr = (struct drm_mode_modeinfo __user *)(uintptr_t)out_resp->modes_ptr;
 		list_for_each_entry(mode, &connector->modes, head) {
 			if (!mode->expose_to_userspace)
 				continue;

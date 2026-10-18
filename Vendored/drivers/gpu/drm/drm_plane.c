@@ -892,7 +892,7 @@ int drm_mode_getplane(struct drm_device *dev, void *data,
 	 */
 	if (plane->format_count &&
 	    (plane_resp->count_format_types >= plane->format_count)) {
-		format_ptr = (uint32_t __user *)(unsigned long)plane_resp->format_type_ptr;
+		format_ptr = (uint32_t __user *)(uintptr_t)plane_resp->format_type_ptr;
 		if (copy_to_user(format_ptr,
 				 plane->format_types,
 				 sizeof(uint32_t) * plane->format_count)) {

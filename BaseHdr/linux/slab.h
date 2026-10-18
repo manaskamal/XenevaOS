@@ -70,13 +70,31 @@ struct kmem_cache;
  * GFP flags are advisory in DCL (GFP_KERNEL is 0) -- so the 2-argument form
  * mainline sources write drops the flags.
  *
+ * Zero-size requests are the one disagreement vendored code trips over:
+ * mainline's kmalloc(0) -- and kzalloc(0), kcalloc(0, ...) -- answer with
+ * ZERO_SIZE_PTR, which is non-NULL, and callers are written for that.
+ * drm_atomic_commit_init() is the example that found this:
+ *
+ *     state->colorops = kzalloc_objs(*state->colorops, num_colorop);
+ *     if (!state->colorops)
+ *             goto fail;
+ *
+ * and a driver with no color pipelines reports num_colorop == 0 -- vkms
+ * does -- so a NULL here becomes -ENOMEM on every atomic commit before the
+ * ioctl has looked at anything the caller sent.  The native allocators
+ * refuse zero (Mm/kmalloc.c: both return NULL for an empty request, kmalloc
+ * on `!size`, kcalloc on either factor), so the request is rounded up to
+ * one byte rather than special-cased: the pointer stays real, zeroed where
+ * the name promises it, and freeable -- none of which ZERO_SIZE_PTR would
+ * be here, since kfree() expects a TLSF block.
+ *
  * The helper below is expanded at a point where the macro does not exist
  * yet, so its body resolves to the native one-argument kmalloc() from
  * Mm/kmalloc.h; no recursion, and native DCL files that include
  * Mm/kmalloc.h directly keep calling the plain function.
  */
 static inline void* dcl_kmalloc(unsigned int size) {
-	return kmalloc(size);
+	return kmalloc(size ? size : 1);
 }
 
 #define kmalloc(size, flags) dcl_kmalloc(size)
@@ -97,8 +115,15 @@ static inline void* dcl_kmalloc(unsigned int size) {
  * Like dcl_kmalloc, dcl_kcalloc is defined before the macro exists so that
  * its body resolves to the native two-argument function rather than to
  * itself; the comment at the top of this header is the same reasoning.
+ *
+ * An empty product (either factor 0) takes the same one-byte route the
+ * kmalloc block above explains: mainline answers kcalloc(0, ...) with
+ * ZERO_SIZE_PTR, the native allocator answers NULL, and vendored callers
+ * check for the former.
  */
 static inline void* dcl_kcalloc(size_t n, size_t size) {
+	if (!n || !size)
+		return kcalloc(1, 1);
 	return kcalloc(n, size);
 }
 
@@ -196,9 +221,13 @@ static inline size_t kmalloc_size_roundup(size_t size)
  * The flags argument is accepted and dropped, exactly as kmalloc() drops it:
  * GFP_KERNEL is 0 in DCL and __GFP_ZERO is advisory here, because zeroing is
  * unconditional rather than opt-in.
+ *
+ * size 0 gets one byte rather than the native NULL, for the contract reason
+ * the kmalloc block above records -- kzalloc_objs() over a zero count is how
+ * that path was found, and it arrives here.
  */
 static inline void* dcl_kzalloc(unsigned int size) {
-	return kcalloc(1, size);
+	return kcalloc(1, size ? size : 1);
 }
 
 #define kzalloc(size, flags) dcl_kzalloc(size)

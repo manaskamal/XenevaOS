@@ -500,8 +500,8 @@ int drm_mode_obj_get_properties_ioctl(struct drm_device *dev, void *data,
 
 	ret = drm_mode_object_get_properties(obj, file_priv->atomic,
 			file_priv->plane_color_pipeline,
-			(uint32_t __user *)(unsigned long)(arg->props_ptr),
-			(uint64_t __user *)(unsigned long)(arg->prop_values_ptr),
+			(uint32_t __user *)(uintptr_t)(arg->props_ptr),
+			(uint64_t __user *)(uintptr_t)(arg->prop_values_ptr),
 			&arg->count_props);
 
 out_unref:

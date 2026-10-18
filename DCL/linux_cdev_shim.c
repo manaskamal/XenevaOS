@@ -41,6 +41,11 @@
  * that first needed it. */
 extern void virtio_poll_vqs(void);
 
+/* DRM ioctls whose answer DCL finishes after mainline's handler returned --
+ * dcl_drm_ioctl_post() in drm_stubs.c, where the MAP_DUMB address is the one
+ * case.  A no-op for every other ioctl, and for every other DCL node. */
+extern long dcl_drm_ioctl_post(struct file* file, unsigned int cmd, void* arg);
+
 /*
  * DCL char-device layer: register_chrdev/cdev/class/device for mainline
  * .ko modules, bridged into XenevaOS devfs.
@@ -493,11 +498,16 @@ static int DclVportClose(AuVFSNode* node, AuVFSNode* file) {
  * is widened the same way, and the typedef below has to spell the callee's
  * width, or the argument register would be narrowed at the ABI boundary
  * even though both sides meant 64.
+ *
+ * A successful ioctl then passes through dcl_drm_ioctl_post() before the
+ * result crosses back: DCL owns the tail of a few DRM answers (the MAP_DUMB
+ * address today), and drm_stubs.c's comment on that hook says why.
  */
 static int DclVportIoctl(AuVFSNode* node, int code, void* arg) {
 	typedef long (*ioctl_fn)(struct file*, unsigned int, uintptr_t);
 	struct dcl_dev_slot* s = dcl_slot_by_node(node);
 	ioctl_fn fn;
+	int ret;
 
 	if (!s)
 		return -19; /* -ENODEV */
@@ -512,7 +522,10 @@ static int DclVportIoctl(AuVFSNode* node, int code, void* arg) {
 	fn = s->file.f_op ? (ioctl_fn)s->file.f_op->unlocked_ioctl : 0;
 	if (!fn)
 		return -25; /* -ENOTTY */
-	return (int)fn(&s->file, (unsigned int)code, (uintptr_t)arg);
+	ret = (int)fn(&s->file, (unsigned int)code, (uintptr_t)arg);
+	if (ret == 0)
+		ret = (int)dcl_drm_ioctl_post(&s->file, (unsigned int)code, arg);
+	return ret;
 }
 
 /*
