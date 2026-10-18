@@ -41,13 +41,15 @@
 #define BT_PASSKEY   0x4207
 #define BT_CONFIRM   0x4208
 #define BT_AUDIO     0x4209
+#define BT_A2DP      0x420A
+#define BT_FORGET    0x420B
 
 #define BT_OK            0
 #define BT_ERR           1
 #define BT_NEED_CONFIRM  2
 #define BT_NO_AUDIO      3
 
-#define BT_MAX_SCAN  16
+#define BT_MAX_SCAN  64
 /* Classic inquiry result. LE address types remain 0 (public) and 1 (random). */
 #define BT_ADDR_BREDR 2
 #define BT_NAME_LEN  32

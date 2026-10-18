@@ -142,10 +142,17 @@ typedef unsigned long long uintmax_t;
 #define UINT_FAST64_MAX UINT64_MAX
 
 /* 7.18.2.4  Limits of integer types capable of holding
-object pointers */
+object pointers. These follow the typedefs above: 64-bit on
+AArch64 and x86_64, 32-bit everywhere else. */
+#if defined(ARCH_ARM64) || defined(__aarch64__) || defined(ARCH_X64) || defined(__x86_64__)
+#define INTPTR_MIN	INT64_MIN
+#define INTPTR_MAX	INT64_MAX
+#define UINTPTR_MAX	UINT64_MAX
+#else
 #define INTPTR_MIN	INT32_MIN
 #define INTPTR_MAX	INT32_MAX
-#define UINTPTR_MAX UINT32_MAX
+#define UINTPTR_MAX	UINT32_MAX
+#endif
 
 /* 7.18.2.5  Limits of greatest-width integer types */
 #define INTMAX_MIN	INT64_MIN
@@ -153,13 +160,18 @@ object pointers */
 #define UINTMAX_MAX UINT64_MAX
 
 /* 7.18.3  Limits of other integer types */
-#define PTRDIFF_MIN INT32_MIN
-#define PTRDIFF_MAX INT32_MAX
+#if defined(ARCH_ARM64) || defined(__aarch64__) || defined(ARCH_X64) || defined(__x86_64__)
+#define PTRDIFF_MIN	INT64_MIN
+#define PTRDIFF_MAX	INT64_MAX
+#define SIZE_MAX	UINT64_MAX
+#else
+#define PTRDIFF_MIN	INT32_MIN
+#define PTRDIFF_MAX	INT32_MAX
+#define SIZE_MAX	UINT32_MAX
+#endif
 
 #define SIG_ATOMIC_MIN INT32_MIN
 #define SIG_ATOMIC_MAX INT32_MAX
-
-#define SIZE_MAX 0xFFFFF //UINT32_MAX
 
 #ifndef WCHAR_MIN /* also in wchar.h */
 #define WCHAR_MIN 0

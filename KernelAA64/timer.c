@@ -31,6 +31,7 @@
 
 #include <timer.h>
 #include <Hal/AA64/aa64lowlevel.h>
+#include <Board/board.h>
 #include <string.h>
 #include <aucon.h>
 #include <Drivers/uart.h>
@@ -79,6 +80,16 @@ void AuroraTimerInitialize() {
 	wallClock.shift = 32;
 	wallClock.mult =
 		((uint64_t)1000000000ULL << wallClock.shift) / (AA64CPUGetFreqencyHz() * 10000);
+
+	/* Goldfish RTC (QEMU virt, 0x09010000) counts nanoseconds since the
+	 * Unix epoch. Certificate checks read this clock through time(). */
+	{
+		uint64_t raw = AuAA64BoardGetBootEpoch();
+		if (raw > 1000000000000ULL)
+			AuSetWalltime((int64_t)(raw / 1000000000ULL), (int64_t)(raw % 1000000000ULL));
+		else if (raw > 1500000000ULL)
+			AuSetWalltime((int64_t)raw, 0);
+	}
 }
 
 /**

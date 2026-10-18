@@ -2,7 +2,7 @@
 
 TOOLCHAIN ?= gcc
 TARGET = curl.exe
-INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr
+INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Ports/mbedtls/port
 OBJDIR = obj
 CPP_OBJS = $(OBJDIR)/main.o
 S_OBJS = $(OBJDIR)/crt0_arm64.o
@@ -30,7 +30,7 @@ all: $(TARGET)
 
 ifeq ($(TOOLCHAIN), llvm)
 $(TARGET): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) ../../Libs/XEClib/libXEClib.a -o $@
+	$(LD) $(LDFLAGS) $(OBJS) ../../Ports/mbedtls/libmbedtls.a ../../Libs/XEClib/libXEClib.a -o $@
 endif
 
 $(OBJDIR)/main.o: main.cpp

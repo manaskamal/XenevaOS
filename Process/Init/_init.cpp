@@ -375,6 +375,15 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
 	}
+	proc = _KeCreateProcess(0, "ntpd");
+	if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) != -1) {
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+	} else {
+		_KePrint("[init]: ntpd not started\r\n");
+	}
 	int con = _KeOpenFile("/dev/console", FILE_OPEN_READ_ONLY);
 	if (con == -1) {
 		_KePrint("[init]: failed to open /dev/console \r\n");
@@ -395,6 +404,15 @@ extern "C" void main(int argc, char* argv[]) {
 		_KeCredAddSGroup(proc, ggid_misc_world);
 		_KeCredAddSGroup(proc, GROUP_NETWORK);
 		_KeProcessSleep(500);
+	}
+	proc = _KeCreateProcess(0, "ntpd");
+	if (_KeProcessLoadExec(proc, "/ntpd.exe", 0, NULL) != -1) {
+		_KeSetUID(proc, UAC_DEAMONS);
+		_KeSetGID(proc, UAC_DEAMONS);
+		_KeCredAddSGroup(proc, ggid_misc_world);
+		_KeCredAddSGroup(proc, GROUP_NETWORK);
+	} else {
+		_KePrint("[init]: ntpd not started\r\n");
 	}
 
 	/** actually, design should be like that, each process after

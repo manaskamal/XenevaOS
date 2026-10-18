@@ -151,7 +151,9 @@ int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 			}
 		}
 
-		next = strchr(next + 1, '/');
+		/* scan from next, not next+1; path "/" leaves next at the NUL
+		 * and next+1 would read past the string literal */
+		next = strchr(next, '/');
 		if (next)
 			next++;
 	}
@@ -236,19 +238,27 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 					node_to_ret = node_;
 			}
 		}
-		/* TEMP-BT-TEST (revert before commit): is bt0 visible to opens? */
-		if (strcmp(pathname, "bt0") == 0)
-			UARTDebugOut("[bt-test]: open bt0 %s\r\n", node_to_ret ? "FOUND" : "MISS");
-
-		next = strchr(next + 1, '/');
+		/* scan from next, not next+1; a trailing-NUL next (path "/")
+		 * would make next+1 read past the caller's string */
+		next = strchr(next, '/');
 		if (next)
 			next++;
 	}
 
 	if (node_to_ret)
 		return node_to_ret;
-	else
-		return NULL;
+
+	UARTDebugOut(
+		"[devfs]: open failed for '%s', container entries=%d\r\n", path, entries->childs->pointer);
+	for (int j = 0; j < (int)entries->childs->pointer; j++) {
+		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, j);
+		if (!node_) {
+			UARTDebugOut("[devfs]:   [%d] <null entry>\r\n", j);
+			continue;
+		}
+		UARTDebugOut("[devfs]:   [%d] '%s' flags=%x\r\n", j, node_->filename, node_->flags);
+	}
+	return NULL;
 }
 
 /*

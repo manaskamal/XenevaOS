@@ -50,28 +50,6 @@
 #define VIRTQ_DESC_F_NEXT  1
 #define VIRTQ_DESC_F_WRITE 2
 
-/** private definitions */
-volatile uint8_t* notifyBase;
-static uint32_t notifyOffMultiplier;
-static int controlq_sz;
-static int eventq_sz;
-static int txq_sz;
-static VirtioQueue* controlq;
-static VirtioQueue* eventq;
-static VirtioQueue* txq;
-static void* command_phys;
-static void* resp_phys;
-static void* pcm_buffer;
-static int n_streams;
-static int controlq_lst_idx;
-static int eventq_lst_idx;
-static int txq_lst_idx;
-static bool _response_ok;
-static bool _force_hardware;
-static bool _output_running;
-static bool _input_running;
-static VirtioCommonCfg* _config;
-
 struct virtio_snd_config {
 	uint32_t jacks;
 	uint32_t streams;
@@ -249,766 +227,315 @@ typedef struct {
 	uint32_t latency_bytes;
 }virtio_snd_pcm_status;
 
-#define VIRTIO_PCM_BUFFER_MAXSZ  0x1000   //page size
+#define VIRTIO_PCM_PERIOD 4096
+#define VIRTIO_PCM_BUFFER (VIRTIO_PCM_PERIOD * 2)
 
+static struct VirtioPCIDevice snd_dev;
+static struct VirtqDesc* ctrl_desc;
+static struct VirtqAvailHdr* ctrl_avail;
+static struct VirtqUsedHdr* ctrl_used;
+static uint16_t ctrl_qsz;
+static uint16_t ctrl_used_idx;
+static struct VirtqDesc* tx_desc;
+static struct VirtqAvailHdr* tx_avail;
+static struct VirtqUsedHdr* tx_used;
+static uint16_t tx_qsz;
+static uint16_t tx_used_idx;
+static void* cmd_virt;
+static uint64_t cmd_phys;
+static void* resp_virt;
+static uint64_t resp_phys;
+static void* pcm_virt;
+static uint64_t pcm_phys;
+static uint32_t output_stream;
+static bool dev_ready;
+static bool _output_running;
 
-void virtio_snd_reset(VirtioCommonCfg* common);
+static int queue_wait(struct VirtqUsedHdr* used, uint16_t qsz, uint16_t* last, uint32_t limit) {
+	uint32_t spins = 0;
+	while (used->idx == *last) {
+		dsb_ish();
+		if (++spins > limit) {
+			UARTDebugOut("[virtio-snd]: queue completion timeout \r\n");
+			return 1;
+		}
+	}
+	(*last)++;
+	(void)qsz;
+	return 0;
+}
+
+/* One control message: device-readable request, then a writable status. */
+static int snd_ctrl(uint32_t req_len, uint32_t resp_len) {
+	volatile virtio_snd_hdr* resp;
+	uint16_t slot;
+	if (!dev_ready || !ctrl_qsz)
+		return 1;
+	resp = (volatile virtio_snd_hdr*)resp_virt;
+	memset((void*)resp, 0, resp_len);
+	dsb_ish();
+
+	ctrl_desc[0].addr = cmd_phys;
+	ctrl_desc[0].len = req_len;
+	ctrl_desc[0].flags = VIRTQ_DESC_F_NEXT;
+	ctrl_desc[0].next = 1;
+	ctrl_desc[1].addr = resp_phys;
+	ctrl_desc[1].len = resp_len;
+	ctrl_desc[1].flags = VIRTQ_DESC_F_WRITE;
+	ctrl_desc[1].next = 0;
+
+	slot = (uint16_t)(ctrl_avail->idx % ctrl_qsz);
+	ctrl_avail->ring[slot] = 0;
+	dsb_ish();
+	ctrl_avail->idx = (uint16_t)(ctrl_avail->idx + 1);
+	dsb_ish();
+	AuVirtioPCINotifyQueue(&snd_dev, 0);
+	if (queue_wait(ctrl_used, ctrl_qsz, &ctrl_used_idx, 5000000))
+		return 1;
+	if (resp->code != VIRTIO_SND_S_OK) {
+		UARTDebugOut("[virtio-snd]: control status %x \r\n", resp->code);
+		return 1;
+	}
+	return 0;
+}
+
+/* TX chain is xfer header, PCM (device reads), status (device writes).
+ * Length is one period so QEMU's virtio-sound returns the buffer. */
+static int snd_tx(uint32_t len) {
+	virtio_snd_pcm_xfer* xfer;
+	virtio_snd_pcm_status* st;
+	uint16_t slot;
+	if (!dev_ready || !tx_qsz)
+		return 1;
+	xfer = (virtio_snd_pcm_xfer*)cmd_virt;
+	st = (virtio_snd_pcm_status*)resp_virt;
+	xfer->stream_id = output_stream;
+	memset(st, 0, sizeof(*st));
+	dsb_ish();
+
+	tx_desc[0].addr = cmd_phys;
+	tx_desc[0].len = sizeof(*xfer);
+	tx_desc[0].flags = VIRTQ_DESC_F_NEXT;
+	tx_desc[0].next = 1;
+	tx_desc[1].addr = pcm_phys;
+	tx_desc[1].len = len;
+	tx_desc[1].flags = VIRTQ_DESC_F_NEXT;
+	tx_desc[1].next = 2;
+	tx_desc[2].addr = resp_phys;
+	tx_desc[2].len = sizeof(*st);
+	tx_desc[2].flags = VIRTQ_DESC_F_WRITE;
+	tx_desc[2].next = 0;
+
+	slot = (uint16_t)(tx_avail->idx % tx_qsz);
+	tx_avail->ring[slot] = 0;
+	dsb_ish();
+	tx_avail->idx = (uint16_t)(tx_avail->idx + 1);
+	dsb_ish();
+	AuVirtioPCINotifyQueue(&snd_dev, 2);
+	/* QEMU returns the buffer only after the host has played one period. */
+	return queue_wait(tx_used, tx_qsz, &tx_used_idx, 200000000);
+}
+
+static int snd_pcm_set_params(void) {
+	virtio_snd_pcm_set_params* parm = (virtio_snd_pcm_set_params*)cmd_virt;
+	memset(parm, 0, sizeof(*parm));
+	parm->hdr.hdr.code = VIRTIO_SND_R_PCM_SET_PARAMS;
+	parm->hdr.stream_id = output_stream;
+	parm->buffer_bytes = VIRTIO_PCM_BUFFER;
+	parm->period_bytes = VIRTIO_PCM_PERIOD;
+	parm->features = 0;
+	parm->channels = 2;
+	parm->format = VIRTIO_SND_PCM_FMT_S16;
+	parm->rate = VIRTIO_SND_PCM_RATE_48000;
+	return snd_ctrl(sizeof(*parm), sizeof(virtio_snd_hdr));
+}
+
+static int snd_pcm_simple(uint32_t code) {
+	virtio_snd_pcm_hdr* pcm = (virtio_snd_pcm_hdr*)cmd_virt;
+	memset(pcm, 0, sizeof(*pcm));
+	pcm->hdr.code = code;
+	pcm->stream_id = output_stream;
+	return snd_ctrl(sizeof(*pcm), sizeof(virtio_snd_hdr));
+}
 
 /*
 * AuDriverUnload -- deattach the driver from
 * aurora system
 */
 AU_EXTERN AU_EXPORT int AuDriverUnload() {
-	virtio_snd_reset(_config);
+	if (snd_dev.common)
+		snd_dev.common->DeviceStatus = 0;
+	dev_ready = false;
 	return 0;
 }
 
-/**
- * @brief virtio_snd_reset -- reset the net device
- * @param common -- Pointer to virtio common config desc
- */
-static void virtio_snd_reset(VirtioCommonCfg* common) {
-	common->DeviceStatus = 0;
-	isb_flush();
-	dsb_ish();
-	UARTDebugOut("[virtio-snd]: virtio-snd device reset successfull \r\n");
-}
-
-/**
- * @brief virtio_snd_alloc_controlq -- allocate sound controlq
- * @param cfg -- pointer to virtio common config
- */
-static void virtio_snd_alloc_controlq(VirtioCommonCfg* cfg) {
-	cfg->QueueSelect = 0;
-	isb_flush();
-	dsb_ish();
-
-	int queueSz = cfg->QueueSize;
-	controlq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
-	memset((void*)queuePhys,0, 0x1000);
-	controlq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: controlq size : %d \r\n", queueSz);
-#endif
-	cfg->QueueDesc = queuePhys;
-	cfg->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	cfg->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
-	cfg->MSix = 0;
-	cfg->QueueMSixVector = 0;
-	cfg->QueueEnable = 1;
-	isb_flush();
-	dsb_ish();
-
-	cfg->DeviceStatus = 4;
-	isb_flush();
-	dsb_ish();
-
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: controlq initialized \r\n");
-#endif
-}
-
-/**
- * @brief virtio_snd_alloc_eventq -- allocate sound eventq
- * @param cfg -- pointer to virtio common config
- */
-static void virtio_snd_alloc_eventq(struct VirtioCommonCfg* cfg) {
-	cfg->QueueSelect = 1;
-	isb_flush();
-	dsb_ish();
-
-	int queueSz = cfg->QueueSize;
-	eventq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
-	memset((void*)queuePhys, 0, 0x1000);
-	eventq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
-
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: eventq size : %d \r\n", queueSz);
-#endif
-
-	cfg->QueueDesc = queuePhys;
-	cfg->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	cfg->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
-	cfg->MSix = 0;
-	cfg->QueueMSixVector = 0;
-	cfg->QueueEnable = 1;
-	isb_flush();
-	dsb_ish();
-
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: eventq initialized \r\n");
-#endif
-}
-
-
-/**
- * @brief virtio_snd_alloc_txq -- allocate sound txq
- * @param cfg -- pointer to virtio common config
- */
-static void virtio_snd_alloc_txq(VirtioCommonCfg* cfg) {
-	cfg->QueueSelect = 2;
-	isb_flush();
-	dsb_ish();
-
-	int queueSz = cfg->QueueSize;
-	txq_sz = queueSz;
-	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);//AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz)) / 0x1000);
-	memset((void*)queuePhys, 0, 0x1000);
-	txq = (struct VirtioQueue*)AuMapMMIO(queuePhys, 1);
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: txq size : %d \r\n", queueSz);
-#endif
-	cfg->QueueDesc = queuePhys;
-	cfg->QueueAvail = (queuePhys)+OFFSETOF(struct VirtioQueue, available);
-	cfg->QueueUsed = (queuePhys)+OFFSETOF(struct VirtioQueue, used);
-	cfg->MSix = 0;
-	cfg->QueueMSixVector = 0;
-	cfg->QueueEnable = 1;
-	isb_flush();
-	dsb_ish();
-
-	cfg->DeviceStatus = 4;
-	isb_flush();
-	dsb_ish();
-
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: txq initialized \r\n");
-#endif
-}
-
-
-/**
- * @brief virtio_snd_feature_negotiate -- driver feature negotiation
- * for virtio snd device
- * @param common -- Pointer to virtio common config descriptor
- */
-static void virtio_snd_feature_negotiate(struct VirtioCommonCfg* common) {
-	common->DevFeatureSelect = 0;
-	isb_flush();
-	dsb_ish();
-	uint32_t features_lo = common->DevFeature;
-	common->DevFeatureSelect = 1;
-	isb_flush();
-	dsb_ish();
-	uint32_t feature_hi = common->DevFeature;
-	uint64_t features = ((uint64_t)feature_hi << 32) | features_lo;
-
-	if (!(features & VIRTIO_F_VERSION_1))
-		AuTextOut("[virtio-snd]: warning: device is not modern VirtIO! \r\n");
-
-	uint64_t guestfeatures = 0;
-	guestfeatures |= VIRTIO_F_VERSION_1;
-	guestfeatures &= features;
-
-	common->GuestFeatureSelect = 0;
-	common->GuestFeature = guestfeatures & UINT32_MAX;
-	isb_flush();
-	dsb_ish();
-
-	common->GuestFeatureSelect = 1;
-	common->GuestFeature = (guestfeatures >> 32) & UINT32_MAX;
-	isb_flush();
-	dsb_ish();
-}
-
-/**
- * @brief snd_notify_queue -- notify host that new command
- * is present
- * @param queueIdx -- queue number, zero for controlq and
- * one for cursorq
- */
-void snd_notify_queue(VirtioCommonCfg* cfg, uint16_t queueIdx) {
-	cfg->QueueSelect = queueIdx;
-	isb_flush();
-	dsb_ish();
-	uint16_t notify_off = cfg->QueueNotifyOff;
-	volatile uint16_t* notifyAddr = (volatile uint16_t*)((uint64_t)notifyBase + notify_off * notifyOffMultiplier);
-	*notifyAddr = queueIdx;
-	isb_flush();
-	dsb_ish();
-}
-
-/**
- * @brief snd_poll_resp_u32 -- poll a controlq response word directly
- * instead of waiting on the virtio SPI: on this board/config the virtio
- * SPIs never reach the CPU (same finding as the virtio-gpu driver, see
- * gpu_reset_device), so every _response_ok wait burns its full spin
- * budget and fails. The device itself completes promptly, so invalidate
- * + poll the response buffer. Returns 0 once *word is nonzero, 1 on
- * timeout. Caller must zero the response buffer first.
- */
-static int snd_poll_resp_u32(volatile uint32_t* word) {
-	uint32_t spin = 2000000;
-	dc_ivac((uint64_t)word);
-	while (*word == 0 && --spin)
-		dc_ivac((uint64_t)word);
-	return (*word == 0) ? 1 : 0;
-}
-
-/**
- * @brief snd_query_pcm_info -- query pcm information
- * like number of jacks, chmaps, etc
- * @param cfg -- pointer to virtio common config
- */
-virtio_snd_pcm_info* snd_query_pcm_info(VirtioCommonCfg* cfg) {
-	uint32_t num_streams = n_streams;
-	int index = controlq->available.index % controlq_sz;
-
-	virtio_snd_query_info* req = (virtio_snd_query_info*)command_phys;
-	req->hdr.code = VIRTIO_SND_R_PCM_INFO;
-	req->start_id = 0;
-	req->count = num_streams;
-	req->size = sizeof(virtio_snd_pcm_info);
-	aa64_data_cache_clean_range(command_phys, sizeof(virtio_snd_query_info));
-	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
-	memset(resp, 0, sizeof(virtio_snd_hdr) + sizeof(virtio_snd_pcm_info) * num_streams);
-
-	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
-	controlq->buffers[index].Length = sizeof(virtio_snd_query_info);
-	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = (index + 1) % controlq_sz;
-
-
-	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_hdr) +  sizeof(virtio_snd_pcm_info) *num_streams;
-	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	controlq->available.ring[index % controlq_sz] = index;
-	isb_flush();
-	dsb_ish();
-
-	controlq->available.index++;
-	isb_flush();
-	dsb_ish();
-
-	snd_notify_queue(cfg, 0);
-
-	if (snd_poll_resp_u32(&resp->code))
-		return NULL;
-	if (resp->code != VIRTIO_SND_S_OK) {
-		UARTDebugOut("[virtio-snd]: pcm info query returned : %x \r\n", resp->code);
-		return NULL;
-	}
-	return (virtio_snd_pcm_info*)((uint64_t)resp_phys + sizeof(virtio_snd_hdr));
-}
-
-/**
- * @brief snd_send_pcm -- send pcm data to virtio-snd codec
- * @param cfg -- pointer to virtio common configuration
- * @param pcm_data -- pointer to pcm data
- * @param len -- length of pcm data
- */
-static void snd_send_pcm(VirtioCommonCfg* cfg, void* pcm_data, uint32_t len) {
-	int index = txq->available.index % txq_sz;
-	virtio_snd_pcm_xfer* xfer = (virtio_snd_pcm_xfer*)command_phys;
-	xfer->stream_id = 0; //0 for audio output
-	aa64_data_cache_clean_range(command_phys, 0x1000);
-	
-#ifdef DEBUG
-	UARTDebugOut("txq index : %d \r\n", index);
-#endif
-	txq->buffers[index].Addr = V2P((uint64_t)command_phys);
-	txq->buffers[index].Length = sizeof(virtio_snd_pcm_xfer);
-	txq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	txq->buffers[index].Next = (index + 1) % txq_sz;
-
-	txq->buffers[(index + 1) % txq_sz].Addr = V2P((uint64_t)pcm_data);
-	txq->buffers[(index + 1) % txq_sz].Length = len;
-	txq->buffers[(index + 1) % txq_sz].Flags = VIRTQ_DESC_F_NEXT;
-	txq->buffers[(index + 1) % txq_sz].Next = (index + 2) % txq_sz;
-
-	txq->buffers[(index + 2) % txq_sz].Addr = V2P((uint64_t)resp_phys);
-	txq->buffers[(index + 2) % txq_sz].Length = sizeof(virtio_snd_pcm_status);
-	txq->buffers[(index + 2) % txq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	uint16_t ringSlot = txq->available.index % txq_sz;
-	txq->available.ring[ringSlot] = index;
-	isb_flush();
-	dsb_ish();
-	
-	txq->available.index++;
-	//txq->available.index %= txq_sz;
-	isb_flush();
-	dsb_ish();
-
-	snd_notify_queue(cfg, 2);
-
-	while (txq->used.index == txq_lst_idx)
-		dsb_ish();
-
-
-	while (txq->used.index != txq_lst_idx) {
-		uint16_t idx = txq_lst_idx & (txq_sz - 1);
-		uint32_t desc_id = txq->used.ring[idx].index;
-		txq_lst_idx++;
-	}
-
-	/*while (1) {
-		if (_response_ok == true) {
-			_response_ok = false;
-			break;
-		}
-	}*/
-
-	virtio_snd_pcm_status* stat = (virtio_snd_pcm_status*)resp_phys;
-	if (stat->status != VIRTIO_SND_S_OK)
-		UARTDebugOut("[virtio-snd]: output xfer returned : %x , latency bytes : %d \r\n", stat->status,
-			stat->latency_bytes);
-}
-
-/**
- * snd_pcm_set_params -- set parameter for output stream
- * @param cfg -- Pointer to common config
- */
-static int snd_pcm_set_params(VirtioCommonCfg* cfg) {
-	int val = 1;
-
-	int index = controlq->available.index % controlq_sz;
-
-	virtio_snd_pcm_set_params* parm = (virtio_snd_pcm_set_params*)command_phys;
-	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
-
-	parm->hdr.hdr.code = VIRTIO_SND_R_PCM_SET_PARAMS;
-	parm->hdr.stream_id = 0;
-	parm->features = 0;
-	parm->buffer_bytes = 8192;
-	parm->period_bytes = 4096;
-	parm->channels = 2;
-	parm->format = VIRTIO_SND_PCM_FMT_S16;
-	parm->rate = VIRTIO_SND_PCM_RATE_48000;
-	aa64_data_cache_clean_range(command_phys, sizeof(virtio_snd_pcm_set_params));
-
-	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
-	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_set_params);
-	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = (index + 1) % controlq_sz;
-
-
-	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_pcm_set_params);
-	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	controlq->available.ring[index % controlq_sz] = index;
-	isb_flush();
-	dsb_ish();
-
-	controlq->available.index++;
-	isb_flush();
-	dsb_ish();
-
-	memset(resp, 0, sizeof(virtio_snd_hdr));
-
-	snd_notify_queue(cfg, 0);
-
-	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
-		val = 0;
-	else
-		UARTDebugOut("[virtio-snd]: set params returned : %x \r\n", resp->code);
-	return val;
-}
-
-
-/**
- * snd_pcm_prepare_output -- prepare output stream
- * @param cfg -- Pointer to common config
- */
-static int snd_pcm_prepare_output(VirtioCommonCfg* cfg) {
-	int val = 1;
-	int index = controlq->available.index % controlq_sz;
-
-	virtio_snd_pcm_hdr* pcm = (virtio_snd_pcm_hdr*)command_phys;
-	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
-
-	pcm->hdr.code = VIRTIO_SND_R_PCM_PREPARE;
-	pcm->stream_id = 0;
-
-	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
-	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_hdr);
-	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = (index + 1) % controlq_sz;
-
-
-	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_hdr);
-	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	controlq->available.ring[index % controlq_sz] = index;
-	isb_flush();
-	dsb_ish();
-
-	controlq->available.index++;
-	isb_flush();
-	dsb_ish();
-
-	memset(resp, 0, sizeof(virtio_snd_hdr));
-
-	snd_notify_queue(cfg, 0);
-
-	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
-		val = 0;
-	else
-		UARTDebugOut("[virtio-snd]: prepare output returned : %x \r\n", resp->code);
-
-	return val;
-}
-
-/**
- * snd_pcm_output_start -- start output stream
- * @param cfg -- Pointer to common config
- */
-static int snd_pcm_output_start(VirtioCommonCfg* cfg) {
-	int val = 1;
-	int index = controlq->available.index % controlq_sz;
-
-	virtio_snd_pcm_hdr* pcm = (virtio_snd_pcm_hdr*)command_phys;
-	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
-
-	pcm->hdr.code = VIRTIO_SND_R_PCM_START;
-	pcm->stream_id = 0;
-	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
-	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_hdr);
-	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = (index + 1) % controlq_sz;
-
-
-	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_hdr);
-	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	controlq->available.ring[index % controlq_sz] = index;
-	isb_flush();
-	dsb_ish();
-
-	controlq->available.index++;
-	isb_flush();
-	dsb_ish();
-
-	memset(resp, 0, sizeof(virtio_snd_hdr));
-
-	snd_notify_queue(cfg, 0);
-
-	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
-		val = 0;
-	else
-		UARTDebugOut("[virtio-snd]: control request returned : %x \r\n", resp->code);
-	return val;
-}
-
-
-/**
- * snd_pcm_output_stop -- stop output stream
- * @param cfg -- Pointer to common config
- */
-static int snd_pcm_output_stop(VirtioCommonCfg* cfg) {
-	int val = 1;
-	int index = controlq->available.index % controlq_sz;
-
-	virtio_snd_pcm_hdr* pcm = (virtio_snd_pcm_hdr*)command_phys;
-	virtio_snd_hdr* resp = (virtio_snd_hdr*)resp_phys;
-
-	pcm->hdr.code = VIRTIO_SND_R_PCM_STOP;
-	pcm->stream_id = 0;
-
-	controlq->buffers[index].Addr = (uint64_t)V2P((uint64_t)command_phys);
-	controlq->buffers[index].Length = sizeof(virtio_snd_pcm_hdr);
-	controlq->buffers[index].Flags = VIRTQ_DESC_F_NEXT;
-	controlq->buffers[index].Next = (index + 1) % controlq_sz;
-
-
-	controlq->buffers[(index + 1) % controlq_sz].Addr = (uint64_t)V2P((uint64_t)resp_phys);
-	controlq->buffers[(index + 1) % controlq_sz].Length = sizeof(virtio_snd_hdr);
-	controlq->buffers[(index + 1) % controlq_sz].Flags = VIRTQ_DESC_F_WRITE;
-
-	controlq->available.ring[index % controlq_sz] = index;
-	isb_flush();
-	dsb_ish();
-
-	controlq->available.index++;
-	isb_flush();
-	dsb_ish();
-
-	memset(resp, 0, sizeof(virtio_snd_hdr));
-
-	snd_notify_queue(cfg, 0);
-
-	if (snd_poll_resp_u32(&resp->code) == 0 && resp->code == VIRTIO_SND_S_OK)
-		val = 0;
-	else
-		UARTDebugOut("[virtio-snd]: control request returned : %x \r\n", resp->code);
-	return val;
-}
-
-
-/**
- * @brief virtio_snd_interrupt -- virtio-snd interrupt
- * handler
- */
-void virtio_snd_interrupt(int spi_id) {
-	/* Reap completions only. Never bump available.index here: that would
-	 * re-offer a stale descriptor to the device. Controlq completions are
-	 * polled directly (virtio SPIs don't reach the CPU on this board). */
-	uint16_t them = controlq->used.index;
-
-	for (; controlq_lst_idx < them; controlq_lst_idx++)
-		isb_flush();
-
-	virtio_snd_hdr* hdr = (virtio_snd_hdr*)resp_phys;
-	if (hdr->code == VIRTIO_SND_S_OK) {
-		_response_ok = true;
-	}
-}
-
-/**
- * @brief virtio_snd_write -- sound write pcm data to card
- * @param buffer -- buffer containing pcm data
- * @param len -- len of the pcm data
- */
 int virtio_snd_write(uint8_t* buffer, size_t len) {
-	if (len > VIRTIO_PCM_BUFFER_MAXSZ) {
-		UARTDebugOut("[virtio-snd]: virtio_snd_write exceeds expected size \r\n");
-		if (_force_hardware)
-			return  1;
-		else
-			len = VIRTIO_PCM_BUFFER_MAXSZ;
-	}
-
-	/* copy the pcm buffer */
-	memcpy(pcm_buffer, buffer, len);
-	snd_send_pcm(_config, pcm_buffer, len);
-	return 0;
-}
-
-/**
- * @brief virtio_snd_read -- read pcm data from sound
- * @param buffer -- buffer where to copy input pcm data
- * @param len -- length to copy
- */
-int virtio_snd_read(uint8_t* buffer, size_t len) {
-	/** input capability not implemented yet */
-	return 0;
-}
-
-/**
- * @brief virtio_snd_stop -- stop output stream
- */
-int virtio_snd_output_stop() {
-	if (!_config) {
-		UARTDebugOut("[virtio-snd]: fatel error while stopping output stream, no virtio common config \r\n");
+	if (!dev_ready || !buffer)
 		return 1;
-	}
-	
-	if (_output_running == false)
-		return 0;
+	if (len > VIRTIO_PCM_PERIOD)
+		len = VIRTIO_PCM_PERIOD;
+	memset(pcm_virt, 0, VIRTIO_PCM_PERIOD);
+	memcpy(pcm_virt, buffer, len);
+	return snd_tx(VIRTIO_PCM_PERIOD);
+}
 
-	// start pcm output stream 
-	memset(command_phys, 0, 0x1000);
-	if (snd_pcm_output_stop(_config)) {
+int virtio_snd_read(uint8_t* buffer, size_t len) {
+	(void)buffer;
+	(void)len;
+	return 0;
+}
+
+int virtio_snd_output_stop() {
+	if (!dev_ready)
+		return 1;
+	if (!_output_running)
+		return 0;
+	if (snd_pcm_simple(VIRTIO_SND_R_PCM_STOP)) {
 		UARTDebugOut("[virtio-snd]: failed to stop output stream \r\n");
 		return 1;
 	}
 	_output_running = false;
-	UARTDebugOut("[virtio-snd]: output stream stopped successfully \r\n");
 	return 0;
 }
 
-/**
- * @brief virtio_snd_output_start -- start output
- * stream
- */
 int virtio_snd_output_start() {
-	if (!_config) {
-		UARTDebugOut("[virtio-snd]: fatel error while starting output stream, no virtio common config \r\n");
+	if (!dev_ready)
 		return 1;
-	}
-
-	// check if already output is running 
 	if (_output_running)
 		return 0;
-
-	// start pcm output stream 
-	memset(command_phys, 0, 0x1000);
-	if (snd_pcm_output_start(_config)) {
+	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) ||
+	    snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
 		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
 		return 1;
 	}
-
-	UARTDebugOut("[virtio-snd]: output stream successfully \r\n");
+	_output_running = true;
 	return 0;
 }
 
-/**
- * @brief virtio_snd_set_vol -- set volume of output stream
- * @param vol -- volume in steps
- */
 int virtio_snd_set_vol(uint8_t vol) {
-	/* not implemented yet */
+	(void)vol;
+	return 0;
+}
+
+static int snd_alloc_page(uint64_t* phys, void** virt) {
+	*phys = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+	if (!*phys)
+		return 1;
+	*virt = AuMapMMIO(*phys, 1);
+	if (!*virt)
+		return 1;
+	memset(*virt, 0, PAGE_SIZE);
 	return 0;
 }
 
 /*
-* AuDriverMain -- Main entry for vmware svga driver
+* AuDriverMain -- virtio-sound entry
 */
 AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
+	struct VirtqDesc* d;
+	struct VirtqAvailHdr* a;
+	struct VirtqUsedHdr* u;
+	uint16_t q;
+	int i;
 	AuTextOut("[virtio-sound]: initializing virtio sound driver \r\n");
 	AuTextOut("bus : %d, dev : %d, func : %d \r\n", drv->bus, drv->dev, drv->func);
 	int bus = drv->bus;
 	int dev = drv->dev;
 	int func = drv->func;
-	_response_ok = false;
+	dev_ready = false;
 	_output_running = false;
-	_input_running = false;
+	output_stream = 0;
+	ctrl_used_idx = 0;
+	tx_used_idx = 0;
 
-	command_phys = (uint64_t*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
-	resp_phys = (void*)((uint64_t)command_phys + 2048);
-	memset(command_phys, 0, PAGE_SIZE);
-	controlq_lst_idx = 0;
-	eventq_lst_idx = 0;
-	txq_lst_idx = 0;
-	_force_hardware = false;
-
-	pcm_buffer = (void*)P2V((uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
-	memset(pcm_buffer, 0, 0x1000);
-
-	/** change the class/subclass value **/
-	UARTDebugOut("scanning class \r\n");
 	uint64_t device = AuPCIEScanClass(drv->classCode, drv->subClassCode, &bus, &dev, &func);
-	UARTDebugOut("Device addr : %x \r\n", device);
+	if (!device || device == 0xFFFFFFFFFFFFFFFFULL) {
+		UARTDebugOut("[virtio-snd]: pci scan failed \r\n");
+		return 1;
+	}
 	uint16_t command = AuPCIERead(device, PCI_COMMAND, bus, dev, func);
-	command |= 4;
-	command |= 2;
-	command |= 1;
+	command |= 7;
 	AuPCIEWrite(device, PCI_COMMAND, command, bus, dev, func);
 	isb_flush();
 	dsb_ish();
 
-	uint64_t barLo = AuPCIERead(device, PCI_BAR4, bus, dev, func);
-	uint64_t barHi = AuPCIERead(device, PCI_BAR5, bus, dev, func);
-	uint64_t bar = ((uint64_t)barHi << 32) | (barLo & ~0xFULL);
-	uint64_t finalAddr = (uint64_t)AuMapMMIO(bar, 1);
+	/* Modern virtio: FEATURES_OK before queues, separate desc/avail/used
+	 * rings. The old single-page VirtioQueue never committed VERSION_1,
+	 * so QEMU's virtio-sound (disable-legacy) never played a period and
+	 * PulseAudio stayed silent. */
+	if (!AuVirtioPCIInit(device, bus, dev, func, 0, &snd_dev)) {
+		UARTDebugOut("[virtio-snd]: feature negotiation failed \r\n");
+		return 1;
+	}
+	ctrl_qsz = AuVirtioPCISetupQueue(&snd_dev, 0, &ctrl_desc, &ctrl_avail, &ctrl_used,
+									 VIRTIO_MSI_NO_VECTOR);
+	q = AuVirtioPCISetupQueue(&snd_dev, 1, &d, &a, &u, VIRTIO_MSI_NO_VECTOR);
+	tx_qsz = AuVirtioPCISetupQueue(&snd_dev, 2, &tx_desc, &tx_avail, &tx_used,
+								   VIRTIO_MSI_NO_VECTOR);
+	q = AuVirtioPCISetupQueue(&snd_dev, 3, &d, &a, &u, VIRTIO_MSI_NO_VECTOR);
+	(void)q;
+	if (!ctrl_qsz || !tx_qsz || !snd_dev.deviceCfg) {
+		UARTDebugOut("[virtio-snd]: queue setup failed \r\n");
+		snd_dev.common->DeviceStatus |= VIRTIO_STATUS_FAILED;
+		return 1;
+	}
+	snd_dev.common->DeviceStatus |= VIRTIO_STATUS_DRIVER_OK;
+	isb_flush();
+	dsb_ish();
 
-	uint8_t cap_ptr = AuPCIERead(device, PCI_CAPABILITIES_PTR, bus, dev, func);
-	uint32_t devcfg_offset = 0;
-	while (cap_ptr != 0) {
-		volatile virtio_pci_cap* cap = (volatile virtio_pci_cap*)(device + cap_ptr);
-		if (cap->cap_vndr == VIRTIO_PCI_CAP_ID) {
-			if (cap->cfg_type == VIRTIO_PCI_CAP_DEVICE_CFG) {
-				UARTDebugOut("[virtio-snd]: device configuration offset : %x \n", cap->offset);
-				devcfg_offset = cap->offset;
-				//break;
-			}
-			if (cap->cfg_type == 2) { //NOTIFY_CFG
-				notifyBase = (volatile uint8_t*)AuMapMMIO(bar + cap->offset, 1);
-				struct virtio_notifier_cap* notify = (struct virtio_notifier_cap*)cap;
-				notifyOffMultiplier = notify->notifer_mult_base;
-				UARTDebugOut("[virtio-snd]: notify base : %x , off : %x\n", notifyBase, cap->offset);
-			}
+	if (snd_alloc_page(&cmd_phys, &cmd_virt) ||
+	    snd_alloc_page(&resp_phys, &resp_virt) ||
+	    snd_alloc_page(&pcm_phys, &pcm_virt)) {
+		UARTDebugOut("[virtio-snd]: buffer allocation failed \r\n");
+		return 1;
+	}
+	dev_ready = true;
+
+	volatile uint32_t* sc = (volatile uint32_t*)snd_dev.deviceCfg;
+	uint32_t n_streams = sc[1];
+	UARTDebugOut("[virtio-snd]: streams %d \r\n", n_streams);
+	if (n_streams == 0 || n_streams > 8) {
+		UARTDebugOut("[virtio-snd]: unexpected stream count \r\n");
+		dev_ready = false;
+		return 1;
+	}
+
+	virtio_snd_query_info* qinfo = (virtio_snd_query_info*)cmd_virt;
+	memset(qinfo, 0, sizeof(*qinfo));
+	qinfo->hdr.code = VIRTIO_SND_R_PCM_INFO;
+	qinfo->start_id = 0;
+	qinfo->count = n_streams;
+	qinfo->size = sizeof(virtio_snd_pcm_info);
+	if (snd_ctrl(sizeof(*qinfo),
+				 sizeof(virtio_snd_hdr) + sizeof(virtio_snd_pcm_info) * n_streams)) {
+		UARTDebugOut("[virtio-snd]: pcm info query failed \r\n");
+		dev_ready = false;
+		return 1;
+	}
+	volatile virtio_snd_pcm_info* pcm =
+		(volatile virtio_snd_pcm_info*)((uint8_t*)resp_virt + sizeof(virtio_snd_hdr));
+	output_stream = 0;
+	for (i = 0; i < (int)n_streams; i++) {
+		UARTDebugOut("[virtio-snd]: stream %d dir %d \r\n", i, pcm[i].directions);
+		if (pcm[i].directions & 1) {
+			output_stream = (uint32_t)i;
+			break;
 		}
-		cap_ptr = cap->cap_next;
 	}
 
-	VirtioCommonCfg* cfg = (VirtioCommonCfg*)finalAddr;
-	AuTextOut("[virtio-snd]: num queues : %d \r\n", cfg->Queues);
-
-	_config = cfg;
-
-	/** reset the device **/
-	virtio_snd_reset(cfg);
-
-	/* acknowledge */
-	cfg->DeviceStatus |= 0x01;
-	isb_flush();
-	dsb_ish();
-
-	/* driver status */
-	cfg->DeviceStatus |= 0x02;
-	isb_flush();
-	dsb_ish();
-
-	virtio_snd_feature_negotiate(cfg);
-
-	int spi_id = AuGICAllocateSPI();
-	UARTDebugOut("[virtio-snd]: spi id: %d \n", spi_id);
-	if (AuPCIEAllocMSI(device, spi_id, bus, dev, func)) {
-		UARTDebugOut("[virtio-snd]: msi/msi-x allocated \r\n");
-	}
-	GICEnableSPIIRQ(spi_id);
-	//GICSetTargetCPU(spiID);
-	isb_flush();
-	dsb_ish();
-
-	GICRegisterSPIHandler(&virtio_snd_interrupt, spi_id);
-
-	/** allocate controlq **/
-	virtio_snd_alloc_controlq(cfg);
-	/** allocate eventq **/
-	virtio_snd_alloc_eventq(cfg);
-	/** allocate txq **/
-	virtio_snd_alloc_txq(cfg);
-	/** TODO: input rxq for input **/
-
-	virtio_snd_config* snd = (virtio_snd_config*)(bar + devcfg_offset);
-	if (!snd)
-		return 1;
-
-#if DEBUG
-	UARTDebugOut("[virtio-snd]: num jacks : %d \r\n", snd->jacks);
-	UARTDebugOut("[virtio-snd]: total chmap: %d \r\n", snd->chmaps);
-	UARTDebugOut("[virtio-snd]: num controls : %d \r\n", snd->controls);
-	UARTDebugOut("[virtio-snd]: streams : %d \r\n", snd->streams);
-	UARTDebugOut("[virtio-snd]: pcm info size : %d \r\n", sizeof(virtio_snd_pcm_info));
-#endif
-	n_streams = snd->streams;
-
-	enable_irqs();
-
-	virtio_snd_pcm_info* pcm = snd_query_pcm_info(cfg);
-	if (!pcm) {
-		UARTDebugOut("[virtio-snd]: failed to query pcm info, returned NULL \r\n");
-		return 1;
-	}
-#if DEBUG
-	for (int i = 0; i < n_streams; i++) {
-		virtio_snd_pcm_info* s = &pcm[i];
-		UARTDebugOut("[virtio-snd]: pcm : %d status : %x\r\n",i, s->info_hdr.hda_fn_nid);
-		UARTDebugOut("[virtio-snd]: pcm : %d direction : %d \r\n", i, s->directions);
-		UARTDebugOut("[virtio-snd]: pcm : %d format : %x\r\n",i, s->formats);
-		UARTDebugOut("[virtio-snd]: pcm : %d frame rate : %x \r\n",i, s->rates);
-	}
-#endif
-	memset(command_phys, 0, 0x1000);
-
-	/** set params for the output stream **/
-	if (snd_pcm_set_params(cfg)) {
+	if (snd_pcm_set_params()) {
 		UARTDebugOut("[virtio-snd]: failed to set output stream parameters \r\n");
+		dev_ready = false;
 		return 1;
 	}
-
-
-	memset(command_phys, 0, 0x1000);
-	UARTDebugOut("[virtio-snd]: parameter set successfully for output stream \r\n");
-
-
-	/** prepare the output stream too **/
-	if (snd_pcm_prepare_output(cfg)) {
-		UARTDebugOut("[virtio-snd]: failed to prepare output stream \r\n");
-		return 1;
-	}
-
-	memset(command_phys, 0, 0x1000);
-
-	/** start the output stream **/
-	if (snd_pcm_output_start(cfg)) {
+	if (snd_pcm_simple(VIRTIO_SND_R_PCM_PREPARE) ||
+	    snd_pcm_simple(VIRTIO_SND_R_PCM_START)) {
 		UARTDebugOut("[virtio-snd]: failed to start output stream \r\n");
+		dev_ready = false;
 		return 1;
 	}
 	_output_running = true;
-
-	UARTDebugOut("[virtio-snd]: output stream started \r\n");
-	memset(command_phys, 0, 0x1000);
-
-	mask_irqs();
+	UARTDebugOut("[virtio-snd]: output stream %d started \r\n", output_stream);
 
 	AuSound* ausnd = (AuSound*)kmalloc(sizeof(AuSound));
 	memset(ausnd, 0, sizeof(AuSound));
@@ -1018,18 +545,13 @@ AU_EXTERN AU_EXPORT int AuDriverMain(AuDriver* drv) {
 	ausnd->stop_output = &virtio_snd_output_stop;
 	ausnd->start_output = &virtio_snd_output_start;
 	ausnd->set_vol = &virtio_snd_set_vol;
-	ausnd->control = 0;
-
-	/** no interrupt based sound playback, hardware need to
-	 * be forced to send pcm through command 
-	 */
 	ausnd->_force_write = 1;
 	if (AuSoundRegisterCard(ausnd)) {
 		UARTDebugOut("[aurora]: failed to register sound card : %s \r\n", ausnd->name);
 		kfree(ausnd);
+		dev_ready = false;
 		return 1;
 	}
-	
 	UARTDebugOut("[virtio-snd]: initialized successfully \r\n");
 	return 0;
 }

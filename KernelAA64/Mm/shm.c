@@ -150,20 +150,23 @@ void AuSHMDelete(AuSHM* shm) {
 		shm->link_count--;
 	}
 
-	if (shm->link_count == 0) {
-		for (int i = 0; i < shm->num_frames; i++) {
-			size_t phys = shm->frames[i];
-			AuPmmngrReleasePage((uint64_t)phys);
-		}
+	if (shm->link_count != 0)
+		return;
 
-		for (int j = 0; j <= shm_list->pointer; j++) {
-			AuSHM* shm_ = (AuSHM*)list_get_at(shm_list, j);
-			if (shm_ == shm)
-				list_remove(shm_list, j);
-		}
-		kfree(shm->frames);
-		kfree(shm);
+	for (int i = 0; i < shm->num_frames; i++) {
+		size_t phys = shm->frames[i];
+		AuPmmngrReleasePage((uint64_t)phys);
 	}
+
+	for (int j = 0; j <= shm_list->pointer; j++) {
+		AuSHM* shm_ = (AuSHM*)list_get_at(shm_list, j);
+		if (shm_ == shm) {
+			list_remove(shm_list, j);
+			break;
+		}
+	}
+	kfree(shm->frames);
+	kfree(shm);
 }
 /**
  * @brief AuSHMProcBreak -- gets some available shm memory
@@ -193,7 +196,14 @@ void AuSHMProcSwap(dataentry* current, dataentry* index) {
  */
 void AuSHMProcOrderList(AuProcess* proc) {
 	dataentry* current = proc->shmmaps->entry_current;
-	dataentry* index = NULL;
+	for (; current; current = current->next) {
+		for (dataentry* idx = current->next; idx; idx = idx->next) {
+			if (((AuSHMMappings*)current->data)->start_addr >
+				((AuSHMMappings*)idx->data)->start_addr)
+				AuSHMProcSwap(current, idx);
+		}
+	}
+	/**dataentry* index = NULL;
 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 		if (current == NULL)
 			break;
@@ -208,7 +218,7 @@ void AuSHMProcOrderList(AuProcess* proc) {
 			index = index->next;
 		}
 		current = current->next;
-	}
+	}**/
 }
 
 extern void envmdebug();
@@ -304,7 +314,12 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 					size_t phys = mem->frames[j];
 					if (!AuPmmngrRetainPage(phys))
 						return NULL;
-					AuMapPage(phys, last_addr + j * PAGE_SIZE, PTE_AP_RW_USER);
+					/* Same attributes as the first mapping. AttrIndx 0 is
+					 * device memory, and the audio panel stores a float at
+					 * offset 1. Device memory faults that unaligned store
+					 * the second time a client connects. */
+					AuMapPage(phys, last_addr + j * PAGE_SIZE,
+							  PTE_NORMAL_MEM | PTE_AP_RW_USER);
 					isb_flush();
 					dsb_ish();
 				}
@@ -356,7 +371,7 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
 	int index = 0;
 	for (int i = 0; i < proc->shmmaps->pointer; i++) {
 		AuSHMMappings* maps = (AuSHMMappings*)list_get_at(proc->shmmaps, i);
-		if (maps->shm == shm) {
+		if (maps && maps->shm == shm) {
 			mapping = maps;
 			for (int i = 0; i < mapping->length / PAGE_SIZE; i++) {
 				AuVPage* vpage = AuVmmngrGetPage(mapping->start_addr + i * PAGE_SIZE,
@@ -391,8 +406,8 @@ void AuSHMUnmap(uint16_t key, AuProcess* proc) {
  */
 void AuSHMUnmapAll(AuProcess* proc) {
 	//AuAcquireSpinlock(shmlock);
-	for (int i = 0; i < proc->shmmaps->pointer; i++) {
-		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, i);
+	while (proc->shmmaps->pointer > 0) {
+		AuSHMMappings* mapping = (AuSHMMappings*)list_remove(proc->shmmaps, 0);
 		for (int j = 0; j < mapping->length / PAGE_SIZE; j++) {
 			AuVPage* vpage = AuVmmngrGetPage(
 				mapping->start_addr + j * PAGE_SIZE, VIRT_GETPAGE_ONLY_RET, VIRT_GETPAGE_ONLY_RET);

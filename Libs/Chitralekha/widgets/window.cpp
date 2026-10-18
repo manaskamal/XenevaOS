@@ -145,15 +145,14 @@ void ChGlobalCloseAction(ChWindow* win, ChWinGlobalControl* ctl) {
 	ChWindowCloseWindow(win);
 }
 
-void ChGlobalMaximAction(ChWindow* win, ChWinGlobalControl* ctl){
+void ChGlobalMaximAction(ChWindow* win, ChWinGlobalControl* ctl) {
 	if (win->info->zoomed == false)
-	  win->info->zoomed = true;
+		win->info->zoomed = true;
 	else
-	  win->info->zoomed = false;
+		win->info->zoomed = false;
 
 	/* just give the compositor a space to do the things */
 	_KeProcessSleep(10);
-
 }
 
 void ChGlobalMinimiseAction(ChWindow* win, ChWinGlobalControl* ctl) {
@@ -345,9 +344,8 @@ ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, 
 	 * one. This keeps the memory saving without racing a later frame. */
 	if (dirty || updateEntireWin) {
 		int timeout = 250;
-		while (timeout-- > 0 &&
-			   (ChSharedFlagLoad(&win->info->dirty) ||
-				ChSharedFlagLoad(&win->info->updateEntireWindow)))
+		while (timeout-- > 0 && (ChSharedFlagLoad(&win->info->dirty) ||
+								 ChSharedFlagLoad(&win->info->updateEntireWindow)))
 			_KeProcessSleep(1);
 	}
 #endif
@@ -1089,4 +1087,45 @@ XE_EXTERN XE_EXPORT void ChPopupWindowUpdateLocation(ChWindow* pwin, ChWindow* w
  */
 XE_EXTERN XE_EXPORT void ChPopupWindowHide(ChWindow* pw, ChWindow* parent) {
 	pw->info->hide = true;
+}
+
+/*
+ * @brief ChWindowHandleDestroyBuffer -- handle destroy buffer
+ * message from server
+ * @param win -- Pointer to main window
+ */
+XE_EXTERN XE_EXPORT void ChWindowHandleDestroyBuffer(ChWindow* win) {
+	if (!win)
+		return;
+	_KeUnmapSharedMem(win->app->backbufkey);
+	PostEvent e1;
+	e1.type = DEODHAI_MESSAGE_BUFFER_DESTROYED;
+	e1.to_id = POSTBOX_ROOT_ID;
+	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
+}
+
+/**
+ * @brief ChWindowHandleReinitBuffer -- reinitialize back buffer
+ * with requested size
+ * @param win -- Pointer to window
+ * @param bufferKey -- shared memory key
+ */
+void ChWindowHandleReinitBuffer(ChWindow* win, int bufferkey) {
+	if (!win)
+		return;
+	int backbufkey = bufferkey;
+	int id = _KeCreateSharedMem(backbufkey, 0, 0);
+
+	void* buffer = _KeObtainSharedMem(id, 0, 0);
+	win->app->backbufkey = backbufkey;
+	win->app->fb = buffer;
+	win->buffer = (uint32_t*)buffer;
+	win->info->windowReady = 1;
+
+	_KeProcessSleep(50);
+	ChDeAllocateBuffer(win->canv);
+	win->canv->canvasWidth = win->info->width;
+	win->canv->canvasHeight = win->info->height;
+	ChAllocateBuffer(win->canv);
+	ChWindowPaint(win);
 }

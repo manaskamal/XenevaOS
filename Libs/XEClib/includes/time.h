@@ -86,7 +86,7 @@ XE_EXTERN {
 	XE_LIB clock_t clock(void);
 	XE_LIB char* ctime(const time_t);
 	XE_LIB double difftime(time_t, time_t);
-	XE_LIB struct tm* gmtime(time_t);
+	XE_LIB struct tm* gmtime(const time_t*);
 	XE_LIB time_t mktime(struct tm*);
 	XE_LIB time_t time(time_t* t);
 	XE_LIB int gettimeofday(timeval * val);

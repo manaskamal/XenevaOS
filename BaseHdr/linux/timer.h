@@ -1,3 +1,6 @@
+#ifndef __LINUX_TIMER_H__
+#define __LINUX_TIMER_H__
+
 struct timer_list {
     void          (*function)(struct timer_list* t);
     unsigned long   expires;    /* in jiffies */
@@ -5,10 +8,10 @@ struct timer_list {
     int             pending;
 };
 
-/* Jiffies — you need to provide this from your system counter */
+/* Jiffies ï¿½ you need to provide this from your system counter */
 extern volatile unsigned long jiffies;   /* increment at HZ rate */
 
-#define HZ              250              /* ticks per second — tune to your timer IRQ */
+#define HZ              250              /* ticks per second ï¿½ tune to your timer IRQ */
 #define msecs_to_jiffies(ms)  ((ms) * HZ / 1000)
 #define jiffies_to_msecs(j)   ((j)  * 1000 / HZ)
 #define time_after(a, b)      ((long)((b) - (a)) < 0)
@@ -29,7 +32,7 @@ extern volatile unsigned long jiffies;   /* increment at HZ rate */
     (t)->pending  = 0;                 \
 } while (0)
 
-/* On bare metal — you need a real timer queue for these */
+/* On bare metal ï¿½ you need a real timer queue for these */
 /* Stub for bring-up: call immediately */
 static inline void add_timer(struct timer_list* t) {
     t->pending = 1;
@@ -60,3 +63,5 @@ static inline int timer_pending(const struct timer_list* t) {
 /* Helper to get owning struct from timer pointer */
 #define from_timer(var, callback_timer, timer_fieldname) \
     container_of(callback_timer, typeof(*var), timer_fieldname)
+
+#endif /* __LINUX_TIMER_H__ */

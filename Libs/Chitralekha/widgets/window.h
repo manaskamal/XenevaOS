@@ -66,7 +66,7 @@
  * pixel against the blurred desktop backdrop (DeodhaiXR WINDOW_FLAG_GLASS).
  * Pair it with ChWindowSetGlassMorphism() (chrome) and translucent fills in
  * the client paint code (content). */
-#define WINDOW_FLAG_GLASS			   (1 << 12)
+#define WINDOW_FLAG_GLASS (1 << 12)
 
 #define CHITRALEKHA_WIDGET_TYPE_CONTROL (1 << 1)
 #define CHITRALEKHA_WIDGET_TYPE_POPUP	(1 << 2)
@@ -429,6 +429,21 @@ XE_EXTERN {
 	* @param perent -- Parent Window
 	*/
 	XE_LIB void ChPopupWindowHide(ChWindow * pw, ChWindow * parent);
+
+	/*
+     * @brief ChWindowHandleDestroyBuffer -- handle destroy buffer
+     * message from server
+     * @param win -- Pointer to main window
+     */
+	XE_LIB void ChWindowHandleDestroyBuffer(ChWindow * win);
+
+	/**
+     * @brief ChWindowHandleReinitBuffer -- reinitialize back buffer
+     * with requested size
+     * @param win -- Pointer to window
+     * @param bufferKey -- shared memory key
+     */
+	XE_LIB void ChWindowHandleReinitBuffer(ChWindow * win, int bufferkey);
 
 #ifdef __cplusplus
 }

@@ -50,6 +50,15 @@ set -e
 #                           the image.
 #   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
 #                           the image.
+#   --bt                    Attach Bluetooth on the second serial. The socket
+#                           is /tmp/bt-server-bredr (btproxy), or
+#                           /tmp/xeneva-bt-virt when XENEVA_BT_VIRT=1.
+#                           XENEVA_BT_SERIAL overrides that path. If the
+#                           socket is missing, QEMU still starts.
+#                           Without --bt the guest has no Bluetooth socket.
+#   XENEVA_BT_VIRT=1        With --bt, the second serial is a virtual headset
+#                           (tests/bt/virt_headset), not BlueZ btproxy.
+#                           hci0 stays up.
 #   --no-boot-menu          Skip the EFI resolution menu and boot the default
 #                           mode (NOMENU marker on the ESP). The menu stays on
 #                           by default; headless, egl-headless and xr-demo
@@ -100,6 +109,8 @@ XR_DEMO_MENU=0
 EGL_HEADLESS=0
 XR_HANDS=1
 XR_CONTROLLERS=1
+# The viewer is pinned to WiVRn's GPU, so its hand swapchains share the same
+# Mesa device and can be enabled with the default hand input path. --axiss
 XR_HAND_MESH=1
 XR_RESOLUTION="1024x768"
 XR_GAIN=20000
@@ -116,9 +127,10 @@ NO_NETWORK=0
 NO_AUDIO=0
 NO_BOOT_MENU=0
 NO_DOOM=0
-BT_SERIAL="${XENEVA_BT_SERIAL:-/tmp/bt-server-bredr}"
-NO_BT=0
+BT_SERIAL="${XENEVA_BT_SERIAL:-}"
+NO_BT=1
 NO_NETSURF=0
+VIRTIO_RNG=1
 
 print_help(){
     printf "${STY_CYAN}"
@@ -389,9 +401,12 @@ while [ $# -gt 0 ]; do
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
-        --bt-serial) BT_SERIAL="/tmp/bt-server-bredr" ;;
-        --bt-serial=*) BT_SERIAL="${1#--bt-serial=}" ;;
+        --bt) NO_BT=0 ;;
+        --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
+        --bt-serial=*) NO_BT=0; BT_SERIAL="${1#--bt-serial=}" ;;
         --no-bt) NO_BT=1 ;;
+        --virtio-rng) VIRTIO_RNG=1 ;;
+        --no-virtio-rng) VIRTIO_RNG=0 ;;
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
@@ -781,7 +796,7 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         case "$1" in
             MUSIC|ARCH_X64|snd.wav|RoLight.ttf|RoLiIta.ttf|RoThin.ttf|corbel.ttf)
                 [ "$BLEED" -eq 1 ] && return 0 || return 1 ;;
-            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe)
+            netmngr.exe|route.exe|iptable.exe|ping.exe|udpecho.exe|dig.exe|nslook.exe|telnet.exe|finger.exe|gopher.exe|ntpd.exe|curl.exe)
                 [ "$NO_NETWORK" -eq 1 ] && return 0 || return 1 ;;
             doom.exe|doom2.wad)
                 [ "$NO_DOOM" -eq 1 ] && return 0 || return 1 ;;
@@ -891,6 +906,17 @@ fi
 echo "[+] Image ready! Booting QEMU..."
 echo "[+] Guest memory: $qemu_memory"
 
+# A QEMU built without PulseAudio only exposes 'none'/'wav'. Asking it for
+# 'pa' aborts the emulator before the guest ever boots, so ask the binary
+# which backends it actually has and fall back to a silent one. The
+# virtio-sound-pci device itself is still added, so the guest sees the same
+# audio hardware either way. --axiss
+QEMU_AUDIO_BACKEND="pa"
+if ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
+    QEMU_AUDIO_BACKEND="none"
+    echo "[+] Audio: this QEMU has no 'pa' backend, using 'none' (silent guest sound)."
+fi
+
 QEMU_ARGS=(
     -machine virt,gic-version=2,highmem=off
     -cpu cortex-a72
@@ -906,25 +932,33 @@ QEMU_ARGS=(
     -device virtio-net-pci,netdev=net0
     -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
     -monitor unix:/tmp/xeneva-mon.sock,server,nowait
+    # Register virtio-gpu first so QEMU's VNC server follows the display the
+    # Xeneva compositor drives after boot. ramfb remains as a fallback GOP.
+    -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device ramfb,id=ramfb
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
-    # ramfb stays the boot/GOP display (listed first); virtio-gpu-pci is
-    # additional and only gets driven once our own virtio-gpu driver runs
-    # its SET_SCANOUT, same disable-legacy=on reasoning as virtio-blk above
-    # so it lands at the class/subclass our driver (and audrv.cnf) expect
-    # --axiss
-    -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device usb-ehci
     -device usb-kbd
-    # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
-    # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
-    # and the virtsnd driver's AuPCIEScanClass probe. pa backend talks
-    # to the host PulseAudio/PipeWire server. --axiss
-    -audiodev pa,id=snd0
-    -device virtio-sound-pci,audiodev=snd0,disable-legacy=on
     -serial stdio
 )
+
+# virtio-rng-pci gives the DCL virtio bus a real entropy device to match
+# against the virtio_rng driver registered by the loaded .ko. --axiss
+if [ "$VIRTIO_RNG" -eq 1 ]; then
+    QEMU_ARGS+=(-device virtio-rng-pci,disable-legacy=on,id=rng0)
+fi
+
+# virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
+# [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
+# and the virtsnd driver's AuPCIEScanClass probe. Skipped under --no-audio
+# so the guest never enumerates a sound card it was told not to have. --axiss
+if [ "$NO_AUDIO" -eq 1 ]; then
+    echo "[+] Audio: virtio-sound-pci omitted (--no-audio)"
+else
+    QEMU_ARGS+=(-audiodev "$QEMU_AUDIO_BACKEND",id=snd0)
+    QEMU_ARGS+=(-device virtio-sound-pci,audiodev=snd0,disable-legacy=on)
+fi
 bt_power_off_for_proxy() {
     local i prop
     command -v busctl >/dev/null 2>&1 || return 0
@@ -940,17 +974,33 @@ bt_power_off_for_proxy() {
     echo "[+] Bluetooth: adapter still powered; btproxy may report 'Device or resource busy'"
 }
 
+if [ "$NO_BT" -eq 0 ] && [ -z "$BT_SERIAL" ]; then
+    if [ "${XENEVA_BT_VIRT:-0}" = "1" ]; then
+        BT_SERIAL="/tmp/xeneva-bt-virt"
+    else
+        BT_SERIAL="/tmp/bt-server-bredr"
+    fi
+fi
 if [ "$NO_BT" -eq 1 ]; then
-    echo "[+] Bluetooth: disabled (--no-bt), guest uses mock controller"
+    # UART1 stays present so a guest probe of 0x09040000 does not fault.
+    # Nothing is connected to it.
+    QEMU_ARGS+=(-serial null)
+    echo "[+] Bluetooth: off (pass --bt for /tmp/bt-server-bredr)"
 elif [ -S "$BT_SERIAL" ]; then
-    bt_power_off_for_proxy
     QEMU_ARGS+=(-serial "unix:$BT_SERIAL")
-    echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
+    if [ "${XENEVA_BT_VIRT:-0}" = "1" ]; then
+        echo "[+] Bluetooth: virtual headset at $BT_SERIAL (hci0 left up)"
+    else
+        bt_power_off_for_proxy
+        echo "[+] Bluetooth: second serial -> $BT_SERIAL (BlueZ via btproxy)"
+    fi
 else
-    echo "[+] Bluetooth: no $BT_SERIAL (run: sudo btproxy -u -i 0), guest uses mock"
+    # Missing socket must not stop the VM. Same UART sink as --no-bt.
+    QEMU_ARGS+=(-serial null)
+    echo "[+] Bluetooth: no $BT_SERIAL, continuing without it"
 fi
 if [ "$XR_DEMO" -eq 1 ]; then
-	# Core XR transport: D-Bus exports Console_1 to the viewer, using either
+	# Core XR transport: D-Bus exports Console_0 (gpu0) to the viewer, using either
 	# CPU scanout with VNC or EGL DMA-BUF scanout. The Unix monitor handles
 	# boot/menu control. Optional services are independent. --axiss
     echo "[+] Building host XR tools..."
@@ -966,11 +1016,11 @@ if [ "$XR_DEMO" -eq 1 ]; then
         # consume the same console concurrently. --axiss
         QEMU_ARGS+=(-display dbus,gl=off -vnc :0)
         XR_DISPLAY_DESC="D-Bus CPU scanout + VNC localhost:0"
-        XR_QEMU_CONSOLE=1
+        XR_QEMU_CONSOLE=0
     else
         QEMU_ARGS+=(-display egl-headless -display dbus,gl=on)
         XR_DISPLAY_DESC="egl-headless + D-Bus DMA-BUF"
-        XR_QEMU_CONSOLE=1
+        XR_QEMU_CONSOLE=0
     fi
     QEMU_ARGS+=(-monitor "unix:$XR_MON_SOCK,server,nowait")
     if [ "$XR_TELNET" -eq 1 ]; then
@@ -1065,7 +1115,12 @@ if [ "$XR_DEMO" -eq 1 ]; then
     elif [ "$XR_HANDS" -eq 1 ]; then
         XR_VIEW_ARGS+=(--no-hand-mesh)
     fi
-    XR_RUNTIME_JSON="$XR_RT_JSON" XENEVA_QEMU_CONSOLE="$XR_QEMU_CONSOLE" \
+    # WiVRn owns swapchains on the discrete GPU on this host. Keep the viewer
+    # on that same Mesa device; cross-GPU GL texture names are invalid. Allow
+    # both selections to be overridden for other hosts. --axiss
+    DRI_PRIME="${XENEVA_XR_DRI_PRIME:-1}" \
+    LIBGL_ALWAYS_SOFTWARE="${XENEVA_XR_SOFTWARE_GL:-false}" \
+        XR_RUNTIME_JSON="$XR_RT_JSON" XENEVA_QEMU_CONSOLE="$XR_QEMU_CONSOLE" \
         "$REPO_ROOT/Tools/xeneva-xr-view/xeneva-xr-view" "${XR_VIEW_ARGS[@]}" \
         >"$XR_VIEW_LOG" 2>&1 &
     XR_VIEW_PID=$!

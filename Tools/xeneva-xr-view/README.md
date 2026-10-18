@@ -109,9 +109,10 @@ Tools/xeneva-xr-client/xeneva-xr-client     # interactive monitor (keys, info)
 No GTK window: QEMU runs its D-Bus display and a Unix monitor socket. The
 default VNC-enabled profile uses CPU scanout because QEMU cannot combine VNC
 with a GL display context; disabling VNC selects `egl-headless` DMA-BUF. The
-default profile selects 1024x768, sharp scaling, and enables
-hand pointer, controllers, the tracked mesh, and localhost VNC. The telnet
-monitor remains an optional TUI module.
+default profile selects 1024x768, sharp scaling, and enables hand pointer,
+controllers, tracked hand meshes, and localhost VNC. The launcher keeps the
+viewer on WiVRn's GPU so its OpenGL swapchain textures share one Mesa device.
+The telnet monitor remains an optional TUI module.
 `--egl` steals the real scanout (CPU `Scanout` blobs, or DMA-BUF when EGL
 import works), not an X11 screenshot.
 

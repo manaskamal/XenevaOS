@@ -83,14 +83,22 @@ int OpenFile(char* filename, int mode) {
 
 	/** check permissions before procedding **/
 	if (AuCredCheckPermissions(file, &current_proc->creds)) {
-		if (!file)
+		if (!file) {
+			UARTDebugOut("[fserv]: open '%s' denied: no node\r\n", fname);
 			return -1;
+		}
+		UARTDebugOut("[fserv]: open '%s' denied: creds uid=%d gid=%d nsgid=%d vs node uid=%d "
+					 "gid=%d flags=%x\r\n",
+					 fname,
+					 current_proc->creds.uid,
+					 current_proc->creds.gid,
+					 current_proc->creds.num_sgid,
+					 file->uid,
+					 file->gid,
+					 file->flags);
 		AuTextOut("[aurora]: file : %s is not accessible to this user with uid : %d \r\n",
 				  file->filename,
 				  current_proc->creds.uid);
-		if (!(file->flags & FS_FLAG_CACHED) || !(file->flags & FS_FLAG_DEVICE) ||
-			!(file->flags & FS_FLAG_FILE_SYSTEM))
-			kfree(file);
 		return -1;
 	}
 	bool created = false;
@@ -98,15 +106,21 @@ int OpenFile(char* filename, int mode) {
 		if (mode & FILE_OPEN_CREAT || mode & FILE_OPEN_WRITE) {
 			file = AuVFSCreateFile(fsys, filename);
 			created = true;
-		} else
+		} else {
+			UARTDebugOut("[fserv]: open '%s' failed: no node, mode=%x\r\n", fname, mode);
 			return -1;
+		}
 	}
 	/* check for last time, if any error occured */
-	if (!file)
+	if (!file) {
+		UARTDebugOut("[fserv]: open '%s' failed: create returned NULL\r\n", fname);
 		return -1;
+	}
 
-	if (fd == -1)
+	if (fd == -1) {
+		UARTDebugOut("[fserv]: open '%s' failed: no free fd\r\n", fname);
 		return -1;
+	}
 
 	/* just to increase the reference count */
 	if (file->open)

@@ -101,11 +101,9 @@ void AuVmmngrInitialize() {
 	/* accessing the live root through the just-installed direct map here,
 	 * since the inherited low alias might point at a different firmware
 	 * translation --axiss */
-	uint64_t* liveKernelRoot =
-		(uint64_t*)(PHYSICAL_MEM_BASE + ((uint64_t)kernelRoot & ~0xFFFULL));
+	uint64_t* liveKernelRoot = (uint64_t*)(PHYSICAL_MEM_BASE + ((uint64_t)kernelRoot & ~0xFFFULL));
 	liveKernelRoot[pml4_index(KERNEL_BASE_ADDRESS)] = 0;
-	aa64_data_cache_clean_range(&liveKernelRoot[pml4_index(KERNEL_BASE_ADDRESS)],
-		sizeof(uint64_t));
+	aa64_data_cache_clean_range(&liveKernelRoot[pml4_index(KERNEL_BASE_ADDRESS)], sizeof(uint64_t));
 	tlb_flush_vmalle1is();
 
 	_RootPaging = userRoot;
@@ -635,7 +633,7 @@ void AuVmmngrBootFree() {
 
 	for (int i = 0; i < 256; i++)
 		cr3[i] = 0;
-	aa64_data_cache_clean_range(cr3, 256 * sizeof(uint64_t));
+	aa64_data_cache_clean_range((void*)P2V((uint64_t)cr3), 256 * sizeof(uint64_t));
 	dsb_ish();
 
 	/*AuConsoleFlushFramebuffer();

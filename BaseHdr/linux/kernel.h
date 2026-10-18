@@ -9,13 +9,6 @@
 #include <Mm/kmalloc.h>
 #include <_null.h>
 #include <Hal/AA64/aa64lowlevel.h>
-#include <linux/bitmap.h>
-#include <linux/list.h>
-#include <linux/usb/ch9.h>
-#include <linux/timer.h>
-#include <linux/workqueue.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/ch9.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -43,41 +36,12 @@ typedef uint16_t __be16;
 typedef uint32_t __be32;
 typedef uint64_t __be64;
 
-
-#define udelay(us)  AA64SleepUS(us)
-#define mdelay(ms) AA64SleepMS(ms)
-#define msleep(ms) mdelay(ms)
-#define usleep(us) AA64SleepUS(us)
-
-#define GFP_KERNEL 0
-#define GFP_ATOMIC 1
-#define GFP_DMA 2
-
-#define kmalloc(size, flags) kmalloc(size)
-#define kzalloc(size, flags) kcalloc(size)
-
-#define container_of(ptr, type, member) \
-     ((type*)((char*)(ptr)- offsetof(type,member)))
-
-#define offsetof(type, member) \
-     ((size_t)&((type*)0)->member)
-
-#define IS_ENABLED(opt) (!!(opt))
-
 typedef uintptr_t phys_addr_t;
 typedef uintptr_t resource_size_t;
 typedef uintptr_t dma_addr_t;
 typedef uintptr_t io_addr_t;
 typedef int spinlock_t;
 typedef int mutex;
-
-/** implementation needed */
-#define spin_lock_init(l) do{} while(0)
-#define spin_lock_irqsave(l,f) do{(f) = 0;}while(0)
-#define spin_unlock_irqrestore(l, f) do{}while(0)
-#define mutex_init(m)  do{} while(0)
-#define mutex_lock(m)  do{}while(0)
-#define mutex_unlock(m)  do{} while(0)
 
 typedef uint64_t sector_t;
 typedef uint64_t blkcnt_t;
@@ -95,6 +59,41 @@ typedef int irqreturn_t;
 typedef unsigned long irq_hw_number_t;
 typedef unsigned long pgoff_t;
 typedef unsigned long kernel_ulong_t;
+
+#include <linux/compiler.h>
+#include <linux/bitmap.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/printk.h>
+#include <linux/timer.h>
+#include <linux/workqueue.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/otg.h>
+#include <linux/virtio.h>
+
+#define udelay(us)  AA64SleepUS(us)
+#define mdelay(ms) AA64SleepMS(ms)
+#define msleep(ms) mdelay(ms)
+#define usleep(us) AA64SleepUS(us)
+
+#define GFP_KERNEL 0
+#define GFP_ATOMIC 1
+#define GFP_DMA 2
+
+#define container_of(ptr, type, member) \
+     ((type*)((char*)(ptr)- offsetof(type,member)))
+
+#define offsetof(type, member) \
+     ((size_t)&((type*)0)->member)
+
+#define IS_ENABLED(opt) (!!(opt))
+
+#define spin_lock_init(l) do{} while(0)
+#define spin_lock_irqsave(l,f) do{(f) = 0;}while(0)
+#define spin_unlock_irqrestore(l, f) do{}while(0)
+#define mutex_init(m)  do{} while(0)
+#define mutex_lock(m)  do{}while(0)
+#define mutex_unlock(m)  do{} while(0)
 
 #define IRQ_NONE 0
 #define IRQ_HANDLED 1
@@ -128,6 +127,7 @@ typedef unsigned long kernel_ulong_t;
 #define ENOSYS 38
 #define ENOTEMPTY 39
 #define ELOOP 40
+#define EAGAIN      11
 #define EWOULDBLOCK EAGAIN
 #define ENOMSG 42
 #define EIDRM 43
@@ -158,13 +158,11 @@ typedef unsigned long kernel_ulong_t;
 #define ENETRESET 102
 #define ECONNABORTED 103
 #define ECONNRESET 104
-#define ECONNRESET 104
 #define ENOBUFS 105
 #define EISCONN 106
 #define ENOTCONN 107
 #define ESHUTDOWN 108
 #define ETOOMANYREGS 109
-#define ETIMEDOUT 110
 #define ECONNREFUSED 111
 #define EHOSTDOWN 112
 
@@ -197,7 +195,7 @@ typedef int64_t ktime_t;
 #define KTIME_SEC_MAX (KTIME_MAX / NSEC_PER_SEC)
 
 static inline ktime_t ktime_set(long secs, unsigned long nsecs) {
-    return (ktime_t)secs * MSEC_PER_SEC + (ktime_t)nsecs;
+    return (ktime_t)secs * NSEC_PER_SEC + (ktime_t)nsecs;
 }
 
 static inline ktime_t ktime_add(ktime_t a, ktime_t b) {
@@ -305,7 +303,20 @@ UARTDebugOut("[WARN] %s:%d \r\n", __FILE__, __LINE__); \
 })
 #endif
 
+#define ARRAY_SIZE(a)   (sizeof(a) / sizeof((a)[0]))
+
+#ifndef DIV_ROUND_UP
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 #endif
+#define ALIGN(x, a)     __ALIGN_KERNEL((x), (a))
+#define __ALIGN_KERNEL(x, a) __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask) (((x) + (mask)) & ~(mask))
+#define MIN(a, b)       ((a) < (b) ? (a) : (b))
+#define MAX(a, b)       ((a) > (b) ? (a) : (b))
+#define clamp(val, lo, hi) ((val) < (lo) ? (lo) : ((val) > (hi) ? (hi) : (val)))
+#define BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
+#define upper_32_bits(n) ((uint32_t)((n) >> 32))
+#define lower_32_bits(n) ((uint32_t)((n) & 0xFFFFFFFF))
 
-
+#endif
 

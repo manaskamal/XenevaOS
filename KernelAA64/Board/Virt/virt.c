@@ -71,7 +71,8 @@ uint8_t AuVirtIOInputCheck(uint64_t device, int bus, int dev, int func) {
  * see BaseHdr/Drivers/virtio.h for the rest of the 0x1AF4:0x10xx scheme */
 #define VIRTIO_PCI_DEVICE_ID_BLK 0x1042
 
-/* headroom for blk+net+kbd+tablet+gpu/snd without silently dropping inputs */
+/* headroom for blk+net+kbd+tablet+gpu/snd without silently dropping inputs.
+ * virtio-rng (0x1044) is claimed later by the DCL virtio-rng.ko probe. */
 #define MAX_VIRTIO_DEVICES 8
 
 void AuVirtIOInputInitialize() {

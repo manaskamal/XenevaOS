@@ -70,6 +70,7 @@
 #include <Fs/Fat/FatFile.h>
 #include <Fs/Fat/FatDir.h>
 #include <Log/klog.h>
+#include <linux/module_loader.h>
 
 extern void AuBtInitialize(void);
 
@@ -176,6 +177,8 @@ void _AuroraTimerCallback(void* p) {
 	UARTDebugOut("from inside timer++ \r\n");
 }
 
+extern void modload_test_run(void);
+
 /**
  * @brief _AuMain -- the main entry point for kernel
  * @param info -- Kernel Boot information passed
@@ -253,6 +256,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	FontManagerInitialise();
 
+	/* Test DCL Layer: load embedded .ko module. This also detects a
+	 * virtio-rng device and binds it, while the module's driver is still
+	 * registered (see modload_test.c). */
+	modload_test_run();
+
 	/* from here, be carefull with AuPmmngrAllocBlocks,
 	 * sometime it doesn't allocate blocks contiguously,
 	 * it allocate one previously freed block and other
@@ -286,7 +294,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
-
 	AuSchedulerInitialize();
 	AuBtInitialize();
 	//AuEDFSelfTestStart();
@@ -306,7 +313,6 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	CRED_SET_CAP_ROOT(proc);
 	CRED_MARK_ROOT(proc);
 	AuLoadExecToProcess(proc, "/init.exe", num_args, argvs);
-
 
 #ifdef __KERNEL_PROFILER_ON__
 	PROFILE_END("_AuMain");

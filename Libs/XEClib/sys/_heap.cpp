@@ -6446,6 +6446,5 @@ void* realloc(void* ptr, unsigned int new_size) {
 * @param size -- size of each items
 */
 void* calloc(unsigned long long n_item, unsigned long long size) {
-    _KePrint("Calloc : %d - sz : %d \r\n", n_item, size);
     return dlcalloc(n_item, size);
 }

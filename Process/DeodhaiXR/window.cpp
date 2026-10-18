@@ -125,6 +125,8 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	win->title = (char*)malloc(strlen(title) + 1);
 	memset(win->title, 0, strlen(title) + 1);
 	strcpy(win->title, title);
+	win->originalW = w;
+	win->originalH = h;
 	WinSharedInfo* shwin = (WinSharedInfo*)win->sharedInfo;
 	shwin->x = x;
 	shwin->y = y;

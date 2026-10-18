@@ -67,14 +67,14 @@ void XEShellSigInterrupt(int signo) {
 void XEShellSignalTest(int signo) {
 	printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
 	fflush(stdout);
-	
+
 	if (job > 0) {
 		printf("[xeshell]: Sending signal to process %d\r\n", job);
 		fflush(stdout);
 		_KeSendSignal(job, signo);
 		job = 0;
 	}
-	
+
 	printf("[xeshell]: Signal handler completed\r\n");
 	fflush(stdout);
 }
@@ -115,13 +115,13 @@ void XEShellSpawn(char* string) {
 		const int max_args = 32;
 		char** argv = (char**)malloc(max_args * sizeof(char*));
 		memset(argv, 0, max_args * sizeof(char*));
-		
+
 		/* Validate input string length */
 		if (strlen(string) > 127) {
 			printf("\n[xeshell]: Command too long (max 127 characters)\r\n");
 			return;
 		}
-		
+
 		/* here we mainly prepare for the arguments to pass */
 		for (int i = 0; i < strlen(string) + 1; i++) {
 			if (string[i] == ' ' || string[i] == '\0') {
@@ -160,6 +160,9 @@ void XEShellSpawn(char* string) {
 
 		memset(filename, 0, sizeof(filename));
 		strcpy(filename, currentDirectory);
+		if (strlen(currentDirectory) != 1 && currentDirectory[strlen(currentDirectory) - 1] != '/')
+			strcat(filename, "/");
+
 		strcat(filename, execname);
 		strcat(filename, ".exe");
 
@@ -170,14 +173,14 @@ void XEShellSpawn(char* string) {
 			printf("\n[xeshell]: No command or program found: %s\r\n", filename);
 			return;
 		}
-		
+
 		int proc_id = _KeCreateProcess(0, string);
 		if (proc_id == -1) {
 			printf("\n[xeshell]: Failed to create process for: %s\r\n", string);
 			_KeCloseFile(file);
 			return;
 		}
-		
+
 		/* Set file descriptors for the process */
 		if (_KeSetFileToProcess(XENEVA_STDIN, XENEVA_STDIN, proc_id) != 0) {
 			printf("\n[xeshell]: Failed to set stdin for process %d\r\n", proc_id);
@@ -194,7 +197,7 @@ void XEShellSpawn(char* string) {
 			_KeCloseFile(file);
 			return;
 		}
-		
+
 		int status = _KeProcessLoadExec(proc_id, filename, argcount, argv);
 		if (status != 0) {
 			printf("\n[xeshell]: Failed to load executable %s (error: %d)\r\n", filename, status);
@@ -231,17 +234,17 @@ void XEShellReadLine() {
 	// Only process if we have a command to process
 	// Note: We don't check _process_needed here - we always try to read
 	// The flag is used in the main loop to know when to process the command
-	
+
 	// Don't clear buffer if we're in the middle of reading
 	if (index == 0) {
 		// Clear the command buffer only at start of new command
 		memset(cmdBuf, 0, 1024);
 	}
-	
+
 	// Use stdin provided by init. Init already opened /dev/console
 	// and set it as XENEVA_STDIN for the shell.
 	int read_fd = g_console_fd;
-	
+
 	// Read one character from console (blocks in kernel until a key arrives)
 	char buf[2];
 	memset(buf, 0, 2);
@@ -252,9 +255,9 @@ void XEShellReadLine() {
 		cmdBuf[index] = '\0';
 		return;
 	}
-	
+
 	char c = buf[0];
-	
+
 	if (c == '\n' || c == '\r') {
 		// End of line - process the command
 		printf("\n");
@@ -283,7 +286,7 @@ void XEShellReadLine() {
 			}
 			return;
 		}
-		
+
 		if (c == KEY_SPACE) {
 			printf("%c", c);
 			fflush(stdout);
@@ -291,7 +294,7 @@ void XEShellReadLine() {
 			index++;
 			return;
 		}
-		
+
 		// Only print printable characters
 		if (c >= 32 && c <= 126) {
 			printf("%c", c);
@@ -299,7 +302,7 @@ void XEShellReadLine() {
 			cmdBuf[index++] = c;
 		}
 	}
-	
+
 	// Null-terminate the current buffer
 	cmdBuf[index] = '\0';
 	return;
@@ -319,14 +322,13 @@ void XEShellCD(char* path) {
 
 	char* newPath = NULL;
 	int prevPathLen = strlen(currentDirectory);
-
 	/* navigate back to parent directory */
-	if (strcmp(path, "..") == 0) {
+	if ((strcmp(path, "..") == 0)) {
 		if (prevPathLen == 1 && (strcmp(currentDirectory, "/") == 0)) {
 			printf("\n[xeshell]: Already at root directory\r\n");
 			return;
 		}
-		
+
 		// Find the last '/' and truncate
 		int last_slash = -1;
 		for (int i = prevPathLen - 1; i >= 0; i--) {
@@ -335,17 +337,68 @@ void XEShellCD(char* path) {
 				break;
 			}
 		}
-		
-		if (last_slash != -1) {
+
+		if (last_slash != 0) {
 			currentDirectory[last_slash] = '\0';
 		} else {
 			strcpy(currentDirectory, "/");
 		}
-		
-		printf("\n[xeshell]: Changed to parent directory: %s\r\n", currentDirectory);
+
+		/* last check if the current directory became totally \0 */
+
+		printf("\n[xeshell]: Changed to parent directory: %s \r\n", currentDirectory);
 		// Update environment variable
 		_XESetEnvironmentVariable("PWD", currentDirectory, 1);
 		printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
+		return;
+	}
+
+	/** handle large relative path */
+	if (strncmp(path, "../", 3) == 0) {
+		int i = 0;
+		int pathLen = strlen(path);
+		int maxLen = 4096;
+		while (i < pathLen) {
+			while (i < pathLen && path[i] == '/')
+				i++;
+			if (i >= pathLen)
+				break;
+
+			int start = i;
+			while (i < pathLen && path[i] != '/')
+				i++;
+			int compLen = i - start;
+			if (compLen == 1 && path[start] == '.') {
+				continue;
+			} else if (compLen == 2 && path[start] == '.' && path[start + 1] == '.') {
+				int len = strlen(currentDirectory);
+				if (len > 1) {
+					int lastSlash = -1;
+					for (int j = len - 1; j >= 0; j--) {
+						if (currentDirectory[j] == '/') {
+							lastSlash = j;
+							break;
+						}
+					}
+					if (lastSlash == 0)
+						currentDirectory[1] = '\0';
+					else if (lastSlash > 0)
+						currentDirectory[lastSlash] = '\0';
+				}
+			} else {
+				int len = strlen(currentDirectory);
+				int isRoot = (len == 1 && currentDirectory[0] == '/');
+				int needed = len + (isRoot ? 0 : 1) + compLen + 1;
+
+				if (needed > maxLen)
+					return;
+
+				if (!isRoot)
+					currentDirectory[len++] = '/';
+				memcpy(currentDirectory + len, path + start, compLen);
+				currentDirectory[len + compLen] = '\0';
+			}
+		}
 		return;
 	}
 
@@ -373,13 +426,13 @@ void XEShellCD(char* path) {
 		printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
 		return;
 	}
-	
+
 	// Validate path length
 	if (strlen(path) > 127) {
 		printf("\n[xeshell]: Path too long (max 127 characters)\r\n");
 		return;
 	}
-	
+
 	// Check if the path exists
 	char testPath[256];
 	if (currentDirectory[prevPathLen - 1] == '/' && prevPathLen > 1) {
@@ -387,14 +440,14 @@ void XEShellCD(char* path) {
 	} else {
 		snprintf(testPath, sizeof(testPath), "%s/%s", currentDirectory, path);
 	}
-	
+
 	int testDirfd = _KeOpenDir(testPath);
 	if (testDirfd == -1) {
 		printf("\n[xeshell]: Directory not found: %s\r\n", testPath);
 		return;
 	}
 	_KeCloseFile(testDirfd);
-	
+
 	// Construct new path
 	if (currentDirectory[prevPathLen - 1] == '/' && prevPathLen > 1) {
 		newPath = (char*)malloc(prevPathLen + strlen(path) + 1);
@@ -403,21 +456,36 @@ void XEShellCD(char* path) {
 	} else {
 		newPath = (char*)malloc(prevPathLen + strlen(path) + 2);
 		strcpy(newPath, currentDirectory);
-		strcat(newPath, "/");
+		// check if the currentDirectory is only "/" which means root
+		if (strlen(currentDirectory) != 1 && currentDirectory[0] != '/')
+			strcat(newPath, "/");
+
+		while (*path == '/')
+			path++;
+
+		size_t len = strlen(path);
+		while (len > 0 && path[len - 1] == '/') {
+			len--;
+		}
+		path[len] = '\0';
+
+		if (currentDirectory[strlen(currentDirectory) - 1] != '/')
+			strcat(newPath, "/");
+
 		strcat(newPath, path);
 	}
-	
+
 	free(currentDirectory);
 	currentDirectory = newPath;
-	
+
 	// Remove trailing slash if not root
 	if (strlen(currentDirectory) > 1 && currentDirectory[strlen(currentDirectory) - 1] == '/') {
 		currentDirectory[strlen(currentDirectory) - 1] = '\0';
 	}
-	
+
 	printf("\n[xeshell]: Changed directory to: %s\r\n", currentDirectory);
 
-		// Update environment variable
+	// Update environment variable
 	_XESetEnvironmentVariable("PWD", currentDirectory, 1);
 	printf("[xeshell]: PWD environment variable updated to: %s\r\n", currentDirectory);
 }
@@ -431,7 +499,7 @@ void XEShellLS() {
 		printf("\n[xeshell]: Failed to open directory: %s\r\n", currentDirectory);
 		return;
 	}
-	
+
 	XEDirectoryEntry* dirent = (XEDirectoryEntry*)malloc(sizeof(XEDirectoryEntry));
 	if (!dirent) {
 		printf("\n[xeshell]: Memory allocation failed for directory entry\r\n");
@@ -439,10 +507,10 @@ void XEShellLS() {
 		return;
 	}
 	memset(dirent, 0, sizeof(XEDirectoryEntry));
-	
+
 	int file_count = 0;
 	printf("\n[xeshell]: Contents of %s:\r\n", currentDirectory);
-	
+
 	while (1) {
 		memset(dirent->filename, 0, 32);
 		int code = _KeReadDir(dirfd, dirent);
@@ -452,7 +520,7 @@ void XEShellLS() {
 		if (dirent->index == -1) {
 			break;
 		}
-		
+
 		file_count++;
 		if (dirent->flags & FILE_DIRECTORY) {
 			printf("\033[36m%s/\033[0m\r\n", dirent->filename);
@@ -460,7 +528,7 @@ void XEShellLS() {
 			printf("%s\r\n", dirent->filename);
 		}
 	}
-	
+
 	printf("\n[xeshell]: %d items found\r\n", file_count);
 	_KeCloseFile(dirfd);
 	free(dirent);
@@ -481,6 +549,9 @@ void XEShellPrintHelp() {
 	printf("║ help        Show this help message                        ║\n");
 	printf("║ systeminfo  Display system information                    ║\n");
 	printf("║ time        Display current time                           ║\n");
+	printf("║ modinfo     Display DCL module status (/dev/dcl)           ║\n");
+	printf("║ rngtest     Read entropy from /dev/hwrng                   ║\n");
+	printf("║ rngguess    Guess the number virtio-rng picked             ║\n");
 	printf("║ exit        Exit the shell                                 ║\n");
 	printf("╚════════════════════════════════════════════════════════════╝\n");
 	printf("\n");
@@ -510,24 +581,24 @@ void XEShellEcho(char* msg) {
 		printf("\n[xeshell]: Missing message for echo command\r\n");
 		return;
 	}
-	
+
 	printf("\n");
-	
+
 	// Handle output redirection
 	char* filename = strchr(msg, '>');
 	if (filename) {
 		filename++; // Skip '>'
-		
+
 		// Skip whitespace after '>'
 		while (*filename == ' ') {
 			filename++;
 		}
-		
+
 		if (*filename == '\0') {
 			printf("[xeshell]: Missing filename after '>'\r\n");
 			return;
 		}
-		
+
 		// Extract filename (until space or end of string)
 		char file[128];
 		int i = 0;
@@ -536,24 +607,24 @@ void XEShellEcho(char* msg) {
 			i++;
 		}
 		file[i] = '\0';
-		
+
 		// Extract message text (before '>')
 		char* msg_end = msg;
 		while (*msg_end != '>' && *msg_end != '\0') {
 			msg_end++;
 		}
 		*msg_end = '\0'; // Terminate message at '>'
-		
+
 		// Trim leading whitespace from message
 		while (*msg == ' ') {
 			msg++;
 		}
-		
+
 		if (*msg == '\0') {
 			printf("[xeshell]: No message to write to file\r\n");
 			return;
 		}
-		
+
 		// Write to file
 		FILE* f = fopen(file, "w+");
 		if (f) {
@@ -565,9 +636,162 @@ void XEShellEcho(char* msg) {
 		}
 		return;
 	}
-	
+
 	// Simple echo - just print the message
 	printf("%s\r\n", msg);
+}
+
+/*
+ * XEShellRngReadLine -- read one input line straight from the console
+ * for the rngguess game. Same key handling as XEShellReadLine (echo,
+ * backspace, enter) but with a private buffer, so the main command
+ * buffer and index state are untouched while the game is prompting.
+ * The kernel blocks in _KeReadFile until a key arrives.
+ */
+void XEShellRngReadLine(char* buf, int max) {
+	int len = 0;
+	buf[0] = '\0';
+	while (1) {
+		char b[2];
+		memset(b, 0, 2);
+		int n = (int)_KeReadFile(g_console_fd, b, 1);
+		if (n <= 0)
+			continue;
+		char c = b[0];
+		if (c == '\n' || c == '\r') {
+			printf("\n");
+			fflush(stdout);
+			return;
+		}
+		if (c == KEY_BACKSPACE) {
+			if (len > 0) {
+				printf("%c", c);
+				fflush(stdout);
+				buf[--len] = '\0';
+			}
+			continue;
+		}
+		if (c >= 32 && c <= 126 && len < max - 1) {
+			printf("%c", c);
+			fflush(stdout);
+			buf[len++] = c;
+			buf[len] = '\0';
+		}
+	}
+}
+
+/*
+ * XEShellModInfo -- print the DCL module loader status read from
+ * the /dev/dcl device node
+ */
+void XEShellModInfo() {
+	int dclfd = _KeOpenFile("/dev/dcl", FILE_OPEN_READ_ONLY);
+	if (dclfd < 0) {
+		printf("[xeshell]: /dev/dcl not available\r\n");
+		return;
+	}
+	char dclbuf[512];
+	memset(dclbuf, 0, sizeof(dclbuf));
+	size_t dclread = _KeReadFile(dclfd, dclbuf, sizeof(dclbuf) - 1);
+	_KeCloseFile(dclfd);
+	if (dclread > 0)
+		printf("%s", dclbuf);
+	else
+		printf("[xeshell]: empty DCL status\r\n");
+}
+
+/*
+ * XEShellRngTest -- pull two 16-byte samples from virtio-rng via
+ * /dev/hwrng and check the RNG actually varies between reads
+ */
+void XEShellRngTest() {
+	int rngfd = _KeOpenFile("/dev/hwrng", FILE_OPEN_READ_ONLY);
+	if (rngfd < 0) {
+		printf("[xeshell]: /dev/hwrng not available\r\n");
+		return;
+	}
+	static const char hexd[] = "0123456789abcdef";
+	unsigned char s1[16], s2[16];
+	memset(s1, 0, sizeof(s1));
+	memset(s2, 0, sizeof(s2));
+	size_t r1 = _KeReadFile(rngfd, s1, sizeof(s1));
+	size_t r2 = _KeReadFile(rngfd, s2, sizeof(s2));
+	_KeCloseFile(rngfd);
+	printf("[xeshell]: rng sample 1 (%d bytes):", (int)r1);
+	for (size_t i = 0; i < r1 && i < sizeof(s1); i++)
+		printf(" %c%c", hexd[s1[i] >> 4], hexd[s1[i] & 0xF]);
+	printf("\r\n[xeshell]: rng sample 2 (%d bytes):", (int)r2);
+	for (size_t i = 0; i < r2 && i < sizeof(s2); i++)
+		printf(" %c%c", hexd[s2[i] >> 4], hexd[s2[i] & 0xF]);
+	printf("\r\n");
+	if (r1 == 0 || r2 == 0)
+		printf("[xeshell]: rngtest FAILED - no entropy returned\r\n");
+	else if (memcmp(s1, s2, sizeof(s1)) == 0)
+		printf("[xeshell]: rngtest FAILED - both samples identical\r\n");
+	else
+		printf("[xeshell]: rngtest OK - samples differ, entropy is live\r\n");
+}
+
+/*
+ * XEShellRngGuess -- number guessing game (rngguess): the secret is
+ * drawn from the hardware RNG (/dev/hwrng -> virtio-rng loaded via
+ * the DCL module loader), so every play uses fresh device entropy.
+ */
+void XEShellRngGuess() {
+	int rngfd = _KeOpenFile("/dev/hwrng", FILE_OPEN_READ_ONLY);
+	if (rngfd < 0) {
+		printf("[xeshell]: /dev/hwrng not available\r\n");
+		return;
+	}
+	unsigned char entropy = 0;
+	size_t got = _KeReadFile(rngfd, &entropy, 1);
+	_KeCloseFile(rngfd);
+	if (got != 1) {
+		printf("[xeshell]: no entropy from the device\r\n");
+		return;
+	}
+	int secret = (entropy % 100) + 1;
+	printf("\r\n[xeshell]: virtio-rng drew a number from 1 to 100\r\n");
+	printf("[xeshell]: type 'quit' to give up\r\n");
+	int attempts = 0;
+	while (1) {
+		printf("Guess (%d): ", attempts + 1);
+		fflush(stdout);
+		char line[32];
+		XEShellRngReadLine(line, sizeof(line));
+		if (line[0] == '\0')
+			continue;
+		if (strcmp(line, "quit") == 0) {
+			printf("[xeshell]: gave up -- the number was %d\r\n", secret);
+			return;
+		}
+		int val = 0, valid = 1;
+		for (char* p = line; *p; p++) {
+			if (*p < '0' || *p > '9') {
+				valid = 0;
+				break;
+			}
+			val = val * 10 + (*p - '0');
+			if (val > 100) {
+				valid = 0;
+				break;
+			}
+		}
+		if (!valid || val < 1) {
+			printf("[xeshell]: enter a whole number from 1 to 100\r\n");
+			continue;
+		}
+		attempts++;
+		if (val == secret) {
+			printf("[xeshell]: correct! guessed in %d %s\r\n",
+			       attempts, attempts == 1 ? "try" : "tries");
+			return;
+		}
+		if (val > secret)
+			printf("[xeshell]: too high\r\n");
+		else
+			printf("[xeshell]: too low\r\n");
+	}
 }
 
 /*
@@ -654,11 +878,20 @@ void XEShellProcessLine() {
 		} else if (strcmp(cmdBuf, "exit") == 0) {
 			printf("[xeshell]: Exiting shell...\r\n");
 			_KeProcessExit();
+		} else if (strcmp(cmdBuf, "modinfo") == 0) {
+			XEShellModInfo();
+			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "rngtest") == 0) {
+			XEShellRngTest();
+			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "rngguess") == 0) {
+			XEShellRngGuess();
+			_spawnable_process = false;
 		} else if (_spawnable_process) {
 			XEShellSpawn(cmdBuf);
 		}
 
-cleanup:
+	cleanup:
 		memset(cmdBuf, 0, 1024);
 		index = 0;
 		_process_needed = false;
@@ -679,7 +912,7 @@ int main(int argc, char* arv[]) {
 
 	printf("Copyright (C) Xeneva Private Limited \n");
 	fflush(stdout);
-	
+
 	// Initialize command buffer
 	cmdBuf = (char*)malloc(1024);
 	if (!cmdBuf) {
@@ -687,7 +920,7 @@ int main(int argc, char* arv[]) {
 		return 1;
 	}
 	memset(cmdBuf, 0, 1024);
-	
+
 	// Initialize current directory
 	currentDirectory = (char*)malloc(2);
 	if (!currentDirectory) {
@@ -696,7 +929,7 @@ int main(int argc, char* arv[]) {
 		return 1;
 	}
 	strcpy(currentDirectory, "/");
-	
+
 	// Initialize shell state
 	_process_needed = false;
 	_spawnable_process = true;
@@ -706,26 +939,26 @@ int main(int argc, char* arv[]) {
 	index = 0;
 	timercount = 0;
 	g_console_fd = XENEVA_STDIN;
-	
+
 	// Set environment variable
 	_XESetEnvironmentVariable("PWD", currentDirectory, 0);
 	printf("[xeshell]: PWD environment variable initialized to: %s\r\n", currentDirectory);
-	
+
 	// Set up signal handling
 	if (_KeSetSignal(SIGINT, XEShellSignalTest) != 0) {
 		printf("[xeshell]: Warning: Failed to set up signal handler\r\n");
 	}
 	// Timer functionality disabled - not available in XenevaOS
-	
+
 	printf("[xeshell]: Shell initialized successfully\r\n");
 	fflush(stdout);
-	
+
 	// Timer test code disabled - not available in XenevaOS
 #if 0
 	// Unix/Linux timer functions not available in XenevaOS
 	// This code is commented out
 #endif
-	
+
 	while (1) {
 		XEShellWriteCurrentDir();
 		XEShellReadLine();
