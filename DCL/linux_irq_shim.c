@@ -244,6 +244,20 @@ void outb(unsigned char v, unsigned long addr)
 	dcl_pio_note();
 }
 
+unsigned short inw(unsigned long addr)
+{
+	(void)addr;
+	dcl_pio_note();
+	return 0;
+}
+
+void outw(unsigned short v, unsigned long addr)
+{
+	(void)v;
+	(void)addr;
+	dcl_pio_note();
+}
+
 unsigned int inl(unsigned long addr)
 {
 	(void)addr;

@@ -37,6 +37,36 @@
 #define module_exit(func)
 
 /*
+ * module_driver() -- mainline's bus-driver registration helper (upstream:
+ * include/linux/device/driver.h). Two details in its shape are what other
+ * DCL pieces are built on:
+ *
+ *   - the init function it generates is named __driver##_init, taking the
+ *     driver variable's name; module_init then stamps that name into
+ *     __dcl_initcall_<...>_init, the name DclRunInitcalls() (DCL/
+ *     linux_mm_shim.c) calls. drm_module.h's
+ *     drm_module_pci_driver_if_modeset(bochs_pci_driver, bochs_modeset)
+ *     therefore produces __dcl_initcall_bochs_pci_driver_init.
+ *
+ *   - it takes the registration function as a macro argument and calls it
+ *     with the driver, so drm_module.h can slip the
+ *     drm_firmware_drivers_only() test between module_init and
+ *     pci_register_driver without this header knowing about DRM.
+ *
+ * Mainline also generates an exit half (__driver##_exit -> __unregister) and
+ * passes it to module_exit(). DCL has no unload and module_exit above is
+ * empty, so that half would be a static function with no reference --
+ * -Wunused-function on every build. Dropped rather than silenced; it returns
+ * with module_exit() if unloading ever exists.
+ */
+#define module_driver(__driver, __register, __unregister, ...) \
+static int __init __driver##_init(void) \
+{ \
+	return __register(&(__driver), ##__VA_ARGS__); \
+} \
+module_init(__driver##_init)
+
+/*
  * module_param_named() / module_param() / MODULE_PARM_DESC() -- no-ops, for
  * the same reason MODULE_LICENSE() above is.
  *

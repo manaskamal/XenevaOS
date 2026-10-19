@@ -113,4 +113,35 @@ static inline void devres_free(void* res)
 	kfree(res);
 }
 
+/*
+ * The four "managed" calls bochs.c makes around its BARs. "Managed" for the
+ * region pair means the claim would be released when the device goes away;
+ * no device in this tree ever releases (see the header comment), so the plain
+ * claim is the whole behavior -- and requesting it again here instead of
+ * calling request_mem_region() directly is what keeps the driver's
+ * error handling meaningful: a NULL still means "someone else owns this
+ * window", which is the one answer bochs_pci_probe tests before proceeding.
+ *
+ * devm_ioremap()/devm_ioremap_wc() cannot be inlines here: their bodies need
+ * AuMapMMIO() and the page size, which live under <Mm/vmmngr.h> -- a kernel
+ * header the BaseHdr tree does not include. Bodies in DCL/pci_shim.c. They
+ * are exactly what the native drivers do with a BAR (virtgpu.cpp maps its
+ * registers the same way): the linear physical->virtual map is for RAM, PCI
+ * BARs are device memory, and a PCI window is not promised to land inside
+ * the direct map's range -- so the mapping is made explicitly, for the
+ * window, with device attributes.
+ */
+struct resource* devm_request_mem_region(struct device* dev,
+					 resource_size_t start,
+					 resource_size_t n,
+					 const char* name);
+struct resource* devm_request_region(struct device* dev,
+				     resource_size_t start,
+				     resource_size_t n,
+				     const char* name);
+void* devm_ioremap(struct device* dev, resource_size_t offset,
+		   resource_size_t size);
+void* devm_ioremap_wc(struct device* dev, resource_size_t offset,
+		      resource_size_t size);
+
 #endif /* _LINUX_DEVRES_H */

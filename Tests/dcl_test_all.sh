@@ -27,21 +27,21 @@ cd "$(dirname "$0")/.." || exit 1
 
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=236    # BaseHdr/linux/*.h
+EXP_LINUX_H=238    # BaseHdr/linux/*.h
 EXP_ASM_H=16       # BaseHdr/asm/*.h
-EXP_DCL_C=27       # DCL/*.c   (dcl_va_trampoline.s adds the 28th object)
-EXP_DCL_O=28       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=91      # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
-                   #   virtio_console, and the drm set: core, vkms,
-                   #   dma-buf, lib)
-EXP_ALL_O=250      # everything under KernelAA64/obj
+EXP_DCL_C=28       # DCL/*.c   (dcl_va_trampoline.s adds the 29th object)
+EXP_DCL_O=29       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=92      # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+                   #   virtio_console, and the drm set: core, vkms, tiny/
+                   #   bochs, dma-buf, lib)
+EXP_ALL_O=252      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=108   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup
+EXP_DCLTEST=186   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup + 20 writeback pixel proof + 13 page flip event + 45 stage-5 card1 (bochs)
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -106,9 +106,37 @@ cp -f Process/Terminal/term.exe Resources/resources/ >>"$LOG" 2>&1
 # log ends at the banner, so every assertion below fails on a boot that
 # never happened. Verified -- the same run green on a non-TTY stdin, 17
 # FAILED on a pty.
+#
+# Stage 5's pixel proof needs one thing done *during* the run: when the
+# guest's dcltest says the bochs pattern commit has returned, take a
+# screendump of bochs0 through QEMU's monitor.  The guest cannot see its
+# own scanout -- the pixels belong to the device -- so the only place to
+# look at them is here, from the host, while QEMU is alive.  The helper
+# polls the log for that line and does the one monitor command; it is
+# killed below if QEMU ends before the line ever appears.
+SHOT=${SHOT:-/tmp/xeneva/bochs.ppm}
+rm -f "$SHOT"
+python3 ./Tests/dcl_screendump.py wait \
+	--log "$LOG" \
+	--marker "[dcltest] info bochs scanout committed" \
+	--out "$SHOT" --dev bochs0 --timeout 90 >/dev/null 2>&1 &
+SHOOT_PID=$!
+
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
 	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
 rc=$?
+
+# The helper has either already exited with the screendump, or is still
+# polling a marker that will never come (a failed boot, a failed commit).
+if kill -0 "$SHOOT_PID" 2>/dev/null; then
+	kill "$SHOOT_PID" 2>/dev/null
+	wait "$SHOOT_PID" 2>/dev/null
+	shoot_rc=2
+else
+	wait "$SHOOT_PID"
+	shoot_rc=$?
+fi
+
 case $rc in
 	124) ok "QEMU ran to timeout (124, expected)" ;;
 	0)   ok "QEMU exited 0" ;;
@@ -172,6 +200,43 @@ expect "virtio_console is not a .ko"        "[modtest]: virtio_console built-in"
 expect "virtio-console device found"        "[dcl-virtio]: virtio-console device registered"
 expect "vport node created"                 "[dcl]: device 'vport"
 expect "vport round-trip"                   "[modtest]: vport selftest rc=0"
+
+# Stage 5: drivers/gpu/drm/tiny/bochs.c, vendored from source and compiled
+# into the image -- the tree's first PCI driver: matched by the DCL PCI
+# fabric (DCL/pci_shim.c) against QEMU's bochs-display and bound with no
+# virtio ring anywhere.  These are the guest's lines; the pixels are the
+# host's, asserted right below.
+expect "bochs pci driver registered"        "[dcl]: bochs pci driver registered"
+expect "bochs bound by the pci fabric"      "bound to bochs-drm"
+expect "bochs published card1"              "[dcl]: device_add 'dri/card1'"
+# The slot ceiling must not be what limits the bus: the scan walks only the
+# buses the ECAM window covers, and "0 dropped" is the scan saying the
+# ceiling was never reached. A regression to walking past the window shows
+# up here as a count -- the first boot with the ceiling raised read RAM as
+# devices and its drop count ran into the hundreds.
+expect "pci bus fits its ceiling"           "0 dropped"
+
+# And the pattern itself: dcltest committed a 0x123456-rgb fill through
+# card1 -- bochs.c's shadow plane memcpy'd it into BAR0, which is what the
+# device scans out -- and the helper above took the screendump at that
+# moment.  A screendump that never got taken and one that shows something
+# else are different failures, so they report separately.
+if [ "$shoot_rc" -eq 0 ] && [ -f "$SHOT" ]; then
+	ok "bochs screendump captured"
+else
+	bad "bochs screendump captured" "helper exit $shoot_rc"
+fi
+if [ -f "$SHOT" ]; then
+	if pix_msg=$(python3 ./Tests/dcl_screendump.py check \
+			--ppm "$SHOT" --rgb 123456 2>&1); then
+		ok "bochs scanout pixel proof"
+	else
+		bad "bochs scanout pixel proof" \
+			"$(printf '%s' "$pix_msg" | tail -1 | cut -c1-100)"
+	fi
+else
+	bad "bochs scanout pixel proof" "no screendump at $SHOT"
+fi
 
 # The ELF loader is a separate guarantee from "the driver links" -- it still
 # loads and runs test_module.o through DCL/module_loader.c.

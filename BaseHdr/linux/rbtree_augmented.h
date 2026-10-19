@@ -229,7 +229,13 @@ __rb_erase_augmented(struct rb_node *node, struct rb_root *root,
 	struct rb_node *child = node->rb_right;
 	struct rb_node *tmp = node->rb_left;
 	struct rb_node *parent, *rebalance;
-	unsigned long pc;
+	/*
+	 * DCL delta -- `uintptr_t`; see rbtree.h.  `pc` holds a whole
+	 * __rb_parent_color (parent pointer plus color bit) and is written
+	 * back into nodes below, so it cannot be a 32-bit `unsigned long`
+	 * here.
+	 */
+	uintptr_t pc;
 
 	if (!tmp) {
 		/*

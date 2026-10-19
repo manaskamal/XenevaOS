@@ -140,6 +140,20 @@ static unsigned int kms_prop_id(int fd, unsigned int obj_id,
 	return 0;
 }
 
+/* The writeback pixel pattern, and what the capture buffer must hold for
+ * it.  Every channel is derived from the coordinates -- B = x ^ y, G = y,
+ * R = x, X = 0 -- so a frame read at the wrong offset, stride or line
+ * order compares unequal somewhere.  The capture's top byte is 0xff: that
+ * is not the pattern, it is what argb_u16_to_XRGB8888() in
+ * Vendored/drivers/gpu/drm/vkms/vkms_formats.c writes there
+ * unconditionally, so the compare masks it in. */
+static unsigned int wb_pat(int x, int y) {
+	return ((unsigned int)(x & 0xFF) << 16) |
+	       ((unsigned int)(y & 0xFF) << 8) |
+	       ((unsigned int)(x ^ y) & 0xFF);
+}
+#define WB_CAP_MASK 0xFF000000u
+
 int main(int argc, char* argv[]) {
 	unsigned char a[64], b[64];
 	int fd, n, i, differs;
@@ -445,7 +459,7 @@ int main(int argc, char* argv[]) {
 			static unsigned int enc_ids[4], conn_encs[4];
 			static unsigned int plane_ids[4], formats[64];
 			static struct drm_mode_modeinfo_arg modes[128];
-			int virt = -1, prim_xrgb = 0;
+			int virt = -1, wb = -1, prim_xrgb = 0;
 			unsigned int virt_type = 0, wb_type = 0;
 
 			memset(&res, 0, sizeof res);
@@ -550,6 +564,7 @@ int main(int argc, char* argv[]) {
 					virt_type = conn.connector_type;
 				} else {
 					wb_type = conn.connector_type;
+					wb = k;
 				}
 			}
 			report("drm kms virtual connector found",
@@ -605,20 +620,20 @@ int main(int argc, char* argv[]) {
 					unsigned int height, width, bpp, flags;
 					unsigned int handle, pitch;
 					unsigned long long size;
-				} dumb;
+				} dumb, dumb2;
 				struct drm_mode_map_dumb_arg {
 					unsigned int handle, pad;
 					unsigned long long offset;
-				} map;
+				} map, map2;
 				struct drm_mode_destroy_dumb_arg {
 					unsigned int handle, pad;
-				} dd;
+				} dd, dd2;
 				struct drm_mode_fb_cmd2_arg {
 					unsigned int fb_id, width, height;
 					unsigned int pixel_format, flags;
 					unsigned int handles[4], pitches[4], offsets[4];
 					unsigned long long modifier[4];
-				} fb;
+				} fb, fb2;
 				struct drm_mode_create_blob_arg {
 					unsigned long long data;
 					unsigned int length, blob_id;
@@ -633,7 +648,7 @@ int main(int argc, char* argv[]) {
 				unsigned int plane_fb_id, plane_crtc_id;
 				unsigned int src_x, src_y, src_w, src_h;
 				unsigned int crtc_x, crtc_y, crtc_w, crtc_h;
-				static unsigned int a_objs[3], a_counts[3];
+				static unsigned int a_objs[4], a_counts[4];
 				static unsigned int a_props[13];
 				static unsigned long long a_vals[13];
 				int rc;
@@ -811,6 +826,100 @@ int main(int argc, char* argv[]) {
 					   (int)(crtc.mode.hdisplay == 1024 &&
 						 crtc.mode.vdisplay == 768), 1);
 
+				/* ---- stage 4: page flip -> vblank event ----
+				 *
+				 * A flip to a second framebuffer with
+				 * DRM_MODE_PAGE_FLIP_EVENT asked for: the
+				 * completion event must come back through
+				 * the same fd that asked.  The commit
+				 * tail's tick delivers it -- drm_stubs.c.
+				 */
+				struct drm_mode_crtc_page_flip_arg {
+					unsigned int crtc_id, fb_id;
+					unsigned int flags, reserved;
+					unsigned long long user_data;
+				} flip;
+				struct drm_event_vblank_arg {
+					unsigned int type, length;
+					unsigned long long user_data;
+					unsigned int tv_sec, tv_usec;
+					unsigned int sequence, crtc_id;
+				} ev;
+
+				memset(&dumb2, 0, sizeof dumb2);
+				dumb2.width = 1024;
+				dumb2.height = 768;
+				dumb2.bpp = 32;
+				report("drm kms flip CREATE_DUMB",
+					   _KeFileIoControl(vfd, 0xC02064B2,
+							    &dumb2), 0);
+				memset(&map2, 0, sizeof map2);
+				map2.handle = dumb2.handle;
+				report("drm kms flip MAP_DUMB",
+					   _KeFileIoControl(vfd, 0xC01064B3,
+							    &map2), 0);
+				memset(&fb2, 0, sizeof fb2);
+				fb2.width = 1024;
+				fb2.height = 768;
+				fb2.pixel_format = 0x34325258; /* 'X','R','2','4' */
+				fb2.handles[0] = dumb2.handle;
+				fb2.pitches[0] = dumb2.pitch;
+				report("drm kms flip ADDFB2",
+					   _KeFileIoControl(vfd, 0xC06864B8, &fb2), 0);
+
+				/* the flip itself: 0xC01864B0 is
+				 * _IOWR('d', 0xB0, 24), flags 0x01 is
+				 * PAGE_FLIP_EVENT, and user_data rides
+				 * through to the event unchanged. */
+				memset(&flip, 0, sizeof flip);
+				flip.crtc_id = crtc_ids[0];
+				flip.fb_id = fb2.fb_id;
+				flip.flags = 0x01;
+				flip.user_data = 0x50494C46ULL; /* 'FLIP' */
+				report("drm kms flip event request",
+					   _KeFileIoControl(vfd, 0xC01864B0, &flip), 0);
+
+				/* the commit tail's tick ran inside the
+				 * ioctl, so the event is already queued:
+				 * one 32-byte drm_event_vblank record --
+				 * header, the user_data above, vblank
+				 * timestamp and sequence. */
+				memset(&ev, 0, sizeof ev);
+				report("drm kms flip event read",
+					   (int)_KeReadFile(vfd, &ev, sizeof ev),
+					   (int)sizeof ev);
+				report("drm kms flip event type",
+					   (int)ev.type, 0x02); /* FLIP_COMPLETE */
+				report("drm kms flip event length",
+					   (int)ev.length, (int)sizeof ev);
+				report("drm kms flip event user data",
+					   (int)(ev.user_data == 0x50494C46ULL), 1);
+				report("drm kms flip event crtc",
+					   (int)ev.crtc_id, (int)crtc_ids[0]);
+				report("drm kms flip event sequence",
+					   (int)(ev.sequence != 0), 1);
+
+				/* flip back without EVENT: nothing more to
+				 * read, and the plane carries the stage-2
+				 * fb again when the disable below runs. */
+				flip.fb_id = fb.fb_id;
+				flip.flags = 0;
+				report("drm kms flip back",
+					   _KeFileIoControl(vfd, 0xC01864B0, &flip), 0);
+
+				/* fb2 is unbound again: RMFB then
+				 * DESTROY_DUMB. */
+				{
+					unsigned int rmfb_id = fb2.fb_id;
+					report("drm kms flip RMFB",
+						   _KeFileIoControl(vfd, 0xC00464AF,
+								    &rmfb_id), 0);
+				}
+				memset(&dd2, 0, sizeof dd2);
+				dd2.handle = dumb2.handle;
+				report("drm kms flip DESTROY_DUMB",
+					   _KeFileIoControl(vfd, 0xC00864B4, &dd2), 0);
+
 				/* disable: plane off, crtc inactive with its
 				 * mode cleared, connector detached -- the same
 				 * three objects again.  MODE_ID=0 is what turns
@@ -856,8 +965,698 @@ int main(int argc, char* argv[]) {
 				report("drm kms MAP_DUMB after destroy fails",
 					   (int)(_KeFileIoControl(vfd, 0xC01064B3,
 								  &map) != 0), 1);
+
+				/* ---- stage 3: writeback, the pixel proof ----
+				 *
+				 * The frame the app paints must come back
+				 * composed through the writeback connector:
+				 * source buffer -> (composer) -> capture
+				 * buffer, both reached through this app's
+				 * own mappings.  The pattern is what makes
+				 * it a pixel proof and not a plumbing
+				 * proof -- see wb_pat() above.
+				 *
+				 * The wb job is one-shot: WRITEBACK_FB_ID
+				 * applies to this commit only and reads
+				 * back 0.  No out-fence is asked for -- the
+				 * completion half (drm_writeback_signal_
+				 * completion) has already run when the
+				 * ioctl returns, because DCL's vblank tick
+				 * runs the composer inline; see
+				 * DCL/drm_stubs.c.
+				 */
+				memset(&dumb, 0, sizeof dumb);
+				dumb.width = 1024;
+				dumb.height = 768;
+				dumb.bpp = 32;
+				report("drm kms wb src CREATE_DUMB",
+					   _KeFileIoControl(vfd, 0xC02064B2,
+							    &dumb), 0);
+				memset(&dumb2, 0, sizeof dumb2);
+				dumb2.width = 1024;
+				dumb2.height = 768;
+				dumb2.bpp = 32;
+				report("drm kms wb capture CREATE_DUMB",
+					   _KeFileIoControl(vfd, 0xC02064B2,
+							    &dumb2), 0);
+
+				memset(&map, 0, sizeof map);
+				map.handle = dumb.handle;
+				report("drm kms wb src MAP_DUMB",
+					   _KeFileIoControl(vfd, 0xC01064B3,
+							    &map), 0);
+				memset(&map2, 0, sizeof map2);
+				map2.handle = dumb2.handle;
+				report("drm kms wb capture MAP_DUMB",
+					   _KeFileIoControl(vfd, 0xC01064B3,
+							    &map2), 0);
+
+				/* paint the source through the mapping;
+				 * the capture buffer is only ever read
+				 * afterwards. */
+				{
+					volatile unsigned int* src =
+						(volatile unsigned int*)(size_t)
+							map.offset;
+					for (int y = 0; y < 768; y++)
+						for (int x = 0; x < 1024; x++)
+							src[y * 1024 + x] =
+								wb_pat(x, y);
+				}
+
+				memset(&fb, 0, sizeof fb);
+				fb.width = 1024;
+				fb.height = 768;
+				fb.pixel_format = 0x34325258; /* 'X','R','2','4' */
+				fb.handles[0] = dumb.handle;
+				fb.pitches[0] = dumb.pitch;
+				report("drm kms wb src ADDFB2",
+					   _KeFileIoControl(vfd, 0xC06864B8, &fb), 0);
+				memset(&fb2, 0, sizeof fb2);
+				fb2.width = 1024;
+				fb2.height = 768;
+				fb2.pixel_format = 0x34325258;
+				fb2.handles[0] = dumb2.handle;
+				fb2.pitches[0] = dumb2.pitch;
+				report("drm kms wb capture ADDFB2",
+					   _KeFileIoControl(vfd, 0xC06864B8, &fb2), 0);
+
+				/* the writeback connector's two atomic
+				 * properties: the standard CRTC_ID and
+				 * WRITEBACK_FB_ID, which only exists once
+				 * the client opted into the writeback caps
+				 * at the top of this block. */
+				unsigned int wb_conn_id =
+					(wb >= 0) ? conn_ids[wb] : 0;
+				unsigned int wb_crtc_id = kms_prop_id(vfd,
+					wb_conn_id, DRM_MODE_OBJECT_CONNECTOR, "CRTC_ID");
+				unsigned int wb_fb_id = kms_prop_id(vfd,
+					wb_conn_id, DRM_MODE_OBJECT_CONNECTOR,
+					"WRITEBACK_FB_ID");
+				report("drm kms wb atomic property ids",
+					   (int)(wb_crtc_id != 0 && wb_fb_id != 0), 1);
+				report("drm kms wb pixel formats prop",
+					   (int)(kms_prop_id(vfd, wb_conn_id,
+							     DRM_MODE_OBJECT_CONNECTOR,
+							     "WRITEBACK_PIXEL_FORMATS") != 0), 1);
+
+				/* the pipeline back up: connector, crtc and
+				 * plane exactly as stage 2 committed them
+				 * (the mode blob is still there). */
+				a_objs[0] = conn_ids[virt];
+				a_counts[0] = 1;
+				a_objs[1] = crtc_ids[0];
+				a_counts[1] = 2;
+				a_objs[2] = plane_ids[0];
+				a_counts[2] = 10;
+				{
+					unsigned int p = 0;
+					a_props[p] = conn_crtc_id;
+					a_vals[p++] = crtc_ids[0];
+					a_props[p] = crtc_mode_id;
+					a_vals[p++] = blob.blob_id;
+					a_props[p] = crtc_active;
+					a_vals[p++] = 1;
+					a_props[p] = plane_fb_id;
+					a_vals[p++] = fb.fb_id;
+					a_props[p] = plane_crtc_id;
+					a_vals[p++] = crtc_ids[0];
+					a_props[p] = src_x;
+					a_vals[p++] = 0;
+					a_props[p] = src_y;
+					a_vals[p++] = 0;
+					a_props[p] = src_w;
+					a_vals[p++] = 1024ULL << 16;
+					a_props[p] = src_h;
+					a_vals[p++] = 768ULL << 16;
+					a_props[p] = crtc_x;
+					a_vals[p++] = 0;
+					a_props[p] = crtc_y;
+					a_vals[p++] = 0;
+					a_props[p] = crtc_w;
+					a_vals[p++] = 1024;
+					a_props[p] = crtc_h;
+					a_vals[p++] = 768;
+				}
+				memset(&at, 0, sizeof at);
+				at.count_objs = 3;
+				at.objs_ptr = (unsigned long long)(size_t)a_objs;
+				at.count_props_ptr =
+					(unsigned long long)(size_t)a_counts;
+				at.props_ptr = (unsigned long long)(size_t)a_props;
+				at.prop_values_ptr =
+					(unsigned long long)(size_t)a_vals;
+				at.flags = 0x400;
+				report("drm kms wb pipeline commit",
+					   _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+
+				/* the capture request: attach the writeback
+				 * connector to the crtc and hand it the
+				 * capture fb for this one commit. */
+				static unsigned int w_props[2];
+				static unsigned long long w_vals[2];
+				a_objs[0] = wb_conn_id;
+				a_counts[0] = 2;
+				w_props[0] = wb_crtc_id;
+				w_vals[0] = crtc_ids[0];
+				w_props[1] = wb_fb_id;
+				w_vals[1] = fb2.fb_id;
+				memset(&at, 0, sizeof at);
+				at.count_objs = 1;
+				at.objs_ptr = (unsigned long long)(size_t)a_objs;
+				at.count_props_ptr =
+					(unsigned long long)(size_t)a_counts;
+				at.props_ptr = (unsigned long long)(size_t)w_props;
+				at.prop_values_ptr =
+					(unsigned long long)(size_t)w_vals;
+				at.flags = 0x400;
+				report("drm kms wb capture commit",
+					   _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+
+				/* the frame came back: the composer read the
+				 * source through the kernel's mapping, blended
+				 * it, and wrote the capture buffer through the
+				 * wb job's -- all of it before the ioctl
+				 * returned. */
+				{
+					volatile unsigned int* cap =
+						(volatile unsigned int*)(size_t)
+							map2.offset;
+					int row_ok;
+
+					report("drm kms wb capture pixel (0,0)",
+						   (int)(cap[0] ==
+							 (WB_CAP_MASK |
+							  wb_pat(0, 0))), 1);
+					report("drm kms wb capture pixel center",
+						   (int)(cap[384 * 1024 + 512] ==
+							 (WB_CAP_MASK |
+							  wb_pat(512, 384))), 1);
+					report("drm kms wb capture pixel (1023,767)",
+						   (int)(cap[767 * 1024 + 1023] ==
+							 (WB_CAP_MASK |
+							  wb_pat(1023, 767))), 1);
+					row_ok = 1;
+					for (int x = 0; x < 1024; x++)
+						if (cap[100 * 1024 + x] !=
+						    (WB_CAP_MASK |
+						     wb_pat(x, 100)))
+							row_ok = 0;
+					report("drm kms wb capture row 100",
+						   row_ok, 1);
+					row_ok = 1;
+					for (int x = 0; x < 1024; x++)
+						if (cap[767 * 1024 + x] !=
+						    (WB_CAP_MASK |
+						     wb_pat(x, 767)))
+							row_ok = 0;
+					report("drm kms wb capture row 767",
+						   row_ok, 1);
+				}
+
+				/* tear down: the writeback connector detaches
+				 * and drops its spent job (the core's check
+				 * releases a job with no fb), the main
+				 * connector detaches, plane and crtc go back
+				 * off. */
+				a_objs[0] = conn_ids[virt];
+				a_counts[0] = 1;
+				a_objs[1] = wb_conn_id;
+				a_counts[1] = 2;
+				a_objs[2] = crtc_ids[0];
+				a_counts[2] = 2;
+				a_objs[3] = plane_ids[0];
+				a_counts[3] = 2;
+				a_props[0] = conn_crtc_id;
+				a_vals[0] = 0;
+				a_props[1] = wb_crtc_id;
+				a_vals[1] = 0;
+				a_props[2] = wb_fb_id;
+				a_vals[2] = 0;
+				a_props[3] = crtc_active;
+				a_vals[3] = 0;
+				a_props[4] = crtc_mode_id;
+				a_vals[4] = 0;
+				a_props[5] = plane_fb_id;
+				a_vals[5] = 0;
+				a_props[6] = plane_crtc_id;
+				a_vals[6] = 0;
+				memset(&at, 0, sizeof at);
+				at.count_objs = 4;
+				at.objs_ptr = (unsigned long long)(size_t)a_objs;
+				at.count_props_ptr =
+					(unsigned long long)(size_t)a_counts;
+				at.props_ptr = (unsigned long long)(size_t)a_props;
+				at.prop_values_ptr =
+					(unsigned long long)(size_t)a_vals;
+				at.flags = 0x400;
+				report("drm kms wb atomic disable",
+					   _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+
+				{
+					unsigned int rmfb_id = fb.fb_id;
+					report("drm kms wb RMFB src",
+						   _KeFileIoControl(vfd, 0xC00464AF,
+								    &rmfb_id), 0);
+					rmfb_id = fb2.fb_id;
+					report("drm kms wb RMFB capture",
+						   _KeFileIoControl(vfd, 0xC00464AF,
+								    &rmfb_id), 0);
+				}
+				memset(&dd, 0, sizeof dd);
+				dd.handle = dumb.handle;
+				report("drm kms wb DESTROY_DUMB src",
+					   _KeFileIoControl(vfd, 0xC00864B4, &dd), 0);
+				memset(&dd2, 0, sizeof dd2);
+				dd2.handle = dumb2.handle;
+				report("drm kms wb DESTROY_DUMB capture",
+					   _KeFileIoControl(vfd, 0xC00864B4, &dd2), 0);
 			}
 			_KeCloseFile(vfd);
+		}
+	}
+
+	/* ── stage 5: /dev/dri/card1 -- the vendored tiny/bochs.c ─────────────
+	 *
+	 * The second DRM device is this tree's first PCI driver: no virtio
+	 * rings anywhere, matched by the DCL PCI fabric (pci_shim.c) against
+	 * QEMU's bochs-display (1234:1111) and bound at 0000:00:04.0.  Every
+	 * uapi shape below mirrors the vkms block above -- same two-pass
+	 * ioctls, same property names -- but the half userspace cannot see is
+	 * the point: the commit's plane update memcpys the shadow buffer into
+	 * the device's BAR0, which QEMU scans out.  The real pixel proof is
+	 * taken from the host side (the gate screendumps QEMU's monitor and
+	 * reads the pixels), so this block commits one known pattern and
+	 * marks the moment in the log for the gate to wait on:
+	 *
+	 *     [dcltest] info bochs scanout committed      (the note() below)
+	 *
+	 * The pattern is 0x00123456 -- XRGB8888, so R 0x12, G 0x34, B 0x56 --
+	 * written across the whole mapped buffer, which makes the check
+	 * stride-proof: every way of sampling the buffer sees the same
+	 * colour.
+	 *
+	 * One difference from the vkms block: the mode is not fixed at
+	 * 1024x768.  bochs's connector offers its EDID's modes when the
+	 * hardware has an EDID (QEMU's does) and defx x defy otherwise, so
+	 * the app takes the one entry DRM marks DRM_MODE_TYPE_PREFERRED and
+	 * sizes the dumb buffer, the framebuffer and both rectangles from it.
+	 */
+	{
+		struct drm_version_arg {
+			int major, minor, patchlevel;
+			size_t name_len;
+			char* name;
+			size_t date_len;
+			char* date;
+			size_t desc_len;
+			char* desc;
+		} ver;
+		struct drm_get_cap_arg {
+			unsigned long long capability;
+			unsigned long long value;
+		} cap;
+		struct drm_set_client_cap_arg {
+			unsigned long long capability;
+			unsigned long long value;
+		} scc;
+		struct drm_mode_card_res_arg {
+			unsigned long long fb_id_ptr, crtc_id_ptr;
+			unsigned long long connector_id_ptr;
+			unsigned long long encoder_id_ptr;
+			unsigned int count_fbs, count_crtcs;
+			unsigned int count_connectors, count_encoders;
+			unsigned int min_width, max_width;
+			unsigned int min_height, max_height;
+		} res;
+		struct drm_mode_modeinfo_arg {
+			unsigned int clock;
+			unsigned short hdisplay, hsync_start, hsync_end;
+			unsigned short htotal, hskew;
+			unsigned short vdisplay, vsync_start, vsync_end;
+			unsigned short vtotal, vscan;
+			unsigned int vrefresh, flags, type;
+			char name[32];
+		};
+		struct drm_mode_get_connector_arg {
+			unsigned long long encoders_ptr, modes_ptr;
+			unsigned long long props_ptr, prop_values_ptr;
+			unsigned int count_modes, count_props;
+			unsigned int count_encoders;
+			unsigned int encoder_id, connector_id;
+			unsigned int connector_type, connector_type_id;
+			unsigned int connection, mm_width, mm_height;
+			unsigned int subpixel, pad;
+		} conn;
+		struct drm_mode_get_plane_res_arg {
+			unsigned long long plane_id_ptr;
+			unsigned int count_planes;
+		} pres;
+		struct drm_mode_get_plane_arg {
+			unsigned int plane_id, crtc_id, fb_id;
+			unsigned int possible_crtcs, gamma_size;
+			unsigned int count_format_types;
+			unsigned long long format_type_ptr;
+		} pl;
+		struct drm_mode_create_dumb_arg {
+			unsigned int height, width, bpp, flags;
+			unsigned int handle, pitch;
+			unsigned long long size;
+		} dumb;
+		struct drm_mode_map_dumb_arg {
+			unsigned int handle, pad;
+			unsigned long long offset;
+		} map;
+		struct drm_mode_fb_cmd2_arg {
+			unsigned int fb_id, width, height;
+			unsigned int pixel_format, flags;
+			unsigned int handles[4], pitches[4], offsets[4];
+			unsigned long long modifier[4];
+		} fb;
+		struct drm_mode_create_blob_arg {
+			unsigned long long data;
+			unsigned int length, blob_id;
+		} blob;
+		struct drm_mode_atomic_arg {
+			unsigned int flags, count_objs;
+			unsigned long long objs_ptr, count_props_ptr;
+			unsigned long long props_ptr, prop_values_ptr;
+			unsigned long long reserved, user_data;
+		} at;
+		struct drm_mode_crtc_arg {
+			unsigned long long set_connectors_ptr;
+			unsigned int count_connectors;
+			unsigned int crtc_id, fb_id, x, y;
+			unsigned int gamma_size, mode_valid;
+			struct drm_mode_modeinfo_arg mode;
+		} prog;
+		static unsigned int crtc_ids[4], conn_ids[4], plane_ids[4];
+		static unsigned int enc_ids[4];
+		static unsigned int a_objs[4], a_counts[4];
+		static unsigned int a_props[13];
+		static unsigned long long a_vals[13];
+		static struct drm_mode_modeinfo_arg modes[128];
+		unsigned int conn_crtc_id, crtc_mode_id, crtc_active;
+		unsigned int plane_fb_id, plane_crtc_id;
+		unsigned int src_x, src_y, src_w, src_h;
+		unsigned int crtc_x, crtc_y, crtc_w, crtc_h;
+		unsigned int bw = 0, bh = 0, k, pick = 0;
+		char bname[32], bdesc[64];
+		int bfd = opendev("/dev/dri/card1",
+				  FILE_OPEN_READ_ONLY | FILE_OPEN_WRITE);
+
+		if (bfd >= 0) {
+			/* identity first: this is the PCI device's driver,
+			 * not a second name for card0. */
+			memset(&ver, 0, sizeof ver);
+			memset(bname, 0, sizeof bname);
+			memset(bdesc, 0, sizeof bdesc);
+			ver.name = bname;
+			ver.name_len = sizeof bname;
+			ver.desc = bdesc;
+			ver.desc_len = sizeof bdesc;
+			report("drm card1 VERSION",
+			       _KeFileIoControl(bfd, 0xC0406400, &ver), 0);
+			report("drm card1 version major", ver.major, 1);
+			report("drm card1 name is bochs-drm",
+			       (int)memcmp(bname, "bochs-drm", 9), 0);
+			report("drm card1 desc length", (int)ver.desc_len,
+			       (int)strlen("bochs dispi vga interface (qemu stdvga)"));
+
+			memset(&cap, 0, sizeof cap);
+			cap.capability = 0x1;	/* DRM_CAP_DUMB_BUFFER */
+			report("drm card1 GET_CAP",
+			       _KeFileIoControl(bfd, 0xC010640C, &cap), 0);
+			report("drm card1 dumb-buffer cap", (int)cap.value, 1);
+
+			/* The caps the vkms block sets too: universal planes
+			 * makes the primary plane listable, atomic makes the
+			 * commit legal.  Both are _IOW('d', 0x0D). */
+			scc.capability = 2;
+			scc.value = 1;
+			report("drm card1 universal planes cap",
+			       _KeFileIoControl(bfd, 0x4010640D, &scc), 0);
+			scc.capability = 3;
+			report("drm card1 atomic cap",
+			       _KeFileIoControl(bfd, 0x4010640D, &scc), 0);
+
+			/* bochs registers one CRTC, one encoder and one
+			 * connector.  The connector needs no hotplug poll:
+			 * with no detect hook the probe helper treats the
+			 * status as always connected -- so it is, and the
+			 * first GETCONNECTOR is what builds the mode list. */
+			memset(&res, 0, sizeof res);
+			report("drm card1 GETRESOURCES",
+			       _KeFileIoControl(bfd, 0xC04064A0, &res), 0);
+			report("drm card1 crtcs", (int)res.count_crtcs, 1);
+			report("drm card1 connectors",
+			       (int)res.count_connectors, 1);
+			report("drm card1 encoders", (int)res.count_encoders, 1);
+			report("drm card1 fbs", (int)res.count_fbs, 0);
+
+			res.crtc_id_ptr = (unsigned long long)(size_t)crtc_ids;
+			res.count_crtcs = 4;
+			res.connector_id_ptr =
+				(unsigned long long)(size_t)conn_ids;
+			res.count_connectors = 4;
+			res.encoder_id_ptr =
+				(unsigned long long)(size_t)enc_ids;
+			res.count_encoders = 4;
+			report("drm card1 GETRESOURCES (ids)",
+			       _KeFileIoControl(bfd, 0xC04064A0, &res), 0);
+			report("drm card1 crtc id",
+			       (int)(crtc_ids[0] != 0), 1);
+			report("drm card1 connector id",
+			       (int)(conn_ids[0] != 0), 1);
+			report("drm card1 encoder id",
+			       (int)(enc_ids[0] != 0), 1);
+
+			memset(&conn, 0, sizeof conn);
+			conn.connector_id = conn_ids[0];
+			report("drm card1 GETCONNECTOR (counts)",
+			       _KeFileIoControl(bfd, 0xC05064A7, &conn), 0);
+			report("drm card1 connector connected",
+			       (int)(conn.connection == 1), 1);
+			report("drm card1 connector has modes",
+			       (int)(conn.count_modes > 0), 1);
+
+			/* the list pass: 128 slots are more than enough for
+			 * either source of modes, and encoders_ptr has to be
+			 * real too -- the kernel fills it whenever
+			 * count_encoders covers the connector's encoders,
+			 * which the count pass above just reported. */
+			memset(&conn, 0, sizeof conn);
+			conn.connector_id = conn_ids[0];
+			conn.modes_ptr = (unsigned long long)(size_t)modes;
+			conn.count_modes = 128;
+			conn.encoders_ptr = (unsigned long long)(size_t)enc_ids;
+			conn.count_encoders = 4;
+			report("drm card1 GETCONNECTOR (modes)",
+			       _KeFileIoControl(bfd, 0xC05064A7, &conn), 0);
+			report("drm card1 connector mode count",
+			       (int)(conn.count_modes >= 1 &&
+				     conn.count_modes <= 128), 1);
+
+			/* the preferred entry: DRM marks exactly one mode
+			 * DRM_MODE_TYPE_PREFERRED (1<<3) -- the EDID's
+			 * first detailed timing when the hardware has an
+			 * EDID, defx x defy when it does not. */
+			for (k = 0; k < conn.count_modes && k < 128; k++) {
+				if (modes[k].type & 0x8) {
+					pick = k;
+					break;
+				}
+			}
+			bw = modes[pick].hdisplay;
+			bh = modes[pick].vdisplay;
+			note("bochs mode width", (int)bw);
+			note("bochs mode height", (int)bh);
+			report("drm card1 mode picked",
+			       (int)(bw > 0 && bh > 0), 1);
+			/* the bound bochs's mode_valid enforces: the mode
+			 * has to fit the 16 MiB BAR0 at 32 bpp. */
+			report("drm card1 mode fits vram",
+			       (int)((unsigned long long)bw * bh * 4 <=
+				     16ULL * 1024 * 1024), 1);
+
+			pres.plane_id_ptr =
+				(unsigned long long)(size_t)plane_ids;
+			pres.count_planes = 4;
+			report("drm card1 GETPLANERESOURCES",
+			       _KeFileIoControl(bfd, 0xC01064B5, &pres), 0);
+			report("drm card1 primary planes",
+			       (int)pres.count_planes, 1);
+
+			memset(&pl, 0, sizeof pl);
+			pl.plane_id = plane_ids[0];
+			report("drm card1 GETPLANE",
+			       _KeFileIoControl(bfd, 0xC02064B6, &pl), 0);
+			report("drm card1 plane on crtc 0",
+			       (int)((pl.possible_crtcs & 1) == 1), 1);
+
+			conn_crtc_id = kms_prop_id(bfd, conn_ids[0],
+						   DRM_MODE_OBJECT_CONNECTOR,
+						   "CRTC_ID");
+			crtc_mode_id = kms_prop_id(bfd, crtc_ids[0],
+						   DRM_MODE_OBJECT_CRTC,
+						   "MODE_ID");
+			crtc_active = kms_prop_id(bfd, crtc_ids[0],
+						  DRM_MODE_OBJECT_CRTC,
+						  "ACTIVE");
+			plane_fb_id = kms_prop_id(bfd, plane_ids[0],
+						  DRM_MODE_OBJECT_PLANE,
+						  "FB_ID");
+			plane_crtc_id = kms_prop_id(bfd, plane_ids[0],
+						    DRM_MODE_OBJECT_PLANE,
+						    "CRTC_ID");
+			src_x = kms_prop_id(bfd, plane_ids[0],
+					    DRM_MODE_OBJECT_PLANE, "SRC_X");
+			src_y = kms_prop_id(bfd, plane_ids[0],
+					    DRM_MODE_OBJECT_PLANE, "SRC_Y");
+			src_w = kms_prop_id(bfd, plane_ids[0],
+					    DRM_MODE_OBJECT_PLANE, "SRC_W");
+			src_h = kms_prop_id(bfd, plane_ids[0],
+					    DRM_MODE_OBJECT_PLANE, "SRC_H");
+			crtc_x = kms_prop_id(bfd, plane_ids[0],
+					     DRM_MODE_OBJECT_PLANE, "CRTC_X");
+			crtc_y = kms_prop_id(bfd, plane_ids[0],
+					     DRM_MODE_OBJECT_PLANE, "CRTC_Y");
+			crtc_w = kms_prop_id(bfd, plane_ids[0],
+					     DRM_MODE_OBJECT_PLANE, "CRTC_W");
+			crtc_h = kms_prop_id(bfd, plane_ids[0],
+					     DRM_MODE_OBJECT_PLANE, "CRTC_H");
+			report("drm card1 atomic property ids",
+			       (int)(conn_crtc_id && crtc_mode_id &&
+				     crtc_active && plane_fb_id &&
+				     plane_crtc_id && src_x && src_y &&
+				     src_w && src_h && crtc_x && crtc_y &&
+				     crtc_w && crtc_h), 1);
+
+			/* the mode as a blob for crtc MODE_ID */
+			memset(&blob, 0, sizeof blob);
+			blob.data = (unsigned long long)(size_t)&modes[pick];
+			blob.length = sizeof modes[pick];
+			report("drm card1 CREATEPROPBLOB",
+			       _KeFileIoControl(bfd, 0xC01064BD, &blob), 0);
+			report("drm card1 blob id",
+			       (int)(blob.blob_id != 0), 1);
+
+			memset(&dumb, 0, sizeof dumb);
+			dumb.width = bw;
+			dumb.height = bh;
+			dumb.bpp = 32;
+			report("drm card1 CREATE_DUMB",
+			       _KeFileIoControl(bfd, 0xC02064B2, &dumb), 0);
+			report("drm card1 dumb handle",
+			       (int)(dumb.handle != 0), 1);
+			report("drm card1 dumb pitch",
+			       (int)dumb.pitch, (int)bw * 4);
+			report("drm card1 dumb size",
+			       (int)(dumb.size ==
+				     ((((unsigned long long)dumb.pitch * bh) +
+				       4095) & ~4095ULL)), 1);
+
+			/* the pattern, over the whole mapping: whatever
+			 * stride QEMU ends up scanning with, every pixel
+			 * the surface can show is this colour. */
+			memset(&map, 0, sizeof map);
+			map.handle = dumb.handle;
+			report("drm card1 MAP_DUMB",
+			       _KeFileIoControl(bfd, 0xC01064B3, &map), 0);
+			{
+				volatile unsigned int* pix =
+					(volatile unsigned int*)(size_t)
+						map.offset;
+				unsigned long long words = dumb.size >> 2;
+				for (unsigned long long i = 0; i < words; i++)
+					pix[i] = 0x00123456u;
+				report("drm card1 pattern written",
+				       (int)(pix[0] == 0x00123456u), 1);
+			}
+
+			memset(&fb, 0, sizeof fb);
+			fb.width = bw;
+			fb.height = bh;
+			fb.pixel_format = 0x34325258; /* 'X','R','2','4' */
+			fb.handles[0] = dumb.handle;
+			fb.pitches[0] = dumb.pitch;
+			report("drm card1 ADDFB2",
+			       _KeFileIoControl(bfd, 0xC06864B8, &fb), 0);
+			report("drm card1 fb id", (int)(fb.fb_id != 0), 1);
+
+			/* the atomic request: connector -> crtc, crtc mode +
+			 * active, plane carrying the fb over the full mode
+			 * with a 16.16 source rectangle. */
+			a_objs[0] = conn_ids[0];
+			a_counts[0] = 1;
+			a_objs[1] = crtc_ids[0];
+			a_counts[1] = 2;
+			a_objs[2] = plane_ids[0];
+			a_counts[2] = 10;
+			{
+				unsigned int p = 0;
+				a_props[p] = conn_crtc_id;
+				a_vals[p++] = crtc_ids[0];
+				a_props[p] = crtc_mode_id;
+				a_vals[p++] = blob.blob_id;
+				a_props[p] = crtc_active;
+				a_vals[p++] = 1;
+				a_props[p] = plane_fb_id;
+				a_vals[p++] = fb.fb_id;
+				a_props[p] = plane_crtc_id;
+				a_vals[p++] = crtc_ids[0];
+				a_props[p] = src_x;
+				a_vals[p++] = 0;
+				a_props[p] = src_y;
+				a_vals[p++] = 0;
+				a_props[p] = src_w;
+				a_vals[p++] = (unsigned long long)bw << 16;
+				a_props[p] = src_h;
+				a_vals[p++] = (unsigned long long)bh << 16;
+				a_props[p] = crtc_x;
+				a_vals[p++] = 0;
+				a_props[p] = crtc_y;
+				a_vals[p++] = 0;
+				a_props[p] = crtc_w;
+				a_vals[p++] = bw;
+				a_props[p] = crtc_h;
+				a_vals[p++] = bh;
+			}
+			memset(&at, 0, sizeof at);
+			at.count_objs = 3;
+			at.objs_ptr = (unsigned long long)(size_t)a_objs;
+			at.count_props_ptr =
+				(unsigned long long)(size_t)a_counts;
+			at.props_ptr = (unsigned long long)(size_t)a_props;
+			at.prop_values_ptr =
+				(unsigned long long)(size_t)a_vals;
+
+			/* TEST_ONLY|ALLOW_MODESET vets the request; then
+			 * the same request for real.  This is the commit
+			 * whose plane update writes the pattern into BAR0 --
+			 * after it returns, QEMU is scanning it out. */
+			at.flags = 0x100 | 0x400;
+			report("drm card1 atomic TEST_ONLY",
+			       _KeFileIoControl(bfd, 0xC03864BC, &at), 0);
+			at.flags = 0x400;
+			report("drm card1 atomic commit",
+			       _KeFileIoControl(bfd, 0xC03864BC, &at), 0);
+
+			memset(&prog, 0, sizeof prog);
+			prog.crtc_id = crtc_ids[0];
+			report("drm card1 GETCRTC",
+			       _KeFileIoControl(bfd, 0xC06864A1, &prog), 0);
+			report("drm card1 crtc programmed",
+			       (int)prog.mode_valid, 1);
+			report("drm card1 crtc mode matches",
+			       (int)(prog.mode.hdisplay == bw &&
+				     prog.mode.vdisplay == bh), 1);
+
+			/* the marker the gate waits for before screendumping
+			 * bochs0; the pattern stays on the scanout, nothing
+			 * else draws on card1. */
+			note("bochs scanout committed", 1);
+			_KeCloseFile(bfd);
 		}
 	}
 

@@ -541,6 +541,7 @@ extern int (*const __dcl_initcall_virtio_rng_driver_init)(void);
 extern int (*const __dcl_initcall_virtio_console_init)(void);
 extern int (*const __dcl_initcall_drm_core_init)(void);
 extern int (*const __dcl_initcall_vkms_init)(void);
+extern int (*const __dcl_initcall_bochs_pci_driver_init)(void);
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -644,5 +645,37 @@ void DclRunInitcalls(void) {
 			UARTDebugOut("[dcl]: vkms registered\r\n");
 	} else {
 		UARTDebugOut("[dcl]: vkms initcall not linked\r\n");
+	}
+
+	/*
+	 * bochs -- the second scanout device, and the tree's first vendored
+	 * PCI driver.  module_driver() in <linux/module.h> plus
+	 * drm_module_pci_driver_if_modeset() in <drm/drm_module.h> expand to
+	 * an initcall that registers bochs_pci_driver with the DCL PCI
+	 * fabric (DCL/pci_shim.c), and the fabric is what walks ECAM,
+	 * matches the id_table against 1234:1111 and calls the driver's
+	 * probe.
+	 *
+	 * Last on purpose, and for a reason the driver itself cannot know:
+	 * a DRM device takes the next free minor when it registers, so vkms
+	 * has to bind first for it to stay card0 -- the order that existed
+	 * before bochs arrived, kept so every path that named card0 keeps
+	 * its meaning.  bochs then lands on card1, and the self-tests look
+	 * for it there.
+	 *
+	 * On a machine without the device (every board this kernel really
+	 * targets -- bochs-display exists in QEMU), the scan finds nothing,
+	 * no probe runs, and the initcall reports exactly what the others
+	 * report when their devices are absent.  The fabric logs how many
+	 * devices it saw either way.
+	 */
+	if (__dcl_initcall_bochs_pci_driver_init) {
+		int rc = __dcl_initcall_bochs_pci_driver_init();
+		if (rc)
+			UARTDebugOut("[dcl]: bochs register failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: bochs pci driver registered\r\n");
+	} else {
+		UARTDebugOut("[dcl]: bochs initcall not linked\r\n");
 	}
 }

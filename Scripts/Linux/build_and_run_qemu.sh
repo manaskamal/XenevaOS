@@ -1101,6 +1101,11 @@ QEMU_ARGS=(
     # Xeneva compositor drives after boot. ramfb remains as a fallback GOP.
     -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device ramfb,id=ramfb
+    # Scanout stage: a second, register-only display device for the DRM
+    # stack (mainline bochs.c) to own, next to the native virtio-gpu. The
+    # host has no seabios VGA ROM; EDK2 drives the device directly and the
+    # mainline driver never touches an option ROM, so romfile= is empty.
+    -device bochs-display,romfile=,id=bochs0
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
     -device qemu-xhci

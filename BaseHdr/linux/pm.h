@@ -43,4 +43,34 @@
 
 #define pm_sleep_ptr(_ptr) (_ptr)
 
+/*
+ * struct dev_pm_ops + SET_SYSTEM_SLEEP_PM_OPS() -- the PCI driver's power
+ * half that bochs.c brings in:
+ *
+ *     static const struct dev_pm_ops bochs_pm_ops = {
+ *         SET_SYSTEM_SLEEP_PM_OPS(bochs_pm_suspend, bochs_pm_resume)
+ *     };
+ *     ...
+ *     static struct pci_driver bochs_pci_driver = {
+ *         ...
+ *         .driver.pm = &bochs_pm_ops,
+ *     };
+ *
+ * The callbacks themselves sit behind `#ifdef CONFIG_PM_SLEEP` in the
+ * driver, and CONFIG_PM_SLEEP is undefined here for the reason pm_sleep_ptr
+ * above records -- there is no suspend path. So mainline's #else arm is the
+ * one that has to exist: an empty expansion that names neither function,
+ * because both were compiled out. A non-empty expansion would reference two
+ * functions that do not exist.
+ *
+ * The struct is correspondingly empty: a zero-member dev_pm_ops is exactly
+ * what a driver with no compiled-in PM callbacks points at. If a suspend
+ * path ever lands, the members arrive with it and this macro grows mainline's
+ * populated arm -- nothing else in the tree names either today.
+ */
+struct dev_pm_ops {
+};
+
+#define SET_SYSTEM_SLEEP_PM_OPS(suspend_fn, resume_fn)
+
 #endif /* __LINUX_PM_H__ */

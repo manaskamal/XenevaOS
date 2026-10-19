@@ -4,6 +4,9 @@
 #include <Mm/kmalloc.h>
 #include <Mm/vmmngr.h>	/* PAGE_SIZE -- tty_buffer.c computes TTY_BUFFER_PAGE from it */
 #include <linux/kernel.h>	/* gfp_t, uintptr_t, E2BIG */
+#include <linux/gfp_types.h>	/* __GFP_ZERO -- the one gfp bit this
+				 * header does not drop, read by
+				 * dcl_kmalloc_flags() below */
 #include <linux/overflow.h>	/* struct_size/flex_array_size -- mainline's
 				 * <linux/slab.h> takes it at :18, and
 				 * lib/dma-resv.c's dma_resv_list_alloc()
@@ -66,9 +69,17 @@
 struct kmem_cache;
 
 /*
- * mainline: kmalloc(size, gfp). Xeneva's allocator takes the size only --
- * GFP flags are advisory in DCL (GFP_KERNEL is 0) -- so the 2-argument form
- * mainline sources write drops the flags.
+ * mainline: kmalloc(size, gfp). Xeneva's allocator takes the size only and
+ * DCL drops the flags -- GFP_KERNEL is 0 here -- with one exception:
+ * __GFP_ZERO selects the zeroing path. It cannot be dropped, because
+ * vendored code reaches the zeroing through the flag and nowhere else:
+ * drmm_kzalloc() calls drmm_kmalloc(dev, size, gfp | __GFP_ZERO), and
+ * drm_managed.c's alloc_dr() builds the whole drmres block -- header plus
+ * payload -- with one kmalloc_node_track_caller(tot_size, gfp, nid). Ignore
+ * the flag and drmm_kzalloc() hands back whatever TLSF held last: vkms's
+ * plane came back with a garbage properties.count, and the first
+ * drm_object_attach_property() turned it into a wild store.
+ * dcl_kmalloc_flags() below is the dispatch that reads it.
  *
  * Zero-size requests are the one disagreement vendored code trips over:
  * mainline's kmalloc(0) -- and kzalloc(0), kcalloc(0, ...) -- answer with
@@ -97,7 +108,19 @@ static inline void* dcl_kmalloc(unsigned int size) {
 	return kmalloc(size ? size : 1);
 }
 
-#define kmalloc(size, flags) dcl_kmalloc(size)
+/* defined with the rest of the kzalloc family further down */
+static inline void* dcl_kzalloc(unsigned int size);
+
+/* __GFP_ZERO -> the zeroing route, everything else -> a plain block. This is
+ * the one GFP bit that has to be read rather than dropped; the block above
+ * records the drmm_kzalloc() path that made that true. */
+static inline void* dcl_kmalloc_flags(unsigned int size, gfp_t flags) {
+	if (flags & __GFP_ZERO)
+		return dcl_kzalloc(size);
+	return dcl_kmalloc(size);
+}
+
+#define kmalloc(size, flags) dcl_kmalloc_flags(size, flags)
 
 /*
  * kcalloc(n, size, flags) -- the same shape as kmalloc above, except DCL's
@@ -218,9 +241,10 @@ static inline size_t kmalloc_size_roundup(size_t size)
  * driver that may skip or repeat its own cleanup -- all invisible until the
  * numbers happen to be large.
  *
- * The flags argument is accepted and dropped, exactly as kmalloc() drops it:
- * GFP_KERNEL is 0 in DCL and __GFP_ZERO is advisory here, because zeroing is
- * unconditional rather than opt-in.
+ * The flags argument is accepted and dropped: zeroing here is unconditional
+ * rather than opt-in, so the caller cannot ask for less than the name
+ * promises. kmalloc() is the one that has to read __GFP_ZERO, and its block
+ * above records why.
  *
  * size 0 gets one byte rather than the native NULL, for the contract reason
  * the kmalloc block above records -- kzalloc_objs() over a zero count is how
@@ -333,7 +357,9 @@ static inline void* dcl_kzalloc(unsigned int size) {
  * DCL's allocator does not warn.
  *
  * __GFP_NOWARN exists as a name only so that expression parses. GFP flags are
- * all 0 (see kernel.h): they are documentation in DCL, not policy.
+ * documentation in DCL, not policy, except for __GFP_ZERO: <linux/gfp_types.h>
+ * comes in at the top of this header, so its real bit is defined by the time
+ * this fallback is reached (and skipped) -- dcl_kmalloc_flags() is the reader.
  */
 #ifndef __GFP_NOWARN
 #define __GFP_NOWARN  0
@@ -467,10 +493,9 @@ static inline void *kmalloc_array(size_t n, size_t size, gfp_t flags)
 {
 	size_t bytes;
 
-	(void)flags;
 	if (unlikely(check_mul_overflow(n, size, &bytes)))
 		return NULL;
-	return dcl_kmalloc((unsigned int)bytes);
+	return dcl_kmalloc_flags((unsigned int)bytes, flags);
 }
 
 /*
@@ -483,9 +508,8 @@ static inline void *kmalloc_array(size_t n, size_t size, gfp_t flags)
  */
 static inline void *kmalloc_node_track_caller(size_t size, gfp_t flags, int node)
 {
-	(void)flags;
 	(void)node;
-	return dcl_kmalloc((unsigned int)size);
+	return dcl_kmalloc_flags((unsigned int)size, flags);
 }
 
 /*

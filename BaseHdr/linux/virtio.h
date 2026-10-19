@@ -49,6 +49,10 @@
 				 * does too, as `struct device dev;`), and fs.h is where
 				 * DCL's is defined. fs.h includes only <stdint.h> and
 				 * <stddef.h>, so this cannot cycle. */
+#include <linux/device/driver.h>	/* struct device_driver -- shared with
+					 * pci.h since the scanout stage; see the
+					 * note where the struct used to live,
+					 * below virtio_device. */
 #include <linux/list.h>	/* struct list_head -- virtio_device.vqs, virtqueue.list */
 #include <Drivers/virtio.h>
 
@@ -197,44 +201,18 @@ struct virtio_device {
 };
 
 /*
- * struct device_driver -- mainline's, reduced to the two things DCL can
- * actually lay out.
- *
- * This used to be flattened: `struct virtio_driver` carried `const char*
- * name;` followed by `unsigned char _device_driver_tail[144];`, which is the
- * same bytes in the same order but spells them the way a C struct that
- * nobody can write `.driver.name` against would. That mattered as soon as a
- * real mainline source was compiled here -- virtio-rng.c initialises
- *
- *     static struct virtio_driver virtio_rng_driver = {
- *         .driver.name = KBUILD_MODNAME,
- *         ...
- *     };
- *
- * and a flattened field is a *field designator* error ("field designator
- * 'driver' does not refer to any field in type 'struct virtio_driver'"),
- * which is what the first vendored build reported.
- *
- * Layout is unchanged, and that is the part to keep intact: `name` stays at
- * offset 0 and `_rest` is the 144 bytes that used to be `_device_driver_tail`,
- * so struct device_driver is 152 bytes exactly as the old prefix was, the
- * offset of id_table and every member after it is untouched, and the ABI the
- * prebuilt modules were assembled against still holds. Nothing outside reads
- * this flat today (register_virtio_driver() only ever touches ->probe,
- * ->scan and ->id_table), so this is a widening of what can be written, not
- * a move of anything that existed.
- *
- * mainline's continues with bus, owner, mod_name, probe, of_match_table and
- * the rest of the bind machinery. Those are not here: DCL has no bus type to
- * point at and no sysfs to bind through, and a member that is always NULL
- * plus a member nothing reads is two more offsets for a future port to have
- * to keep straight. If a driver needs one of them, adding it means deciding
- * what it should do first -- the padding is what makes that cheap.
+ * struct device_driver now lives at upstream's path, <linux/device/driver.h>
+ * (included above), because pci_driver writes `.driver.pm` too and two
+ * definitions of the tag would collide in any translation unit that includes
+ * both buses -- the vendored virtio-gpu driver includes <linux/pci.h>
+ * alongside this header. Everything this comment used to promise moved with
+ * the struct: `name` at offset 0, 152 bytes exactly, `_rest` covering
+ * mainline's unmodelled bind machinery, and virtio_driver's field offsets
+ * (id_table at 152, probe at 200) untouched. One thing changed while moving:
+ * the 144-byte tail is 136 now, and the eight bytes that went missing are
+ * `pm` -- the one field bochs.c's pci_driver initialises through the same
+ * tag. Nothing read the padding, so no existing caller sees a difference.
  */
-struct device_driver {
-	const char* name;
-	unsigned char _rest[144];
-};
 
 struct virtio_driver {
 	/*

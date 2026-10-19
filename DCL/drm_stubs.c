@@ -32,9 +32,18 @@
 #include <linux/dma-buf.h>	/* the importer half drm_prime.c calls */
 #include <linux/ww_mutex.h>	/* the four ww_mutex externs */
 #include <video/cmdline.h>	/* video_get_options */
+#include <drm/drm_atomic.h>	/* struct drm_atomic_commit */
+#include <drm/drm_atomic_helper.h>	/* the commit tail's helpers */
 #include <drm/drm_gem_shmem_helper.h>	/* the two ops of DRM_GEM_SHMEM_DRIVER_OPS */
-#include <drm/drm.h>		/* DRM_IOCTL_MODE_MAP_DUMB, drm_mode_map_dumb */
+#include <drm/drm.h>		/* DRM_IOCTL_MODE_* */
 #include <drm/drm_dumb_buffers.h>	/* drm_mode_size_dumb */
+#include <drm/drm_crtc.h>	/* drm_for_each_crtc */
+#include <drm/drm_device.h>	/* struct drm_device */
+#include <drm/drm_file.h>	/* struct drm_file */
+#include <drm/drm_ioctl.h>	/* drm_ioctl, the DRM file check */
+#include <drm/drm_mode.h>	/* struct drm_mode_atomic */
+#include <drm/drm_modeset_helper_vtables.h>	/* handle_vblank_timeout */
+#include <drm/drm_vblank.h>	/* struct drm_vblank_crtc */
 #include <Mm/pmmngr.h>		/* P2V, AuPmmngrAllocPages/ReleasePages */
 #include <Mm/vmmngr.h>		/* PAGE_SIZE, AuMapPage, AuFreePages, PTE bits */
 
@@ -248,26 +257,21 @@ drm_gem_shmem_prime_import_no_map(struct drm_device *dev,
 }
 
 /*
- * dcl_drm_ioctl_post -- what DCL adds after a DRM ioctl has succeeded.
+ * dcl_drm_map_dumb_post -- MAP_DUMB's second half.
  *
- * The cdev bridge (linux_cdev_shim.c) calls this once mainline's handler
- * returned 0.  Only MAP_DUMB has a second half: mainline put the fake mmap
- * offset in args->offset, and this maps the object's frames into the
- * calling process as user pages and replaces the offset with that address.
- * AuMapPage() refuses a leaf that is already valid, so a colliding address
- * fails the ioctl instead of aliasing memory.
+ * mainline put the fake mmap offset in args->offset; this maps the object's
+ * frames into the calling process as user pages and replaces the offset with
+ * that address.  AuMapPage() refuses a leaf that is already valid, so a
+ * colliding address fails the ioctl instead of aliasing memory.
  */
-long dcl_drm_ioctl_post(struct file *filp, unsigned int cmd, void *arg)
+static long dcl_drm_map_dumb_post(struct file *filp,
+				  struct drm_mode_map_dumb *maparg)
 {
-	struct drm_mode_map_dumb *maparg = arg;
 	struct drm_gem_object *obj;
 	struct dcl_gem_dumb *d;
 	uint64_t va;
 	size_t i, npages;
 	int ret = 0;
-
-	if (cmd != DRM_IOCTL_MODE_MAP_DUMB || !filp)
-		return 0;
 
 	obj = drm_gem_object_lookup(filp->private_data, maparg->handle);
 	if (!obj)
@@ -301,6 +305,173 @@ long dcl_drm_ioctl_post(struct file *filp, unsigned int cmd, void *arg)
 out:
 	drm_gem_object_put(obj);
 	return ret;
+}
+
+/* ── vblank: the frame tick a commit gets ──────────────────────────────── */
+
+/*
+ * dcl_drm_vblank_tick -- the frame boundary DCL commits get instead of a
+ * vblank timer.
+ *
+ * <linux/hrtimer.h> documents the whole story: this target runs no timer
+ * interrupt, so the callback the DRM core's vblank timer is armed with --
+ * drm_vblank_timer_function() (drm_vblank.c:2175) -- never runs.  That one
+ * callback is the only caller of the CRTC's handle_vblank_timeout hook,
+ * and for vkms that hook is what queues the composer worker: the code that
+ * reads every active plane's buffer, blends the frame and writes it into a
+ * writeback job's framebuffer before signalling completion
+ * (vkms_crtc.c:16).  Without a tick, a writeback job would be queued by
+ * the commit and never run.
+ *
+ * So a successful commit ticks its CRTCs once here, from DCL's commit tail
+ * below, which splices the call in between hw_done and the
+ * wait_for_flip_done.  A commit is the frame boundary this target has,
+ * which is the meaning the timer carries ("the frame is out"), and running
+ * it at commit time makes the composer synchronous with the ioctl that
+ * asked for the capture instead of racing a wall-clock period.  The call
+ * itself is the timer callback's own dispatch (drm_vblank.c:2198): through
+ * crtc->helper_private->handle_vblank_timeout when the CRTC has one -- the
+ * public vtable entry (drm_modeset_helper_vtables.h:481), which for vkms is
+ * where the composer is queued -- and drm_crtc_handle_vblank() directly
+ * when it does not.  That else-arm is bochs's shape: a scanout with a timer
+ * vblank and nothing else to run, whose counts and flip events live
+ * entirely in it.  The hook is also where a page flip's
+ * completion event is delivered -- vkms's starts with
+ * drm_crtc_handle_vblank() (vkms_crtc.c:25), which sends the event armed by
+ * DRM_MODE_PAGE_FLIP_EVENT to the waiting file; the tail waits on that
+ * delivery right after the tick, and the failed stage-4 gate is what the
+ * placement answers -- tick after the ioctl, wait timing out its ten
+ * seconds first.  Only the re-arm is not reproduced -- a timer has a next
+ * expiry, a commit does not.
+ *
+ * Clearing the frame period first is what lets the tick count.  Either arm
+ * advances the count through drm_crtc_handle_vblank() -> drm_handle_vblank()
+ * -> drm_update_vblank_count() (drm_vblank.c:307), whose timestamp path
+ * trusts the driver timestamp; on this target that comes from the hrtimer
+ * expiry (drm_crtc_vblank_get_vblank_timeout(), drm_vblank.c:2291), which
+ * only moves when the timer is re-armed -- the shim never fires, so the
+ * count would sit frozen and an armed event's sequence would never be
+ * passed.  framedur_ns = 0 picks the core's other path, the one for
+ * hardware without a usable timestamp: one count per tick (`diff =
+ * in_vblank_irq ? 1 : 0`, drm_vblank.c:355, with framedur_ns read into a
+ * local at :314).  drm_calc_timestamping_constants() writes the period back
+ * at the next vblank enable; every tick clears it again.
+ *
+ * A CRTC whose vblank is off is skipped: that is the state
+ * drm_crtc_vblank_off() leaves behind on a commit that just disabled the
+ * output, and drm_handle_vblank() answers a tick for it with "vblank not
+ * enabled" noise (drm_vblank.c, the !vblank->enabled early return).
+ */
+static void dcl_drm_vblank_tick(struct drm_device *dev)
+{
+	struct drm_crtc *crtc;
+
+	if (!dev)
+		return;
+
+	drm_for_each_crtc(crtc, dev) {
+		const struct drm_crtc_helper_funcs *funcs =
+			crtc->helper_private;
+		struct drm_vblank_crtc *vblank = drm_crtc_vblank_crtc(crtc);
+
+		if (!funcs)
+			continue;
+		if (!READ_ONCE(vblank->enabled))
+			continue;
+
+		WRITE_ONCE(vblank->framedur_ns, 0);
+		if (funcs->handle_vblank_timeout)
+			funcs->handle_vblank_timeout(crtc);
+		else
+			drm_crtc_handle_vblank(crtc);
+	}
+}
+
+/*
+ * dcl_drm_atomic_commit_tail -- vkms_atomic_commit_tail (vkms_drv.c:65)
+ * with the tick spliced in.
+ *
+ * DCL needs to own the commit tail for the tick's placement: the wait on a
+ * flip's completion event -- drm_atomic_helper_wait_for_flip_done(), on the
+ * event that the flush armed through drm_crtc_arm_vblank_event()
+ * (drm_vblank.c:1122) when its drm_crtc_vblank_get() succeeded -- has to
+ * come after the tick, because the tick is what sends the event
+ * (drm_handle_vblank_events(), drm_vblank.c:1882).  Ticked at ioctl time
+ * instead, the wait always times out its ten seconds first; that is the
+ * failed stage-4 gate.  Everything else is vkms's order verbatim; the
+ * composer flush_work() loop between the wait and the cleanup is dropped
+ * because DCL's queue_work() runs inline (linux/workqueue.h) -- by the
+ * time the tick queues the composer, it has already run.
+ */
+static void dcl_drm_atomic_commit_tail(struct drm_atomic_commit *state)
+{
+	struct drm_device *dev = state->dev;
+
+	drm_atomic_helper_commit_modeset_disables(dev, state);
+	drm_atomic_helper_commit_planes(dev, state, 0);
+	drm_atomic_helper_commit_modeset_enables(dev, state);
+
+	drm_atomic_helper_fake_vblank(state);
+
+	drm_atomic_helper_commit_hw_done(state);
+
+	dcl_drm_vblank_tick(dev);
+
+	drm_atomic_helper_wait_for_flip_done(dev, state);
+
+	drm_atomic_helper_cleanup_planes(dev, state);
+}
+
+static const struct drm_mode_config_helper_funcs dcl_drm_mode_config_helpers = {
+	.atomic_commit_tail = dcl_drm_atomic_commit_tail,
+};
+
+/*
+ * dcl_drm_tail_install -- hand the device DCL's commit tail.
+ *
+ * vkms pointed the device at vkms_atomic_commit_tail from its
+ * vkms_modeset_init() (vkms_drv.c:157), so this replaces the pointer
+ * afterwards.  The ioctl post hook below is the landing spot: it sees the
+ * device on every ioctl of every DRM file, and no commit can be a client's
+ * first ioctl -- the framebuffers a commit names have to be created and
+ * bound first (CREATE_DUMB, ADDFB2, MAP_DUMB), each through here.
+ * Idempotent, so every later call is one pointer compare.
+ */
+static void dcl_drm_tail_install(struct drm_device *dev)
+{
+	if (!dev || dev->mode_config.helper_private == &dcl_drm_mode_config_helpers)
+		return;
+
+	dev->mode_config.helper_private = &dcl_drm_mode_config_helpers;
+}
+
+/*
+ * dcl_drm_ioctl_post -- what DCL adds after a DRM ioctl has succeeded.
+ *
+ * The cdev bridge (linux_cdev_shim.c) calls this once mainline's handler
+ * returned 0 -- for every vport it serves, so the file is identified
+ * first: unlocked_ioctl == drm_ioctl is true of a DRM node's file only
+ * (drm_stub_open()'s replace_fops puts the driver's fops there, which the
+ * bridge comment on this call spells out), and it is what makes
+ * private_data a struct drm_file.  For such a file the commit tail above
+ * is installed, then MAP_DUMB's uapi answer gets its DCL offset rewritten.
+ */
+long dcl_drm_ioctl_post(struct file *filp, unsigned int cmd, void *arg)
+{
+	struct drm_file *file_priv;
+
+	if (!filp || !filp->f_op ||
+	    filp->f_op->unlocked_ioctl != (void *)drm_ioctl)
+		return 0;
+
+	file_priv = filp->private_data;
+	if (file_priv && file_priv->minor)
+		dcl_drm_tail_install(file_priv->minor->dev);
+
+	if (cmd == DRM_IOCTL_MODE_MAP_DUMB)
+		return dcl_drm_map_dumb_post(filp, arg);
+
+	return 0;
 }
 
 /* ── drm's internal pseudo fs (drm_drv.c:620-660) ─────────────────────── */
@@ -411,6 +582,22 @@ const char *video_get_options(const char *name)
 {
 	(void)name;
 	return NULL;
+}
+
+/*
+ * video_firmware_drivers_only(): false.  mainline's body (drivers/video/
+ * nomodeset.c) reads the `nomodeset` boot parameter; DCL has no cmdline
+ * parser and no firmware framebuffer a driver would be told to leave alone,
+ * so "firmware owns the display" is never true here -- which is also what
+ * mainline answers when the parameter is absent.  drm_module.h's
+ * registration helpers all test it (through drm_drv.h:587), so `true` would
+ * be a global disable for every vendored DRM driver; false is the answer
+ * that lets them register, and it is the state this kernel has been in all
+ * along.
+ */
+bool video_firmware_drivers_only(void)
+{
+	return false;
 }
 
 /*
