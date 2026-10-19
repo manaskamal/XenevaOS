@@ -268,6 +268,25 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 		break;
 	}
+	case SCREEN_UPDATE: {
+		/* Userspace present request: (x, y, w, h) in ushort_1/ushort_2/
+		 * ulong_1/ulong_2, a zero width or height meaning "whole screen".
+		 * The compositor sends one bounding box per frame once it has
+		 * blitted into the mapped framebuffer; the text console never
+		 * uses this path. --axiss */
+		int x = ioctl->ushort_1;
+		int y = ioctl->ushort_2;
+		int w = (int)ioctl->ulong_1;
+		int h = (int)ioctl->ulong_2;
+		if (w <= 0 || h <= 0) {
+			x = 0;
+			y = 0;
+			w = (int)aucon->width;
+			h = (int)aucon->height;
+		}
+		AuConsolePresentRect(x, y, w, h);
+		break;
+	}
 	case SCREEN_RESTORE_BOOT_FB: {
 		ret = AuConsoleRestoreBootFb();
 		break;
@@ -621,6 +640,38 @@ void AuConsoleSetDisplayOwned(void) {
 
 void AuConsoleSetPresentHook(AuConsolePresentFn fn) {
 	present_hook = fn;
+}
+
+/**
+ * @brief AuConsolePresentRect -- hand an explicit damage rectangle to the
+ * scanout mirror installed by AuConsoleSetPresentHook.
+ *
+ * The text console marks its own damage and flushes through
+ * AuConsoleFlushMirror(); this entry is for userspace, which paints into the
+ * mapped framebuffer directly and has no way to say "this much changed"
+ * other than SCREEN_UPDATE. Unlike the text mirror it is deliberately not
+ * gated on display_owned: the request comes from the process that owns the
+ * display, and muzzling it would leave the scanout frozen on its last text
+ * frame once the compositor takes over.
+ */
+void AuConsolePresentRect(int x, int y, int w, int h) {
+	if (!present_hook || !aucon)
+		return;
+
+	int right = x + w;
+	int bottom = y + h;
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+	if (right > (int)aucon->width)
+		right = (int)aucon->width;
+	if (bottom > (int)aucon->height)
+		bottom = (int)aucon->height;
+	if (right <= x || bottom <= y)
+		return;
+
+	present_hook(aucon->buffer, aucon->pitch, x, y, right - x, bottom - y);
 }
 
 void AuPutC(char c) {

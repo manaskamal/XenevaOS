@@ -399,10 +399,10 @@ void sg_free_table(struct sg_table* sgt);
 /*
  * sg_phys() -- the physical address an entry covers. mainline spells it
  * page_to_phys(sg_page(sg)) + sg->offset; a DCL entry names its buffer
- * directly (struct scatterlist above), so the same answer is the kernel's
- * virtual-to-physical translation of ->buf plus the offset within its page.
- * Body in DCL/linux_kmod_shim.c beside sg_init_one(), on the same arithmetic
- * buf_phys() in DCL/virtio_shim.c uses for descriptor addresses.
+ * directly (struct scatterlist above). The entries that reach this are the
+ * shmem tables' linear-map aliases, so the answer is the direct map's own
+ * inverse: V2P() of ->buf, page offset included. Body in
+ * DCL/linux_kmod_shim.c beside sg_init_one().
  *
  * The caller is the non-DMA-API arm of virtgpu_object.c:194's mem-entry
  * fill; mainline declares this in the same header.

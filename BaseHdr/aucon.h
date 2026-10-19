@@ -140,6 +140,13 @@ typedef void (*AuConsolePresentFn)(uint32_t* src, uint32_t src_pitch,
 AU_EXTERN AU_EXPORT void AuConsoleSetPresentHook(AuConsolePresentFn fn);
 
 /*
+ * AuConsolePresentRect -- hand an explicit damage rectangle to the scanout
+ * mirror (see AuConsoleSetPresentHook). This is the path SCREEN_UPDATE takes
+ * for userspace, which paints into the mapped framebuffer directly.
+ */
+void AuConsolePresentRect(int x, int y, int w, int h);
+
+/*
  * AuConsoleGetScreenWidth -- return the screen
  * width
  */

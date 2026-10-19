@@ -29,12 +29,12 @@ cd "$(dirname "$0")/.." || exit 1
 # Bump deliberately, in the same change that alters the count.
 EXP_LINUX_H=243    # BaseHdr/linux/*.h
 EXP_ASM_H=16       # BaseHdr/asm/*.h
-EXP_DCL_C=29       # DCL/*.c   (dcl_va_trampoline.s adds the 30th object)
-EXP_DCL_O=30       # KernelAA64/obj/DCL/*.o
+EXP_DCL_C=30       # DCL/*.c   (dcl_va_trampoline.s adds a 31st object)
+EXP_DCL_O=31       # KernelAA64/obj/DCL/*.o
 EXP_VEND_O=107     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
                    #   virtio_console, and the drm set: core, vkms, tiny/
                    #   bochs, virtio-gpu, dma-buf, lib)
-EXP_ALL_O=268      # everything under KernelAA64/obj
+EXP_ALL_O=269      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
@@ -251,6 +251,12 @@ if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
 	expect "virtio-gpu bound by the fabric"  "[drm] pci: virtio-gpu-pci detected at"
 	expect "virtio-gpu published card2"      "[dcl]: device_add 'dri/card2'"
 	expect "virtio-gpu initialized"          "[drm] Initialized virtio_gpu"
+	# Stage 7: the console rides the vendored driver's own scanout -- the
+	# bridge allocates a resource through the vendored object API, repoints
+	# the console at its backing and installs the present mirror. The attach
+	# marker is the whole claim; the failure marker would mean it declined.
+	expect "console on the vendored scanout" "[virtgpu-console]: console on vendored scanout"
+	reject "no vendored console attach failures" "[virtgpu-console]: resource create failed"
 	# QEMU rejects a descriptor chain it cannot map and the guest prints its
 	# own verdict when a probe-time wait expires with the reply still unread;
 	# either one is a broken queue, not a detail.

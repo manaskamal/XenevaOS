@@ -150,4 +150,11 @@ void SplashScreenShow() {
 	void* image_bytes = (void*)(buffer + offset);
 	_draw_bitmap_(
 		screen_w / 2 - width / 2, screen_h / 2 - height / 2, width, height, (uint8_t*)image_bytes);
+
+	/* Push the painted splash to the scanout mirror, if one is registered
+	 * (with none, the boot framebuffer is scanned directly and this is a
+	 * no-op). Zero width/height requests the whole screen. --axiss */
+	memset(&ioctl, 0, sizeof(ioctl));
+	ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+	_KeFileIoControl(graphFd, SCREEN_UPDATE, &ioctl);
 }

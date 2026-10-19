@@ -125,28 +125,36 @@ void AddDirtyClip(int x, int y, int w, int h) {
  * to dirty rect boundary
  * @param canvas -- pointer to canvas
  */
+/* DirtyBoundingBox -- merge a rect list into one bounding box. Shared by the
+ * GPU flush below and the kernel present request the software path sends. --axiss */
+static void DirtyBoundingBox(const Rect* rects, uint32_t count,
+			     int64_t* left, int64_t* top, int64_t* right, int64_t* bottom) {
+	*left = rects[0].x;
+	*top = rects[0].y;
+	*right = *left + rects[0].w;
+	*bottom = *top + rects[0].h;
+	for (uint32_t i = 1; i < count; i++) {
+		int64_t r = (int64_t)rects[i].x + rects[i].w;
+		int64_t b = (int64_t)rects[i].y + rects[i].h;
+		if (rects[i].x < *left)
+			*left = rects[i].x;
+		if (rects[i].y < *top)
+			*top = rects[i].y;
+		if (r > *right)
+			*right = r;
+		if (b > *bottom)
+			*bottom = b;
+	}
+}
+
 /* DirtyFlushBounding -- one synchronous transfer+flush for the whole frame.
  * Each 0x202 is a full virtqueue round-trip, so N rects meant N round-trips
  * and the guest watched its own screen assemble piece by piece. Merging to
  * one bounding box trades (sometimes more) bytes for exactly one round-trip
  * per frame -- on TCG the latency win dominates. --axiss */
 static void DirtyFlushBounding(int display_id, const Rect* rects, uint32_t count) {
-	int64_t left = rects[0].x;
-	int64_t top = rects[0].y;
-	int64_t right = left + rects[0].w;
-	int64_t bottom = top + rects[0].h;
-	for (uint32_t i = 1; i < count; i++) {
-		int64_t r = (int64_t)rects[i].x + rects[i].w;
-		int64_t b = (int64_t)rects[i].y + rects[i].h;
-		if (rects[i].x < left)
-			left = rects[i].x;
-		if (rects[i].y < top)
-			top = rects[i].y;
-		if (r > right)
-			right = r;
-		if (b > bottom)
-			bottom = b;
-	}
+	int64_t left, top, right, bottom;
+	DirtyBoundingBox(rects, count, &left, &top, &right, &bottom);
 	ioctl.uint_1 = display_id;
 	ioctl.ushort_1 = (uint16_t)left;
 	ioctl.ushort_2 = (uint16_t)top;
@@ -202,6 +210,19 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 			ChCanvasScreenUpdate(
 				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
 		ChCanvasScreenCommit();
+		/* No /dev/virtiogpu to flush through here, but the console may
+		 * still be mirrored onto a scanout by the kernel (the vendored
+		 * virtio-gpu bridge). Ask for this frame's bounding box; with no
+		 * mirror registered the request is a no-op. --axiss */
+		int64_t left, top, right, bottom;
+		DirtyBoundingBox(dirtyRect, valid, &left, &top, &right, &bottom);
+		memset(&ioctl, 0, sizeof(ioctl));
+		ioctl.syscall_magic = AURORA_SYSCALL_MAGIC;
+		ioctl.ushort_1 = (uint16_t)left;
+		ioctl.ushort_2 = (uint16_t)top;
+		ioctl.ulong_1 = (uint64_t)(right - left);
+		ioctl.ulong_2 = (uint64_t)(bottom - top);
+		_KeFileIoControl(canvas->graphics_fd, SCREEN_UPDATE, &ioctl);
 		return;
 	}
 

@@ -1,4 +1,5 @@
 #include <linux/virtio.h>
+#include <linux/virtio_ids.h>	/* VIRTIO_ID_GPU: the console hand-off gate */
 #include <linux/pci.h>	/* vdev->dev.parent: the fabric's device for the function */
 #include <linux/err.h>	/* ERR_PTR -- virtio_find_single_vq reports find_vqs failures */
 #include <Drivers/virtio.h>
@@ -57,6 +58,16 @@ void virtio_poll_vqs(void) {
 void dcl_wait_pump(void) {
 	virtio_poll_vqs();
 }
+
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+/*
+ * The console-side half of the bypass bring-up: DCL/virtgpu_console.c hands
+ * the kernel console to the vendored virtio-gpu's scanout (as scanout 0) the
+ * moment its probe succeeds, so the desktop size the loader asked for has a
+ * scanout to land on. Only a bypass image reaches the call site.
+ */
+void dcl_virtgpu_console_attach(struct virtio_device* vdev);
+#endif
 
 /* ─── Driver registration ─── */
 
@@ -669,6 +680,16 @@ void virtio_device_register(struct virtio_device* vdev,
 				UARTDebugOut("[dcl-virtio]: calling scan\r\n");
 				drv->scan(vdev);
 			}
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+			/*
+			 * Bypass: the vendored virtio-gpu owns 1AF4:1050 and the
+			 * internal virtgpu.dll is out of the image, so nothing has
+			 * claimed the display for the console yet. Hand it over
+			 * now that the driver is live (DCL/virtgpu_console.c).
+			 */
+			if (virtio_device_type(vdev->au_dev) == VIRTIO_ID_GPU)
+				dcl_virtgpu_console_attach(vdev);
+#endif
 		}
 		return;
 	}

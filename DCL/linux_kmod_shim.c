@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
-#include <Mm/vmmngr.h>		/* AuGetPhysicalAddress() -- sg_phys() below */
+#include <Mm/pmmngr.h>		/* V2P() -- sg_phys() below */
 #include <linux/virtio.h>
 #include <linux/pagemap.h>	/* page_address() -- sg_set_page() is the one
 				 * sg helper that has to turn a struct page* into
@@ -175,24 +175,30 @@ void sg_init_one(struct scatterlist* sg, const void* buf, unsigned int len) {
 }
 
 /*
- * sg_phys() -- <linux/scatterlist.h>'s declaration carries the why; the
- * arithmetic is buf_phys()'s (DCL/virtio_shim.c:302), reused here rather
- * than duplicated: a buffer's physical base plus the page offset it names.
- * sg_init_one()-built entries and the shmem tables' linear-map entries both
- * go through the same translation, which is the point -- the answer has to
- * be the kernel's own, not a guess about how the buffer was made.
+ * sg_phys() -- the physical address an entry covers. The entries that reach
+ * it are the shmem helper's: one per object, naming its whole contiguous run
+ * through the linear-map alias (DCL/drm_shmem_shim.c's dcl_shmem_make_sgt --
+ * "->buf carries the linear-map alias so sg_phys() can undo the P2V"). V2P()
+ * is that mapping's own inverse, so undoing it is the whole translation,
+ * page offset included.
+ *
+ * It also has to be arithmetic rather than a page-table walk. The first cut
+ * walked (AuGetPhysicalAddress()); the direct map is installed as 1 GiB
+ * block descriptors (BootAA64/paging.cpp: XEPagingInstallPhysicalDirectMap),
+ * and a walker that tests bit 0 without PTE_TABLE follows one of those blocks
+ * as if it were a child table and dereferences whatever physical memory lies
+ * at the address it decodes. That is exactly how this function first ran:
+ * the virtio-gpu object path (the console bridge's first resource) had the
+ * walk read a block's target as an L2 table and fault on a garbage L3
+ * pointer. vmm_get_leaf() already carries the block rule; this translation
+ * simply never saw a block-mapped address until the shmem tables did.
  */
 dma_addr_t sg_phys(const struct scatterlist* sg)
 {
-	uint64_t a;
-	uint64_t base;
-
 	if (!sg || !sg->buf)
 		return 0;
 
-	a = (uint64_t)(uintptr_t)sg->buf;
-	base = (uint64_t)(uintptr_t)AuGetPhysicalAddress(a);
-	return base ? base + (a & 0xFFF) : 0;
+	return (dma_addr_t)V2P((uint64_t)(uintptr_t)sg->buf);
 }
 
 /*
