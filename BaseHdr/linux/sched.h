@@ -169,6 +169,26 @@ static inline int task_pid_vnr(struct task_struct* tsk)
 	return tsk ? tsk->pid : 0;
 }
 
+/*
+ * get_task_comm(buf, tsk) -- mainline's accessor for a task's comm, which
+ * mainline also declares in <linux/sched.h> (there as a macro over
+ * __get_task_comm()). One caller, the virtio-gpu debug-name ioctl, and the
+ * copy is bounded by the struct's own `comm` array so the terminator
+ * always fits. `comm` is exactly what dcl_current() refreshes from the
+ * running thread on every call, so a live task's name is real text; the
+ * shape is this header's static-inline style rather than a shim symbol,
+ * for the task_pid_vnr() reason above.
+ */
+static inline char* get_task_comm(char* buf, struct task_struct* tsk)
+{
+	unsigned int i;
+
+	for (i = 0; i + 1 < sizeof(tsk->comm) && tsk->comm[i]; i++)
+		buf[i] = tsk->comm[i];
+	buf[i] = 0;
+	return buf;
+}
+
 void schedule(void);
 
 /*

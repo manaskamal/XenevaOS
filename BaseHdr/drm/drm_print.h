@@ -28,6 +28,13 @@
 
 #include <linux/compiler.h>
 #include <linux/printk.h>
+/*
+ * DCL delta: DRM_DEV_ERROR_RATELIMITED and friends below expand
+ * DEFINE_RATELIMIT_STATE, which mainline's printk.h chain happens to make
+ * visible and DCL's does not. virtgpu_vq.c:254 is the first reader in this
+ * tree (DRM_ERROR_RATELIMITED in the command-response reap).
+ */
+#include <linux/ratelimit.h>
 #include <linux/device.h>
 #include <linux/dynamic_debug.h>
 

@@ -34,6 +34,17 @@ ifeq ($(DEBUG_ALLOC),1)
     DEBUG_ALLOC_FLAGS = -D__XENEVA_DEBUG_ALLOC__
 endif
 
+# --bypass-virtgpu, kernel half: the image-side half
+# (Scripts/Linux/build_and_run_qemu.sh) drops the internal virtgpu.dll so
+# nothing claims 1AF4:1050; this define arms the DCL scan that creates the
+# virtio device (DCL/modload_test.c), which is what lets the vendored DRM
+# virtio-gpu driver probe. Off by default: with the internal driver in the
+# image the same scan would take the device out from under it.
+BYPASS_VIRTGPU ?= 0
+ifeq ($(BYPASS_VIRTGPU),1)
+    BYPASS_VIRTGPU_FLAGS = -D__XENEVA_BYPASS_VIRTGPU__
+endif
+
 # Triggered when you run "make llvm"
 .PHONY: all clean llvm
 llvm:
@@ -66,7 +77,7 @@ ifeq ($(TOOLCHAIN), llvm)
     # pulls compiler_types in first so its fallbacks never shadow them.
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -97,7 +108,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
               $(INCLUDES)
 endif
 

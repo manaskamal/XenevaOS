@@ -702,6 +702,43 @@ struct dma_buf_attachment *dma_buf_attach(struct dma_buf *dmabuf,
 	return ERR_PTR(-ENODEV);
 }
 
+/*
+ * dma_buf_dynamic_attach() -- mainline's attach with importer callbacks.
+ * Same answer as dma_buf_attach() above, for the same reason: an
+ * attachment is what an imported buffer carries, and dma_buf_get() fails
+ * first (see the section note above), so no object here ever has one to
+ * fill in.
+ */
+struct dma_buf_attachment *
+dma_buf_dynamic_attach(struct dma_buf *dmabuf, struct device *dev,
+		       const struct dma_buf_attach_ops *importer_ops,
+		       void *importer_priv)
+{
+	(void)dmabuf;
+	(void)dev;
+	(void)importer_ops;
+	(void)importer_priv;
+	return ERR_PTR(-ENODEV);
+}
+
+/*
+ * dma_buf_pin() / dma_buf_unpin() -- pin the exporter's pages for a
+ * device, added with the virtio-gpu port (the plane's prepare_fb and the
+ * prime map path pin; unpin only echoes a successful pin). With no live
+ * attachment to pin (see above) the pinned answer is the checked failure
+ * those callers already branch on, and unpin() has nothing to release.
+ */
+int dma_buf_pin(struct dma_buf_attachment *attach)
+{
+	(void)attach;
+	return -ENODEV;
+}
+
+void dma_buf_unpin(struct dma_buf_attachment *attach)
+{
+	(void)attach;
+}
+
 void dma_buf_detach(struct dma_buf *dmabuf,
 		    struct dma_buf_attachment *attach)
 {
@@ -725,6 +762,33 @@ void dma_buf_put(struct dma_buf *dmabuf)
 {
 	(void)dmabuf;
 	/* nothing took a reference worth dropping: get() failed above */
+}
+
+/*
+ * dma_buf_map_attachment() / dma_buf_unmap_attachment() -- the locked
+ * wrappers over the _unlocked pair below, added with the virtio-gpu port
+ * (its prime map path tests the result and reads sgt->nents on success).
+ * An error rather than the unlocked stub's NULL: NULL sails through the
+ * IS_ERR() test and into a dereference, so the same "no attachment can
+ * exist" answer dma_buf_attach() gives is the one that lands in a checked
+ * branch. The unmap has nothing to match with, same reasoning as its
+ * unlocked twin.
+ */
+struct sg_table *dma_buf_map_attachment(struct dma_buf_attachment *attach,
+					enum dma_data_direction direction)
+{
+	(void)attach;
+	(void)direction;
+	return ERR_PTR(-ENODEV);
+}
+
+void dma_buf_unmap_attachment(struct dma_buf_attachment *attach,
+			      struct sg_table *sg_table,
+			      enum dma_data_direction direction)
+{
+	(void)attach;
+	(void)sg_table;
+	(void)direction;
 }
 
 struct sg_table *

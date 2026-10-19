@@ -396,6 +396,65 @@ void pci_unregister_driver(struct pci_driver* drv)
 	}
 }
 
+/* ── lookup ─────────────────────────────────────────────────────────────── */
+
+/*
+ * pci_get_device() -- mainline's pair walk, over the fabric's slot table.
+ *
+ * The match here is identity alone: mainline returns the first device
+ * carrying (vendor, device), with no subsystem or class filtering, and
+ * virtio-gpu's init uses it for exactly that -- "is a 1AF4:1050 function on
+ * this bus?" -- before it registers the driver that the virtio side matches
+ * later. So PCI_ANY_ID is accepted on either field, as mainline does, and
+ * the slot's fixed order is the walk order.
+ *
+ * The scan is triggered on first call rather than assumed: the contract is a
+ * self-contained lookup, and a caller must not have to know that some other
+ * driver's registration already enumerated the bus. from != NULL resumes
+ * after the device handed in, per mainline's iteration contract; a from that
+ * is not on this bus ends the search (NULL), which is a lookup answering "no
+ * more devices" rather than pretending to a position it never had.
+ *
+ * The reference mainline takes is the no-op of a bus whose devices outlive
+ * every driver -- nothing is ever removed from the slot table, so a returned
+ * pointer stays valid and pci_dev_put() has nothing to drop. Both spellings
+ * exist because the driver's unwind path is mainline's.
+ */
+struct pci_dev* pci_get_device(unsigned int vendor, unsigned int device,
+			       struct pci_dev* from)
+{
+	int i = 0;
+
+	if (!dcl_pci_scanned)
+		dcl_pci_scan();
+
+	if (from) {
+		for (; i < dcl_pci_count; i++) {
+			if (&dcl_pci_slots[i].dev == from) {
+				i++;
+				break;
+			}
+		}
+		if (i >= dcl_pci_count)
+			return NULL;
+	}
+
+	for (; i < dcl_pci_count; i++) {
+		if ((vendor == PCI_ANY_ID ||
+		     vendor == dcl_pci_slots[i].dev.vendor) &&
+		    (device == PCI_ANY_ID ||
+		     device == dcl_pci_slots[i].dev.device))
+			return &dcl_pci_slots[i].dev;
+	}
+
+	return NULL;
+}
+
+void pci_dev_put(struct pci_dev* pdev)
+{
+	(void)pdev;
+}
+
 int pcim_enable_device(struct pci_dev* pdev)
 {
 	struct dcl_pci_slot* s = dcl_pci_slot_of(pdev);

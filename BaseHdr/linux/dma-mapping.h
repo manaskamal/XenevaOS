@@ -204,4 +204,83 @@ static inline void dma_unmap_sgtable(struct device* dev, struct sg_table* sgt,
 int dma_coerce_mask_and_coherent(struct device* dev, u64 mask);
 size_t dma_max_mapping_size(struct device* dev);
 
+/*
+ * dma_set_max_seg_size() -- mainline's cap on one DMA segment, read by
+ * virtio_gpu_probe() (Vendored/drivers/gpu/drm/virtio/virtgpu_drv.c:102:
+ * `dma_set_max_seg_size(dev->dev, dma_max_mapping_size(dev->dev) ?: UINT_MAX)`).
+ * There is no DMA layer here for a segment limit to bind -- dma_map_sg()
+ * above is the identity and the virtio queues carry linear-map buffers --
+ * and the caller does not read the result, so the whole of the contract that
+ * matters is "accept the call". 0 is success, mainline's own answer for a
+ * limit it stored. Inline because there is no state to keep.
+ */
+static inline int dma_set_max_seg_size(struct device* dev, unsigned int size)
+{
+	(void)dev;
+	(void)size;
+	return 0;
+}
+
+/*
+ * dma_map_resource()/dma_unmap_resource()/dma_mapping_error() -- the
+ * resource mapping trio, added with the virtio-gpu port. One caller:
+ * virtgpu_vram.c maps a host-visible blob's physical range before hanging
+ * it on an sg element and checks the result with dma_mapping_error(). That
+ * path is unreachable on a device with no host-visible region, and the
+ * bodies are the identity this port's DMA story is throughout (dma_map_sg
+ * above; the queues carry linear-map buffers): the address maps to itself,
+ * the unmap has nothing to tear down, and 0 answers "not an error".
+ *
+ * u64 for mainline's phys_addr_t: the name is not spelled anywhere in this
+ * tree and u64 is what it aliases on arm64.
+ */
+static inline dma_addr_t dma_map_resource(struct device* dev, u64 phys,
+					  size_t size,
+					  enum dma_data_direction dir,
+					  unsigned long attrs)
+{
+	(void)dev;
+	(void)size;
+	(void)dir;
+	(void)attrs;
+	return (dma_addr_t)phys;
+}
+
+static inline void dma_unmap_resource(struct device* dev, dma_addr_t addr,
+				      size_t size,
+				      enum dma_data_direction dir,
+				      unsigned long attrs)
+{
+	(void)dev;
+	(void)addr;
+	(void)size;
+	(void)dir;
+	(void)attrs;
+}
+
+static inline bool dma_mapping_error(struct device* dev, dma_addr_t addr)
+{
+	(void)dev;
+	(void)addr;
+	return false;
+}
+
+/*
+ * dma_sync_sgtable_for_device() -- mainline's sync-a-whole-table entry
+ * point, added with the virtio-gpu port. DCL has no caches to sync (the
+ * queues carry linear-map buffers and the device side is QEMU's
+ * emulation), and every caller reaches it behind the driver's use_dma_api
+ * test, which is false without VIRTIO_F_ACCESS_PLATFORM -- the only kind
+ * of virtio-gpu device this tree scans. A no-op rather than a forward to a
+ * dma_sync_sg_for_device() that does not exist here.
+ */
+static inline void dma_sync_sgtable_for_device(struct device* dev,
+					       struct sg_table* sgt,
+					       enum dma_data_direction dir)
+{
+	(void)dev;
+	(void)sgt;
+	(void)dir;
+}
+
 #endif /* __LINUX_DMA_MAPPING_H */

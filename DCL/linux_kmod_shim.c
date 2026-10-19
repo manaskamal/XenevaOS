@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <Mm/kmalloc.h>
+#include <Mm/vmmngr.h>		/* AuGetPhysicalAddress() -- sg_phys() below */
 #include <linux/virtio.h>
 #include <linux/pagemap.h>	/* page_address() -- sg_set_page() is the one
 				 * sg helper that has to turn a struct page* into
@@ -171,6 +172,27 @@ void sg_init_one(struct scatterlist* sg, const void* buf, unsigned int len) {
 	 * anyone's page.
 	 */
 	sg->page = NULL;
+}
+
+/*
+ * sg_phys() -- <linux/scatterlist.h>'s declaration carries the why; the
+ * arithmetic is buf_phys()'s (DCL/virtio_shim.c:302), reused here rather
+ * than duplicated: a buffer's physical base plus the page offset it names.
+ * sg_init_one()-built entries and the shmem tables' linear-map entries both
+ * go through the same translation, which is the point -- the answer has to
+ * be the kernel's own, not a guess about how the buffer was made.
+ */
+dma_addr_t sg_phys(const struct scatterlist* sg)
+{
+	uint64_t a;
+	uint64_t base;
+
+	if (!sg || !sg->buf)
+		return 0;
+
+	a = (uint64_t)(uintptr_t)sg->buf;
+	base = (uint64_t)(uintptr_t)AuGetPhysicalAddress(a);
+	return base ? base + (a & 0xFFF) : 0;
 }
 
 /*

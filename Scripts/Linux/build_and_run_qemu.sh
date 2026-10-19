@@ -52,6 +52,13 @@ set -e
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
+#   --bypass-virtgpu        Leave virtio-gpu-pci (1AF4:1050) to the
+#                           kernel-side driver: the image carries neither
+#                           virtgpu.dll nor its audrv.cnf entry, so the
+#                           internal in-tree driver never claims it. Off by
+#                           default; for bringing up the vendored DRM
+#                           virtio-gpu driver. Also reads BYPASS_VIRTGPU=1
+#                           from the environment.
 #   --no-virtio-serial      Skip the virtio-serial controller and its one
 #                           virtserialport, so the guest's virtio_console
 #                           driver has no device to probe. It is on by
@@ -155,6 +162,9 @@ ISO_OUTPUT=""
 TUI=0
 NO_NETWORK=0
 NO_AUDIO=0
+# --bypass-virtgpu: keep the internal virtgpu.dll driver (and its audrv
+# entry) out of the image, so 1AF4:1050 is left to the kernel-side driver.
+BYPASS_VIRTGPU=${BYPASS_VIRTGPU:-0}
 NO_BOOT_MENU=0
 NO_DOOM=0
 BT_SERIAL="${XENEVA_BT_SERIAL:-}"
@@ -474,6 +484,7 @@ while [ $# -gt 0 ]; do
         --no-doom) NO_DOOM=1 ;;
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
+        --bypass-virtgpu) BYPASS_VIRTGPU=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         --bt) NO_BT=0 ;;
         --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
@@ -655,8 +666,8 @@ if [ "$TEST_MUSL" -eq 1 ] && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
 	exit 1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
-	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ] || [ "$BYPASS_VIRTGPU" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf/--bypass-virtgpu need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
 
@@ -818,7 +829,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -839,8 +850,10 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         echo "[+] Building external drivers..."
         ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
-        ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
-        cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        if [ "$BYPASS_VIRTGPU" -eq 0 ]; then
+            ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
+            cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        fi
         ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
         cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
         fi
@@ -950,6 +963,8 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
                 [ "$TEST_MUSL" -eq 1 ] && return 1 || return 0 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
+            virtgpu.dll)
+                [ "$BYPASS_VIRTGPU" -eq 1 ] && return 0 || return 1 ;;
         esac
         return 1
     }
@@ -972,6 +987,29 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         mcopy -o -s -i initrd2.img "$resource" ::/
     done
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
+    if [ "$BYPASS_VIRTGPU" -eq 1 ]; then
+        # The kernel-side virtio-gpu driver owns 1AF4:1050 -- strip the
+        # internal driver's line from the packed config too, or audrv would
+        # announce a file the image no longer carries.
+        echo "[+] Internal virtgpu driver excluded from the image (--bypass-virtgpu)."
+        # audrv walks the table by entry number -- it looks for (1), then
+        # (2), and a hole at (1) sends every lookup to the (0) terminator,
+        # which would strand virtnet/virtsnd/virtblk too. So the entry is
+        # removed and the rest renumber to stay contiguous.
+        bypass_cnf="$(mktemp)"
+        bypass_idx=0
+        while IFS= read -r bypass_line || [ -n "$bypass_line" ]; do
+            case "$bypass_line" in
+                *'/virtgpu.dll'*) continue ;;
+                '(0)') printf '%s\n' "$bypass_line" ;;
+                '('*)  bypass_idx=$((bypass_idx + 1))
+                       printf '(%d)%s\n' "$bypass_idx" "${bypass_line#*)}" ;;
+                *)     printf '%s\n' "$bypass_line" ;;
+            esac
+        done < Resources/resources/audrv.cnf > "$bypass_cnf"
+        mcopy -o -i initrd2.img "$bypass_cnf" ::/audrv.cnf
+        rm -f "$bypass_cnf"
+    fi
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
     echo "    (Omit --force-legacy-build to rebuild it.)"

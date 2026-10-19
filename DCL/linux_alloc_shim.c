@@ -197,3 +197,31 @@ void *vmemdup_array_user(const void __user *src, size_t n, size_t size)
 {
 	return memdup_array_user(src, n, size);
 }
+
+/*
+ * memdup_user() / vmemdup_user() -- the pair the array forms above are
+ * inlines over (mainline declares them in <linux/string.h>; see the note
+ * in <linux/slab.h> for why the declarations land there here). The
+ * virtio-gpu ioctl blob paths and the submit queue reach for them
+ * directly, and neither had a definition. The same two facts as above
+ * make the body what it is: copy_from_user() *is* memcpy here, so the
+ * copy is a plain one, and the IS_ERR() answers are what the callers
+ * check. The empty length follows dcl_kmalloc()'s zero handling -- a
+ * one-byte block, never a bare NULL.
+ */
+void *memdup_user(const void __user *src, size_t len)
+{
+	void *p;
+
+	p = dcl_kmalloc((unsigned int)len);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
+
+	memcpy(p, src, len);
+	return p;
+}
+
+void *vmemdup_user(const void __user *src, size_t len)
+{
+	return memdup_user(src, len);
+}

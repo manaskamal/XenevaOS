@@ -145,6 +145,14 @@ typedef uint64_t pgprot_t;
 struct vm_operations_struct {
 	void* access;	/* generic_access_phys only under CONFIG_HAVE_IOREMAP_PROT */
 	void* close;
+	/*
+	 * DCL delta: mainline's open() callback, added with the virtio-gpu
+	 * port -- virtgpu_vram.c:30 names .open = drm_gem_vm_open. No VMA is
+	 * ever constructed on this port, so nothing calls it; the field exists
+	 * so the vendored initialiser compiles, the same reason the two above
+	 * are void pointers rather than typed function pointers.
+	 */
+	void* open;
 };
 
 /* ── struct vm_area_struct ───────────────────────────────────────────────
@@ -196,6 +204,13 @@ struct vm_area_struct {
  * vm_get_page_prot() reads -- all three of which are here.
  */
 #define VM_PFNMAP	0x00000400	/* the whole range is one page table */
+/*
+ * DCL delta: mainline's flag, added with the virtio-gpu port --
+ * virtgpu_vram.c:58 sets it on a host-visible blob mapping. Same value as
+ * linux-7.2's include/linux/mm.h; nothing in DCL reads it, and no VMA is
+ * built on this port (see the note above struct vm_operations_struct).
+ */
+#define VM_MIXEDMAP	0x00000100
 #define VM_IO		0x00004000	/* mapped I/O or similar */
 #define VM_DONTEXPAND	0x00080000	/* mremap may not grow this */
 #define VM_DONTDUMP	0x02000000	/* leave out of the core dump */
@@ -222,6 +237,43 @@ static inline void vm_flags_set(struct vm_area_struct *vma, vm_flags_t flags)
 static inline unsigned long vma_pages(const struct vm_area_struct *vma)
 {
 	return (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
+}
+
+/*
+ * PAGE_ALIGNED(addr) -- mainline's "is this address page-aligned" (v7.2
+ * mm.h), added with the virtio-gpu port: the command path warns on the
+ * answer before walking a buffer page by page, and with the macro
+ * undeclared that line compiled as an implicit call. uintptr_t, not
+ * unsigned long: addresses here hold the top of the 64-bit space and long
+ * is 32 bits on this LLP64 target -- the same width note the allocation
+ * casts carry.
+ */
+#define PAGE_ALIGNED(addr) (((uintptr_t)(addr) & (PAGE_SIZE - 1)) == 0)
+
+/*
+ * is_vmalloc_addr() / vmalloc_to_page() -- mainline declares both in this
+ * header (v7.2 mm.h:1849 and :1859), and that is how the virtio-gpu port's
+ * command path reaches them: the translation unit's include list carries no
+ * <linux/vmalloc.h>, only the DRM headers that land here. There is no
+ * vmalloc address range in this tree (see <linux/vmalloc.h>), so no pointer
+ * can be inside of one and there is no page to translate; both answers are
+ * exactly the ones mainline gives for a kmalloc'd argument, which is what
+ * every caller here passes. Added with the virtio-gpu port, whose vbuf
+ * assembly tests a buffer before walking it page by page and translates it
+ * when the test says vmalloc.
+ */
+struct page;
+
+static inline bool is_vmalloc_addr(const void* addr)
+{
+	(void)addr;
+	return false;
+}
+
+static inline struct page* vmalloc_to_page(const void* addr)
+{
+	(void)addr;
+	return NULL;
 }
 
 /*
@@ -263,6 +315,39 @@ static inline pgprot_t pgprot_writecombine(pgprot_t prot)
 static inline pgprot_t pgprot_decrypted(pgprot_t prot)
 {
 	return prot;
+}
+
+/*
+ * pgprot_noncached() -- arm64's "map uncached" attribute, the sibling of
+ * pgprot_writecombine() above and the same identity for the same reason.
+ * Added with the virtio-gpu port: the vram mmap path selects it for blobs
+ * whose host mapping is uncached, and that path is only reachable on a
+ * device with a host-visible region -- none of the ones this tree scans.
+ */
+static inline pgprot_t pgprot_noncached(pgprot_t prot)
+{
+	return prot;
+}
+
+/*
+ * io_remap_pfn_range() -- mainline's remap of a pfn range into a VMA
+ * (arm64 declares it; the generic form is a #define to remap_pfn_range).
+ * One caller, the same unreachable vram mmap path as pgprot_noncached()
+ * above. There is no pfn remap on this port -- the devfs bridge builds no
+ * VMAs for drivers (see the vma section note) -- so the honest answer is
+ * mainline's "cannot remap" failure, which the one caller already has a
+ * branch for.
+ */
+static inline int io_remap_pfn_range(struct vm_area_struct *vma,
+				     unsigned long addr, unsigned long pfn,
+				     unsigned long size, pgprot_t prot)
+{
+	(void)vma;
+	(void)addr;
+	(void)pfn;
+	(void)size;
+	(void)prot;
+	return -ENOSYS;
 }
 
 struct vm_area_desc {

@@ -20,6 +20,15 @@
 #include <linux/list.h>
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
+/*
+ * DCL delta: mainline's <linux/fs.h> includes <linux/uuid.h> (linux-7.2
+ * fs.h:37), and that is how DRM headers that name uuid_t -- virtgpu_drv.h:101
+ * is the reader here -- see the type. DCL's fs.h is a pinned ABI blob that
+ * includes nothing (see its opening note), so the include its mainline
+ * counterpart would have supplied is carried here, on the header that pulls
+ * fs.h in: drm_gem.h -> dma-buf.h.
+ */
+#include <linux/uuid.h>
 #include <linux/dma-fence.h>
 #include <linux/wait.h>
 #include <linux/pci-p2pdma.h>

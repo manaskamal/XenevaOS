@@ -458,6 +458,16 @@ static inline void* dcl_kzalloc(unsigned int size) {
 	dcl_kmalloc((unsigned int)(sizeof(type) * (unsigned int)(count)))
 
 /*
+ * kvzalloc_objs(type, count) -- the zeroing spelling, added with the
+ * virtio-gpu port: virtgpu_submit.c:109 and :200 size their syncobj arrays
+ * with it. mainline's v-named pair differs only in the fallback both DCL
+ * spellings share, so this expands to kzalloc_objs() and the overflow note
+ * there applies here too.
+ */
+#define kvzalloc_objs(type, count) \
+	kzalloc_objs(type, count)
+
+/*
  * The rest of the kvmalloc family and the two string helpers, as functions
  * rather than more macros: a vendored caller names each of them as a call --
  * vkms_composer.c:568/:574 (kvmalloc), drm_property.c:565 (kvzalloc),
@@ -499,6 +509,23 @@ static inline void *kmalloc_array(size_t n, size_t size, gfp_t flags)
 }
 
 /*
+ * kvmalloc_array(n, size, flags) -- the v-named spelling of the same
+ * overflow-checked array allocation, added with the virtio-gpu port: the
+ * submit path sizes its syncobj arrays with it. mainline picks kmalloc and
+ * falls back to vmalloc above a threshold; DCL's kvmalloc family has no
+ * vmalloc to fall back to -- see the note over kvmalloc_objs() -- so the
+ * body is kmalloc_array()'s under the name its caller names.
+ */
+static inline void *kvmalloc_array(size_t n, size_t size, gfp_t flags)
+{
+	size_t bytes;
+
+	if (unlikely(check_mul_overflow(n, size, &bytes)))
+		return NULL;
+	return dcl_kmalloc_flags((unsigned int)bytes, flags);
+}
+
+/*
  * kmalloc_node_track_caller(size, flags, node) -- kmalloc() with a NUMA node
  * and caller tracking, both of which this tree absorbs. One TLSF heap means
  * there are no nodes to choose between, and the tracking is slab leak
@@ -520,6 +547,19 @@ static inline void *kmalloc_node_track_caller(size_t size, gfp_t flags, int node
  */
 void *memdup_array_user(const void __user *src, size_t n, size_t size);
 void *vmemdup_array_user(const void __user *src, size_t n, size_t size);
+
+/*
+ * memdup_user()/vmemdup_user() -- the pair those inlines are *over*,
+ * declared here for the same reachability reason as they are. mainline
+ * declares the pair in <linux/string.h>; DCL's string.h is
+ * memcpy-and-friends only, and this header already owns the string half of
+ * the allocation surface. The virtio-gpu ioctl blob paths and the submit
+ * queue name them directly, and neither had a definition. Bodies in
+ * DCL/linux_alloc_shim.c beside the array forms; IS_ERR() answers because
+ * the callers check with IS_ERR().
+ */
+void *memdup_user(const void __user *src, size_t len);
+void *vmemdup_user(const void __user *src, size_t len);
 
 /*
  * kmemdup(src, len, gfp) -- copy `len` bytes into a fresh allocation.
@@ -564,6 +604,57 @@ static inline void* kmem_cache_alloc_lru(struct kmem_cache* cache,
 {
 	(void)lru;
 	return kmalloc(cache->size, gfp);
+}
+
+/*
+ * DCL delta: the cache lifecycle virtio-gpu's vbuf allocator drives --
+ * virtgpu_vq.c:75 creates the cache, :101/:208/:628 allocate from it,
+ * :208/:89 free and :83 destroys it. A DCL cache is the size in its
+ * descriptor and nothing else: every allocation comes from the one TLSF
+ * heap whatever name it was asked for, so create() allocates the descriptor
+ * out of that same heap, destroy() returns it, and the two allocation
+ * spellings bottom out in kmalloc/kzalloc by way of the descriptor's size.
+ *
+ * `align`, the flags word and the constructor have nothing to act on and are
+ * accepted because mainline's signature is what the vendored caller compiles
+ * against. The one consequence a reader should see: it is a real allocation,
+ * so create() can fail, and the caller checks -- which is the same failure
+ * path mainline's create() has.
+ */
+static inline struct kmem_cache* kmem_cache_create(const char* name,
+						   unsigned int size,
+						   unsigned int align,
+						   unsigned int flags,
+						   void (*ctor)(void*))
+{
+	struct kmem_cache* cache;
+
+	(void)name;
+	(void)align;
+	(void)flags;
+	(void)ctor;
+	cache = dcl_kmalloc(sizeof(*cache));
+	if (!cache)
+		return NULL;
+	cache->size = size;
+	return cache;
+}
+
+static inline void kmem_cache_destroy(struct kmem_cache* cache)
+{
+	kfree(cache);
+}
+
+static inline void* kmem_cache_zalloc(struct kmem_cache* cache, gfp_t gfp)
+{
+	(void)gfp;
+	return dcl_kzalloc(cache->size);
+}
+
+static inline void kmem_cache_free(struct kmem_cache* cache, void* obj)
+{
+	(void)cache;
+	kfree(obj);
 }
 
 static inline void* kmemdup(const void* src, size_t len, gfp_t gfp)

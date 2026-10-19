@@ -163,6 +163,19 @@
  */
 #define CONFIG_XARRAY_MULTI	1
 
+/*
+ * CONFIG_DRM_VIRTIO_GPU_KMS -- on, and it has to be: virtio_gpu_init()
+ * (Vendored/drivers/gpu/drm/virtio/virtgpu_kms.c:240) gates the modeset half
+ * on it with IS_ENABLED(), and its "#else" clears DRIVER_MODESET and
+ * DRIVER_ATOMIC from the driver features and writes num_scanouts = 0. A
+ * virtio-gpu device without KMS is a driver that registers and then has no
+ * output to prove anything on -- the scanout stage exists to prove exactly
+ * that half, so the option is the feature table of this port, not a
+ * preference. It gates nothing else in the tree; the driver is the only
+ * reader.
+ */
+#define CONFIG_DRM_VIRTIO_GPU_KMS 1
+
 /* Deliberately undefined:
  *   CONFIG_DEVPORT           no x86 I/O ports on ARM64 -> no /dev/port
  *   CONFIG_STRICT_DEVMEM     page_is_allowed() collapses to "allow all"

@@ -265,4 +265,17 @@ static inline __must_check bool refcount_dec_and_test(refcount_t *r)
 	return __refcount_sub_and_test(1, r, NULL);
 }
 
+/*
+ * refcount_dec() -- the plain decrement refcount_dec_and_test() above is
+ * built on, and mainline's neighbour to refcount_inc() (v7.2 refcount.h).
+ * Added with the virtio-gpu port: DCL/drm_shmem_shim.c's unpin drops
+ * pages_pin_count with it. Underflow saturates and warns exactly as the
+ * other arms do; the result __refcount_sub_and_test() also hands back is
+ * the part mainline's refcount_dec() drops.
+ */
+static inline void refcount_dec(refcount_t *r)
+{
+	__refcount_sub_and_test(1, r, NULL);
+}
+
 #endif /* __LINUX_REFCOUNT_H__ */

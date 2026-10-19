@@ -63,6 +63,27 @@ unsigned long copy_from_user(void* to, const void __user* from, unsigned long n)
 	return 0;
 }
 
+/*
+ * strncpy_from_user(dst, src, count) -- mainline's NUL-terminated copy out
+ * of a user address, added with the virtio-gpu port (the debug-name ioctl
+ * bounds a name by its destination buffer). The copy is a plain one for
+ * the reason copy_from_user() above says; the loop stops one short of the
+ * bound so the terminator always fits, and the count is what comes back --
+ * "length copied, terminator not counted", which is what the one caller's
+ * success test reads.
+ */
+long strncpy_from_user(char* dst, const char __user* src, long count) {
+	long i;
+
+	if (count <= 0)
+		return -EINVAL;
+
+	for (i = 0; i < count - 1 && ((const char*)src)[i]; i++)
+		dst[i] = ((const char*)src)[i];
+	dst[i] = 0;
+	return i;
+}
+
 unsigned long clear_user(void __user* to, unsigned long n) {
 	if (!to)
 		return n;
@@ -514,6 +535,35 @@ int sg_alloc_table_from_pages_segment(struct sg_table* sgt,
 }
 
 /*
+ * sg_alloc_table() -- declared in <linux/scatterlist.h>, added with the
+ * virtio-gpu port: the command path builds its per-page table with it
+ * before walking it, and the vram path a one-entry table. The table is
+ * nents zeroed entries off the same heap sg_alloc_table_from_pages_segment()
+ * above draws from, and the count is validated like the ones mainline
+ * rejects: zero entries is not a table, and a byte length that would not
+ * survive the allocator's word is refused before the multiply runs.
+ */
+int sg_alloc_table(struct sg_table* sgt, unsigned int nents, gfp_t gfp) {
+	struct scatterlist* sgl;
+
+	(void)gfp;
+	if (!sgt || !nents)
+		return -EINVAL;
+	if (nents > (unsigned int)(0xffffffffu / sizeof(*sgl)))
+		return -EINVAL;
+
+	sgl = kmalloc((unsigned int)(nents * sizeof(*sgl)));
+	if (!sgl)
+		return -ENOMEM;
+	memset(sgl, 0, (unsigned long)nents * sizeof(*sgl));
+
+	sgt->sgl = sgl;
+	sgt->nents = nents;
+	sgt->orig_nents = nents;
+	return 0;
+}
+
+/*
  * sg_free_table() -- declared in <linux/scatterlist.h>, where the note over
  * it explains why this stopped being an inline no-op: the constructor above
  * is now a real allocation, and kfree() is the body it needs.  The reset
@@ -542,6 +592,7 @@ extern int (*const __dcl_initcall_virtio_console_init)(void);
 extern int (*const __dcl_initcall_drm_core_init)(void);
 extern int (*const __dcl_initcall_vkms_init)(void);
 extern int (*const __dcl_initcall_bochs_pci_driver_init)(void);
+extern int (*const __dcl_initcall_virtio_gpu_driver_init)(void);
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -677,5 +728,27 @@ void DclRunInitcalls(void) {
 			UARTDebugOut("[dcl]: bochs pci driver registered\r\n");
 	} else {
 		UARTDebugOut("[dcl]: bochs initcall not linked\r\n");
+	}
+
+	/*
+	 * virtio-gpu -- the third registration, and the first whose probe ends
+	 * in a DRM card rather than a character device. Nothing is claimed
+	 * here: the vendored virtio_gpu_driver_init()
+	 * (Vendored/drivers/gpu/drm/virtio/virtgpu_drv.c:182) only puts the
+	 * driver on the virtio list. A device appears when virtio_gpu_detect()
+	 * runs, and the only caller of that is modload_test_run() under
+	 * __XENEVA_BYPASS_VIRTGPU__ (see DCL/modload_test.c). A default build
+	 * thus registers this driver as a bystander, which is the point: the
+	 * internal virtgpu.dll owns 1AF4:1050 unless the image was packed
+	 * without it.
+	 */
+	if (__dcl_initcall_virtio_gpu_driver_init) {
+		int rc = __dcl_initcall_virtio_gpu_driver_init();
+		if (rc)
+			UARTDebugOut("[dcl]: virtio_gpu register failed: %d\r\n", rc);
+		else
+			UARTDebugOut("[dcl]: virtio_gpu driver registered\r\n");
+	} else {
+		UARTDebugOut("[dcl]: virtio_gpu initcall not linked\r\n");
 	}
 }

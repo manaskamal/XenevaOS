@@ -72,7 +72,18 @@
  */
 struct scatterlist {
 	void* buf;
-	unsigned int len;
+	/*
+	 * One length, two spellings. DCL's writers (sg_init_one,
+	 * sg_set_page, the shmem tables) name it `len`; mainline's readers
+	 * name it `length` -- virtgpu_object.c:195 copies sg->length into a
+	 * virtio_gpu_mem_entry -- and vendored sources are not edited to a
+	 * local spelling. A union keeps the two names on one storage, so a
+	 * write through either is visible through the other.
+	 */
+	union {
+		unsigned int len;
+		unsigned int length;
+	};
 	struct page* page;
 	/*
 	 * mainline's two DMA fields, carried in full even though nothing
@@ -261,16 +272,35 @@ static inline int __sg_page_iter_next(struct sg_page_iter* pgi)
 #define sg_dma_len(sg)		((sg)->dma_length)
 
 /*
- * Argument order is mainline's -- (sglist, i, nents) -- and the loop
- * variable is mainline's too: `sg` is hardcoded, which is why
- * for_each_sgtable_dma_sg() below takes it as an argument and then passes
- * only `i` down. drm_prime.c:894 spells it that way.
+ * The table walk keeps mainline's spelling -- for_each_sgtable_dma_sg(sgt,
+ * sg, i) -- and threads the caller's variable through to the entry walk
+ * instead of naming a fixed `sg` inside it: virtgpu_prime.c:174 walks with
+ * `sl`, and a macro that hardcodes the name cannot serve that caller. The
+ * bound is explicit because DCL's entries carry no chain/terminator bit (see
+ * struct scatterlist).
  */
-#define for_each_sg_dma(sglist, i, nents)				\
+#define for_each_sg_dma(sglist, sg, nents, i)				\
 	for ((i) = 0; (i) < (nents) && ((sg) = &(sglist)[(i)]); (i)++)
 
 #define for_each_sgtable_dma_sg(sgt, sg, i)				\
-	for_each_sg_dma((sgt)->sgl, i, (sgt)->nents)
+	for_each_sg_dma((sgt)->sgl, sg, (sgt)->nents, i)
+
+/*
+ * for_each_sg() -- mainline's plain entry walk, added with the virtio-gpu
+ * port. The caller is virtgpu_object.c:193, filling a resource's attach
+ * mem-entry list: with VIRTIO_F_ACCESS_PLATFORM never offered, the addresses
+ * come from sg_phys() and every entry counts (orig_nents, not the
+ * dma-degraded nents).
+ *
+ * The spellings are mainline's, same trade as for_each_sg_dma() above: the
+ * loop variable is the hardcoded `sg`, and the bound is explicit because
+ * DCL's entries carry no chain/terminator bit (see struct scatterlist).
+ */
+#define for_each_sg(sglist, sg, nents, i)				\
+	for ((i) = 0; (i) < (nents) && ((sg) = &(sglist)[(i)]); (i)++)
+
+#define for_each_sgtable_sg(sgt, sg, i)					\
+	for_each_sg((sgt)->sgl, sg, (sgt)->orig_nents, i)
 
 /*
  * struct sg_dma_page_iter and its walk -- the address-granular counterpart,
@@ -355,6 +385,28 @@ int sg_alloc_table_from_pages_segment(struct sg_table* sgt,
  * this header deliberately does not include <linux/slab.h> to name it.
  * mainline declares the same function in this header.
  */
+/*
+ * sg_alloc_table() -- allocate a table of `nents` zeroed entries, the
+ * entry point sg_init_table() (whose callers fill in place) is the static
+ * form of. Added with the virtio-gpu port: the command path sizes its
+ * per-page table from it and the vram path its one-entry mapping. Body in
+ * DCL/linux_mm_shim.c beside sg_free_table().
+ */
+int sg_alloc_table(struct sg_table* sgt, unsigned int nents, gfp_t gfp);
+
 void sg_free_table(struct sg_table* sgt);
+
+/*
+ * sg_phys() -- the physical address an entry covers. mainline spells it
+ * page_to_phys(sg_page(sg)) + sg->offset; a DCL entry names its buffer
+ * directly (struct scatterlist above), so the same answer is the kernel's
+ * virtual-to-physical translation of ->buf plus the offset within its page.
+ * Body in DCL/linux_kmod_shim.c beside sg_init_one(), on the same arithmetic
+ * buf_phys() in DCL/virtio_shim.c uses for descriptor addresses.
+ *
+ * The caller is the non-DMA-API arm of virtgpu_object.c:194's mem-entry
+ * fill; mainline declares this in the same header.
+ */
+dma_addr_t sg_phys(const struct scatterlist* sg);
 
 #endif /* __LINUX_SCATTERLIST_H__ */

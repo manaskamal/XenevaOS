@@ -22,6 +22,18 @@
 
 #include <linux/printk.h>
 
+/*
+ * DCL delta: mainline's defaults, added with the virtio-gpu port --
+ * virtgpu_vq.c:254's DRM_ERROR_RATELIMITED expands DEFINE_RATELIMIT_STATE
+ * with these. The value is inert here (__ratelimit() always proceeds), so
+ * the interval is written out rather than left as `5 * HZ`: this header
+ * cannot count on <linux/timer.h> being in scope at every use site, and 1250
+ * is five seconds at DCL's HZ (250, linux/timer.h:57) if the limiter ever
+ * grows teeth.
+ */
+#define DEFAULT_RATELIMIT_INTERVAL	1250
+#define DEFAULT_RATELIMIT_BURST		10
+
 struct ratelimit_state {
 	int interval;
 	int burst;

@@ -235,4 +235,48 @@ static inline void* pci_get_drvdata(const struct pci_dev* pdev)
 	return pdev->driver_data;
 }
 
+/* ── device lookup ──────────────────────────────────────────────────────── */
+
+/*
+ * pci_get_device() / pci_dev_put(), as virtio-gpu's init names them: mainline
+ * walks the device list and returns a match with a reference held, the caller
+ * dropping it with pci_dev_put() when done. The DCL fabric's slot table is
+ * the list (DCL/pci_shim.c walks ECAM into it; nothing is ever removed), and
+ * the from-argument keeps mainline's iteration contract -- resuming *after*
+ * the device handed to the previous call -- because the one caller passes
+ * NULL and a second caller, if it ever comes, will expect the same walk.
+ *
+ * The reference itself is the no-op of a bus whose devices outlive every
+ * driver: there is no removal path to fence against, so get is "the pointer
+ * is still valid" and put has nothing to drop. Both bodies are in
+ * DCL/pci_shim.c beside the scan.
+ */
+struct pci_dev* pci_get_device(unsigned int vendor, unsigned int device,
+			       struct pci_dev* from);
+void pci_dev_put(struct pci_dev* pdev);
+
+/*
+ * pci_is_vga() -- mainline's legacy-VGA class test, body verbatim
+ * (include/linux/pci.h:784 in linux-7.2.6): the device either announces the
+ * display-VGA class or the old not-defined-VGA one. Only the class matters
+ * here; mainline's ioport/parity extras are x86 machinery this port has no
+ * registers for.
+ *
+ * What reads it: virtio_gpu_driver_init()'s VGA-quirk branch. The device
+ * this port runs against (virtio-gpu-pci) reports 0x0380, so the answer is
+ * false and the branch -- vga_get_interruptible()/vga_put() -- is skipped;
+ * virtio_gpu_probe()'s aperture_remove_conflicting_pci_devices() is skipped
+ * for the same reason.
+ */
+static inline bool pci_is_vga(struct pci_dev* pdev)
+{
+	if ((pdev->class >> 8) == PCI_CLASS_DISPLAY_VGA)
+		return true;
+
+	if ((pdev->class >> 8) == PCI_CLASS_NOT_DEFINED_VGA)
+		return true;
+
+	return false;
+}
+
 #endif /* _LINUX_PCI_H */

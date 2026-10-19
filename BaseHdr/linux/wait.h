@@ -180,10 +180,29 @@ unsigned int wait_woken(struct wait_queue_entry* wq_entry,
 void dcl_wait_event_timeout(const char* func);
 
 /*
+ * dcl_wait_pump() -- run pending device completions while the bounded poll
+ * spins. Declared here, called from _dcl_wait_core below, defined in
+ * DCL/virtio_shim.c beside virtio_poll_vqs().
+ *
+ * Why a wait has to pump at all: completions on this port are reaped by
+ * polling -- the cdev read loop, or the caller's own loop -- and a driver's
+ * *probe-time* waits have no such loop above them. virtio_gpu_init()'s
+ * display-info wait is the first time it bites: the reply only moves when
+ * the control queue is polled, nothing else polls before userspace runs,
+ * and without this the condition could never come true inside the wait. The
+ * call is idempotent and cheap (one used->idx read per live queue), so
+ * running it under every wait_event is safe on the same terms the cdev
+ * paths already pump.
+ */
+void dcl_wait_pump(void);
+
+/*
  * _dcl_wait_core(wq_head, condition) -- the one polling loop every
  * wait_event* macro below is built from: DCL_WAIT_EVENT_MS passes of
  * mdelay(1) while the condition is false, dcl_wait_event_timeout() on the
- * way out, then the condition read one last time.
+ * way out, then the condition read one last time. Each pass first runs
+ * dcl_wait_pump() (declared above), so a condition fed by a device
+ * completion can arrive during the wait rather than only being re-tested.
  *
  * Spelled once because the four macros that use it differ only in what they
  * make of an expiry -- nothing, -ERESTARTSYS, 0, or the caller's own
@@ -204,6 +223,7 @@ void dcl_wait_event_timeout(const char* func);
 		(void)(wq_head);						\
 		while (!(condition) && _dcl_i) {				\
 			_dcl_i--;						\
+			dcl_wait_pump();					\
 			mdelay(1);						\
 		}								\
 		_dcl_ok = !!(condition);					\

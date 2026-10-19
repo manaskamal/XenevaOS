@@ -27,14 +27,14 @@ cd "$(dirname "$0")/.." || exit 1
 
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=238    # BaseHdr/linux/*.h
+EXP_LINUX_H=243    # BaseHdr/linux/*.h
 EXP_ASM_H=16       # BaseHdr/asm/*.h
-EXP_DCL_C=28       # DCL/*.c   (dcl_va_trampoline.s adds the 29th object)
-EXP_DCL_O=29       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=92      # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+EXP_DCL_C=29       # DCL/*.c   (dcl_va_trampoline.s adds the 30th object)
+EXP_DCL_O=30       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=107     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
                    #   virtio_console, and the drm set: core, vkms, tiny/
-                   #   bochs, dma-buf, lib)
-EXP_ALL_O=252      # everything under KernelAA64/obj
+                   #   bochs, virtio-gpu, dma-buf, lib)
+EXP_ALL_O=268      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
@@ -170,6 +170,10 @@ expect() {   # label pattern
 	if grep -qF -- "$2" "$LOG"; then ok "$1"; else bad "$1" "missing: $2"; fi
 }
 
+reject() {   # label pattern -- the line must NOT be somewhere in the log
+	if grep -qF -- "$2" "$LOG"; then bad "$1" "present: $2"; else ok "$1"; fi
+}
+
 expect "chr_dev_init"                       "chr_dev_init ok (mem devices registered)"
 expect "mem devices"                        "mem devices $EXP_MEM ok, 0 failed"
 expect "stage 1 primitives"                 "dcl primitives: $EXP_PRIM ok, 0 failed"
@@ -236,6 +240,22 @@ if [ -f "$SHOT" ]; then
 	fi
 else
 	bad "bochs scanout pixel proof" "no screendump at $SHOT"
+fi
+
+# Stage 6: drivers/gpu/drm/virtio/, vendored from source -- the driver rides
+# the same PCI fabric and virtio rings as the console, and it is armed only
+# in a --bypass-virtgpu image: the internal virtgpu.dll owns 1AF4:1050 by
+# default, so BYPASS_VIRTGPU=1 is what puts these lines in the log at all.
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	expect "virtio_gpu is not a .ko"         "[modtest]: virtio_gpu built-in"
+	expect "virtio-gpu bound by the fabric"  "[drm] pci: virtio-gpu-pci detected at"
+	expect "virtio-gpu published card2"      "[dcl]: device_add 'dri/card2'"
+	expect "virtio-gpu initialized"          "[drm] Initialized virtio_gpu"
+	# QEMU rejects a descriptor chain it cannot map and the guest prints its
+	# own verdict when a probe-time wait expires with the reply still unread;
+	# either one is a broken queue, not a detail.
+	reject "no rejected descriptor chains"   "zero sized buffers are not allowed"
+	reject "no expired virtio-gpu waits"     "wait_event in virtio_gpu_init gave up"
 fi
 
 # The ELF loader is a separate guarantee from "the driver links" -- it still
