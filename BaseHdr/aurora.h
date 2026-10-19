@@ -32,14 +32,13 @@
 
 #include <stdint.h>
 
-
 #ifdef __GNUC__
-#define AU_EXPORT  __attribute__((visibility("default")))
+#define AU_EXPORT __attribute__((visibility("default")))
 #define AU_IMPORT
 #define AU_ALIGN(x) __attribute__((aligned(x)))
 #else
-#define AU_EXPORT  __declspec(dllexport) __declspec(noinline)
-#define AU_IMPORT  __declspec(dllimport)
+#define AU_EXPORT	__declspec(dllexport) __declspec(noinline)
+#define AU_IMPORT	__declspec(dllimport)
 #define AU_ALIGN(x) __declspec(align(x))
 #endif
 
@@ -50,7 +49,7 @@
 #endif
 
 #ifdef __cplusplus
-#define AU_EXTERN  extern "C"
+#define AU_EXTERN extern "C"
 #else
 #define AU_EXTERN extern
 #endif
@@ -58,24 +57,67 @@
 typedef uint32_t CapRights;
 
 #ifdef ARCH_X64
-#define KERNEL_STACK_LOCATION   0xFFFFFB0000000000
+#define KERNEL_STACK_LOCATION 0xFFFFFB0000000000
 #elif ARCH_ARM64
-#define KERNEL_STACK_LOCATION  0xFFFFB00000000000    //0x0000000B00000000
+#define KERNEL_STACK_LOCATION 0xFFFFB00000000000 //0x0000000B00000000
 #endif
 
-#define KERNEL_STACK_SIZE  40960//16384  //16KiB
+#define KERNEL_STACK_SIZE 40960 //16384  //16KiB
 
 // macro for llvm compatibility
 #ifndef ALIGNED
 #if defined(_MSC_VER)
-    #define ALIGNED(x) __declspec(align(x))
+#define ALIGNED(x) __declspec(align(x))
 #elif defined(__GNUC__) || defined(__clang__)
-    #define ALIGNED(x) __attribute__((aligned(x)))
+#define ALIGNED(x) __attribute__((aligned(x)))
 #else
-    #define ALIGNED(x)
+#define ALIGNED(x)
 #endif
 #endif
 
+/**
+ * Kernel specific information
+ */
+
+/** operating system identity */
+#define XENEVA_OS_NAME "XenevaOS"
+
+//using hardcoded value
+#define XENEVA_OS_NODENAME "jajabor-xeneva"
+
+#define XENEVA_KERNEL_NAME "Aurora_Bordoisila"
+
+/* each architectural release may 
+ * be in different version/release
+ */
+#ifdef ARCH_X64
+#define XENEVA_KERNEL_VERSION	"1.0.0"
+#define XENEVA_KERNEL_RELEASE	"1.0.0"
+#define XENEVA_KERNEL_BUILD		"x86_64"
+#define XENEVA_KERNEL_BUILD_TAG "jajabor"
+/** Target architecture */
+#define XENEVA_KERNEL_ARCH "x86_64"
+
+#elif ARCH_ARM64
+#define XENEVA_KERNEL_VERSION	"1.0.0"
+#define XENEVA_KERNEL_RELEASE	"1.0.0"
+/** Target architecture */
+#define XENEVA_KERNEL_ARCH		"arm64"
+#define XENEVA_KERNEL_BUILD		"arm64"
+#define XENEVA_KERNEL_BUILD_TAG "jajabor"
+
+#elif ARCH_RISCV64
+#define XENEVA_KERNEL_VERSION	"1.0.0"
+#define XENEVA_KERNEL_RELEASE	"1.0.0"
+/** Target architecture */
+#define XENEVA_KERNEL_ARCH		"riscv64"
+#define XENEVA_KERNEL_BUILD		"riscv64"
+#define XENEVA_KERNEL_BUILD_TAG "jajabor"
+#endif
+
+/** kernel configuration  */
+#define XENEVA_KERNEL_SMP	  0
+#define XENEVA_KERNEL_PREEMPT 1
 
 typedef struct _lbprotocol_ {
 	uint64_t initrd_start;
@@ -103,11 +145,10 @@ typedef struct _lbprotocol_ {
 	uint64_t physicalStart;
 	uint64_t physicalEnd;
 	uint64_t numberOfPages;
-}AuLittleBootProtocol;
+} AuLittleBootProtocol;
 
-
-#define BOOT_UEFI_x64 1
-#define BOOT_UEFI_ARM64 2
+#define BOOT_UEFI_x64		  1
+#define BOOT_UEFI_ARM64		  2
 #define BOOT_LITTLEBOOT_ARM64 3
 /**
 * Kernel Boot information structure passed by XNLDR
@@ -122,7 +163,7 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint64_t reserved_mem_count;
 
 	/* map -- UEFI memory map */
-	void *map;
+	void* map;
 
 	/* descriptor_size -- UEFI memory map descriptor size */
 	uint64_t descriptor_size;
@@ -138,16 +179,16 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t* graphics_framebuffer;
 
 	/* fb_size -- framebuffer total size */
-	size_t   fb_size;
+	size_t fb_size;
 
 	/* X_Resolution -- Total width of the entire display */
-	uint16_t  X_Resolution;
+	uint16_t X_Resolution;
 
 	/* Y_Resolution -- Total height of the entire display */
-	uint16_t   Y_Resolution;
+	uint16_t Y_Resolution;
 
 	/* pixels_per_line -- scanline of the current display */
-	uint16_t   pixels_per_line;
+	uint16_t pixels_per_line;
 
 	/* redmask, greenmask, bluemask, resvmask -- color mask */
 	uint32_t redmask;
@@ -156,10 +197,10 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	uint32_t resvmask;
 
 	/* acpi_table_pointer -- acpi base memory map */
-	void*    acpi_table_pointer;
+	void* acpi_table_pointer;
 
 	/* kernel_size -- total kernel image size */
-	size_t   kernel_size;
+	size_t kernel_size;
 
 	/* psf_font_data -- screen font address loaded
 	by XNLDR to use for debugging purpose */
@@ -167,16 +208,16 @@ typedef struct _KERNEL_BOOT_INFO_ {
 
 	/* printf_gui -- character printing function pointer to use
 	for debugging purpose provided by XNLDR */
-	void(*printf_gui) (const char* text, ...);
+	void (*printf_gui)(const char* text, ...);
 
 	/* unused pointer entries */
-	uint8_t* driver_entry1;   //OTHER
-	uint8_t *driver_entry2;   //!NVME
-	uint8_t *driver_entry3;   //!AHCI
-	uint8_t* driver_entry4;   //!FLOPPY
-	uint8_t* driver_entry5;   //!ATA
-	uint8_t* driver_entry6;   //!USB
-	void*    apcode;
+	uint8_t* driver_entry1; //OTHER
+	uint8_t* driver_entry2; //!NVME
+	uint8_t* driver_entry3; //!AHCI
+	uint8_t* driver_entry4; //!FLOPPY
+	uint8_t* driver_entry5; //!ATA
+	uint8_t* driver_entry6; //!USB
+	void* apcode;
 	uint32_t hid;
 	uint32_t uid;
 	uint32_t cid;
@@ -188,7 +229,7 @@ typedef struct _KERNEL_BOOT_INFO_ {
 	 * surface, so the early console never runs off it. --axiss */
 	uint16_t DesktopOverrideWidth;
 	uint16_t DesktopOverrideHeight;
-}KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
+} KERNEL_BOOT_INFO, *PKERNEL_BOOT_INFO;
 
 /*
  * AuGetBootInfoStruc -- return kernel boot information

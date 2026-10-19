@@ -570,25 +570,28 @@ static uint32_t AuProcessUpdateCPUPercent(AuProcess* proc, uint64_t now) {
  * @param num_proc_count -- number of process count
  */
 int AuProcessFetch(AuProcessList* list, int num_proc_count) {
-	AuProcess* first = proc_first;
+	if (!list)
+		return 1;
+
+	//AuProcess* first = proc_first;
 	uint64_t now = AuGetCurrentUS();
 
-	for (int i = 0; i < num_proc_count; i++) {
-		if (!first)
+	size_t n = 0;
+	for (AuProcess* p = proc_first; p && n < num_proc_count; p = p->next, n++) {
+		if (!p)
 			break;
-		size_t namelen = strlen(first->name);
-		if (namelen >= sizeof(list[i].name))
-			namelen = sizeof(list[i].name) - 1;
-		memcpy(list[i].name, first->name, namelen);
-		list[i].name[namelen] = '\0';
-		list[i].num_file_opened = AuProcGetOpenFileCount(first);
-		list[i].num_threads = first->num_thread;
-		list[i].proc_id = first->proc_id;
-		list[i].total_runtime_us = first->total_runtime_us;
-		list[i].window_runtime_us = first->window_runtime_us;
-		first->cpu_usage = AuProcessUpdateCPUPercent(first, now);
-		list[i].cpu_usage = first->cpu_usage;
-		first = first->next;
+		size_t namelen = strlen(p->name);
+		if (namelen >= sizeof(list[n].name))
+			namelen = sizeof(list[n].name) - 1;
+		memcpy(list[n].name, p->name, namelen);
+		list[n].name[namelen] = '\0';
+		list[n].num_file_opened = AuProcGetOpenFileCount(p);
+		list[n].num_threads = p->num_thread;
+		list[n].proc_id = p->proc_id;
+		list[n].total_runtime_us = p->total_runtime_us;
+		list[n].window_runtime_us = p->window_runtime_us;
+		p->cpu_usage = AuProcessUpdateCPUPercent(p, now);
+		list[n].cpu_usage = p->cpu_usage;
 	}
 
 	return 0;

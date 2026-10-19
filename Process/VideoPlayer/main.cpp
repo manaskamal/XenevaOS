@@ -52,8 +52,8 @@ ChitralekhaApp* app;
 ChWindow* mainWin;
 int sound;
 
-#define FRAMEBUFFER_WIDTH  800
-#define FRAMEBUFFER_HEIGHT 700
+#define FRAMEBUFFER_WIDTH  700
+#define FRAMEBUFFER_HEIGHT 500
 
 /**
  *  TODO: proper UI and refactoring
@@ -356,7 +356,7 @@ static void feed_nal(storage_t* h264, const uint8_t* nal, uint32_t len, uint32_t
 							  FRAMEBUFFER_WIDTH,
 							  FRAMEBUFFER_HEIGHT);
 
-			ChWindowUpdate(mainWin, 0, 0, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, 1, 0);
+			ChWindowUpdate(mainWin, 0, 0, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, 0, 1);
 		}
 
 	} else if (status == H264BSD_ERROR || status == H264BSD_PARAM_SET_ERROR) {
@@ -473,6 +473,9 @@ void play_video(const char* path) {
 	//uint8_t buf[65536];
 	unsigned v_sample = 0, a_sample = 0;
 
+	uint8_t* video_sample_buf = (uint8_t*)malloc(2 * 1024 * 1024);
+	memset(video_sample_buf, 0, 2 * 1024 * 1024);
+
 	while (v_sample < vt->sample_count || (at && a_sample < at->sample_count)) {
 		bool have_v = v_sample < vt->sample_count;
 		bool have_a = at && a_sample < at->sample_count;
@@ -484,44 +487,45 @@ void play_video(const char* path) {
 		if (have_v)
 			v_off = MP4D_frame_offset(&mp4, video_track, v_sample, &v_frame_bytes, &v_ts, &v_dur);
 
-		if (have_a)
-			a_off = MP4D_frame_offset(&mp4, audio_track, a_sample, &a_frame_bytes, &a_ts, &a_dur);
+		//if (have_a)
+		//	a_off = MP4D_frame_offset(&mp4, audio_track, a_sample, &a_frame_bytes, &a_ts, &a_dur);
 
-		bool take_audio = have_a && (!have_v || a_ts <= v_ts + 300);
+		//bool take_audio = have_a && (!have_v || a_ts <= v_ts + 300);
 
-		if (take_audio) {
-			uint8_t* buf = (uint8_t*)malloc(a_frame_bytes);
-			if (mp4_read_cb((int64_t)a_off, buf, a_frame_bytes, &mf) == 0) {
-				//decode_audio_sample(buf, a_frame_bytes);
-			} else {
-				_KePrint("audio sample %d read failed \r\n", a_sample);
-			}
-			free(buf);
-			a_sample++;
-		} else if (have_v) {
-			uint8_t* buf = (uint8_t*)malloc(v_frame_bytes);
-			if (mp4_read_cb((int64_t)v_off, buf, v_frame_bytes, &mf) == 0) {
-				size_t p = 0;
-				while (p + 4 <= v_frame_bytes) {
-					uint32_t nal_len =
-						(buf[p] << 24) | (buf[p + 1] << 16) | (buf[p + 2] << 8) | buf[p + 3];
-					p += 4;
-					if (p + nal_len > v_frame_bytes) {
-						printf("p + nal_len > frame_bytes \n");
-						break;
-					}
-					feed_nal(&h264, buf + p, nal_len, 0);
-					p += nal_len;
+		//if (take_audio) {
+		/**uint8_t* buf = (uint8_t*)malloc(a_frame_bytes);**/
+		//	if (mp4_read_cb((int64_t)a_off, audio_sample_buffer, a_frame_bytes, &mf) == 0) {
+		//		decode_audio_sample(audio_sample_buffer, a_frame_bytes);
+		//	} else {
+		//		_KePrint("audio sample %d read failed \r\n", a_sample);
+		//	}
+		//free(buf);
+		//	a_sample++;
+		//} else if (have_v) {
+		//uint8_t* buf = (uint8_t*)malloc(v_frame_bytes);
+		if (mp4_read_cb((int64_t)v_off, video_sample_buf, v_frame_bytes, &mf) == 0) {
+			size_t p = 0;
+			while (p + 4 <= v_frame_bytes) {
+				uint32_t nal_len = (video_sample_buf[p] << 24) | (video_sample_buf[p + 1] << 16) |
+								   (video_sample_buf[p + 2] << 8) | video_sample_buf[p + 3];
+				p += 4;
+				if (p + nal_len > v_frame_bytes) {
+					printf("p + nal_len > frame_bytes \n");
+					break;
 				}
-			} else {
-				_KePrint("sample read failed \r\n");
+				feed_nal(&h264, video_sample_buf + p, nal_len, 0);
+				p += nal_len;
 			}
-			free(buf);
-			v_sample++;
+		} else {
+			_KePrint("sample read failed \r\n");
 		}
+		//free(buf);
+		v_sample++;
 	}
 
 	printf("h264bsd shutdowning \r\n");
+	free(video_sample_buf);
+	//free(audio_sample_buffer);
 	h264bsdShutdown(&h264);
 	MP4D_close(&mp4);
 	fclose(mf.f);
@@ -600,6 +604,7 @@ void* audio_thread(void* arg) {
 	}
 
 	if (audio_track < 0) {
+		printf("no audio track \r\n");
 		MP4D_close(&mp4);
 		fclose(mf.f);
 		_KePauseThread();
@@ -610,15 +615,24 @@ void* audio_thread(void* arg) {
 	_KePrint("Audio decoder initialized \r\n");
 	printf("decoding audio samples in audio thread \r\n");
 
+	uint8_t* audio_sample_buffer = (uint8_t*)malloc(64 * 1024);
+	memset(audio_sample_buffer, 0, 64 * 1024);
+
 	for (unsigned s = 0; s < at->sample_count; s++) {
 		unsigned frame_bytes = 0, ts = 0, dur = 0;
 		MP4D_file_offset_t off = MP4D_frame_offset(&mp4, audio_track, s, &frame_bytes, &ts, &dur);
-		uint8_t* buf = (uint8_t*)malloc(frame_bytes);
-		if (mp4_read_cb((int64_t)off, buf, frame_bytes, &mf) == 0)
-			decode_audio_sample(buf, frame_bytes);
-		free(buf);
+
+		if (frame_bytes > 64 * 1024) {
+			printf("audio sample too big: skipping \r\n");
+			continue;
+		}
+
+		if (mp4_read_cb((int64_t)off, audio_sample_buffer, frame_bytes, &mf) == 0)
+			decode_audio_sample(audio_sample_buffer, frame_bytes);
+		//_KeProcessSleep(1);
 	}
 
+	free(audio_sample_buffer);
 	//_KePauseThread();
 	pthread_exit(NULL);
 }
@@ -628,7 +642,7 @@ int main(int argc, char* argv[]) {
 
 	app = ChitralekhaStartApp(argc, argv);
 	mainWin =
-		ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Video Player", 400, 480 / 2 - 400 / 2, 800, 700);
+		ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Video Player", 400, 480 / 2 - 400 / 2, 700, 500);
 
 	ChWindowPaint(mainWin);
 
@@ -637,7 +651,7 @@ int main(int argc, char* argv[]) {
 
 	play_video("/test.mp4");
 	while (1) {
-		_KeProcessSleep(100);
+		_KePauseThread();
 	}
 
 	return 0;

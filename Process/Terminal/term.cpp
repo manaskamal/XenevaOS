@@ -125,7 +125,8 @@ static void _terminal_redraw_cursor(Terminal* t) {
 		clip.y = py;
 		clip.w = t->cellW;
 		clip.h = t->cellH;
-		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
+		ChFontDrawTextClipped(
+			win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
 	}
 	// draw the character here
 	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
@@ -1281,10 +1282,10 @@ static void TerminalClipboardPaste(Terminal* t) {
  * yields '3'/'.') , so rawkey matching hijacked '8', '3' and '.' while
  * typing addresses and commands. --axiss */
 #define TERMINAL_SCANCODE_RELEASE 0x80
-#define TERMINAL_SCANCODE_MASK	   0x7f
-#define TERMINAL_SCANCODE_UP	   0x48
-#define TERMINAL_SCANCODE_LEFT	   0x4b
-#define TERMINAL_SCANCODE_RIGHT	   0x4d
+#define TERMINAL_SCANCODE_MASK	  0x7f
+#define TERMINAL_SCANCODE_UP	  0x48
+#define TERMINAL_SCANCODE_LEFT	  0x4b
+#define TERMINAL_SCANCODE_RIGHT	  0x4d
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -1346,6 +1347,7 @@ void TerminalHandleMessage(PostEvent* e) {
 				_terminal_redraw_cursor(&term);
 			}
 			memset(e, 0, sizeof(PostEvent));
+			return;
 		}
 
 		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
@@ -1356,6 +1358,7 @@ void TerminalHandleMessage(PostEvent* e) {
 				_terminal_redraw_cursor(&term);
 			}
 			memset(e, 0, sizeof(PostEvent));
+			return;
 		}
 		/**
 		 * CTRL + SHIFT + C/V -- the host<->VM clipboard, on the same
@@ -1474,8 +1477,7 @@ void TerminalThread() {
 			 * so an empty pty doesn't hot-spin. Master reads return 0
 			 * when empty, so this branch is the only sleeper. --axiss */
 			uint64_t now = _KeGetCurrentMS();
-			if (now - last_blink_ms >= 500)
-			{
+			if (now - last_blink_ms >= 500) {
 				TerminalBlinkTick(&term);
 				last_blink_ms = now;
 			}

@@ -809,20 +809,12 @@ static void DeodhaiComposeResizePreview(ChCanvas* canv) {
 	_always_on_top_update = true;
 	int rx = reszNewX < reszOLDX ? reszNewX : reszOLDX;
 	int ry = reszNewY < reszOLDY ? reszNewY : reszOLDY;
-	int right = reszNewX + reszNewW > reszOLDX + reszOLDW ? reszNewX + reszNewW
-																 : reszOLDX + reszOLDW;
-	int bottom = reszNewY + reszNewH > reszOLDY + reszOLDH ? reszNewY + reszNewH
-																  : reszOLDY + reszOLDH;
-	_deodhai_repaint_region(canv,
-						   rx,
-						   ry,
-						   right - rx,
-						   bottom - ry,
-						   reszWin,
-						   reszNewX,
-						   reszNewY,
-						   reszNewW,
-						   reszNewH);
+	int right =
+		reszNewX + reszNewW > reszOLDX + reszOLDW ? reszNewX + reszNewW : reszOLDX + reszOLDW;
+	int bottom =
+		reszNewY + reszNewH > reszOLDY + reszOLDH ? reszNewY + reszNewH : reszOLDY + reszOLDH;
+	_deodhai_repaint_region(
+		canv, rx, ry, right - rx, bottom - ry, reszWin, reszNewX, reszNewY, reszNewW, reszNewH);
 }
 /**
  * @brief DeodhaiWindowCheckResizable -- checks and resize
@@ -835,12 +827,12 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 	if (!reszWin) {
 		Window* win = focusedWin;
 		if (!win || dragWin || win->resizePending ||
-			(win->flags & (WINDOW_FLAG_MESSAGEBOX | WINDOW_FLAG_BLOCKED |
-						   WINDOW_FLAG_NON_RESIZABLE)))
+			(win->flags &
+			 (WINDOW_FLAG_MESSAGEBOX | WINDOW_FLAG_BLOCKED | WINDOW_FLAG_NON_RESIZABLE)))
 			return;
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (info->hide || info->zoomed || x < info->x || y < info->y || x >= info->x + info->width ||
-			y >= info->y + info->height)
+		if (info->hide || info->zoomed || x < info->x || y < info->y ||
+			x >= info->x + info->width || y >= info->y + info->height)
 			return;
 		int hitEdge = RESIZE_EDGE_NONE;
 		if (x < info->x + RESIZE_BORDER_LR)
@@ -856,9 +848,8 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 				ChangeCursor(arrow);
 			return;
 		}
-		ChangeCursor((hitEdge & (RESIZE_EDGE_LEFT | RESIZE_EDGE_RIGHT))
-					 ? resizeLeftRight
-					 : resizeUpDown);
+		ChangeCursor((hitEdge & (RESIZE_EDGE_LEFT | RESIZE_EDGE_RIGHT)) ? resizeLeftRight
+																		: resizeUpDown);
 		if (!button || lastMouseButton)
 			return;
 		edge = hitEdge;
@@ -1727,6 +1718,7 @@ int main(int argc, char* argv[]) {
 				uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
 				uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
 				uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+#if DEBUG
 				_KePrint(
 					"[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
 					(int)fps,
@@ -1734,7 +1726,9 @@ int main(int argc, char* argv[]) {
 					(int)fpsFrameCount,
 					(int)windowMs,
 					(int)frameTime);
+#endif
 				if (input_ring_fd >= 0) {
+#if DEBUG
 					AuInputRingStats stats;
 					memset(&stats, 0, sizeof(stats));
 					if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
@@ -1744,11 +1738,15 @@ int main(int argc, char* argv[]) {
 								 (int)stats.keyboard_dropped,
 								 (int)stats.mouse_pending,
 								 (int)stats.keyboard_pending);
+#endif
 				}
+
+#if DEBUG
 				_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n",
 						 (int)avgC,
 						 (int)avgP,
 						 (int)avgT);
+#endif
 				fpsFrameCount = 0;
 				fpsComposeMsAccum = 0;
 				profAccumCompose = 0;

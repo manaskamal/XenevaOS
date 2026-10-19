@@ -64,8 +64,11 @@ void XEShellSigInterrupt(int signo) {
 	fflush(stdout);
 }
 
+volatile int g_interrupted = 0;
+
 void XEShellSignalTest(int signo) {
-	printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
+	g_interrupted++;
+	//printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
 	fflush(stdout);
 
 	if (job > 0) {
@@ -75,7 +78,7 @@ void XEShellSignalTest(int signo) {
 		job = 0;
 	}
 
-	printf("[xeshell]: Signal handler completed\r\n");
+	//printf("[xeshell]: Signal handler completed\r\n");
 	fflush(stdout);
 }
 
@@ -91,7 +94,8 @@ void XEShellTimerCallback(int signo) {
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir) {
-		printf("\033[32mXEShell %s$:\033[37m", currentDirectory ? currentDirectory : "/");
+		printf("\033[32mXEShell %s$:\033[37m\033]133;B\007",
+			   currentDirectory ? currentDirectory : "/");
 		fflush(stdout);
 		_draw_shell_curdir = false;
 	}
@@ -841,7 +845,8 @@ void XEShellRngGuess() {
 		attempts++;
 		if (val == secret) {
 			printf("[xeshell]: correct! guessed in %d %s\r\n",
-			       attempts, attempts == 1 ? "try" : "tries");
+				   attempts,
+				   attempts == 1 ? "try" : "tries");
 			return;
 		}
 		if (val > secret)
@@ -851,6 +856,7 @@ void XEShellRngGuess() {
 	}
 }
 
+extern int _term_handle_posix(char* cmd);
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
@@ -948,7 +954,8 @@ void XEShellProcessLine() {
 			XEShellRngGuess();
 			_spawnable_process = false;
 		} else if (_spawnable_process) {
-			XEShellSpawn(cmdBuf);
+			if (_term_handle_posix(cmdBuf) < 0)
+				XEShellSpawn(cmdBuf);
 		}
 
 	cleanup:
