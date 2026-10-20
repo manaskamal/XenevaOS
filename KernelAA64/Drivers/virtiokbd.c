@@ -78,6 +78,8 @@ static void AuVirtioKbdReinit(void) {
 volatile uint32_t kbd_dbg_irqs;
 
 static const uint8_t ext_key_map[256] = {
+	[0x60] = 0x1c, //kpenter
+	[0x62] = 0x35, //kpslash
 	[0x63] = 0x37, //print screen
 	[0x66] = 0x47, //home
 	[0x67] = 0x48, //up
@@ -87,6 +89,8 @@ static const uint8_t ext_key_map[256] = {
 	[0x6a] = 0x4D, //right
 	[0x6b] = 0x4F, //end
 	[0x6d] = 0x51, //page down
+	[0x6e] = 0x52, //insert
+	[0x6f] = 0x53, //delete
 	[0x7d] = 0x5b, //left super
 };
 
@@ -130,7 +134,7 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			} else if (evt.code < 0x49) {
+			} else if (evt.code < 0x59) {
 				uint8_t scancode = (uint8_t)evt.code;
 				if (evt.value == 0)
 					scancode |= 0x80;
