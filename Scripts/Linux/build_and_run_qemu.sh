@@ -1162,9 +1162,11 @@ fi
 # so the guest never enumerates a sound card it was told not to have. --axiss
 if [ "$NO_AUDIO" -eq 1 ]; then
     echo "[+] Audio: virtio-sound-pci omitted (--no-audio)"
-else
+elif qemu-system-aarch64 -device help 2>&1 | grep -q 'virtio-sound-pci'; then
     QEMU_ARGS+=(-audiodev "$QEMU_AUDIO_BACKEND",id=snd0)
     QEMU_ARGS+=(-device virtio-sound-pci,audiodev=snd0,disable-legacy=on)
+else
+    echo "[+] Audio: this QEMU has no 'virtio-sound-pci' device (needs QEMU 8.2+), omitting sound device."
 fi
 bt_power_off_for_proxy() {
     local i prop
@@ -1389,7 +1391,11 @@ else
     else
         # Keep both ramfb (boot/GOP) and virtio-gpu visible. The compositor
         # moves to the second display after boot, while ramfb goes black. --axiss
-        QEMU_ARGS+=(-display gtk,zoom-to-fit=on,show-tabs=on)
+        if qemu-system-aarch64 -help 2>&1 | grep -q 'show-tabs'; then
+            QEMU_ARGS+=(-display gtk,zoom-to-fit=on,show-tabs=on)
+        else
+            QEMU_ARGS+=(-display gtk,zoom-to-fit=on)
+        fi
         qemu-system-aarch64 "${QEMU_ARGS[@]}"
     fi
 fi

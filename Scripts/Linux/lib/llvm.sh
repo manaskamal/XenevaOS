@@ -29,7 +29,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # removed component is never built, deployed, or packed. --axiss
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
-        Calender Calculator Files Control XEShell btctl XENotes XEPaints
+        Calender Calculator Files Control XEShell btctl XENotes XEPaints XESheets
         Clipd dcltest
     )
     # hwtest unloads the in-kernel sound driver and claims its PCI function from
@@ -104,6 +104,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
     cp -f ../../Process/XEPaints/xepaints.exe     ../../Resources/resources/
+    cp -f ../../Process/XESheets/xesheets.exe     ../../Resources/resources/
     cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
     cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
     if [ "${HWTEST:-0}" -eq 1 ]; then
