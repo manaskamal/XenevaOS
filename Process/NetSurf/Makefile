@@ -18,11 +18,10 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 
 INCLUDES = -I. -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include \
            -I../../Ports/CssLibs/libcss/include -I../../Ports/CssLibs/libparserutils/include -I../../Ports/CssLibs/libwapcaplet/include \
-           -I../../Ports/mbedtls/port -I../../Ports/quickjs/include -Ih264bsd -Iminiz -DMINIZ_EXPORT=
+           -I../../Ports/mbedtls/port -I../../Ports/quickjs/include -Iminiz -DMINIZ_EXPORT=
 
 CPP_SRCS = main.cpp
-C_SRCS = css.c js.c yt.c pngdec.c svgdec.c miniz/miniz_tinfl.c
-C_SRCS += $(wildcard h264bsd/*.c)
+C_SRCS = css.c js.c pngdec.c svgdec.c miniz/miniz_tinfl.c
 S_SRCS =
 
 OBJDIR = obj
@@ -59,6 +58,11 @@ QJSLIB = ../../Ports/quickjs/libquickjs.a
 .PHONY: all clean llvm
 
 all: $(TARGET)
+
+# libcss, libdom, libhubbub, libparserutils, and libwapcaplet are one
+# archive. Building netsurf.exe builds it.
+$(CSSLIB):
+	$(MAKE) -C ../../Ports/CssLibs llvm
 
 llvm:
 	@$(MAKE) TOOLCHAIN=llvm all

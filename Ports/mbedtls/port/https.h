@@ -60,16 +60,6 @@ int xe_http_get(const char* url,
 
 void xe_http_response_free(xe_http_response* out);
 
-/* POST a raw body. Same status codes as xe_http_get. Does not follow
- * redirects; SABR redirects are URLs inside the body. */
-int xe_http_post(const char* url,
-				 const char* user_agent,
-				 const char* content_type,
-				 const void* body,
-				 size_t body_len,
-				 xe_http_response* out,
-				 size_t max_body);
-
 #ifdef __cplusplus
 }
 #endif

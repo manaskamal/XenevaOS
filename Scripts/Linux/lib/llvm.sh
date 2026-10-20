@@ -187,7 +187,6 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         cp -f ../../Process/http/curl.exe             ../../Resources/resources/
         cp -f ../../Process/wifictl/wifictl.exe       ../../Resources/resources/
         if [ "${NO_NETSURF:-0}" -eq 0 ]; then
-            ( cd ../../Ports/CssLibs && make llvm )
             ( cd ../../Process/NetSurf && make clean && make llvm )
             cp -f ../../Process/NetSurf/netsurf.exe   ../../Resources/resources/
         fi

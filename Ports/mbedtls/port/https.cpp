@@ -838,26 +838,3 @@ int xe_http_get(const char* url, const char* method, const char* user_agent,
 	}
 	return 0;
 }
-
-int xe_http_post(const char* url, const char* user_agent, const char* content_type,
-				 const void* body, size_t body_len, xe_http_response* out, size_t max_body) {
-	struct xe_url u;
-	char location[3072];
-	int pu;
-	if (!out)
-		return -1;
-	memset(out, 0, sizeof(*out));
-	pu = parse_url(url, &u);
-	if (pu < 0) {
-		set_err(out, pu == -2 ? "IPv6-only hosts are not reachable yet" : "Bad URL");
-		return -1;
-	}
-	if (fetch_once(&u, "POST", user_agent, (const unsigned char*)body, body_len, content_type, out,
-				   max_body, location, sizeof(location)) < 0)
-		return -1;
-	if (out->status >= 400) {
-		snprintf(out->error, sizeof(out->error), "HTTP %d", out->status);
-		return 22;
-	}
-	return 0;
-}

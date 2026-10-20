@@ -28,7 +28,7 @@
 
 #include "css.h"
 #include "js.h"
-#include "yt.h"
+
 #include "pngdec.h"
 #include "svgdec.h"
 #include <nanojpg.h>
@@ -122,7 +122,6 @@ static int s_nimg = 0;
 /* English stand-in for a link whose visible text is not Latin (hl=hi, …). */
 static const char* s_latinLink = NULL;
 static int s_latinUsed = 0;
-static char s_media[160];
 /* Painted search field. Click focuses it; typing does not go to the URL bar. */
 static char s_query[240];
 static size_t s_qCursor = 0;
@@ -192,8 +191,6 @@ static int NsVisibleLines(void) {
 	int origin = s_googleHome ? 56 : 19;
 	int h;
 	int n;
-	if (s_media[0])
-		origin = 78;
 	if (!s_pageBox)
 		return NS_PAGE_LINES;
 	h = s_pageBox->wid.h - origin;
@@ -287,38 +284,6 @@ static void NsPagePaint(ChWidget* wid, ChWindow* win) {
 			x += ChFontGetWidthChar(logo, letters[i]);
 		}
 		peny = tb->wid.y + 56;
-	}
-	{
-		int fw = 0, fh = 0;
-		const uint32_t* fr = NsYtFrame(&fw, &fh);
-		if (fr && fw > 0 && fh > 0) {
-			int dw = tb->wid.w - 16;
-			int dh = 140;
-			int y0 = tb->wid.y + 8;
-			int x0 = tb->wid.x + 8;
-			int row, col;
-			if (dw > 480)
-				dw = 480;
-			for (row = 0; row < dh; row++) {
-				int sy = row * fh / dh;
-				uint32_t* dst = win->canv->buffer + (uint32_t)(y0 + row) * win->canv->canvasWidth + x0;
-				for (col = 0; col < dw; col++) {
-					int sx = col * fw / dw;
-					dst[col] = fr[sy * fw + sx];
-				}
-			}
-			peny = tb->wid.y + 8 + dh + 18;
-		} else if (s_media[0] && tb->font) {
-		ChDrawRect(win->canv, tb->wid.x + 8, tb->wid.y + 8, tb->wid.w - 16, 52, 0xff0f0f0fu);
-		ChRect bar;
-		bar.x = tb->wid.x + 8;
-		bar.y = tb->wid.y + 8;
-		bar.w = tb->wid.w - 16;
-		bar.h = 52;
-		ChFontDrawTextClipped(win->canv, tb->font, s_media, tb->wid.x + 16, tb->wid.y + 36,
-							  0xffffffffu, &bar);
-		peny = tb->wid.y + 78;
-		}
 	}
 	int lineMax = 0;
 	int lineX0 = penx;
@@ -2100,109 +2065,6 @@ static void NsEnsureHttps(char* url, size_t n) {
 	snprintf(url, n, "%s", tmp);
 }
 
-static const char* NsFind(const char* h, const char* end, const char* needle) {
-	size_t n = strlen(needle);
-	const char* p;
-	if (!h || !needle || n == 0 || h >= end)
-		return NULL;
-	for (p = h; p + n <= end; p++) {
-		if (!memcmp(p, needle, n))
-			return p;
-	}
-	return NULL;
-}
-
-/* Copy a JSON string after "key": into out. Returns 0 if the key is absent. */
-static int NsJsonStr(const char* h, const char* end, const char* key, char* out, size_t outsz) {
-	char pat[64];
-	const char* p;
-	size_t n = 0;
-	if (!out || outsz == 0)
-		return 0;
-	out[0] = 0;
-	snprintf(pat, sizeof(pat), "\"%s\":\"", key);
-	p = NsFind(h, end, pat);
-	if (!p)
-		return 0;
-	p += strlen(pat);
-	while (p < end && *p != '"' && n + 1 < outsz) {
-		if (*p == '\\' && p + 1 < end) {
-			p++;
-			if (*p == 'n')
-				out[n++] = ' ';
-			else if (*p == 'u')
-				p += 4;
-			else
-				out[n++] = *p;
-			p++;
-			continue;
-		}
-		out[n++] = *p++;
-	}
-	out[n] = 0;
-	return n > 0;
-}
-
-/* YouTube's watch HTML embeds ytInitialPlayerResponse. In 2026 that object
- * lists itags and a serverAbrStreamingUrl, and does not include a media file
- * URL. The bar shows the title and the quality ladder from that object. */
-static void NsMediaTitle(const char* url, const char* body, size_t len) {
-	const char* end;
-	const char* player;
-	const char* details;
-	char title[96];
-	char quals[80];
-	const char* q;
-	size_t qn = 0;
-	int labels = 0;
-	s_media[0] = 0;
-	if (!url || !body)
-		return;
-	if (!strstr(url, "youtube.com/") && !strstr(url, "youtu.be/"))
-		return;
-	end = body + len;
-	player = NsFind(body, end, "ytInitialPlayerResponse");
-	details = player ? player : body;
-	title[0] = 0;
-	if (!NsJsonStr(details, end, "title", title, sizeof(title))) {
-		const char* t = NsFind(body, end, "<title>");
-		size_t n = 0;
-		if (t) {
-			t += 7;
-			while (t < end && *t != '<' && n + 1 < sizeof(title)) {
-				if (*t != '\n' && *t != '\r')
-					title[n++] = *t;
-				t++;
-			}
-			title[n] = 0;
-		}
-	}
-	quals[0] = 0;
-	q = details;
-	while (labels < 4 && (q = NsFind(q, end, "\"qualityLabel\":\"")) != NULL) {
-		char one[16];
-		size_t i = 0;
-		q += 16;
-		while (q < end && *q != '"' && i + 1 < sizeof(one))
-			one[i++] = *q++;
-		one[i] = 0;
-		if (i && !strstr(quals, one) && qn + i + 2 < sizeof(quals)) {
-			if (qn)
-				quals[qn++] = ' ';
-			memcpy(quals + qn, one, i);
-			qn += i;
-			quals[qn] = 0;
-			labels++;
-		}
-	}
-	if (title[0] && quals[0])
-		snprintf(s_media, sizeof(s_media), "%s  (%s)", title, quals);
-	else if (title[0])
-		snprintf(s_media, sizeof(s_media), "%s", title);
-	else
-		snprintf(s_media, sizeof(s_media), "YouTube");
-}
-
 static int NsFetch(char* url) {
 	char status[NS_URL_MAX + 64];
 	xe_http_response resp;
@@ -2211,7 +2073,6 @@ static int NsFetch(char* url) {
 	int left_tls = 0;
 	int used_tls = 0;
 
-	s_media[0] = 0;
 	s_query[0] = 0;
 	s_qCursor = 0;
 	s_qFocus = 0;
@@ -2221,10 +2082,7 @@ static int NsFetch(char* url) {
 	NsShowStatus(status);
 
 	memset(&resp, 0, sizeof(resp));
-	size_t fetch_cap = NS_BODY_MAX;
-	if (strstr(url, "youtube.com/") || strstr(url, "youtu.be/"))
-		fetch_cap = NS_RAW_MAX;
-	int rc = xe_http_get(url, "GET", kNsUa, &resp, fetch_cap);
+	int rc = xe_http_get(url, "GET", kNsUa, &resp, NS_BODY_MAX);
 	if (rc != 0 && (!resp.body || !resp.body_len)) {
 		NsShowStatus(resp.error[0] ? resp.error : "Fetch failed.");
 		xe_http_response_free(&resp);
@@ -2253,15 +2111,8 @@ static int NsFetch(char* url) {
 	NsJsBegin(url);
 	NsJsScanTitle(body, blen);
 
-	NsMediaTitle(url, body, blen);
-	NsYtStart(url, body, blen);
-	if (NsYtStatus()[0])
-		snprintf(s_media, sizeof(s_media), "%s", NsYtStatus());
 	NsCollectCss(body, blen);
-	/* YouTube's stylesheets are separate TLS fetches and the text
-	 * renderer does not need them. They were the serial stall. */
-	if (!strstr(url, "youtube.com") && !strstr(url, "youtu.be"))
-		NsCollectCssLinks(body, blen, url);
+	NsCollectCssLinks(body, blen, url);
 	_KePrint("[css] author sheet %d bytes\n", (int)strlen(s_cssBuf));
 	xe_heap_check("post-collect");
 	NsCssBegin();
@@ -2684,7 +2535,7 @@ int main(int argc, char* argv[]) {
 		if (err == POSTBOX_NO_EVENT) {
 			/* Idle: fire due page timers (document.write appends repaint
 			 * the view), then a short sleep so the next tick lands. */
-			if (NsJsTick() || NsYtTick())
+			if (NsJsTick())
 				NsPageRender();
 			_KeProcessSleep(10);
 		}
