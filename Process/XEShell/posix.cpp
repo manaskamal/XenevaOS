@@ -33,6 +33,13 @@
 #include <sys\utsname.h>
 #include <sys\_keproc.h>
 #include <sys\_ketime.h>
+#include <sys\_kefile.h>
+
+/**
+ * NOTE: LLM Cluade Sonnet 5.5 Medium is used for
+ * implementing only posix commands for XEShell,
+ * please report an issue if any bug found
+ */
 
 typedef int (*posix_fn)(int argc, char** argv);
 
@@ -184,6 +191,304 @@ int posix_sleep(int argc, char** argv) {
 	}
 }
 
+static bool parse_ll(const char* s, long long* out) {
+	bool neg = false;
+	if (*s == '-') {
+		neg = true;
+		s++;
+	} else if (*s == '+')
+		s++;
+	if (!*s)
+		return false;
+	long long v = 0;
+	for (; *s; s++) {
+		if (*s < '0' || *s > '9')
+			return false;
+		if (v > (0x7FFFFFFFFFFFFFFFLL - (*s - '0')) / 10)
+			return false;
+		v = v * 10 + (*s - '0');
+	}
+	*out = neg ? -v : v;
+	return true;
+}
+
+static int posix_seq(int argc, char** argv) {
+	long long first = 1, incr = 1, last = 0;
+	if (argc < 2 || argc > 4) {
+		printf("seq: uage: seq [FIRST [INCR]] LAST\r\n");
+		return 1;
+	}
+	bool ok = true;
+	if (argc == 2)
+		ok = parse_ll(argv[1], &last);
+	else if (argc == 3)
+		ok = parse_ll(argv[1], &first) && parse_ll(argv[2], &last);
+	else
+		ok = parse_ll(argv[1], &first) && parse_ll(argv[2], &incr) && parse_ll(argv[3], &last);
+
+	if (!ok) {
+		printf("seq: invalid number\r\n");
+		return 1;
+	}
+
+	if (incr == 0) {
+		printf("seq: increment must not be 0 \r\n");
+		return 1;
+	}
+
+	g_interrupted = 0;
+	for (long long i = first; incr > 0 ? i <= last : i >= last; i += incr) {
+		if (g_interrupted)
+			return 130;
+		printf("%lld\r\n", i);
+	}
+	return 0;
+}
+
+static char** ex_av;
+static int ex_ac, ex_i;
+static bool ex_err, ex_div0;
+
+static bool ex_peek(const char* s) {
+	return ex_i < ex_ac && strcmp(ex_av[ex_i], s) == 0;
+}
+static long long ex_or(void);
+
+static long long ex_primary(void) {
+	if (ex_i >= ex_ac) {
+		ex_err = true;
+		return 0;
+	}
+	if (ex_peek("(")) {
+		ex_i++;
+		long long v = ex_or();
+		if (!ex_peek(")")) {
+			ex_err = true;
+			return 0;
+		}
+		ex_i++;
+		return v;
+	}
+	long long v;
+	if (!parse_ll(ex_av[ex_i], &v)) {
+		ex_err = true;
+		return 0;
+	}
+	ex_i++;
+	return v;
+}
+
+static long long ex_mul(void) {
+	long long l = ex_primary();
+	while (!ex_err && (ex_peek("*") || ex_peek("/") || ex_peek("%"))) {
+		char op = ex_av[ex_i++][0];
+		long long r = ex_primary();
+		if (op == '*')
+			l *= r;
+		else if (r == 0) {
+			ex_div0 = true;
+			ex_err = true;
+			return 0;
+		} else
+			l = (op == '/') ? l / r : l % r;
+	}
+	return l;
+}
+
+static long long ex_add(void) {
+	long long l = ex_mul();
+	while (!ex_err && (ex_peek("+") || ex_peek("-"))) {
+		char op = ex_av[ex_i++][0];
+		long long r = ex_mul();
+		l = (op == '*') ? l + r : l - r;
+	}
+	return l;
+}
+
+static long long ex_cmp(void) {
+	long long l = ex_add();
+	static const char* ops[] = {"=", "!=", "<", "<=", ">", ">="};
+	while (!ex_err) {
+		int k = -1;
+		for (int j = 0; j < 6; j++)
+			if (ex_peek(ops[j])) {
+				k = j;
+				break;
+			}
+		if (k < 0)
+			break;
+		ex_i++;
+		long long r = ex_add();
+		switch (k) {
+		case 0:
+			l = (l == r);
+			break;
+		case 1:
+			l = (l != r);
+			break;
+		case 2:
+			l = (l < r);
+			break;
+		case 3:
+			l = (l <= r);
+			break;
+		case 4:
+			l = (l > r);
+			break;
+		case 5:
+			l = (l >= r);
+			break;
+		}
+	}
+	return l;
+}
+
+static long long ex_and(void) {
+	long long l = ex_cmp();
+	while (!ex_err && ex_peek("&")) {
+		ex_i++;
+		long long r = ex_cmp();
+		l = (l != 0 && r != 0) ? l : 0;
+	}
+	return l;
+}
+
+static long long ex_or(void) {
+	long long l = ex_and();
+	while (!ex_err && ex_peek("|")) {
+		ex_i++;
+		long long r = ex_and();
+		l = (l != 0) ? l : r;
+	}
+	return l;
+}
+
+static int posix_expr(int argc, char** argv) {
+	ex_av = argv + 1;
+	ex_ac = argc - 1;
+	ex_i = 0;
+	ex_err = ex_div0 = false;
+	if (ex_ac == 0) {
+		printf("expr: missing operand\r\n");
+		return 2;
+	}
+
+	long long v = ex_or();
+	if (ex_err | ex_i != ex_ac) {
+		printf(ex_div0 ? "expre: division by zero\r\n" : "expr: syntax error\r\n");
+		return 2;
+	}
+	printf("%lld\r\n", v);
+	return v != 0 ? 0 : 1;
+}
+
+static bool test_path_is_dir(const char* p) {
+	int fd = _KeOpenDir((char*)p);
+	if (fd == -1)
+		return false;
+	_KeCloseFile(fd);
+	return true;
+}
+
+static bool test_path_is_file(const char* p) {
+	int fd = _KeOpenFile((char*)p, FILE_OPEN_READ_ONLY);
+	if (fd == -1)
+		return false;
+	_KeCloseFile(fd);
+	return true;
+}
+
+static int test_eval(int n, char** a) {
+	if (n == 0)
+		return 0;
+	if (n == 1)
+		return a[0][0] != '\0';
+
+	if (strcmp(a[0], "!") == 0) {
+		int r = test_eval(n - 1, a + 1);
+		return r < 0 ? r : !r;
+	}
+
+	if (n == 2) {
+		const char *op = a[0], *s = a[1];
+		if (!strcmp(op, "-z"))
+			return s[0] == '\0';
+		if (!strcmp(op, "-n"))
+			return s[0] != '\0';
+		if (!strcmp(op, "-f"))
+			return test_path_is_file(s);
+		if (!strcmp(op, "-d"))
+			return test_path_is_dir(s);
+		if (!strcmp(op, "-e"))
+			return test_path_is_file(s) || test_path_is_dir(s);
+		return -1;
+	}
+	if (n == 3) {
+		const char *x = a[0], *op = a[1], *y = a[2];
+		if (!strcmp(op, "="))
+			return strcmp(x, y) == 0;
+		if (!strcmp(op, "!="))
+			return strcmp(x, y) != 0;
+		long long l, r;
+		if (!parse_ll(x, &l) || !parse_ll(y, &r))
+			return -1;
+		if (!strcmp(op, "-eq"))
+			return l == r;
+		if (!strcmp(op, "-ne"))
+			return l != r;
+		if (!strcmp(op, "-lt"))
+			return l < r;
+		if (!strcmp(op, "-le"))
+			return l <= r;
+		if (!strcmp(op, "-gt"))
+			return l > r;
+		if (!strcmp(op, "-ge"))
+			return l >= r;
+	}
+	return -1;
+}
+
+static int posix_test(int argc, char** argv) {
+	int n = argc - 1;
+	char** a = argv + 1;
+	if (strcmp(argv[0], "[") == 0) {
+		if (n < 1 || strcmp(a[n - 1], "]") != 0) {
+			printf("[: missing ']'\r\n");
+			return 2;
+		}
+		n--;
+	}
+	int r = test_eval(n, a);
+	if (r < 0) {
+		printf("test: syntax error\r\n");
+		return 2;
+	}
+	return r ? 0 : 1;
+}
+
+static int posix_cat(int argc, char** argv) {
+	if (argc < 2) {
+		printf("cat: missing file operand\r\n");
+		return 1;
+	}
+	int rc = 0;
+	for (int i = 1; i < argc; i++) {
+		FILE* f = fopen(argv[i], "r");
+		if (!f) {
+			printf("cat: %s: cannot open\r\n", argv[i]);
+			rc = 1;
+			continue;
+		}
+		char buf[256];
+		size_t n;
+		while ((n = fread(buf, 1, sizeof(buf), f)) > 0)
+			fwrite(buf, 1, n, stdout);
+		fclose(f);
+	}
+	fflush(stdout);
+	return rc;
+}
+
 #define POSIX_MAX_ARGS 16
 
 /**
@@ -194,6 +499,10 @@ static const PosixCommand posix_table[] = {
 	{"who", posix_who},
 	{"clear", posix_clear},
 	{"sleep", posix_sleep},
+	{"seq", posix_seq},
+	{"expr", posix_expr},
+	{"test", posix_test},
+	{"cat", posix_cat},
 };
 
 /**
