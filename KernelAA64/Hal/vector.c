@@ -80,6 +80,23 @@ void sync_el1_handler(AA64Registers* regs) {
 
 	uint32_t ec = (esr >> 26) & 0x3F;
 
+	/* A new user thread is entered through AuProcessEntSubThread, which is
+	 * kernel code. If that eret landed at EL0, the first MSR DAIFSet in
+	 * mask_irqs is trapped here (EC 0x18) and the old path halted the
+	 * machine. Promote that entry back to EL1h and retry the instruction.
+	 * enter_user then drops to EL0 on purpose. */
+	if (ec == 0x18) {
+		uint64_t spsr = 0;
+		uint64_t elr = 0;
+		__asm__ volatile("mrs %0, spsr_el1" : "=r"(spsr));
+		__asm__ volatile("mrs %0, elr_el1" : "=r"(elr));
+		if ((spsr & 0xF) == 0 && elr >= 0xFFFF000000000000ull) {
+			spsr = (spsr & ~0xFFull) | 0x3C5ull;
+			__asm__ volatile("msr spsr_el1, %0" ::"r"(spsr));
+			return;
+		}
+	}
+
 	// AuTextOut("======Synch exception=======\r\n");
 	// AuTextOut("FAR: %x, PC: %x \r\n", read_far_el1(), read_elr_el1());
 
