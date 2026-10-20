@@ -51,7 +51,7 @@
 #define TX_BUFFER_COUNT 8
 #define TX_BUFFER_SIZE	2048
 #define RX_BUFFER_SIZE	2048
-#define MAKE_IP(a, b, c, d) \
+#define MAKE_IP(a, b, c, d)                                                                        \
 	((uint32_t)(d) << 24 | (uint32_t)(c) << 16 | (uint32_t)(b) << 8 | (uint32_t)(a))
 
 static struct VirtioPCIDevice netDev;
@@ -125,9 +125,8 @@ static void AuVirtioNetRxPoll(void) {
 		uint32_t totlen = rx_used->ring[used_slot].len;
 		uint8_t* buffer = rx_buf_virt + (buf_id * RX_BUFFER_SIZE);
 		void* eth = buffer + sizeof(virtio_net_hdr_t);
-		uint32_t ethlen = totlen > sizeof(virtio_net_hdr_t)
-			? totlen - (uint32_t)sizeof(virtio_net_hdr_t)
-			: 0;
+		uint32_t ethlen =
+			totlen > sizeof(virtio_net_hdr_t) ? totlen - (uint32_t)sizeof(virtio_net_hdr_t) : 0;
 		rx_avail->ring[rx_avail->idx % rx_qsize] = (uint16_t)buf_id;
 		rx_avail->idx++;
 		dsb_ish();
@@ -151,8 +150,8 @@ static void AuVirtioNetRxinitialize(void) {
 	uint64_t rxbuff;
 	uint32_t pages;
 
-	rx_qsize = AuVirtioPCISetupQueue(&netDev, 0, &rx_desc, &rx_avail, &rx_used,
-									 VIRTIO_MSI_NO_VECTOR);
+	rx_qsize =
+		AuVirtioPCISetupQueue(&netDev, 0, &rx_desc, &rx_avail, &rx_used, VIRTIO_MSI_NO_VECTOR);
 	if (!rx_qsize || !rx_desc || !rx_avail || !rx_used) {
 		UARTDebugOut("[aurora]: virtio-net RX queue setup failed\r\n");
 		return;
@@ -170,11 +169,10 @@ static void AuVirtioNetRxinitialize(void) {
 	}
 	rx_buf_phys = rxbuff;
 	rx_buf_virt = (uint8_t*)P2V(rxbuff);
-	AuVirtioPCIPostAvail(rx_desc, rx_avail, rx_qsize, rxbuff, RX_BUFFER_SIZE,
-						 rx_nbuf, VIRTQ_DESC_F_WRITE);
+	AuVirtioPCIPostAvail(
+		rx_desc, rx_avail, rx_qsize, rxbuff, RX_BUFFER_SIZE, rx_nbuf, VIRTQ_DESC_F_WRITE);
 	AuVirtioPCINotifyQueue(&netDev, 0);
-	UARTDebugOut("[aurora]: virtio rx queue initialized hdr=%d\r\n",
-				 (int)sizeof(virtio_net_hdr_t));
+	UARTDebugOut("[aurora]: virtio rx queue initialized hdr=%d\r\n", (int)sizeof(virtio_net_hdr_t));
 }
 
 static void AuVirtioNetTxinitialize(void) {
@@ -182,8 +180,8 @@ static void AuVirtioNetTxinitialize(void) {
 	uint32_t pages;
 	int i;
 
-	tx_qsize = AuVirtioPCISetupQueue(&netDev, 1, &tx_desc, &tx_avail, &tx_used,
-									 VIRTIO_MSI_NO_VECTOR);
+	tx_qsize =
+		AuVirtioPCISetupQueue(&netDev, 1, &tx_desc, &tx_avail, &tx_used, VIRTIO_MSI_NO_VECTOR);
 	if (!tx_qsize || !tx_desc || !tx_avail || !tx_used) {
 		UARTDebugOut("[aurora]: virtio-net TX queue setup failed\r\n");
 		return;
@@ -298,6 +296,7 @@ static int AuVirtioNetIOCtl(AuVFSNode* file, int code, void* arg) {
 		return 1;
 	switch (code) {
 	case AUNET_GET_HARDWARE_ADDRESS:
+		UARTDebugOut("VirtioNet getting mac address \r\n");
 		memcpy(arg, ndev->mac, 6);
 		return 0;
 	case AUNET_GET_IPV4_ADDRESS:
@@ -443,7 +442,7 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	/* 1. stop the kernel from calling into this image */
 	AuNetRegisterRxPoll(0);
 	AuWifiPortalSetTx(0);
-	AuRemoveNetAdapter((char*)"virtio-net");     /* frees the node */
+	AuRemoveNetAdapter((char*)"virtio-net"); /* frees the node */
 	AuRemoveNetAdapter((char*)"e1000");
 	nic = 0;
 	/* 2. reset the device so it stops touching our buffers */
@@ -453,8 +452,14 @@ AU_EXTERN AU_EXPORT int AuDriverUnload() {
 	dsb_ish();
 	/* queue memory and the interrupt are released by the loader's ledger */
 	rx_qsize = tx_qsize = 0;
-	rx_used = 0; rx_avail = 0; rx_desc = 0; rx_buf_virt = 0;
-	tx_used = 0; tx_avail = 0; tx_desc = 0; tx_buf_virt = 0;
+	rx_used = 0;
+	rx_avail = 0;
+	rx_desc = 0;
+	rx_buf_virt = 0;
+	tx_used = 0;
+	tx_avail = 0;
+	tx_desc = 0;
+	tx_buf_virt = 0;
 	if (ndev) {
 		kfree(ndev);
 		ndev = 0;

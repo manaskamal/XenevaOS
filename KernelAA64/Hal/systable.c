@@ -78,6 +78,35 @@ uint64_t test_call() {
 	return 100;
 }
 
+#define _UTSNAME_LENGTH 256
+
+struct utsname {
+	char sysname[_UTSNAME_LENGTH];
+	char nodename[_UTSNAME_LENGTH];
+	char release[_UTSNAME_LENGTH];
+	char version[_UTSNAME_LENGTH];
+	char machine[_UTSNAME_LENGTH];
+	char domainname[_UTSNAME_LENGTH];
+};
+
+/**
+ * @brief ExecUname -- uname system call
+ * @param name -- Pointer to user space utsname structure
+ */
+int ExecUname(struct utsname* name) {
+	if (!name)
+		return 1;
+	//check for pointer validation of name
+	strcpy(name->sysname, XENEVA_OS_NAME);
+	strcpy(name->nodename, XENEVA_OS_NODENAME);
+	strcpy(name->release, XENEVA_KERNEL_RELEASE);
+	strcpy(name->version,
+		   XENEVA_KERNEL_VERSION " #" XENEVA_KERNEL_BUILD " " XENEVA_KERNEL_BUILD_TAG);
+	strcpy(name->machine, XENEVA_KERNEL_ARCH);
+	strcpy(name->domainname, " ");
+	return 0;
+}
+
 AA64Registers* AA64GetCurrentRegCtx() {
 	return svcCurrentRegs;
 }
@@ -165,6 +194,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	[SYS_EXIT_SUB_THREAD] = ExitSubThread,
 	[SYS_SEND_SIGNAL_TO_THREAD] = SendSignalToThread,
 	[SYS_THREAD_WAIT_FOR_TERMINATION] = AuThreadWaitForTermination,
+	[SYS_KERNEL_UNAME] = ExecUname,
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -258,8 +288,8 @@ extern void modifyx17();
  * @brief AuAA64SyscalHandler -- common system call handler for aarch64
  * @param regs -- Register information passed by sync_exception
  */
-int64_t AuLinuxSyscall(uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4,
-						uint64_t a5);
+int64_t AuLinuxSyscall(
+	uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4, uint64_t a5);
 
 void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();

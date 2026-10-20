@@ -39,7 +39,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # All AArch64 user-space applications
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
-        Calender Calculator Files Control XEShell XENotes XEPaints
+        Calender Calculator Files Control XEShell XENotes XEPaints XESheets
         Clipd dcltest
     )
     if [ "${NO_AUDIO:-0}" -eq 0 ]; then
@@ -75,6 +75,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
     cp -f ../../Process/XEPaints/xepaints.exe     ../../Resources/resources/
+    cp -f ../../Process/XESheets/xesheets.exe     ../../Resources/resources/
     cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
     cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/

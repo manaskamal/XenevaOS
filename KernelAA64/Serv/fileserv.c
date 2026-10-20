@@ -305,7 +305,9 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		size_t done = 0;
 		while (done < length) {
 			size_t chunk = length - done > PAGE_SIZE ? PAGE_SIZE : length - done;
-			size_t w = fsys->write ? fsys->write(fsys, file, (uint64_t*)(aligned_buffer + done), chunk) : 0;
+			size_t w = fsys->write
+						   ? fsys->write(fsys, file, (uint64_t*)(aligned_buffer + done), chunk)
+						   : 0;
 			if (!w)
 				break;
 			done += w;
