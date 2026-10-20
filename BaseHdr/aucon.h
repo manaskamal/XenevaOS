@@ -61,7 +61,9 @@ typedef struct _aucon_ {
 	/* desktop_width/height -- size reported to the compositor for the
 	 * desktop scanout. Equals width/height unless the loader passed a
 	 * manual desktop override (resolutions the firmware GOP never
-	 * offers). Text drawing always uses width/height (real GOP). --axiss */
+	 * offers) and the console framebuffer is at least that big; a
+	 * bigger override needs a GPU driver to repoint the console to it
+	 * first. Text drawing always uses width/height (real GOP). --axiss */
 	uint32_t desktop_width;
 	uint32_t desktop_height;
 }AuConsole;
@@ -136,6 +138,13 @@ int AuConsoleRestoreBootFb(void);
 typedef void (*AuConsolePresentFn)(uint32_t* src, uint32_t src_pitch,
 	int x, int y, int w, int h);
 AU_EXTERN AU_EXPORT void AuConsoleSetPresentHook(AuConsolePresentFn fn);
+
+/*
+ * AuConsolePresentRect -- hand an explicit damage rectangle to the scanout
+ * mirror (see AuConsoleSetPresentHook). This is the path SCREEN_UPDATE takes
+ * for userspace, which paints into the mapped framebuffer directly.
+ */
+void AuConsolePresentRect(int x, int y, int w, int h);
 
 /*
  * AuConsoleGetScreenWidth -- return the screen

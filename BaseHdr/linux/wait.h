@@ -180,10 +180,29 @@ unsigned int wait_woken(struct wait_queue_entry* wq_entry,
 void dcl_wait_event_timeout(const char* func);
 
 /*
+ * dcl_wait_pump() -- run pending device completions while the bounded poll
+ * spins. Declared here, called from _dcl_wait_core below, defined in
+ * DCL/virtio_shim.c beside virtio_poll_vqs().
+ *
+ * Why a wait has to pump at all: completions on this port are reaped by
+ * polling -- the cdev read loop, or the caller's own loop -- and a driver's
+ * *probe-time* waits have no such loop above them. virtio_gpu_init()'s
+ * display-info wait is the first time it bites: the reply only moves when
+ * the control queue is polled, nothing else polls before userspace runs,
+ * and without this the condition could never come true inside the wait. The
+ * call is idempotent and cheap (one used->idx read per live queue), so
+ * running it under every wait_event is safe on the same terms the cdev
+ * paths already pump.
+ */
+void dcl_wait_pump(void);
+
+/*
  * _dcl_wait_core(wq_head, condition) -- the one polling loop every
  * wait_event* macro below is built from: DCL_WAIT_EVENT_MS passes of
  * mdelay(1) while the condition is false, dcl_wait_event_timeout() on the
- * way out, then the condition read one last time.
+ * way out, then the condition read one last time. Each pass first runs
+ * dcl_wait_pump() (declared above), so a condition fed by a device
+ * completion can arrive during the wait rather than only being re-tested.
  *
  * Spelled once because the four macros that use it differ only in what they
  * make of an expiry -- nothing, -ERESTARTSYS, 0, or the caller's own
@@ -204,6 +223,7 @@ void dcl_wait_event_timeout(const char* func);
 		(void)(wq_head);						\
 		while (!(condition) && _dcl_i) {				\
 			_dcl_i--;						\
+			dcl_wait_pump();					\
 			mdelay(1);						\
 		}								\
 		_dcl_ok = !!(condition);					\
@@ -285,6 +305,42 @@ void dcl_wait_event_timeout(const char* func);
 		_dcl_wait_core(wq_head, condition)				\
 			? _dcl_t : 0;						\
 	})
+
+/*
+ * wait_event_timeout(wq_head, condition, timeout) -- the two drm vblank
+ * waits, drm_atomic_helper.c:1916 and drm_vblank.c:1325.
+ *
+ * Same bounded poll and the same result convention as
+ * wait_event_interruptible_timeout() above: the caller's timeout back when
+ * the condition came true, 0 when the budget expired first.  Both call
+ * sites test only `!ret` / `ret == 0` -- drm_crtc_wait_one_vblank() maps the
+ * 0 onto -ETIMEDOUT -- so no remainder is ever read.  mainline floors a
+ * success at 1 (`timeout ?: 1`); returning the input unchanged is what the
+ * sibling macro above chose, so this one follows it rather than giving two
+ * answers for one argument in the same header.
+ */
+#define wait_event_timeout(wq_head, condition, timeout)			\
+	({									\
+		long _dcl_t = (timeout);					\
+		_dcl_wait_core(wq_head, condition)				\
+			? _dcl_t : 0;						\
+	})
+
+/*
+ * wait_event_lock_irq(wq_head, condition, lock) -- drm_vblank_work.c:229
+ * and :250, which hold dev->event_lock across the wait and pass it to the
+ * macro so mainline's __wait_event_lock_irq() can drop it around each
+ * schedule() and take it again on wake.  DCL's spinlocks are no-ops with
+ * nothing to drop (see <linux/spinlock.h>), so `lock` is unused; what
+ * remains is wait_event()'s bounded poll.  The contract mainline states --
+ * the lock is held on entry and still held on return -- is then trivially
+ * kept, because the lock was never actually released.
+ */
+#define wait_event_lock_irq(wq_head, condition, lock)			\
+	do {									\
+		(void)(lock);						\
+		(void)_dcl_wait_core(wq_head, condition);			\
+	} while (0)
 
 
 /*

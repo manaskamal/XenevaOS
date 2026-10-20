@@ -42,8 +42,6 @@
  * ---------------------------------------------------------------------------
  */
 
-#include <linux/types.h>
-
 #define O_ACCMODE	3
 #define O_RDONLY	0
 #define O_WRONLY	(1 << 0)
@@ -156,5 +154,31 @@
 #define LOCK_UN		8	/* remove lock */
 
 #define F_LINUX_SPECIFIC_BASE	1024
+
+/*
+ * Deliberately *not* <linux/types.h>, which mainline's fcntl.h does include.
+ *
+ * mainline needs it because the full uapi surface carries types: struct
+ * flock, struct f_owner_ex, flock64, struct falloc and the __kernel_* types
+ * they are built from. DCL's port is every #define above and nothing else --
+ * grep for a non-# line in this file and there are none -- so types.h was
+ * carrying nothing.
+ *
+ * It was carrying something, though, and it is worth recording why it is
+ * gone: types.h's only include is <linux/kernel.h> (types.h:21), which is the
+ * aggregator -- virtio.h, completion.h, wait.h, sched.h. So a header of
+ * numeric constants was reaching <linux/sched.h>, which `#undef current` and
+ * redefines the word as a macro. struct __VFS_NODE__ (BaseHdr/Fs/vfs.h:105)
+ * has a `uint64_t current` member, so a file that includes <Fs/vfs.h> after
+ * anything which touched this header came out with "field declared as a
+ * function" pointing at that member. linux_cdev_shim.c hit exactly that: it
+ * includes <linux/file.h> at line 9 and <Fs/vfs.h> at line 11, and file.h
+ * owes this header because mainline's fs.h includes it.
+ *
+ * If anyone adds struct flock or any other type here, <linux/types.h> comes
+ * back with it, and the collision comes back with that. The way round it
+ * then is to include <linux/fcntl.h> before <Fs/vfs.h>, not to make the
+ * member go away -- Xeneva's VFS layout is not this tree's to move.
+ */
 
 #endif /* __LINUX_FCNTL_H__ */

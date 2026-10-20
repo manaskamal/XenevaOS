@@ -95,6 +95,80 @@ static inline bool virtio_has_feature(const struct virtio_device* vdev,
 }
 
 /*
+ * virtio_has_dma_quirk() -- mainline's reverse-polarity ACCESS_PLATFORM test
+ * (linux/virtio_config.h:714 in linux-7.2). A device without the feature has
+ * not announced that it takes bus DMA addresses, so drivers fall back to
+ * their non-DMA-API branch -- sg_phys() addresses instead of
+ * sg_dma_address().
+ *
+ * That fallback is the branch this port wants, not merely tolerates: the
+ * shim never offers VIRTIO_F_ACCESS_PLATFORM, and DCL's scatterlist is
+ * {buf, len} with no page for an IOMMU to translate (see that header).
+ * virtgpu_object.c:166 is the reader that made this a must-have.
+ */
+static inline bool virtio_has_dma_quirk(const struct virtio_device* vdev)
+{
+	return !virtio_has_feature(vdev, VIRTIO_F_ACCESS_PLATFORM);
+}
+
+/*
+ * struct virtio_shm_region -- a shared-memory window as reported through the
+ * config ops' get_shm_region (linux/virtio.h:135). mainline keeps the struct
+ * in this header; the members are mainline's.
+ */
+struct virtio_shm_region {
+	u64 addr;
+	u64 len;
+};
+
+/*
+ * virtio_get_shm_region() -- checked routing to config->get_shm_region.
+ * mainline calls the op unconditionally, on the contract that a device
+ * advertising the region installed it. DCL's shim installs no op at all
+ * (none of its devices has a window), and a NULL call would fault in the
+ * middle of virtio_gpu_init(); answering false is the same "no region" that
+ * mainline's has_host_visible=false arm gets, and it keeps virtio-gpu's
+ * non-blob resource paths working.
+ */
+static inline bool virtio_get_shm_region(struct virtio_device* vdev,
+					 struct virtio_shm_region* region_out,
+					 u8 id)
+{
+	if (!vdev || !vdev->config || !vdev->config->get_shm_region)
+		return false;
+	return vdev->config->get_shm_region(vdev, region_out, id);
+}
+
+/*
+ * virtio_cread_le() / virtio_cwrite() / virtio_cwrite_le() -- mainline's
+ * endian-converting config accessors, reduced to what LE-on-LE makes them.
+ *
+ * virtio_cread_le() is DCL's virtio_cread() (<linux/virtio.h>) byte for
+ * byte: on a little-endian target the conversion mainline performs is the
+ * identity, and the copy already lands in the caller's member-typed object.
+ *
+ * The write stages the member-typed value from *ptr before handing
+ * config->set() the span -- set's DCL contract is (offset, buf, length) of
+ * raw bytes, and staging through the struct member is what guarantees the
+ * width written is the config field's, not whatever type the caller happened
+ * to hold. The one writer today is virtgpu_kms.c:59's virtio_cwrite_le() of
+ * events_clear.
+ */
+#define virtio_cread_le(vdev, structname, member, ptr)			\
+	virtio_cread((vdev), structname, member, ptr)
+
+#define virtio_cwrite(vdev, structname, member, ptr)			\
+	do {								\
+		typeof(((structname*)0)->member) _dcl_cw =		\
+			(typeof(((structname*)0)->member))(*(ptr));	\
+		(vdev)->config->set((vdev), offsetof(structname, member), \
+				    &_dcl_cw, sizeof(_dcl_cw));		\
+	} while (0)
+
+#define virtio_cwrite_le(vdev, structname, member, ptr)			\
+	virtio_cwrite((vdev), structname, member, ptr)
+
+/*
  * virtio_cread_feature(vdev, fbit, structname, member, ptr) -- read a config
  * field, but only if feature `fbit` is agreed; otherwise report -ENOENT.
  *

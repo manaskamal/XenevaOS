@@ -79,6 +79,22 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	aucon = NULL;
 }
 
+/* A manual loader desktop override names a size the firmware GOP never
+ * scans out. Until a driver backs it the console framebuffer is all
+ * there is, and reporting the larger size let init's splash paint past
+ * the framebuffer mapping. Report the real console size while the
+ * override is bigger than what can be drawn. --axiss */
+static void aucon_desktop_size(uint32_t* width, uint32_t* height) {
+	uint32_t w = aucon->desktop_width ? aucon->desktop_width : aucon->width;
+	uint32_t h = aucon->desktop_height ? aucon->desktop_height : aucon->height;
+	if (w > aucon->width || h > aucon->height) {
+		w = aucon->width;
+		h = aucon->height;
+	}
+	*width = w;
+	*height = h;
+}
+
 /*
  * AuConsoleIoControl -- io control of console file
  */
@@ -93,12 +109,14 @@ int AuConsoleIoControl(AuVFSNode* node, int code, void* args) {
 	
 	switch (code) {
 	case SCREEN_GETWIDTH:{
-							 uint32_t width = aucon->desktop_width;
+							 uint32_t width = 0, height = 0;
+							 aucon_desktop_size(&width, &height);
 							 ioctl->uint_1 = width;
 							 break;
 	}
 	case SCREEN_GETHEIGHT:{
-							  uint32_t height = aucon->desktop_height;
+							  uint32_t width = 0, height = 0;
+							  aucon_desktop_size(&width, &height);
 							  ioctl->uint_1 = height;
 							  break;
 	}

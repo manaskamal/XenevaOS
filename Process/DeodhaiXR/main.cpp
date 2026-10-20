@@ -1315,6 +1315,18 @@ int main(int argc, char* argv[]) {
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenCommit();
 
+	/* The copy above only lands in the console framebuffer; a scanout
+	 * mirror (the vendored virtio-gpu console bridge) only learns about
+	 * pixels through SCREEN_UPDATE. Without this first full-frame present
+	 * the scanout keeps the boot console's stale edges next to the
+	 * wallpaper. Zero width/height ask for the whole screen. --axiss */
+	{
+		XEFileIOControl startup_present;
+		memset(&startup_present, 0, sizeof(startup_present));
+		startup_present.syscall_magic = AURORA_SYSCALL_MAGIC;
+		_KeFileIoControl(canv->graphics_fd, SCREEN_UPDATE, &startup_present);
+	}
+
 	/** intialize key data structure */
 	ChitralekhaKeyInitialise();
 

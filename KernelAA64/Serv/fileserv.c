@@ -395,6 +395,19 @@ int CloseFile(int fd) {
 		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
+	/* Device nodes are permanent and shared between every open, so the
+	 * node is never freed here -- but the close hook must still run: DCL
+	 * routes it to the module's release, and a DRM file's master lives
+	 * there. Without this, closing /dev/dri/cardN left the master set and
+	 * the next opener had every DRM_MASTER ioctl refused with -EACCES.
+	 * See AuProcessCloseFiles for the process-exit half. --axiss */
+	if (file->flags & FS_FLAG_DEVICE) {
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		if (file->close)
+			file->close(file, file);
+		return 0;
+	}
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);

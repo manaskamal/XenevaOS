@@ -64,7 +64,6 @@
 
 #include <Mm/pmmngr.h>		/* P2V */
 #include <Hal/AA64/gic.h>	/* GICRegisterSPIHandler + read-back */
-#include <Hal/AA64/sched.h>	/* AuGetCurrentThread, AA64Thread.name */
 #include <Drivers/uart.h>	/* UARTDebugOut */
 /* No <process.h>: it includes Xeneva's <list.h>, whose
  * list_add(list_t*, void*) cannot share a translation unit with mainline's
@@ -245,6 +244,20 @@ void outb(unsigned char v, unsigned long addr)
 	dcl_pio_note();
 }
 
+unsigned short inw(unsigned long addr)
+{
+	(void)addr;
+	dcl_pio_note();
+	return 0;
+}
+
+void outw(unsigned short v, unsigned long addr)
+{
+	(void)v;
+	(void)addr;
+	dcl_pio_note();
+}
+
 unsigned int inl(unsigned long addr)
 {
 	(void)addr;
@@ -312,9 +325,18 @@ long long ktime_get_real_seconds(void)
 static struct signal_struct dcl_signal;
 static struct task_struct dcl_task = { "kernel", 0, &dcl_signal };
 
+/*
+ * The native half is another translation unit: <Hal/AA64/sched.h> carries
+ * Xeneva's <list.h>, whose list_add(list_t*, void*) cannot share a TU with
+ * mainline's static inline list_add (see the landmine note there), and this
+ * file needs mainline's for its wait queues. DCL/current_ident.c keeps the
+ * thread layout on the native side and hands over three scalars.
+ */
+extern int dcl_current_ident(char* buf, int cap, int* pid);
+
 struct task_struct* dcl_current(void)
 {
-	AA64Thread* thread = AuGetCurrentThread();
+	int pid;
 
 	/*
 	 * One shared task rather than a per-thread table: the nine files read
@@ -322,28 +344,13 @@ struct task_struct* dcl_current(void)
 	 * permission gate), and never write either, so refreshing comm on the
 	 * way out answers truthfully for whichever context asked.
 	 *
-	 * The name comes from the thread (AA64Thread.name, 8 bytes) rather than
-	 * its process (AuProcess.name, 16) because <process.h> pulls in
-	 * Xeneva's <list.h> and its list_add() collides with mainline's -- see
-	 * <linux/list.h>. Eight characters of a real name beats a fabricated
-	 * one, and the truncation is visible in the warning text rather than
-	 * hidden.
-	 *
-	 * The scan stops at the field's own bound: name[] is not guaranteed to
-	 * be NUL-terminated, so reading a longer span would walk into the next
-	 * member. A thread with no name keeps the static "kernel" instead of
-	 * leaving a warning to print an empty one.
+	 * A thread with no name keeps the static "kernel" instead of leaving a
+	 * warning to print an empty one -- dcl_current_ident() only writes when
+	 * there is a name to write, and only reports a pid when there is a
+	 * thread to take one from.
 	 */
-	if (thread) {
-		int n = 0;
-		while (n < (int)sizeof(thread->name) && thread->name[n])
-			n++;
-		if (n > 0) {
-			memcpy(dcl_task.comm, thread->name, n);
-			dcl_task.comm[n] = 0;
-		}
-		dcl_task.pid = (int)thread->thread_id;
-	}
+	if (dcl_current_ident(dcl_task.comm, (int)sizeof(dcl_task.comm), &pid) >= 0)
+		dcl_task.pid = pid;
 	return &dcl_task;
 }
 
@@ -657,6 +664,30 @@ static void dcl_release_region(resource_size_t start, resource_size_t n)
 		}
 	}
 }
+
+/*
+ * iomem_resource -- the root of the I/O memory *tree*, kept empty.
+ *
+ * drm_cache.c:204 walks it to find the highest mapped address and decide
+ * whether a device with a narrower DMA mask needs bounce buffers:
+ *
+ *     for (tmp = iomem_resource.child; tmp; tmp = tmp->sibling)
+ *         max_iomem = max(max_iomem, tmp->end);
+ *     return max_iomem > ((u64)1 << dma_bits);
+ *
+ * This kernel maps nothing through that tree, so child is NULL, the loop
+ * never runs, max_iomem keeps the 0 it was initialised with, and
+ * drm_need_swiotlb() answers false. That is the correct answer and not a
+ * stubbed one: there is no SWIOTLB in Xeneva to bounce against.
+ *
+ * The regions this file does track live in dcl_regions[] above as a flat
+ * array with a used flag, which is why a NULL child does not contradict it --
+ * the array is a claim table for hand-registered UART and virtio windows, not
+ * a hierarchy, and nothing has ever asked it for its children.
+ */
+struct resource iomem_resource = {
+	.name = "PCI mem",
+};
 
 struct resource* request_mem_region(resource_size_t start, resource_size_t n,
 					const char* name)

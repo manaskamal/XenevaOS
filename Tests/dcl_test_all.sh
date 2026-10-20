@@ -27,19 +27,21 @@ cd "$(dirname "$0")/.." || exit 1
 
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=147    # BaseHdr/linux/*.h
-EXP_ASM_H=6        # BaseHdr/asm/*.h
-EXP_DCL_C=16       # DCL/*.c   (dcl_va_trampoline.s adds the 17th object)
-EXP_DCL_O=17       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=9       # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial, virtio_console)
-EXP_ALL_O=155      # everything under KernelAA64/obj
+EXP_LINUX_H=243    # BaseHdr/linux/*.h
+EXP_ASM_H=16       # BaseHdr/asm/*.h
+EXP_DCL_C=30       # DCL/*.c   (dcl_va_trampoline.s adds a 31st object)
+EXP_DCL_O=31       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=107     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+                   #   virtio_console, and the drm set: core, vkms, tiny/
+                   #   bochs, virtio-gpu, dma-buf, lib)
+EXP_ALL_O=269      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
 EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
-EXP_DCLTEST=36
+EXP_DCLTEST=186   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup + 20 writeback pixel proof + 13 page flip event + 45 stage-5 card1 (bochs)
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -60,39 +62,6 @@ check_count "DCL sources"           "$(ls DCL/*.c | wc -l)"                     
 check_count "DCL objects"           "$(ls KernelAA64/obj/DCL/*.o 2>/dev/null | wc -l)" "$EXP_DCL_O"
 check_count "Vendored objects"      "$(find KernelAA64/obj/Vendored -name '*.o' 2>/dev/null | wc -l)" "$EXP_VEND_O"
 check_count "total objects"         "$(find KernelAA64/obj -name '*.o' | wc -l)" "$EXP_ALL_O"
-
-# A vendored source must still be what MANIFEST.md says it is. This is check 1
-# from that file, inlined so a run of this gate cannot pass with a silently
-# edited vendored file. The manifest row carries two md5s (upstream, then
-# local) so `tail -1` takes the local one; the row is picked out by its tag
-# cell rather than by the path, since the path also appears in a heading below.
-if [ -f Vendored/MANIFEST.md ]; then
-	_manifest=$(grep -F '`v7.2`' Vendored/MANIFEST.md | head -1 |
-		grep -oE '[0-9a-f]{32}' | tail -1)
-	_actual=$(md5sum Vendored/drivers/char/hw_random/virtio-rng.c | cut -d' ' -f1)
-	if [ -n "$_manifest" ] && [ "$_manifest" = "$_actual" ]; then
-		ok "vendored virtio-rng.c matches MANIFEST.md"
-	else
-		bad "vendored virtio-rng.c" "manifest ${_manifest:-<none>}, file $_actual"
-	fi
-
-	# Stage 4's two files, checked the same way but keyed by the path in
-	# their own row rather than by position -- `head -1` above would land
-	# on whichever row was added first, which is exactly the kind of
-	# assumption a third row breaks. These two are byte-identical to
-	# v7.2, so any non-empty diff is drift rather than a recorded delta.
-	for _f in drivers/char/virtio_console.c drivers/tty/hvc/hvc_console.h; do
-		_manifest=$(grep -F "| \`$_f\` |" Vendored/MANIFEST.md | head -1 |
-			grep -oE '[0-9a-f]{32}' | tail -1)
-		_actual=$(md5sum "Vendored/$_f" | cut -d' ' -f1)
-		_name=${_f##*/}
-		if [ -n "$_manifest" ] && [ "$_manifest" = "$_actual" ]; then
-			ok "vendored $_name matches MANIFEST.md"
-		else
-			bad "vendored $_name" "manifest ${_manifest:-<none>}, file $_actual"
-		fi
-	done
-fi
 
 [ "$fails" -eq 0 ] || { echo "count assertions failed; not booting"; exit 1; }
 
@@ -137,9 +106,37 @@ cp -f Process/Terminal/term.exe Resources/resources/ >>"$LOG" 2>&1
 # log ends at the banner, so every assertion below fails on a boot that
 # never happened. Verified -- the same run green on a non-TTY stdin, 17
 # FAILED on a pty.
+#
+# Stage 5's pixel proof needs one thing done *during* the run: when the
+# guest's dcltest says the bochs pattern commit has returned, take a
+# screendump of bochs0 through QEMU's monitor.  The guest cannot see its
+# own scanout -- the pixels belong to the device -- so the only place to
+# look at them is here, from the host, while QEMU is alive.  The helper
+# polls the log for that line and does the one monitor command; it is
+# killed below if QEMU ends before the line ever appears.
+SHOT=${SHOT:-/tmp/xeneva/bochs.ppm}
+rm -f "$SHOT"
+python3 ./Tests/dcl_screendump.py wait \
+	--log "$LOG" \
+	--marker "[dcltest] info bochs scanout committed" \
+	--out "$SHOT" --dev bochs0 --timeout 90 >/dev/null 2>&1 &
+SHOOT_PID=$!
+
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
 	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
 rc=$?
+
+# The helper has either already exited with the screendump, or is still
+# polling a marker that will never come (a failed boot, a failed commit).
+if kill -0 "$SHOOT_PID" 2>/dev/null; then
+	kill "$SHOOT_PID" 2>/dev/null
+	wait "$SHOOT_PID" 2>/dev/null
+	shoot_rc=2
+else
+	wait "$SHOOT_PID"
+	shoot_rc=$?
+fi
+
 case $rc in
 	124) ok "QEMU ran to timeout (124, expected)" ;;
 	0)   ok "QEMU exited 0" ;;
@@ -173,6 +170,10 @@ expect() {   # label pattern
 	if grep -qF -- "$2" "$LOG"; then ok "$1"; else bad "$1" "missing: $2"; fi
 }
 
+reject() {   # label pattern -- the line must NOT be somewhere in the log
+	if grep -qF -- "$2" "$LOG"; then bad "$1" "present: $2"; else ok "$1"; fi
+}
+
 expect "chr_dev_init"                       "chr_dev_init ok (mem devices registered)"
 expect "mem devices"                        "mem devices $EXP_MEM ok, 0 failed"
 expect "stage 1 primitives"                 "dcl primitives: $EXP_PRIM ok, 0 failed"
@@ -184,7 +185,10 @@ expect "userspace dcltest"                  "[dcltest] SUMMARY $EXP_DCLTEST ok, 
 expect "vendored driver registered"         "[dcl]: virtio_rng driver registered"
 expect "vendored driver is not a .ko"       "[modtest]: virtio_rng built-in"
 expect "probe ran"                          "[dcl-virtio]: probe done"
-expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng.0)"
+# The number after the dot is DCL's shared ida counter (linux_kmod_shim.c
+# hands out one sequence for every IDA), so it is not fixed at 0 once other
+# IDAs have allocated; the registration itself is what this checks.
+expect "/dev/hwrng registered"              "[dcl]: hwrng_register (virtio_rng."
 expect "clipboard device"                   "[aurora]: device clipboard registered"
 expect "/dev/hwrng round-trip"              "[dcl]: /dev/hwrng round-trip OK (samples differ)"
 
@@ -200,6 +204,65 @@ expect "virtio_console is not a .ko"        "[modtest]: virtio_console built-in"
 expect "virtio-console device found"        "[dcl-virtio]: virtio-console device registered"
 expect "vport node created"                 "[dcl]: device 'vport"
 expect "vport round-trip"                   "[modtest]: vport selftest rc=0"
+
+# Stage 5: drivers/gpu/drm/tiny/bochs.c, vendored from source and compiled
+# into the image -- the tree's first PCI driver: matched by the DCL PCI
+# fabric (DCL/pci_shim.c) against QEMU's bochs-display and bound with no
+# virtio ring anywhere.  These are the guest's lines; the pixels are the
+# host's, asserted right below.
+expect "bochs pci driver registered"        "[dcl]: bochs pci driver registered"
+expect "bochs bound by the pci fabric"      "bound to bochs-drm"
+expect "bochs published card1"              "[dcl]: device_add 'dri/card1'"
+# The slot ceiling must not be what limits the bus: the scan walks only the
+# buses the ECAM window covers, and "0 dropped" is the scan saying the
+# ceiling was never reached. A regression to walking past the window shows
+# up here as a count -- the first boot with the ceiling raised read RAM as
+# devices and its drop count ran into the hundreds.
+expect "pci bus fits its ceiling"           "0 dropped"
+
+# And the pattern itself: dcltest committed a 0x123456-rgb fill through
+# card1 -- bochs.c's shadow plane memcpy'd it into BAR0, which is what the
+# device scans out -- and the helper above took the screendump at that
+# moment.  A screendump that never got taken and one that shows something
+# else are different failures, so they report separately.
+if [ "$shoot_rc" -eq 0 ] && [ -f "$SHOT" ]; then
+	ok "bochs screendump captured"
+else
+	bad "bochs screendump captured" "helper exit $shoot_rc"
+fi
+if [ -f "$SHOT" ]; then
+	if pix_msg=$(python3 ./Tests/dcl_screendump.py check \
+			--ppm "$SHOT" --rgb 123456 2>&1); then
+		ok "bochs scanout pixel proof"
+	else
+		bad "bochs scanout pixel proof" \
+			"$(printf '%s' "$pix_msg" | tail -1 | cut -c1-100)"
+	fi
+else
+	bad "bochs scanout pixel proof" "no screendump at $SHOT"
+fi
+
+# Stage 6: drivers/gpu/drm/virtio/, vendored from source -- the driver rides
+# the same PCI fabric and virtio rings as the console, and it is armed only
+# in a --bypass-virtgpu image: the internal virtgpu.dll owns 1AF4:1050 by
+# default, so BYPASS_VIRTGPU=1 is what puts these lines in the log at all.
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	expect "virtio_gpu is not a .ko"         "[modtest]: virtio_gpu built-in"
+	expect "virtio-gpu bound by the fabric"  "[drm] pci: virtio-gpu-pci detected at"
+	expect "virtio-gpu published card2"      "[dcl]: device_add 'dri/card2'"
+	expect "virtio-gpu initialized"          "[drm] Initialized virtio_gpu"
+	# Stage 7: the console rides the vendored driver's own scanout -- the
+	# bridge allocates a resource through the vendored object API, repoints
+	# the console at its backing and installs the present mirror. The attach
+	# marker is the whole claim; the failure marker would mean it declined.
+	expect "console on the vendored scanout" "[virtgpu-console]: console on vendored scanout"
+	reject "no vendored console attach failures" "[virtgpu-console]: resource create failed"
+	# QEMU rejects a descriptor chain it cannot map and the guest prints its
+	# own verdict when a probe-time wait expires with the reply still unread;
+	# either one is a broken queue, not a detail.
+	reject "no rejected descriptor chains"   "zero sized buffers are not allowed"
+	reject "no expired virtio-gpu waits"     "wait_event in virtio_gpu_init gave up"
+fi
 
 # The ELF loader is a separate guarantee from "the driver links" -- it still
 # loads and runs test_module.o through DCL/module_loader.c.

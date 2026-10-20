@@ -100,6 +100,17 @@ void AuVirtioTabletHandler(int spiNum) {
 	dsb_sy_barrier();
 	uint16_t them = TabletQueue->used.index;
 
+	/* The console is repointed to a different scanout size after this
+	 * driver initializes (the GPU console hand-off), so the absolute
+	 * pointer range must follow the live desktop size. Caching it at
+	 * init left the cursor stuck at the boot mode's edges. --axiss */
+	uint32_t liveW = AuConsoleGetScreenWidth();
+	uint32_t liveH = AuConsoleGetScreenHeight();
+	if (liveW && liveH) {
+		resX = (int)liveW;
+		resY = (int)liveH;
+	}
+
 	for (; tabletIndex < them; tabletIndex++) {
 		uint16_t slot = tabletIndex % tabletQueueSz;
 		dc_ivac((uint64_t)&TabletInput[slot]);

@@ -66,4 +66,36 @@ static inline void iowrite32be(u32 v, volatile void* addr)
 {
 	writel(__builtin_bswap32(v), addr);
 }
+
+/*
+ * memcpy_fromio() / memcpy_toio() -- copies across the I/O-memory wall.
+ *
+ * mainline defines these as extern functions in <asm-generic/io.h>, backed
+ * by lib/iomap.c's byte loop or an arch override, and <linux/iosys-map.h>
+ * calls them from iosys_map_memcpy_to/_from and its 64-bit _rd_io/_wr_io
+ * arms -- so a vendored file can reach them through iosys-map.h alone.  On
+ * this target there is no separate I/O mapping to be careful about: ioremap()
+ * above is the linear P2V map and an MMIO pointer is an ordinary pointer, so
+ * the correct body is a plain memcpy and the inlines *are* the definition
+ * rather than declarations waiting on a lib/iomap.c DCL does not vendor.
+ *
+ * Call sites: drm_cache.c:220/:232/:239 (drm_memcpy_from_wc) and
+ * drm_format_helper.c:216 (drm_fb_memcpy/swab destinations).
+ *
+ * The __iomem spelling is mainline's; it is empty on this target
+ * (<linux/compiler.h>), and the volatile qualifier on the pair is what keeps
+ * a caller from handing the source where the destination belongs -- dropping
+ * it would compile the two swapped in either direction.
+ */
+static inline void memcpy_fromio(void* dst, const volatile void __iomem* src,
+				 size_t count)
+{
+	memcpy(dst, (const void*)src, count);
+}
+
+static inline void memcpy_toio(volatile void __iomem* dst, const void* src,
+			       size_t count)
+{
+	memcpy((void*)dst, src, count);
+}
 #endif /* __LINUX_IO_H__ */

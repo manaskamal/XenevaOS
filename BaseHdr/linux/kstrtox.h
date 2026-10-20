@@ -215,7 +215,18 @@ static inline int kstrtobool(const char* s, bool* res)
  *             (simple_strtoull's wrapper), lib/kstrtox.c
  *             (_parse_integer_fixup_radix, _parse_integer_limit)
  */
-#include <ctype.h>	/* isxdigit, for base-0 autodetection */
+/*
+ * Kernel ctype, not <ctype.h>.  DCL's own <ctype.h> declares isspace() and
+ * friends as exported *functions*; linux/ctype.h spells the same names as
+ * macros over _ctype[].  Whichever lands second turns the other's
+ * declarations into garbage -- a function declaration whose name is already
+ * a macro parses as an expression, which is what produced the cascade of
+ * "expected ')'" at the top of BaseHdr/ctype.h.  Mainline keeps these apart
+ * because kernel code never sees the userspace header; here both are on the
+ * include path, so the choice of which one a kernel header asks for has to
+ * be deliberate.  It is the kernel one.
+ */
+#include <linux/ctype.h>	/* isxdigit, for base-0 autodetection */
 
 static inline unsigned long long simple_strtoull(const char* cp, char** endp,
 						 unsigned int base)
@@ -281,5 +292,37 @@ static inline unsigned long simple_strtoul(const char* cp, char** endp,
 					   unsigned int base)
 {
 	return (unsigned long)simple_strtoull(cp, endp, base);
+}
+
+/*
+ * simple_strtol() -- the signed form, mainline's three-line wrapper
+ * (lib/vsprintf.c):
+ *
+ *     if (*cp == '-')
+ *             return -simple_strtoul(cp + 1, endp, base);
+ *     return simple_strtoul(cp, endp, base);
+ *
+ * drm_modes.c is the whole consumer set, all five calls inside the
+ * command-line parser: :1947 and :1966 read a bpp and a refresh rate,
+ * :2038/:2047 a resolution, :2105 a bare integer option. The sign branch is
+ * the only thing this adds, and it is the point: handed "-32" directly,
+ * simple_strtoul() stops at the '-' and returns 0 with endp on the sign, so
+ * a command line asking for a negative value would parse as zero. Zero is a
+ * value the mode validator later rejects or silently treats as "unset",
+ * which is a wrong answer rather than the parse error the writer deserved --
+ * whereas with the branch the caller receives -32 and can reject it itself.
+ *
+ * '+' is not consumed, and that is mainline's behaviour rather than an
+ * omission: no caller distinguishes a leading plus, and simple_strtoul()
+ * would stop on it identically to any other non-digit. The negation wraps
+ * through unsigned long like mainline's does, so -2147483648 comes out as
+ * LONG_MIN rather than saturating.
+ */
+static inline long simple_strtol(const char* cp, char** endp,
+				 unsigned int base)
+{
+	if (*cp == '-')
+		return -simple_strtoul(cp + 1, endp, base);
+	return simple_strtoul(cp, endp, base);
 }
 #endif /* __LINUX_KSTRTOX_H__ */

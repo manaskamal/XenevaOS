@@ -35,4 +35,26 @@
 #define L1_CACHE_ALIGN(x) (((x) + (L1_CACHE_BYTES - 1)) & ~(L1_CACHE_BYTES - 1))
 #endif
 
+/*
+ * ARCH_DMA_MINALIGN -- the alignment DMA-capable allocations must have, which
+ * mainline takes from arch/arm64/include/asm/cache.h. A number here rather
+ * than mainline's `____cacheline_aligned` attribute spelling: both call sites
+ * in this tree wrap it in __aligned(), and `__aligned(__attribute__(...))`
+ * does not parse. L1_CACHE_BYTES (64) is the same value mainline's spelling
+ * produces, which is the point -- an allocation DMA'd into must start on a
+ * cache line or the device and the CPU disagree about which line it is.
+ *
+ * The one caller is drm_managed.c:56, `u8 __aligned(ARCH_DMA_MINALIGN) data[]`
+ * inside struct drmres, so a managed allocation gets its payload on a line of
+ * its own.
+ *
+ * ARCH_HAS_DMA_MINALIGN is deliberately *not* defined alongside it.
+ * dma-mapping.h tests that one and switches ____dma_from_device_aligned to
+ * the aligned spelling; flipping it would change virtio-rng.c's buffer
+ * layout, which the note there records as a decision rather than an omission.
+ */
+#ifndef ARCH_DMA_MINALIGN
+#define ARCH_DMA_MINALIGN L1_CACHE_BYTES
+#endif
+
 #endif /* __ASM_CACHE_H */

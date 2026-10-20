@@ -30,9 +30,28 @@
 #include <linux/uio.h>
 #include <linux/uaccess.h>
 #include <linux/security.h>
+#include <linux/highuid.h>	/* DEFAULT_OVERFLOWUID */
 
 #define DEVMEM_MINOR	1
 #define DEVPORT_MINOR	4
+
+/*
+ * overflowuid -- mainline keeps this in kernel/sysctl.c (`int overflowuid =
+ * DEFAULT_OVERFLOWUID;`) and every uid that a 16-bit interface cannot carry
+ * is munged to it (highuid.h's high2lowuid, uidgid.h's from_kuid_munged).
+ * DCL has no sysctl and no user namespace, so it is one constant for the
+ * life of the boot and the constant is mainline's initialiser, "nobody"
+ * (65534). The reader that matters here is drm_ioctl.c:200 -- the hollowed-out
+ * getclient whose whole point is to hand old userspace tools a plausible uid
+ * without walking a client list.
+ *
+ * It is defined in this port because there is no kernel/sysctl.c to hold it
+ * and drivers/char/mem.c is the file among the ported char sources that is
+ * always linked (its fs_initcall below creates the whole devlist); a
+ * one-int shim for the declaration highuid.h already carries would be a
+ * second thing to keep in step with it.
+ */
+int overflowuid = DEFAULT_OVERFLOWUID;
 
 static inline unsigned long size_inside_page(unsigned long start,
 					     unsigned long size)

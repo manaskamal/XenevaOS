@@ -162,6 +162,24 @@ void AuConsoleInitialize(PKERNEL_BOOT_INFO info, bool early) {
 	bypass_autextout = false;
 }
 
+/* A manual loader desktop override names a size the firmware GOP never
+ * scans out; only a GPU driver repointing the console through
+ * AuConsoleSetConInfo can back it. Until then the console framebuffer is
+ * all there is, and reporting the larger size let init's splash paint
+ * past the SCREEN_GET_FB mapping and die on the guest black. Report the
+ * real console size while the override is bigger than what can be
+ * drawn. --axiss */
+static void aucon_desktop_size(uint32_t* width, uint32_t* height) {
+	uint32_t w = aucon->desktop_width ? aucon->desktop_width : aucon->width;
+	uint32_t h = aucon->desktop_height ? aucon->desktop_height : aucon->height;
+	if (w > aucon->width || h > aucon->height) {
+		w = aucon->width;
+		h = aucon->height;
+	}
+	*width = w;
+	*height = h;
+}
+
 /**
  * @brief AuConsoleIoControl -- iocontrol implementation
  * for au console, called from user space
@@ -191,17 +209,12 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	case TIOCSWINSZ:
 	case TIOSPGRP:
 		return 0;
-	case SCREEN_GETWIDTH: {
-		uint32_t width = aucon->desktop_width;
-		ioctl->uint_1 = width;
-		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
+	case SCREEN_GETWIDTH:
+		ioctl->uint_1 = AuConsoleGetScreenWidth();
 		break;
-	}
-	case SCREEN_GETHEIGHT: {
-		uint32_t height = aucon->desktop_height;
-		ioctl->uint_1 = height;
+	case SCREEN_GETHEIGHT:
+		ioctl->uint_1 = AuConsoleGetScreenHeight();
 		break;
-	}
 	case SCREEN_GETBPP: {
 		uint32_t bpp = aucon->bpp;
 		ioctl->uint_1 = bpp;
@@ -246,6 +259,25 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 
 	case SCREEN_REG_MNGR: {
 		return 1;
+		break;
+	}
+	case SCREEN_UPDATE: {
+		/* Userspace present request: (x, y, w, h) in ushort_1/ushort_2/
+		 * ulong_1/ulong_2, a zero width or height meaning "whole screen".
+		 * The compositor sends one bounding box per frame once it has
+		 * blitted into the mapped framebuffer; the text console never
+		 * uses this path. --axiss */
+		int x = ioctl->ushort_1;
+		int y = ioctl->ushort_2;
+		int w = (int)ioctl->ulong_1;
+		int h = (int)ioctl->ulong_2;
+		if (w <= 0 || h <= 0) {
+			x = 0;
+			y = 0;
+			w = (int)aucon->width;
+			h = (int)aucon->height;
+		}
+		AuConsolePresentRect(x, y, w, h);
 		break;
 	}
 	case SCREEN_RESTORE_BOOT_FB: {
@@ -601,6 +633,38 @@ void AuConsoleSetDisplayOwned(void) {
 
 void AuConsoleSetPresentHook(AuConsolePresentFn fn) {
 	present_hook = fn;
+}
+
+/**
+ * @brief AuConsolePresentRect -- hand an explicit damage rectangle to the
+ * scanout mirror installed by AuConsoleSetPresentHook.
+ *
+ * The text console marks its own damage and flushes through
+ * AuConsoleFlushMirror(); this entry is for userspace, which paints into the
+ * mapped framebuffer directly and has no way to say "this much changed"
+ * other than SCREEN_UPDATE. Unlike the text mirror it is deliberately not
+ * gated on display_owned: the request comes from the process that owns the
+ * display, and muzzling it would leave the scanout frozen on its last text
+ * frame once the compositor takes over.
+ */
+void AuConsolePresentRect(int x, int y, int w, int h) {
+	if (!present_hook || !aucon)
+		return;
+
+	int right = x + w;
+	int bottom = y + h;
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+	if (right > (int)aucon->width)
+		right = (int)aucon->width;
+	if (bottom > (int)aucon->height)
+		bottom = (int)aucon->height;
+	if (right <= x || bottom <= y)
+		return;
+
+	present_hook(aucon->buffer, aucon->pitch, x, y, right - x, bottom - y);
 }
 
 void AuPutC(char c) {
@@ -1009,12 +1073,15 @@ void AuConsoleEarlyEnable(bool value) {
  * The only caller is the tablet driver: report the desktop size the
  * compositor draws at, not the firmware GOP console size, so absolute
  * pointer input spans the whole desktop at any resolution.
- * --axiss
+ * Falls back to the real console geometry while no driver backs a
+ * manual override, same value SCREEN_GETWIDTH hands out. --axiss
  */
 uint32_t AuConsoleGetScreenWidth() {
 	if (!aucon)
 		return 0;
-	return aucon->desktop_width ? aucon->desktop_width : aucon->width;
+	uint32_t width = 0, height = 0;
+	aucon_desktop_size(&width, &height);
+	return width;
 }
 
 /**
@@ -1027,7 +1094,9 @@ uint32_t AuConsoleGetScreenWidth() {
 uint32_t AuConsoleGetScreenHeight() {
 	if (!aucon)
 		return 0;
-	return aucon->desktop_height ? aucon->desktop_height : aucon->height;
+	uint32_t width = 0, height = 0;
+	aucon_desktop_size(&width, &height);
+	return height;
 }
 
 void AuConsoleFlushFramebuffer() {

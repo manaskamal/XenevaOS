@@ -130,7 +130,15 @@ typedef struct {
 #define SHN_UNDEF			0
 #define SHN_ABS				0xfff1
 
-#define MOD_VBASE 0xFFFFC00000100000ULL
+/*
+ * Where module image pages get mapped. The kernel image is loaded at
+ * 0xFFFFC00000000000 and has grown with the DRM set to a SizeOfImage of
+ * 0x14B000 (KernelAA64/KernelAA64.exe); the boot-driver region starts at
+ * 0xFFFFC00000400000 (KernelAA64/audrv.c). This base sits at the top of
+ * the free band between them -- at its old 0x100000 the image had grown
+ * past it, and AuMapPage() refused with "page already present".
+ */
+#define MOD_VBASE 0xFFFFC000003F0000ULL
 static uint64_t mod_vnext = MOD_VBASE;
 
 static uint64_t map_executable_pages(uint64_t phys, size_t size) {

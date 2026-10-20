@@ -1,12 +1,39 @@
 #ifndef __LINUX_TIMER_H__
 #define __LINUX_TIMER_H__
 
+#include <linux/container_of.h>	/* container_of -- timer_container_of below */
+
 struct timer_list {
     void          (*function)(struct timer_list* t);
     unsigned long   expires;    /* in jiffies */
     void* data;       /* private context */
     int             pending;
 };
+
+/*
+ * timer_container_of(ptr, timer_member, field) -- recover the struct owning
+ * a timer_list from the timer callback's argument. mainline spells it the
+ * same way, in include/linux/timer.h.
+ *
+ * The three arguments look like a plain container_of() with an extra one,
+ * and the difference matters: container_of()'s first argument is the pointer
+ * *to the member*, whereas here it is the pointer *to the container* -- and
+ * the container is the variable being declared. So `vblank` in
+ *
+ *   struct drm_vblank_crtc *vblank = timer_container_of(vblank, t,
+ *                                                       disable_timer);
+ *
+ * is read before it exists, but only for its type. That is why the expansion
+ * takes __typeof__(*ptr) rather than deriving the type from the member, and
+ * why the second argument is what gets passed through to container_of():
+ * there the static_assert checks that the pointer points at a `field`, and
+ * `t` does.
+ *
+ * __typeof__ rather than typeof because this target is not in GNU mode by
+ * default.
+ */
+#define timer_container_of(ptr, timer_member, field)			\
+	container_of(timer_member, __typeof__(*(ptr)), field)
 
 /*
  * Jiffies -- derived from the ARM generic timer, not counted by a tick.
@@ -54,6 +81,20 @@ unsigned long dcl_jiffies_now(void);
  * evaluation for the macro form to introduce.
  */
 #define nsecs_to_jiffies(n) ((unsigned long)((n) / (NSEC_PER_SEC / HZ)))
+
+/*
+ * nsecs_to_jiffies64(n) -- the 64-bit form drm_syncobj.c waits with (:442, a
+ * submit timeout, and :1220, an absolute deadline) and mainline keeps in
+ * <linux/jiffies.h>.  A macro, and for the same include-order reason
+ * nsecs_to_jiffies above is one: <linux/kernel.h> pulls this header in before
+ * it defines NSEC_PER_SEC, so the division has to be spelled at the call
+ * site, where kernel.h has finished.  At HZ 250 the divisor is exact
+ * (NSEC_PER_SEC / HZ == 4000000), which is mainline's own common case
+ * (`div_u64(n, NSEC_PER_SEC / HZ)` in kernel/time/time.c) with an ordinary
+ * 64-bit division; `n` is read once.
+ */
+#define nsecs_to_jiffies64(n) ((u64)((n) / (NSEC_PER_SEC / HZ)))
+
 #define time_before(a, b)     time_after(b, a)
 #define time_after_eq(a, b)   ((long)((a) - (b)) >= 0)
 
@@ -106,6 +147,18 @@ static inline int del_timer(struct timer_list* t) {
 
 static inline int del_timer_sync(struct timer_list* t) {
     return del_timer(t);
+}
+
+/*
+ * timer_delete_sync() -- the name v7.2 gives that operation (mainline:
+ * include/linux/timer.h declares it, kernel/time/timer.c owns it).  The one
+ * user here is drm_vblank.c:533, which discards the result; forwarding to
+ * del_timer_sync() keeps a single body for one operation rather than letting
+ * the old and new spelling drift.  There is no handler to synchronise with,
+ * because no timer IRQ runs one -- see the note on add_timer() below.
+ */
+static inline int timer_delete_sync(struct timer_list* t) {
+    return del_timer_sync(t);
 }
 
 static inline int timer_pending(const struct timer_list* t) {
