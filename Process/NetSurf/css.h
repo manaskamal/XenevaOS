@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#define NS_CSS_MAX_CLASSES 4
+#define NS_CSS_MAX_CLASSES 8
 #define NS_CSS_CLASS_LEN 31
 #define NS_CSS_ID_LEN 63
 #define NS_CSS_TAG_LEN 15
@@ -61,6 +61,41 @@ void NsCssNodeDestroy(NsCssNode* n);
 uint32_t NsCssNodeColor(NsCssNode* n);
 int NsCssNodeFontPx(NsCssNode* n);
 int NsCssNodeMarginLines(NsCssNode* n);
+/* True when the element must not contribute text: display:none or
+ * visibility:hidden/collapse. */
+int NsCssNodeSkip(NsCssNode* n);
+/* 1 when text-align computes to center. */
+int NsCssNodeCenter(NsCssNode* n);
+/* 1 when this element starts a new line (block, table, flex, grid).
+ * Inline, inline-block, and table-cell stay on the current line.
+ * Children of a table-row or flex row also stay on that line. */
+int NsCssNodeBlock(NsCssNode* n);
+/* 0 when the background is transparent. Otherwise 0xAARRGGBB. */
+uint32_t NsCssNodeBackground(NsCssNode* n);
+
+/* Bits the painter applies. Everything else in the computed style either
+ * has no face to switch to (font-family) or no box tree (position). */
+#define NS_CSS_BOLD 1
+#define NS_CSS_ITALIC 2
+#define NS_CSS_UNDER 4
+#define NS_CSS_STRIKE 8
+#define NS_CSS_OVER 16
+
+typedef struct NsCssUsed {
+	uint8_t decor;
+	uint8_t align; /* 0 left, 1 center, 2 right */
+	uint8_t indent;
+	uint8_t line; /* row step in px */
+	uint8_t list; /* 0 none, 1 disc, 2 circle, 3 square, 4 decimal, 5 alpha */
+	uint8_t upper; /* 1 uppercase, 2 lowercase */
+	uint8_t pre;
+	uint8_t nowrap;
+	uint16_t width; /* 0 = auto */
+	uint8_t opacity; /* 255 = solid */
+	uint32_t border; /* 0, or the bottom-border color */
+} NsCssUsed;
+
+void NsCssNodeUsed(NsCssNode* n, NsCssUsed* out);
 
 #ifdef __cplusplus
 }

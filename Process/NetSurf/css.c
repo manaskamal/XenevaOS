@@ -35,10 +35,18 @@ static lwc_string* s_attrId = NULL;
 
 /* UA reader defaults: white body text, sized headings, blue links. */
 static const char kUaCss[] =
-    "body{color:#ffffff}"
-    "h1{font-size:22px}h2{font-size:19px}h3{font-size:17px}"
-    "small{font-size:11px}"
-    "a{color:#6689d5}";
+    "html,body{color:#202124;background-color:#ffffff}"
+    "h1{font-size:22px;display:block;color:#202124}"
+    "h2{font-size:19px;display:block}h3{font-size:17px;display:block}"
+    "p,div,section,article,header,footer,nav,main,ul,ol,li,h4,h5,h6,form,table{display:block}"
+    "tr{display:table-row}td,th{display:table-cell}"
+    "center{display:block;text-align:center}"
+    "script,style,template,iframe,svg,canvas,link,meta,title{display:none}"
+    "input,textarea,button,select{display:block}"
+    "video{display:block}"
+    "small{font-size:11px;color:#5f6368}"
+    "a{color:#1a0dab}"
+    "footer,footer a,#fbar,#fbar a{color:#70757a}";
 
 static css_error ns_resolve_url(void* pw, const char* base, lwc_string* rel, lwc_string** abs) {
     (void)pw;
@@ -441,7 +449,9 @@ static css_error ns_node_count_siblings(void* pw, void* node, bool same_name, bo
 static css_error ns_ua_default(void* pw, uint32_t property, css_hint* hint) {
     (void)pw;
     if (property == CSS_PROP_COLOR) {
-        hint->data.color = 0xffffffffu;
+        /* Unresolved var() drops the author color. White here painted
+         * the whole page the same color as the background. */
+        hint->data.color = 0xff202124u;
         hint->status = CSS_COLOR_COLOR;
     } else if (property == CSS_PROP_FONT_FAMILY) {
         hint->data.strings = NULL;
@@ -565,7 +575,9 @@ uint32_t NsCssNodeColor(NsCssNode* n) {
         if (type == CSS_COLOR_COLOR)
             return (uint32_t)color;
     }
-    return 0xffffffffu;
+    /* A missing computed color used to be white. On the white page that
+     * made every glyph invisible except the green HTTPS note. */
+    return 0xff202124u;
 }
 
 static int ns_len_px(css_fixed length, css_unit unit, int basePx) {
@@ -644,15 +656,235 @@ static int ns_margin_px(css_computed_style* st, int which) {
     }
 }
 
+int NsCssNodeBlock(NsCssNode* n) {
+    css_computed_style* st = ns_style(n);
+    uint8_t disp;
+    uint8_t parentDisp;
+    if (!n)
+        return 0;
+    if (n->parent) {
+        css_computed_style* ps = ns_style(n->parent);
+        if (ps && st) {
+            uint8_t fl = css_computed_float(st);
+            if (fl == CSS_FLOAT_LEFT || fl == CSS_FLOAT_RIGHT)
+                return 0;
+            parentDisp = css_computed_display(ps, n->parent->parent == NULL);
+            if (parentDisp == CSS_DISPLAY_FLEX || parentDisp == CSS_DISPLAY_INLINE_FLEX ||
+                parentDisp == CSS_DISPLAY_TABLE_ROW)
+                return 0;
+        }
+    }
+    if (!st)
+        return 0;
+    disp = css_computed_display(st, n->parent == NULL);
+    switch (disp) {
+    case CSS_DISPLAY_INLINE:
+    case CSS_DISPLAY_INLINE_BLOCK:
+    case CSS_DISPLAY_INLINE_FLEX:
+    case CSS_DISPLAY_INLINE_GRID:
+    case CSS_DISPLAY_INLINE_TABLE:
+    case CSS_DISPLAY_TABLE_CELL:
+    case CSS_DISPLAY_RUN_IN:
+    case CSS_DISPLAY_TABLE_COLUMN:
+        return 0;
+    default:
+        return 1;
+    }
+}
+
+int NsCssNodeCenter(NsCssNode* n) {
+    css_computed_style* st = ns_style(n);
+    uint8_t a;
+    if (!st)
+        return 0;
+    a = css_computed_text_align(st);
+    return a == CSS_TEXT_ALIGN_CENTER || a == CSS_TEXT_ALIGN_LIBCSS_CENTER;
+}
+
+int NsCssNodeSkip(NsCssNode* n) {
+    css_computed_style* st = ns_style(n);
+    uint8_t disp;
+    uint8_t vis;
+    if (!st)
+        return 0;
+    /* Google ships body{display:none} until its scripts run. Hiding the
+     * root blanks the whole page. */
+    if (!strcmp(n->tag, "html") || !strcmp(n->tag, "body"))
+        return 0;
+    disp = css_computed_display(st, n->parent == NULL);
+    if (disp == CSS_DISPLAY_NONE)
+        return 1;
+    vis = css_computed_visibility(st);
+    if (vis == CSS_VISIBILITY_HIDDEN || vis == CSS_VISIBILITY_COLLAPSE)
+        return 1;
+    return 0;
+}
+
+uint32_t NsCssNodeBackground(NsCssNode* n) {
+    css_computed_style* st = ns_style(n);
+    css_color color = 0;
+    uint8_t type;
+    if (!st)
+        return 0;
+    type = css_computed_background_color(st, &color);
+    if (type != CSS_BACKGROUND_COLOR_COLOR)
+        return 0;
+    /* libcss packs A in the top byte. Fully transparent is not a fill. */
+    if (((uint32_t)color >> 24) == 0)
+        return 0;
+    return (uint32_t)color;
+}
+
 int NsCssNodeMarginLines(NsCssNode* n) {
     css_computed_style* st = ns_style(n);
     int lines;
     if (!st)
         return 0;
-    lines = (ns_margin_px(st, 0) + ns_margin_px(st, 1)) / 14;
+    lines = (ns_margin_px(st, 0) + ns_margin_px(st, 1));
+    {
+        css_fixed length = 0;
+        css_unit unit = CSS_UNIT_PX;
+        int px;
+        if (css_computed_padding_top(st, &length, &unit) == CSS_PADDING_SET) {
+            px = ns_len_px(length, unit, NS_CSS_BASE_PX);
+            if (px > 0)
+                lines += px;
+        }
+        length = 0;
+        if (css_computed_padding_bottom(st, &length, &unit) == CSS_PADDING_SET) {
+            px = ns_len_px(length, unit, NS_CSS_BASE_PX);
+            if (px > 0)
+                lines += px;
+        }
+    }
+    lines /= 14;
     if (lines < 0)
         lines = 0;
     if (lines > 2)
         lines = 2;
     return lines;
+}
+
+static int ns_set_px(uint8_t type, css_fixed length, css_unit unit) {
+    int px;
+    if (type != CSS_MARGIN_SET && type != CSS_PADDING_SET && type != CSS_BORDER_WIDTH_WIDTH)
+        return 0;
+    px = ns_len_px(length, unit, NS_CSS_BASE_PX);
+    return px > 0 ? px : 0;
+}
+
+void NsCssNodeUsed(NsCssNode* n, NsCssUsed* out) {
+    css_computed_style* st;
+    memset(out, 0, sizeof(*out));
+    out->line = 19;
+    out->list = 1;
+    out->opacity = 255;
+    st = ns_style(n);
+    if (!st)
+        return;
+    {
+        uint8_t w = css_computed_font_weight(st);
+        uint8_t s = css_computed_font_style(st);
+        uint8_t d = css_computed_text_decoration(st);
+        if (w == CSS_FONT_WEIGHT_BOLD || w == CSS_FONT_WEIGHT_BOLDER || w >= CSS_FONT_WEIGHT_600)
+            out->decor |= NS_CSS_BOLD;
+        if (s == CSS_FONT_STYLE_ITALIC || s == CSS_FONT_STYLE_OBLIQUE)
+            out->decor |= NS_CSS_ITALIC;
+        if (d & CSS_TEXT_DECORATION_UNDERLINE)
+            out->decor |= NS_CSS_UNDER;
+        if (d & CSS_TEXT_DECORATION_LINE_THROUGH)
+            out->decor |= NS_CSS_STRIKE;
+        if (d & CSS_TEXT_DECORATION_OVERLINE)
+            out->decor |= NS_CSS_OVER;
+    }
+    {
+        uint8_t a = css_computed_text_align(st);
+        if (a == CSS_TEXT_ALIGN_CENTER || a == CSS_TEXT_ALIGN_LIBCSS_CENTER)
+            out->align = 1;
+        else if (a == CSS_TEXT_ALIGN_RIGHT || a == CSS_TEXT_ALIGN_LIBCSS_RIGHT)
+            out->align = 2;
+    }
+    {
+        css_fixed length = 0;
+        css_unit unit = CSS_UNIT_PX;
+        int px = 0;
+        px += ns_set_px(css_computed_margin_left(st, &length, &unit), length, unit);
+        length = 0;
+        px += ns_set_px(css_computed_padding_left(st, &length, &unit), length, unit);
+        if (px > 120)
+            px = 120;
+        out->indent = (uint8_t)px;
+    }
+    {
+        css_fixed length = 0;
+        css_unit unit = CSS_UNIT_PX;
+        uint8_t t = css_computed_line_height(st, &length, &unit);
+        int px = 19;
+        if (t == CSS_LINE_HEIGHT_DIMENSION)
+            px = ns_len_px(length, unit, NS_CSS_BASE_PX);
+        else if (t == CSS_LINE_HEIGHT_NUMBER)
+            px = (int)((length >> CSS_RADIX_POINT) * NS_CSS_BASE_PX);
+        if (px < 14)
+            px = 14;
+        if (px > 36)
+            px = 36;
+        out->line = (uint8_t)px;
+    }
+    {
+        uint8_t t = css_computed_list_style_type(st);
+        if (t == CSS_LIST_STYLE_TYPE_NONE)
+            out->list = 0;
+        else if (t == CSS_LIST_STYLE_TYPE_CIRCLE)
+            out->list = 2;
+        else if (t == CSS_LIST_STYLE_TYPE_SQUARE)
+            out->list = 3;
+        else if (t == CSS_LIST_STYLE_TYPE_DECIMAL || t == CSS_LIST_STYLE_TYPE_DECIMAL_LEADING_ZERO)
+            out->list = 4;
+        else if (t == CSS_LIST_STYLE_TYPE_LOWER_ALPHA || t == CSS_LIST_STYLE_TYPE_LOWER_LATIN ||
+                 t == CSS_LIST_STYLE_TYPE_UPPER_ALPHA || t == CSS_LIST_STYLE_TYPE_UPPER_LATIN)
+            out->list = 5;
+        else
+            out->list = 1;
+    }
+    {
+        uint8_t t = css_computed_text_transform(st);
+        if (t == CSS_TEXT_TRANSFORM_UPPERCASE)
+            out->upper = 1;
+        else if (t == CSS_TEXT_TRANSFORM_LOWERCASE)
+            out->upper = 2;
+    }
+    {
+        uint8_t t = css_computed_white_space(st);
+        if (t == CSS_WHITE_SPACE_PRE || t == CSS_WHITE_SPACE_PRE_WRAP)
+            out->pre = 1;
+        if (t == CSS_WHITE_SPACE_NOWRAP || t == CSS_WHITE_SPACE_PRE)
+            out->nowrap = 1;
+    }
+    {
+        css_fixed length = 0;
+        css_unit unit = CSS_UNIT_PX;
+        if (css_computed_width(st, &length, &unit) == CSS_WIDTH_SET) {
+            int px = ns_len_px(length, unit, NS_CSS_BASE_PX);
+            if (px > 0 && px < 2000)
+                out->width = (uint16_t)px;
+        }
+    }
+    {
+        uint8_t bs = css_computed_border_bottom_style(st);
+        css_color color = 0;
+        if (bs >= CSS_BORDER_STYLE_DOTTED &&
+            css_computed_border_bottom_color(st, &color) == CSS_BORDER_COLOR_COLOR)
+            out->border = (uint32_t)color;
+    }
+    {
+        css_fixed op = 0;
+        if (css_computed_opacity(st, &op) == CSS_OPACITY_SET) {
+            int a = (int)((op * 255) >> CSS_RADIX_POINT);
+            if (a < 0)
+                a = 0;
+            if (a > 255)
+                a = 255;
+            out->opacity = (uint8_t)a;
+        }
+    }
 }
