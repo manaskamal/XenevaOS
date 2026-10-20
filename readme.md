@@ -11,7 +11,7 @@ Refer to [Introduction to XenevaOS](Docs/Introduction.md) for a high-level overv
 Refer to [API Documentation of XenevaOS](https://bytejoseph.github.io/xeneva-source-reference/files.html). _Thanks to ByteJoseph for API docs_.
 
 ## Contributing to the project
-XenevaOS is an open-source project that welcomes contributions from developers, researchers, and enthusiasts who are passionate about low-level system development. Whether you're interested in Kernel development, driver development, low-level graphics, or application-level features, there are many ways to get involved. We encourage contributions in the form of code, documentation, bug reports, and feature suggestions. If you're interested in contributing, check out the [Contribution Guideline](Docs/Contributing.md), explore open issues, and join the discussion to help shape the project.
+XenevaOS is an open-source project that welcomes contributions from developers, researchers, and enthusiasts who are passionate about low-level system development. Whether you're interested in Kernel development, driver development, low-level graphics, or application-level features, there are many ways to get involved. We encourage contributions in the form of code, documentation, bug reports, and feature suggestions. If you're interested in contributing, check out the [Contribution Guideline](Docs/Contributing.md), our [AI Policy](Docs/AIPolicy.md), explore open issues, and join the discussion to help shape the project.
 
 
 ## __Features__ :

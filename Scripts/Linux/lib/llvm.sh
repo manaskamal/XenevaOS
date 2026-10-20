@@ -20,13 +20,16 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
     ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
     ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        ( cd ../../Ports/mbedtls && make clean && make llvm )
+    fi
 
     # All AArch64 user-space applications. Microkernel rule: --no-network
     # and --no-audio drop their whole userspace (daemons and tools) so a
     # removed component is never built, deployed, or packed. --axiss
     APPS=(
         Init DeodhaiXR Terminal Namdapha XELnch
-        Calender Calculator Files Control XEShell btctl XENotes
+        Calender Calculator Files Control XEShell btctl XENotes XEPaints XESheets
         Clipd dcltest
     )
     # hwtest unloads the in-kernel sound driver and claims its PCI function from
@@ -70,7 +73,7 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         rm -f ../../Resources/resources/deoaud.exe ../../Resources/resources/audplr.exe
     fi
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
-        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd http wifictl)
+        APPS+=(ping udpecho route iptables NETMngr dig nslook Telnet Finger Gopher Ntpd wifictl)
     else
         echo "[llvm] Network userspace excluded (--no-network)."
         rm -f ../../Resources/resources/ping.exe ../../Resources/resources/udpecho.exe \
@@ -100,6 +103,8 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
     cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
     cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
+    cp -f ../../Process/XEPaints/xepaints.exe     ../../Resources/resources/
+    cp -f ../../Process/XESheets/xesheets.exe     ../../Resources/resources/
     cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
     cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
     if [ "${HWTEST:-0}" -eq 1 ]; then
@@ -179,8 +184,6 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         cp -f ../../Process/Finger/finger.exe         ../../Resources/resources/
         cp -f ../../Process/Gopher/gopher.exe         ../../Resources/resources/
         cp -f ../../Process/Ntpd/ntpd.exe             ../../Resources/resources/
-        ( cd ../../Ports/mbedtls && make llvm )
-        ( cd ../../Process/http && make clean && make llvm )
         cp -f ../../Process/http/curl.exe             ../../Resources/resources/
         cp -f ../../Process/wifictl/wifictl.exe       ../../Resources/resources/
         if [ "${NO_NETSURF:-0}" -eq 0 ]; then

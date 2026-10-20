@@ -64,8 +64,11 @@ void XEShellSigInterrupt(int signo) {
 	fflush(stdout);
 }
 
+volatile int g_interrupted = 0;
+
 void XEShellSignalTest(int signo) {
-	printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
+	g_interrupted++;
+	//printf("[xeshell]: Signal %d received (SIGINT - CTRL+C)\r\n", signo);
 	fflush(stdout);
 
 	if (job > 0) {
@@ -75,7 +78,7 @@ void XEShellSignalTest(int signo) {
 		job = 0;
 	}
 
-	printf("[xeshell]: Signal handler completed\r\n");
+	//printf("[xeshell]: Signal handler completed\r\n");
 	fflush(stdout);
 }
 
@@ -91,7 +94,8 @@ void XEShellTimerCallback(int signo) {
  */
 void XEShellWriteCurrentDir() {
 	if (_draw_shell_curdir) {
-		printf("\033[32mXEShell %s$:\033[37m", currentDirectory ? currentDirectory : "/");
+		printf("\033[32mXEShell %s$:\033[37m\033]133;B\007",
+			   currentDirectory ? currentDirectory : "/");
 		fflush(stdout);
 		_draw_shell_curdir = false;
 	}
@@ -592,25 +596,28 @@ void XEShellClipCommand() {
 
 void XEShellPrintHelp() {
 	printf("\n");
-	printf("╔════════════════════════════════════════════════════════════╗\n");
-	printf("║                    Xeneva Shell v1.1 Help                  ║\n");
-	printf("╠════════════════════════════════════════════════════════════╣\n");
-	printf("║ Command     Description                                    ║\n");
-	printf("║────────────────────────────────────────────────────────────║\n");
-	printf("║ cd [path]   Change current working directory               ║\n");
-	printf("║ ls          List files and folders in current directory    ║\n");
-	printf("║ echo [text]  Display text or write to file (echo text>file)║\n");
-	printf("║ pwd         Display current working directory             ║\n");
-	printf("║ clrscr      Clear entire terminal screen                   ║\n");
-	printf("║ help        Show this help message                        ║\n");
-	printf("║ systeminfo  Display system information                    ║\n");
-	printf("║ time        Display current time                           ║\n");
-	printf("║ modinfo     Display DCL module status (/dev/dcl)           ║\n");
-	printf("║ rngtest     Read entropy from /dev/hwrng                   ║\n");
-	printf("║ rngguess    Guess the number virtio-rng picked             ║\n");
-	printf("║ clip [text] Copy text to clipboard, or show it             ║\n");
-	printf("║ exit        Exit the shell                                 ║\n");
-	printf("╚════════════════════════════════════════════════════════════╝\n");
+	printf("                    Xeneva Shell v1.1 Help                  \n");
+	printf(" Command     Description                                    \n");
+	printf(" cd [path]   Change current working directory               \n");
+	printf(" ls          List files and folders in current directory    \n");
+	printf(" echo [text]  Display text or write to file (echo text>file)\n");
+	printf(" pwd         Display current working directory             \n");
+	printf(" clrscr      Clear entire terminal screen                   \n");
+	printf(" help        Show this help message                        \n");
+	printf(" systeminfo  Display system information                    \n");
+	printf(" time        Display current time                           \n");
+	printf(" modinfo     Display DCL module status (/dev/dcl)           \n");
+	printf(" rngtest     Read entropy from /dev/hwrng                   \n");
+	printf(" rngguess    Guess the number virtio-rng picked             \n");
+	printf(" clip [text] Copy text to clipboard, or show it             \n");
+	printf(" exit        Exit the shell                                 \n");
+	printf(" clear       Clear the terminal screen                      \n");
+	printf(" uname       Display system information                     \n");
+	printf(" who         Display current user information               \n");
+	printf(" sleep       Suspend shell for specified number seconds     \n");
+	printf(" seq         Generate a sequence of number                  \n");
+	printf(" expr        Evaluates expressions                          \n");
+	printf(" test        Evaluates conditional expressions              \n");
 	printf("\n");
 	printf("Examples:\n");
 	printf("  cd /usr           - Change to /usr directory\n");
@@ -841,7 +848,8 @@ void XEShellRngGuess() {
 		attempts++;
 		if (val == secret) {
 			printf("[xeshell]: correct! guessed in %d %s\r\n",
-			       attempts, attempts == 1 ? "try" : "tries");
+				   attempts,
+				   attempts == 1 ? "try" : "tries");
 			return;
 		}
 		if (val > secret)
@@ -851,6 +859,7 @@ void XEShellRngGuess() {
 	}
 }
 
+extern int _term_handle_posix(char* cmd);
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
@@ -948,7 +957,8 @@ void XEShellProcessLine() {
 			XEShellRngGuess();
 			_spawnable_process = false;
 		} else if (_spawnable_process) {
-			XEShellSpawn(cmdBuf);
+			if (_term_handle_posix(cmdBuf) < 0)
+				XEShellSpawn(cmdBuf);
 		}
 
 	cleanup:

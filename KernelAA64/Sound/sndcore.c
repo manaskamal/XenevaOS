@@ -153,6 +153,7 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 		AuDSP* dsp = (AuDSP*)kmalloc(sizeof(AuDSP));
 		memset(dsp, 0, sizeof(AuDSP));
 		uint8_t* buffer = (uint8_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+
 		UARTDebugOut("buffer : %x \r\n", buffer);
 		memset(buffer, 0, PAGE_SIZE);
 		dsp->buffer = AuCircBufInitialise(buffer, SND_BUFF_SZ);
@@ -163,7 +164,8 @@ int AuSoundIOControl(AuVFSNode* node, int code, void* arg) {
 		UARTDebugOut("UINT_2 value : %d \r\n", _ioctl->uint_2);
 		if (_ioctl->uint_2 != UINT32_MAX) {
 			dsp->_cardID = _ioctl->uint_2;
-			if (dsp->_cardID >= 0 && dsp->_cardID < AURORA_MAX_SOUND_CARDS && _cards[dsp->_cardID]) {
+			if (dsp->_cardID >= 0 && dsp->_cardID < AURORA_MAX_SOUND_CARDS &&
+				_cards[dsp->_cardID]) {
 				strncpy(dsp->card_name, _cards[dsp->_cardID]->name, sizeof(dsp->card_name) - 1);
 				dsp->card_name[sizeof(dsp->card_name) - 1] = 0;
 			}
@@ -382,6 +384,9 @@ int AuSoundRegisterCard(AuSound* snd) {
 		}
 	}
 	if (rebound)
-		UARTDebugOut("[sound]: card %d (%s) registered, %d client(s) rebound\r\n", index, snd->name, rebound);
+		UARTDebugOut("[sound]: card %d (%s) registered, %d client(s) rebound\r\n",
+					 index,
+					 snd->name,
+					 rebound);
 	return 0;
 }

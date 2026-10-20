@@ -305,7 +305,9 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 		size_t done = 0;
 		while (done < length) {
 			size_t chunk = length - done > PAGE_SIZE ? PAGE_SIZE : length - done;
-			size_t w = fsys->write ? fsys->write(fsys, file, (uint64_t*)(aligned_buffer + done), chunk) : 0;
+			size_t w = fsys->write
+						   ? fsys->write(fsys, file, (uint64_t*)(aligned_buffer + done), chunk)
+						   : 0;
 			if (!w)
 				break;
 			done += w;
@@ -621,15 +623,72 @@ int ProcessGetFileDesc(const char* filename) {
 }
 
 /**
- * @brief RemoveFile -- remove a file. Only file systems that implement removal
- * through a server (/srv) support it; anything else fails, as it always effectively did.
- * @param pathname -- path to remove
+ * @brief RemoveFile -- remove a directory or file
+ * Supports both /srv server filesystem and general VFS (e.g. FAT32).
+ * @param pathname -- path of directory or file to remove
  */
 int RemoveFile(char* pathname) {
 	if (!pathname || strlen(pathname) >= 128)
 		return -1;
-	AuVFSNode* fsys = AuVFSFind(pathname);
-	if (!AuSrvfsOwns(fsys))
+
+	char fname[128];
+	memset(fname, 0, sizeof(fname));
+	strcpy(fname, pathname);
+
+	AuVFSNode* fsys_check = AuVFSFind(fname);
+	if (AuSrvfsOwns(fsys_check))
+		return AuSrvfsRemove(fname);
+
+	AuVFSNode* target = AuVFSOpen(fname);
+	if (!target)
 		return -1;
-	return AuSrvfsRemove(pathname);
+
+	AuVFSNode* fsys = (AuVFSNode*)target->device;
+	if (!fsys) {
+		kfree(target);
+		return -1;
+	}
+
+	int ret = -1;
+	if (target->flags & FS_FLAG_DIRECTORY)
+		ret = AuVFSRemoveDir(fsys, target);
+	else
+		ret = AuVFSRemoveFile(fsys, target);
+
+	kfree(target);
+	return ret;
+}
+
+/**
+ * @brief CreateDir -- create a directory
+ * @param filename -- directory pathname to create
+ */
+int CreateDir(char* filename) {
+	if (!filename)
+		return -1;
+
+	char fname[128];
+	memset(fname, 0, sizeof(fname));
+	if (strlen(filename) >= sizeof(fname))
+		return -1;
+	strcpy(fname, filename);
+
+	/* If directory or node already exists, return success */
+	AuVFSNode* existing = AuVFSOpen(fname);
+	if (existing) {
+		kfree(existing);
+		return 0;
+	}
+
+	AuVFSNode* fsys = AuVFSFind(fname);
+	if (!fsys)
+		return -1;
+
+	AuVFSNode* dirfile = AuVFSCreateDir(fsys, fname);
+	if (dirfile) {
+		kfree(dirfile);
+		return 0;
+	}
+
+	return -1;
 }

@@ -82,3 +82,4 @@ EXPORTS
     _KeExitSubThread
     _KeSendSignalToThread
     _KeThreadWaitForTermination
+    uname

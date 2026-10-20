@@ -96,10 +96,41 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 	}
 
 	char fname[11];
-	memset(fname, 0, 11);
+	memset(fname, ' ', 11);
 	FatToDOSFilename(extract, fname, 11);
-	fname[10] = 0;
 
+	/* Check if directory already exists in parent */
+	uint32_t check_clust = parent_clust;
+	while (check_clust >= 2 && (!(_fs->__TotalClusters) || check_clust < _fs->__TotalClusters) && !FAT_IS_EOC(check_clust)) {
+		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
+			memset(buff, 0, PAGE_SIZE);
+			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, check_clust) + j, 1, buff);
+			FatDir* check_dent = (FatDir*)buff;
+			for (int i = 0; i < 16; i++) {
+				if (check_dent->filename[0] == 0x00)
+					goto create_dir_slot;
+				if ((uint8_t)check_dent->filename[0] == 0xE5) {
+					check_dent++;
+					continue;
+				}
+				if (memcmp(check_dent->filename, fname, 11) == 0) {
+					/* Already exists, avoid creating duplicate */
+					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
+					if (parent)
+						kfree(parent);
+					kfree(file);
+					return NULL;
+				}
+				check_dent++;
+			}
+		}
+		uint32_t next_c = FatReadFAT(fsys, check_clust);
+		if (FAT_IS_EOC(next_c) || next_c < 2)
+			break;
+		check_clust = next_c;
+	}
+
+create_dir_slot:
 	while (1) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 			memset(buff, 0, PAGE_SIZE);
@@ -109,8 +140,7 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
 			for (int i = 0; i < 16; i++) {
 				if (dirent->filename[0] == 0x00 || dirent->filename[0] == 0xE5) {
 					/* fill this direntry*/
-					memset(dirent->filename, 0x20, 11);
-					memcpy(dirent->filename, fname, strlen(fname));
+					memcpy(dirent->filename, fname, 11);
 
 					/* allocate a new cluster for dir*/
 					uint32_t cluster = FatFindFreeCluster(fsys);
@@ -212,48 +242,61 @@ AuVFSNode* FatCreateDir(AuVFSNode* fsys, char* filename) {
  * @return 0 for success, -1 for failure
  */
 int FatRemoveDir(AuVFSNode* fsys, AuVFSNode* file) {
-	if (!fsys)
-		return -1;
-	if (!file)
+	if (!fsys || !file)
 		return -1;
 
 	FatFS* _fs = (FatFS*)fsys->device;
+	if (!_fs || !_fs->vdisk)
+		return -1;
 
 	uint32_t dir_clust = file->current;
+	if (dir_clust < 2)
+		return -1;
 
 	bool _is_empty = true;
 
 	uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
-	memset(buff, 0, PAGE_SIZE);
-	/* verify, if the directory is empty*/
-	while (1) {
+	if (!buff)
+		return -1;
+
+	/* verify if the directory is empty */
+	while (dir_clust >= 2 && (!(_fs->__TotalClusters) || dir_clust < _fs->__TotalClusters) && !FAT_IS_EOC(dir_clust)) {
 		for (int j = 0; j < _fs->__SectorPerCluster; j++) {
 			memset(buff, 0, PAGE_SIZE);
 			AuVDiskRead(_fs->vdisk, FatClusterToSector32(_fs, dir_clust) + j, 1, buff);
 
 			FatDir* dirent = (FatDir*)buff;
 			for (int i = 0; i < 16; i++) {
-				char name[11];
-				memcpy(name, dirent->filename, 11);
-				name[10] = 0;
-
-				if ((dirent->filename[0] != 0x00) && (dirent->filename[0] != 0xE5)) {
-					AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
-					_is_empty = false;
-					break;
+				if (dirent->filename[0] == 0x00) {
+					// End of directory entries
+					goto check_done;
 				}
-				dirent++;
+				if ((uint8_t)dirent->filename[0] == 0xE5) {
+					dirent++;
+					continue;
+				}
+				// Ignore "." and ".."
+				if (dirent->filename[0] == '.') {
+					dirent++;
+					continue;
+				}
+				// Any other entry means directory is not empty
+				_is_empty = false;
+				goto check_done;
 			}
 		}
 
-		dir_clust = FatReadFAT(fsys, dir_clust);
-		if (FAT_IS_EOC(dir_clust))
+		uint32_t next_clust = FatReadFAT(fsys, dir_clust);
+		if (FAT_IS_EOC(next_clust) || next_clust < 2)
 			break;
+		dir_clust = next_clust;
 	}
 
+check_done:
+	AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
+
 	if (_is_empty) {
-		FatFileRemove(fsys, file);
-		return 0;
+		return FatFileRemove(fsys, file);
 	}
 
 	return -1;
@@ -369,9 +412,10 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 		return -1;
 	}
 
-	char filename[11];
-	char name[11];
-	memset(name, 0, 11);
+	char filename[16];
+	char name[16];
+	memset(filename, 0, 16);
+	memset(name, 0, 16);
 	memcpy(name, dir_->filename, 11);
 	FatFromDosToFilename(filename, (char*)dir_->filename);
 	strcpy(dirent->filename, filename);
@@ -385,7 +429,7 @@ int FatDirectoryRead(AuVFSNode* fs, AuVFSNode* dir, AuDirectoryEntry* dirent) {
 
 	if (dir_->attrib & 0x10)
 		dirent->flags = FS_FLAG_DIRECTORY;
-	if (dir_->attrib & 0x20)
+	else
 		dirent->flags = FS_FLAG_GENERAL;
 	AuPmmngrReleasePage((uint64_t)V2P((size_t)buf));
 	dirent->index += 1;
