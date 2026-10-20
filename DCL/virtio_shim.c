@@ -687,7 +687,7 @@ void virtio_device_register(struct virtio_device* vdev,
 			 * claimed the display for the console yet. Hand it over
 			 * now that the driver is live (DCL/virtgpu_console.c).
 			 */
-			if (virtio_device_type(vdev->au_dev) == VIRTIO_ID_GPU)
+			if (vdev->id.device == VIRTIO_ID_GPU)
 				dcl_virtgpu_console_attach(vdev);
 #endif
 		}

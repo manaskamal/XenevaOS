@@ -669,6 +669,16 @@ static void dcl_devnode_remove(AuVFSNode* fs, const char* name) {
 	AuDevFSRemoveFile(fs, upath);
 }
 
+/* Unlink the node and free the slot's copy of it. Both teardown paths --
+ * device_destroy() and device_del() -- end this way; only the name they
+ * resolve differs. */
+static void dcl_devnode_destroy(struct dcl_dev_slot* s, const char* name) {
+	AuVFSNode* fs = AuVFSFind("/dev");
+	if (fs && name)
+		dcl_devnode_remove(fs, name);
+	kfree(s->node);
+}
+
 void device_destroy(const void* class, unsigned int devt) {
 	(void)class;
 	for (int i = 0; i < DCL_MAX_DEVICES; i++) {
@@ -676,13 +686,9 @@ void device_destroy(const void* class, unsigned int devt) {
 		if (!s->used || s->devt != devt)
 			continue;
 		if (s->node) {
-			AuVFSNode* fs = AuVFSFind("/dev");
-			if (fs) {
-				struct device* d = (struct device*)s->dev;
-				dcl_devnode_remove(fs, (d && d->kobj_name)
-					? d->kobj_name : s->node->filename);
-			}
-			kfree(s->node);
+			struct device* d = (struct device*)s->dev;
+			dcl_devnode_destroy(s, (d && d->kobj_name)
+				? d->kobj_name : s->node->filename);
 		}
 		struct device* dev = (struct device*)s->dev;
 		if (dev) {
@@ -751,12 +757,8 @@ void device_del(struct device* dev) {
 		struct dcl_dev_slot* s = &_dcl_devs[i];
 		if (!s->used || s->dev != dev)
 			continue;
-		if (s->node) {
-			AuVFSNode* fs = AuVFSFind("/dev");
-			if (fs && dev->kobj_name)
-				dcl_devnode_remove(fs, dev->kobj_name);
-			kfree(s->node);
-		}
+		if (s->node)
+			dcl_devnode_destroy(s, dev->kobj_name);
 		/*
 		 * The slot goes, the device does not: freeing it is
 		 * put_device()'s job, which is a no-op on this build (the

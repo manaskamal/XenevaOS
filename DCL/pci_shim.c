@@ -116,15 +116,20 @@ static void dcl_pci_mkbusid(char* out, int bus, int dev, int func)
 	out[12] = '\0';
 }
 
-static struct dcl_pci_slot* dcl_pci_slot_of(struct pci_dev* pdev)
+static struct dcl_pci_slot* dcl_pci_slot_by_dev(const struct device* dev)
 {
 	int i;
 
 	for (i = 0; i < dcl_pci_count; i++) {
-		if (&dcl_pci_slots[i].dev == pdev)
+		if (&dcl_pci_slots[i].dev.dev == dev)
 			return &dcl_pci_slots[i];
 	}
 	return NULL;
+}
+
+static struct dcl_pci_slot* dcl_pci_slot_of(struct pci_dev* pdev)
+{
+	return pdev ? dcl_pci_slot_by_dev(&pdev->dev) : NULL;
 }
 
 /* ── scan ───────────────────────────────────────────────────────────────── */
@@ -174,6 +179,25 @@ static void dcl_pci_add(uint64_t ecam, int bus, int dev, int func)
 }
 
 /*
+ * Read one function's identity and add it when the slot is populated.
+ * Returns the function's ECAM address so the caller can read the header type
+ * without looking it up again; 0 means no populated function there.
+ */
+static uint64_t dcl_pci_add_function(int bus, int dev, int func)
+{
+	uint64_t ecam = AuPCIEGetDevice(0, bus, dev, func);
+	uint16_t vendor;
+
+	if (!ecam)
+		return 0;
+	vendor = (uint16_t)dcl_cfg_read(ecam, bus, dev, func, PCI_VENDOR_ID, 2);
+	if (vendor == 0xffff)
+		return 0;
+	dcl_pci_add(ecam, bus, dev, func);
+	return ecam;
+}
+
+/*
  * Walk every bus the ECAM window covers (PCI_MAX_BUS of them, matching what
  * the native scanners walk), and for each device probe function 0. Further
  * functions are read only when the header type's multifunction bit says they
@@ -209,38 +233,17 @@ static void dcl_pci_scan(void)
 
 	for (bus = 0; bus < buses; bus++) {
 		for (dev = 0; dev < PCI_DEVICE_PER_BUS; dev++) {
-			uint64_t ecam;
-			uint16_t vendor;
+			uint64_t ecam = dcl_pci_add_function(bus, dev, 0);
 
-			ecam = AuPCIEGetDevice(0, bus, dev, 0);
 			if (!ecam)
 				continue;
-
-			vendor = (uint16_t)dcl_cfg_read(ecam, bus, dev, 0,
-							PCI_VENDOR_ID, 2);
-			if (vendor == 0xffff)
-				continue;
-
-			dcl_pci_add(ecam, bus, dev, 0);
 
 			if (!(dcl_cfg_read(ecam, bus, dev, 0,
 					   PCI_HEADER_TYPE, 1) & 0x80))
 				continue;
 
-			for (func = 1; func < PCI_FUNCTION_PER_DEVICE; func++) {
-				ecam = AuPCIEGetDevice(0, bus, dev, func);
-				if (!ecam)
-					continue;
-
-				vendor = (uint16_t)dcl_cfg_read(ecam, bus, dev,
-								func,
-								PCI_VENDOR_ID,
-								2);
-				if (vendor == 0xffff)
-					continue;
-
-				dcl_pci_add(ecam, bus, dev, func);
-			}
+			for (func = 1; func < PCI_FUNCTION_PER_DEVICE; func++)
+				dcl_pci_add_function(bus, dev, func);
 		}
 	}
 
@@ -429,14 +432,11 @@ struct pci_dev* pci_get_device(unsigned int vendor, unsigned int device,
 		dcl_pci_scan();
 
 	if (from) {
-		for (; i < dcl_pci_count; i++) {
-			if (&dcl_pci_slots[i].dev == from) {
-				i++;
-				break;
-			}
-		}
-		if (i >= dcl_pci_count)
+		struct dcl_pci_slot* s = dcl_pci_slot_of(from);
+
+		if (!s)
 			return NULL;
+		i = (int)(s - dcl_pci_slots) + 1;
 	}
 
 	for (; i < dcl_pci_count; i++) {
@@ -546,11 +546,5 @@ struct resource* devm_request_region(struct device* dev, resource_size_t start,
  */
 int dcl_pci_device_is_pci(const struct device* dev)
 {
-	int i;
-
-	for (i = 0; i < dcl_pci_count; i++) {
-		if (&dcl_pci_slots[i].dev.dev == dev)
-			return 1;
-	}
-	return 0;
+	return dcl_pci_slot_by_dev(dev) != NULL;
 }

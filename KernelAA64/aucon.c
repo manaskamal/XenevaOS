@@ -209,19 +209,12 @@ int AuConsoleIoControl(AuVFSNode* file, int code, void* arg) {
 	case TIOCSWINSZ:
 	case TIOSPGRP:
 		return 0;
-	case SCREEN_GETWIDTH: {
-		uint32_t width = 0, height = 0;
-		aucon_desktop_size(&width, &height);
-		ioctl->uint_1 = width;
-		//memcpy(&ioctl->uint_1, &width, sizeof(uint32_t));
+	case SCREEN_GETWIDTH:
+		ioctl->uint_1 = AuConsoleGetScreenWidth();
 		break;
-	}
-	case SCREEN_GETHEIGHT: {
-		uint32_t width = 0, height = 0;
-		aucon_desktop_size(&width, &height);
-		ioctl->uint_1 = height;
+	case SCREEN_GETHEIGHT:
+		ioctl->uint_1 = AuConsoleGetScreenHeight();
 		break;
-	}
 	case SCREEN_GETBPP: {
 		uint32_t bpp = aucon->bpp;
 		ioctl->uint_1 = bpp;

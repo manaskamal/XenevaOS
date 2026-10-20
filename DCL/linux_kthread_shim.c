@@ -166,7 +166,12 @@ void complete_all(struct completion *x)
 	x->done = UINT_MAX;
 }
 
-bool try_wait_for_completion(struct completion *x)
+/*
+ * Consume one pending completion. The saturated complete_all() count is never
+ * decremented, so every later waiter keeps succeeding (mainline's rule); a
+ * NULL or exhausted completion is the failure path.
+ */
+static bool dcl_completion_consume(struct completion *x)
 {
 	if (!x || !x->done)
 		return false;
@@ -175,14 +180,18 @@ bool try_wait_for_completion(struct completion *x)
 	return true;
 }
 
+bool try_wait_for_completion(struct completion *x)
+{
+	return dcl_completion_consume(x);
+}
+
 unsigned long wait_for_completion_timeout(struct completion *x,
 					  unsigned long timeout)
 {
-	if (!x || !x->done)
-		return 0;	/* mainline's timeout path -- drm turns it
-				 * into -ETIMEDOUT and a drm_err(). */
-	if (x->done != UINT_MAX)
-		x->done--;
+	/* A miss is mainline's timeout path -- drm turns it into -ETIMEDOUT
+	 * and a drm_err(). */
+	if (!dcl_completion_consume(x))
+		return 0;
 	/* No time passes here, so the remaining timeout is the one passed
 	 * in; mainline's `timeout ?: 1` floor keeps "at least 1 on
 	 * success". */
@@ -191,25 +200,19 @@ unsigned long wait_for_completion_timeout(struct completion *x,
 
 int wait_for_completion_interruptible(struct completion *x)
 {
-	if (!x || !x->done)
-		/* The failure this wait can report: Xeneva delivers no
-		 * signal, so the value is mainline's interrupted one, which
-		 * is what the caller's `if (ret) return ret;` unwinds on.
-		 * Blocking instead would spin forever -- nothing in this
-		 * context completes the commit being waited for. */
-		return -ERESTARTSYS;
-	if (x->done != UINT_MAX)
-		x->done--;
-	return 0;
+	/* The failure this wait can report: Xeneva delivers no signal, so
+	 * the value is mainline's interrupted one, which is what the
+	 * caller's `if (ret) return ret;` unwinds on. Blocking instead
+	 * would spin forever -- nothing in this context completes the
+	 * commit being waited for. */
+	return dcl_completion_consume(x) ? 0 : -ERESTARTSYS;
 }
 
 long wait_for_completion_interruptible_timeout(struct completion *x,
 					       unsigned long timeout)
 {
-	if (!x || !x->done)
+	if (!dcl_completion_consume(x))
 		return 0;
-	if (x->done != UINT_MAX)
-		x->done--;
 	return timeout ? (long)timeout : 1;
 }
 

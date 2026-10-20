@@ -609,6 +609,27 @@ extern int (*const __dcl_initcall_virtio_gpu_driver_init)(void);
  */
 struct user_namespace init_user_ns = { 0 };
 
+/*
+ * Run one DCL_INITCALL() pointer and report the outcome in the shape the
+ * DRM and virtio blocks below use: missing pointer, failed return, or the
+ * success line.
+ */
+static void dcl_run_initcall(int (*fn)(void), const char* name,
+			     const char* ok, const char* missing)
+{
+	int rc;
+
+	if (!fn) {
+		UARTDebugOut("[dcl]: %s initcall not linked\r\n", missing);
+		return;
+	}
+	rc = fn();
+	if (rc)
+		UARTDebugOut("[dcl]: %s failed: %d\r\n", name, rc);
+	else
+		UARTDebugOut("[dcl]: %s\r\n", ok);
+}
+
 void DclRunInitcalls(void) {
 	if (__dcl_initcall_chr_dev_init) {
 		int rc = __dcl_initcall_chr_dev_init();
@@ -678,25 +699,11 @@ void DclRunInitcalls(void) {
 	 * it creates the device, registers its connector, and calls
 	 * drm_dev_register() -- which is what publishes /dev/dri/card0.
 	 */
-	if (__dcl_initcall_drm_core_init) {
-		int rc = __dcl_initcall_drm_core_init();
-		if (rc)
-			UARTDebugOut("[dcl]: drm_core_init failed: %d\r\n", rc);
-		else
-			UARTDebugOut("[dcl]: drm core initialized\r\n");
-	} else {
-		UARTDebugOut("[dcl]: drm core initcall not linked\r\n");
-	}
+	dcl_run_initcall(__dcl_initcall_drm_core_init, "drm_core_init",
+			 "drm core initialized", "drm core");
 
-	if (__dcl_initcall_vkms_init) {
-		int rc = __dcl_initcall_vkms_init();
-		if (rc)
-			UARTDebugOut("[dcl]: vkms_init failed: %d\r\n", rc);
-		else
-			UARTDebugOut("[dcl]: vkms registered\r\n");
-	} else {
-		UARTDebugOut("[dcl]: vkms initcall not linked\r\n");
-	}
+	dcl_run_initcall(__dcl_initcall_vkms_init, "vkms_init",
+			 "vkms registered", "vkms");
 
 	/*
 	 * bochs -- the second scanout device, and the tree's first vendored
@@ -720,15 +727,8 @@ void DclRunInitcalls(void) {
 	 * report when their devices are absent.  The fabric logs how many
 	 * devices it saw either way.
 	 */
-	if (__dcl_initcall_bochs_pci_driver_init) {
-		int rc = __dcl_initcall_bochs_pci_driver_init();
-		if (rc)
-			UARTDebugOut("[dcl]: bochs register failed: %d\r\n", rc);
-		else
-			UARTDebugOut("[dcl]: bochs pci driver registered\r\n");
-	} else {
-		UARTDebugOut("[dcl]: bochs initcall not linked\r\n");
-	}
+	dcl_run_initcall(__dcl_initcall_bochs_pci_driver_init, "bochs register",
+			 "bochs pci driver registered", "bochs");
 
 	/*
 	 * virtio-gpu -- the third registration, and the first whose probe ends
@@ -742,13 +742,7 @@ void DclRunInitcalls(void) {
 	 * internal virtgpu.dll owns 1AF4:1050 unless the image was packed
 	 * without it.
 	 */
-	if (__dcl_initcall_virtio_gpu_driver_init) {
-		int rc = __dcl_initcall_virtio_gpu_driver_init();
-		if (rc)
-			UARTDebugOut("[dcl]: virtio_gpu register failed: %d\r\n", rc);
-		else
-			UARTDebugOut("[dcl]: virtio_gpu driver registered\r\n");
-	} else {
-		UARTDebugOut("[dcl]: virtio_gpu initcall not linked\r\n");
-	}
+	dcl_run_initcall(__dcl_initcall_virtio_gpu_driver_init,
+			 "virtio_gpu register", "virtio_gpu driver registered",
+			 "virtio_gpu");
 }

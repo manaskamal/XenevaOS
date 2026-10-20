@@ -177,20 +177,27 @@ char *kvasprintf(gfp_t gfp, const char *fmt, va_list ap)
  * vs kvfree, drm_lease.c:519 vs drm_gem.c:859); both work on a TLSF block, so
  * the v-form is the same call under the name kvfree-compatible callers use.
  */
+/* The allocation and copy both memdup forms end in; the array form only adds
+ * the overflow check before calling it. */
+static void *dcl_memdup_user(const void __user *src, size_t len)
+{
+	void *p = dcl_kmalloc((unsigned int)len);
+
+	if (!p)
+		return ERR_PTR(-ENOMEM);
+
+	memcpy(p, src, len);
+	return p;
+}
+
 void *memdup_array_user(const void __user *src, size_t n, size_t size)
 {
 	size_t bytes;
-	void *p;
 
 	if (check_mul_overflow(n, size, &bytes))
 		return ERR_PTR(-EOVERFLOW);
 
-	p = dcl_kmalloc((unsigned int)bytes);
-	if (!p)
-		return ERR_PTR(-ENOMEM);
-
-	memcpy(p, src, bytes);
-	return p;
+	return dcl_memdup_user(src, bytes);
 }
 
 void *vmemdup_array_user(const void __user *src, size_t n, size_t size)
@@ -211,14 +218,7 @@ void *vmemdup_array_user(const void __user *src, size_t n, size_t size)
  */
 void *memdup_user(const void __user *src, size_t len)
 {
-	void *p;
-
-	p = dcl_kmalloc((unsigned int)len);
-	if (!p)
-		return ERR_PTR(-ENOMEM);
-
-	memcpy(p, src, len);
-	return p;
+	return dcl_memdup_user(src, len);
 }
 
 void *vmemdup_user(const void __user *src, size_t len)

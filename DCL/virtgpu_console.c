@@ -169,12 +169,14 @@ void dcl_virtgpu_console_attach(struct virtio_device* vdev) {
 		return;
 	}
 
+	size_t want = (size_t)width * height * 4;
+
 	struct virtio_gpu_object_params params;
 	memset(&params, 0, sizeof(params));
 	params.format = VIRTIO_GPU_FORMAT_B8G8R8A8_UNORM;
 	params.width = width;
 	params.height = height;
-	params.size = (unsigned long)width * height * 4;
+	params.size = (unsigned long)want;
 
 	struct virtio_gpu_object* bo = NULL;
 	int ret = virtio_gpu_object_create(vgdev, &params, &bo, NULL);
@@ -183,7 +185,6 @@ void dcl_virtgpu_console_attach(struct virtio_device* vdev) {
 		return;
 	}
 
-	size_t want = (size_t)width * height * 4;
 	size_t have = (size_t)bo->base.sgt->sgl->dma_length;
 	uint64_t fb_phys = (uint64_t)bo->base.sgt->sgl->dma_address;
 	if (!fb_phys || have < want) {

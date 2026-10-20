@@ -372,7 +372,19 @@ static void AuProcessCloseFiles(AuProcess* proc) {
 				file->fileCopyCount -= 1;
 			continue;
 		}
-		if (file->flags & (FS_FLAG_DEVICE | FS_FLAG_FILE_SYSTEM))
+		if (file->flags & FS_FLAG_DEVICE) {
+			/* The node belongs to the device layer and is shared by
+			 * every open, so it is not freed here, but the close hook
+			 * still has to run: DCL routes it to the module's release,
+			 * and a DRM file's master lives there. Skipping it left
+			 * card0/card1 master set after the boot self-test exited,
+			 * so a later dcltest had every DRM_MASTER ioctl refused
+			 * with -EACCES. --axiss */
+			if (file->close)
+				file->close(file, file);
+			continue;
+		}
+		if (file->flags & FS_FLAG_FILE_SYSTEM)
 			continue;
 		if (file->flags & (FS_FLAG_GENERAL | FS_FLAG_DIRECTORY)) {
 			if (file->fileCopyCount <= 0) {
