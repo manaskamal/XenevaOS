@@ -55,6 +55,7 @@ Terminal term;
 bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
+static bool g_appCursorKeys = false;
 bool _seq_osc = false;
 bool _cursor_blink = 0;
 bool _update_terminal_ = false;
@@ -778,6 +779,85 @@ void TerminalHistoryDown(Terminal* t) {
 		TerminalReplaceInput(t, t->inputSaved);
 	}
 }
+
+void TerminalApplySGR(int code) {
+	if (code == 0) {
+		//reset
+		fgColor = WHITE;
+		backColor = TERMINAL_BLACK;
+		return;
+	}
+	if (code == 7) {
+		uint32_t t = fgColor;
+		fgColor = backColor;
+		backColor = t;
+		return;
+	}
+	if (code == 27) {
+		fgColor = WHITE;
+		backColor = TERMINAL_BLACK;
+		return;
+	}
+	if (code == 1 || code == 22)
+		return;
+	switch (code) {
+	case CSI_SET_BG_BLACK:
+		backColor = TERMINAL_BLACK; // BLACK;
+		break;
+	case CSI_SET_BG_BLUE:
+		backColor = BLUE;
+		break;
+	case CSI_SET_BG_BROWN:
+		backColor = BROWN;
+		break;
+	case CSI_SET_BG_CYAN:
+		backColor = CYAN;
+		break;
+	case CSI_SET_BG_DEFAULT:
+		backColor = TERMINAL_BLACK; // BLACK;
+		break;
+	case CSI_SET_BG_GREEN:
+		backColor = GREEN;
+		break;
+	case CSI_SET_BG_MAGENTA:
+		backColor = MAGENTA;
+		break;
+	case CSI_SET_BG_RED:
+		backColor = RED;
+		break;
+	case CSI_SET_BG_WHITE:
+		backColor = WHITE;
+		break;
+	case CSI_SET_FG_BLUE:
+		fgColor = BLUE;
+		break;
+	case CSI_SET_FG_BROWN:
+		fgColor = BROWN;
+		break;
+	case CSI_SET_FG_CYAN:
+		fgColor = CYAN;
+		break;
+	case CSI_SET_FG_BLACK:
+		fgColor = BLACK;
+		break;
+	case CSI_SET_FG_GREEN:
+		fgColor = GREEN;
+		break;
+	case CSI_SET_FG_MAGENTA:
+		fgColor = MAGENTA;
+		break;
+	case CSI_SET_FG_RED:
+		fgColor = RED;
+		break;
+	case CSI_SET_FG_WHITE:
+		fgColor = WHITE;
+		break;
+	case CSI_SET_FG_DEFAULT:
+		fgColor = WHITE;
+		break;
+	}
+}
+
 /* ProcessControlSequence -- the main emulation function 
  * of ANSI Terminal
  * @param ch -- Character to emulate
@@ -791,63 +871,16 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 				break;
 			}
 		}
-		int colorCode = atoi(escBuf);
-		switch (colorCode) {
-		case CSI_SET_BG_BLACK:
-			backColor = TERMINAL_BLACK; // BLACK;
-			break;
-		case CSI_SET_BG_BLUE:
-			backColor = BLUE;
-			break;
-		case CSI_SET_BG_BROWN:
-			backColor = BROWN;
-			break;
-		case CSI_SET_BG_CYAN:
-			backColor = CYAN;
-			break;
-		case CSI_SET_BG_DEFAULT:
-			backColor = TERMINAL_BLACK; // BLACK;
-			break;
-		case CSI_SET_BG_GREEN:
-			backColor = GREEN;
-			break;
-		case CSI_SET_BG_MAGENTA:
-			backColor = MAGENTA;
-			break;
-		case CSI_SET_BG_RED:
-			backColor = RED;
-			break;
-		case CSI_SET_BG_WHITE:
-			backColor = WHITE;
-			break;
-		case CSI_SET_FG_BLUE:
-			fgColor = BLUE;
-			break;
-		case CSI_SET_FG_BROWN:
-			fgColor = BROWN;
-			break;
-		case CSI_SET_FG_CYAN:
-			fgColor = CYAN;
-			break;
-		case CSI_SET_FG_BLACK:
-			fgColor = BLACK;
-			break;
-		case CSI_SET_FG_GREEN:
-			fgColor = GREEN;
-			break;
-		case CSI_SET_FG_MAGENTA:
-			fgColor = MAGENTA;
-			break;
-		case CSI_SET_FG_RED:
-			fgColor = RED;
-			break;
-		case CSI_SET_FG_WHITE:
-			fgColor = WHITE;
-			break;
-		case CSI_SET_FG_DEFAULT:
-			fgColor = WHITE;
-			break;
+		char* p = escBuf;
+		for (;;) {
+			TerminalApplySGR(atoi(p));
+			char* semi = strchr(p, ';');
+			if (!semi)
+				break;
+			p = semi + 1;
 		}
+		//int colorCode = atoi(escBuf);
+
 		_escape_seq = false;
 		_seq_csi = false;
 		memset(escBuf, 0, 256);
@@ -965,8 +998,10 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 		if (col >= term.cols)
 			col = term.cols - 1;
 
-		term.cursorX = row;
-		term.cursorY = col;
+		//term.cursorX = row;
+		//term.cursorY = col;
+		term.cursorY = row;
+		term.cursorX = col;
 
 		_escape_seq = false;
 		_seq_csi = false;
@@ -1065,6 +1100,9 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 		case 1049:
 			break;
 		case 1000:
+			break;
+		case 1:
+			g_appCursorKeys = (ch == CSI_SET_MODE);
 			break;
 		default:
 			break;
@@ -1407,6 +1445,29 @@ void TerminalHandleMessage(PostEvent* e) {
 			memset(e, 0, sizeof(PostEvent));
 			return;
 		}**/
+
+		if (g_appCursorKeys && !ChitralekhaKeyGetShift() && !(code & TERMINAL_SCANCODE_RELEASE)) {
+			const char* seq = NULL;
+			switch (code & TERMINAL_SCANCODE_MASK) {
+			case 0x48:
+				seq = "\033[A";
+				break;
+			case 0x50:
+				seq = "\033[B";
+				break;
+			case 0x4D:
+				seq = "\033[C";
+				break;
+			case 0x4B:
+				seq = "\033[D";
+				break;
+			}
+			if (seq) {
+				_KeWriteFile(master_fd, (void*)seq, 3);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+		}
 
 		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
 			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_LEFT) {

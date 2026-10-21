@@ -141,7 +141,7 @@ int posix_clear(int argc, char** argv) {
 	return 0;
 }
 
-extern volatile int g_interrupted;
+extern "C" volatile int g_interrupted;
 
 /**
  * @brief posix_sleep -- posix sleep implementation
