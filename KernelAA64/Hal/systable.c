@@ -102,7 +102,7 @@ int ExecUname(struct utsname* name) {
 	strcpy(name->release, XENEVA_KERNEL_RELEASE);
 	strcpy(name->version,
 		   XENEVA_KERNEL_VERSION " #" XENEVA_KERNEL_BUILD " " XENEVA_KERNEL_BUILD_TAG);
-	strcpy(name->machine, XENEVA_KERNEL_ARCH);
+	strcpy(name->machine, XENEVA_KERNEL_MACHINE);
 	strcpy(name->domainname, " ");
 	return 0;
 }

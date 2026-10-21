@@ -618,6 +618,7 @@ void XEShellPrintHelp() {
 	printf(" seq         Generate a sequence of number                  \n");
 	printf(" expr        Evaluates expressions                          \n");
 	printf(" test        Evaluates conditional expressions              \n");
+	printf(" neofetch    Display system information with XenevaOS logo  \n");
 	printf("\n");
 	printf("Examples:\n");
 	printf("  cd /usr           - Change to /usr directory\n");
@@ -860,6 +861,7 @@ void XEShellRngGuess() {
 }
 
 extern int _term_handle_posix(char* cmd);
+extern void XEShellNeofetch();
 /*
  *XEShellProcessLine -- processes a line by looking
  * the cmdBuf 
@@ -889,6 +891,8 @@ void XEShellProcessLine() {
 			printf("Window Manager: Deodhai Compositor\n");
 			printf("Xeneva is made in Assam with Love \n");
 			_spawnable_process = false;
+		} else if (strcmp(cmdBuf, "neofetch") == 0) {
+			XEShellNeofetch();
 		} else if (strcmp(cmdBuf, "clrscr") == 0) {
 			printf("\033[2J\033[H"); // Clear screen and move cursor to home
 			printf("[xeshell]: Screen cleared\r\n");
@@ -980,7 +984,6 @@ int main(int argc, char* arv[]) {
 	printf("Xeneva Shell v1.1 (x86_64 build) \n");
 #endif
 
-	printf("Copyright (C) Xeneva Private Limited \n");
 	fflush(stdout);
 
 	// Initialize command buffer
@@ -1020,7 +1023,7 @@ int main(int argc, char* arv[]) {
 	}
 	// Timer functionality disabled - not available in XenevaOS
 
-	printf("[xeshell]: Shell initialized successfully\r\n");
+	printf("[xeshell]:XEShell initialized successfully. Use PGUP/PGDN to scroll\r\n");
 	fflush(stdout);
 
 	// Timer test code disabled - not available in XenevaOS

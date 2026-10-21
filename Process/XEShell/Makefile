@@ -4,7 +4,7 @@ TOOLCHAIN ?= gcc
 TARGET = xesh.exe
 INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha
 OBJDIR = obj
-CPP_OBJS = $(OBJDIR)/main.o $(OBJDIR)/posix.o
+CPP_OBJS = $(OBJDIR)/main.o $(OBJDIR)/posix.o $(OBJDIR)/neofetch.o
 S_OBJS = $(OBJDIR)/crt0_arm64.o
 OBJS = $(CPP_OBJS) $(S_OBJS)
 
@@ -38,6 +38,10 @@ $(OBJDIR)/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJDIR)/posix.o:posix.cpp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/neofetch.o:neofetch.cpp
 	@mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
