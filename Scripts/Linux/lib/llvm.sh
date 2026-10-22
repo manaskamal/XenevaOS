@@ -26,7 +26,7 @@ fi
 ( cd ../../BootAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 
 # AArch64 kernel
-    ( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" GPUSRV="${GPUSRV:-0}" SOAK="${SOAK:-0}" DEBUG_ALLOC="${DEBUG_ALLOC:-0}" STATIC_COMPONENTS="${STATIC_COMPONENTS:-0}" BYPASS_VIRTGPU="${BYPASS_VIRTGPU:-0}" llvm )
+( cd ../../KernelAA64 && make clean && make BLEED="${BLEED:-0}" GPUSRV="${GPUSRV:-0}" SOAK="${SOAK:-0}" DEBUG_ALLOC="${DEBUG_ALLOC:-0}" STATIC_COMPONENTS="${STATIC_COMPONENTS:-0}" llvm )
 
 if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # Userspace C++ runtime + graphics library
@@ -34,6 +34,13 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
         ( cd ../../Ports/mbedtls && make clean && make llvm )
+    fi
+
+    # The vendored input path owns 1AF4:1052 in the kernel; a user-space
+    # input server would race it for the same PCI functions.
+    if [ "${INPUTSRV:-0}" -eq 1 ] && [ "${BYPASS_VIRTIO_INPUT:-0}" -eq 1 ]; then
+        echo "[llvm] inputsrv excluded: the vendored virtio-input path owns 1AF4:1052."
+        INPUTSRV=0
     fi
 
     # All AArch64 user-space applications. Microkernel rule: --no-network

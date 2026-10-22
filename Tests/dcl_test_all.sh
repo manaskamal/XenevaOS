@@ -25,16 +25,23 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# The gate tracks the vendored path now.  An explicit 0 still selects the
+# native virtiokbd/virtiotablet pair for a manual comparison, but the input
+# assertions below only run when this is 1.
+BYPASS_VIRTIO_INPUT="${BYPASS_VIRTIO_INPUT:-1}"
+export BYPASS_VIRTIO_INPUT
+
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=243    # BaseHdr/linux/*.h
+EXP_LINUX_H=244    # BaseHdr/linux/*.h
 EXP_ASM_H=16       # BaseHdr/asm/*.h
-EXP_DCL_C=30       # DCL/*.c   (dcl_va_trampoline.s adds a 31st object)
-EXP_DCL_O=31       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=107     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
-                   #   virtio_console, and the drm set: core, vkms, tiny/
-                   #   bochs, virtio-gpu, dma-buf, lib)
-EXP_ALL_O=269      # everything under KernelAA64/obj
+EXP_DCL_C=31       # DCL/*.c   (dcl_va_trampoline.s adds a 32nd object)
+EXP_DCL_O=32       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=112     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+                   #   virtio_console, input core + virtio_input, and the
+                   #   drm set: core, vkms, tiny/bochs, virtio-gpu,
+                   #   dma-buf, lib)
+EXP_ALL_O=275      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
@@ -143,8 +150,30 @@ if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
 	GPU_SHOOT_PID=$!
 fi
 
+# Input injection needs a QMP socket for absolute tablet coordinates; the
+# HMP monitor can only send keys and relative motion.  The helper waits for
+# the guest's attach marker before touching either socket, so it can start
+# while the tree is still building.
+INPUT_INJECT_PID=
+INPUT_INJECT_RC=2
+INPUT_INJECT_LOG="$(dirname "$LOG")/input_inject.log"
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	rm -f /tmp/xeneva-qmp.sock "$INPUT_INJECT_LOG"
+	XENEVA_QEMU_EXTRA_ARGS="${XENEVA_QEMU_EXTRA_ARGS:-} -qmp unix:/tmp/xeneva-qmp.sock,server=on,wait=off"
+	export XENEVA_QEMU_EXTRA_ARGS
+	python3 ./Tests/dcl_input_inject.py --log "$LOG" >"$INPUT_INJECT_LOG" 2>&1 &
+	INPUT_INJECT_PID=$!
+fi
+
+QEMU_ARGS=(--llvm --headless --no-bt --no-audio)
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	QEMU_ARGS+=(--bypass-virtgpu)
+fi
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	QEMU_ARGS+=(--bypass-virtio-input)
+fi
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
-	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
+	"${QEMU_ARGS[@]}" >>"$LOG" 2>&1 </dev/null
 rc=$?
 
 # The helper has either already exited with the screendump, or is still
@@ -166,6 +195,17 @@ if [ -n "$GPU_SHOOT_PID" ]; then
 	else
 		wait "$GPU_SHOOT_PID"
 		GPU_SHOOT_RC=$?
+	fi
+fi
+
+if [ -n "$INPUT_INJECT_PID" ]; then
+	if kill -0 "$INPUT_INJECT_PID" 2>/dev/null; then
+		kill "$INPUT_INJECT_PID" 2>/dev/null
+		wait "$INPUT_INJECT_PID" 2>/dev/null
+		INPUT_INJECT_RC=2
+	else
+		wait "$INPUT_INJECT_PID"
+		INPUT_INJECT_RC=$?
 	fi
 fi
 
@@ -317,6 +357,30 @@ if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
 	# either one is a broken queue, not a detail.
 	reject "no rejected descriptor chains"   "zero sized buffers are not allowed"
 	reject "no expired virtio-gpu waits"     "wait_event in virtio_gpu_init gave up"
+fi
+
+# Vendored input: the native board scanner is compiled out, so these lines
+# can only come from DCL's multi-function scan binding virtio_input.  The
+# key and pointer lines are the guest's own decode of host-injected events;
+# the helper above is what supplies those events after attach.
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	expect "virtio_input driver registered"  "[dcl]: virtio_input driver registered"
+	expect "virtio_input is not a .ko"       "[modtest]: virtio_input built-in"
+	expect "keyboard and tablet found"       "[modtest]: virtio_input 2 device(s) registered"
+	expect "vendored keyboard attached"      "[virtio-input]: attached keyboard"
+	expect "vendored tablet attached"        "[virtio-input]: attached tablet"
+	expect "injected key decoded"            "[virtio-input]: key code 30 value 1"
+	expect "injected pointer decoded"        "[virtio-input]: pointer"
+	reject "no native virtio keyboard binding" \
+		"[virtio-keyboard]: kernel driver got key code"
+	reject "no vendored input handler failure" \
+		"[virtio-input]: handler registration failed"
+	if [ "$INPUT_INJECT_RC" -eq 0 ]; then
+		ok "host input injection"
+	else
+		bad "host input injection" \
+			"helper exit $INPUT_INJECT_RC: $(tail -1 "$INPUT_INJECT_LOG" 2>/dev/null | cut -c1-80)"
+	fi
 fi
 
 # The ELF loader is a separate guarantee from "the driver links" -- it still

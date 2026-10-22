@@ -109,6 +109,10 @@ module_init(__driver##_init)
 #define MODULE_INFO(info, val)
 #define THIS_MODULE ((void *)0)
 
+/* The input core takes a module reference while an input device is alive.
+ * DCL has no module refcount; the body in DCL/linux_input_shim.c is a no-op. */
+void __module_get(void* module);
+
 
 #define try_module_get(m)   (1)
 #define module_put(m)       do {} while (0)

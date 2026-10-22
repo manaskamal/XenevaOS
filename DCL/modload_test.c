@@ -316,6 +316,30 @@ static int modload_virtio_console_test(void) {
 	return rc < 0 ? 0 : 1;
 }
 
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+/*
+ * modload_virtio_input_test -- scan for every 1AF4:1052 function and let
+ * the vendored virtio-input driver probe each one.  The bridge handler was
+ * registered by DclRunInitcalls() before this runs, so input_register_device()
+ * attaches it as part of probe and the event queue starts filling.
+ */
+static int modload_virtio_input_test(void) {
+	int found;
+
+	UARTDebugOut("[modtest]: virtio_input built-in (Vendored/drivers/virtio)\r\n");
+	found = virtio_input_detect();
+	if (found) {
+		UARTDebugOut("[modtest]: virtio_input %d device(s) registered\r\n",
+					 found);
+		dcl_puts("  virtio_input registered\r\n");
+		return 1;
+	}
+
+	dcl_puts("  virtio_input: no device\r\n");
+	return 0;
+}
+#endif
+
 #ifdef __XENEVA_BYPASS_VIRTGPU__
 /*
  * modload_virtio_gpu_test -- the third virtio scan, and the only one whose
@@ -362,6 +386,9 @@ void modload_test_run(void) {
 	/* After rng: both scan the same bus, and rng's scan returns on its
 	 * own device rather than walking past it. */
 	modload_virtio_console_test();
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+	modload_virtio_input_test();
+#endif
 #ifdef __XENEVA_BYPASS_VIRTGPU__
 	modload_virtio_gpu_test();
 #endif

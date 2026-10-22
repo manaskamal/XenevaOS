@@ -233,6 +233,28 @@ void put_device(const void* dev) {
 	/* devices are freed by device_destroy; no refcount tracking DCL-side */
 }
 
+/*
+ * device_initialize() -- mainline's pre-add half of the device lifecycle.
+ * The input core sets dev.type and dev.class before calling this and then
+ * dev_set_name() afterwards, so the only fields this may touch are the ones
+ * the allocator's zeroing already owns.  A device with no devt never reaches
+ * devfs, and with no release callback it is never freed: same bounded leak
+ * the rest of DCL's device model documents.
+ */
+void device_initialize(struct device* dev) {
+	if (!dev)
+		return;
+	dev->driver_data = NULL;
+}
+
+/* kobject_get_path() -- no sysfs tree, so there is no path to name. The
+ * input core prints "N/A" when this is NULL and kfree(NULL) is defined. */
+char* kobject_get_path(const void* kobj, gfp_t flag) {
+	(void)kobj;
+	(void)flag;
+	return NULL;
+}
+
 /* ── sysfs / debugfs / seq_file: unreachable surfaces, honest stubs ─────── */
 
 int sysfs_create_group(const void* dev, const void* grp) {
