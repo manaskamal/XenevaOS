@@ -42,6 +42,10 @@ EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
 EXP_DCLTEST=186   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup + 20 writeback pixel proof + 13 page flip event + 45 stage-5 card1 (bochs)
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	# + 33 stage-6 card2 (virtio-gpu) checks
+	EXP_DCLTEST=220
+fi
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -122,6 +126,23 @@ python3 ./Tests/dcl_screendump.py wait \
 	--out "$SHOT" --dev bochs0 --timeout 90 >/dev/null 2>&1 &
 SHOOT_PID=$!
 
+# Stage 6's pixel proof is the same host-side idea on the virtio-gpu
+# display: dcltest flips card2's primary plane to a known colour, prints
+# the marker once the atomic commit has returned, and waits long enough
+# for this watcher to attach to QEMU's monitor.  It is armed only in a
+# bypass image because card2 does not exist otherwise.
+GPU_SHOT=${GPU_SHOT:-/tmp/xeneva/virtgpu.ppm}
+GPU_SHOOT_PID=
+GPU_SHOOT_RC=2
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	rm -f "$GPU_SHOT"
+	python3 ./Tests/dcl_screendump.py wait \
+		--log "$LOG" \
+		--marker "[dcltest] info virtio-gpu scanout committed" \
+		--out "$GPU_SHOT" --dev gpu0 --timeout 90 >/dev/null 2>&1 &
+	GPU_SHOOT_PID=$!
+fi
+
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
 	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
 rc=$?
@@ -135,6 +156,17 @@ if kill -0 "$SHOOT_PID" 2>/dev/null; then
 else
 	wait "$SHOOT_PID"
 	shoot_rc=$?
+fi
+
+if [ -n "$GPU_SHOOT_PID" ]; then
+	if kill -0 "$GPU_SHOOT_PID" 2>/dev/null; then
+		kill "$GPU_SHOOT_PID" 2>/dev/null
+		wait "$GPU_SHOOT_PID" 2>/dev/null
+		GPU_SHOOT_RC=2
+	else
+		wait "$GPU_SHOOT_PID"
+		GPU_SHOOT_RC=$?
+	fi
 fi
 
 case $rc in
@@ -256,7 +288,30 @@ if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
 	# the console at its backing and installs the present mirror. The attach
 	# marker is the whole claim; the failure marker would mean it declined.
 	expect "console on the vendored scanout" "[virtgpu-console]: console on vendored scanout"
+	expect "virtio-gpu console KMS fb"        "[virtgpu-console]: KMS fb"
 	reject "no vendored console attach failures" "[virtgpu-console]: resource create failed"
+	reject "no virtio-gpu KMS fallback"      "[virtgpu-console]: atomic modeset failed"
+	reject "no virtio-gpu fb create failure" "[virtgpu-console]: framebuffer create failed"
+	expect "virtio-gpu atomic plane commit"  "[dcltest] PASS drm card2 atomic commit (0)"
+	expect "virtio-gpu console fb restored" "[dcltest] PASS drm card2 console fb active (1)"
+	# And the same host-side pixel proof as bochs: the guest's test fb is
+	# what QEMU scanned out when the marker stopped the guest for 4s.
+	if [ "$GPU_SHOOT_RC" -eq 0 ] && [ -f "$GPU_SHOT" ]; then
+		ok "virtio-gpu screendump captured"
+	else
+		bad "virtio-gpu screendump captured" "helper exit $GPU_SHOOT_RC"
+	fi
+	if [ -f "$GPU_SHOT" ]; then
+		if pix_msg=$(python3 ./Tests/dcl_screendump.py check \
+				--ppm "$GPU_SHOT" --rgb 00beef 2>&1); then
+			ok "virtio-gpu scanout pixel proof"
+		else
+			bad "virtio-gpu scanout pixel proof" \
+				"$(printf '%s' "$pix_msg" | tail -1 | cut -c1-100)"
+		fi
+	else
+		bad "virtio-gpu scanout pixel proof" "no screendump at $GPU_SHOT"
+	fi
 	# QEMU rejects a descriptor chain it cannot map and the guest prints its
 	# own verdict when a probe-time wait expires with the reply still unread;
 	# either one is a broken queue, not a detail.

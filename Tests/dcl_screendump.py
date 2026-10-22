@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Host side of the bochs scanout pixel proof.
+"""Host side of the DRM scanout pixel proofs (bochs0 and gpu0).
 
 usage:
   dcl_screendump.py wait  --log LOG --marker TEXT --out FILE

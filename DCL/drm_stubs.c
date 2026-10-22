@@ -52,6 +52,12 @@
 int vkms_configfs_register(void);
 void vkms_configfs_unregister(void);
 
+/* The shmem side of MAP_DUMB, in DCL/drm_shmem_shim.c.  Its objects use the
+ * shmem backing built there rather than dcl_gem_dumb, so the mapping hook
+ * has to ask that file which objects it owns and where their pages are. */
+bool dcl_gem_is_shmem(struct drm_gem_object *obj);
+long dcl_shmem_map_user(struct drm_gem_object *obj, uint64_t *uva);
+
 /* Vendored lib/radix-tree.h, same reason. */
 extern struct kmem_cache *radix_tree_node_cachep;
 extern void radix_tree_node_rcu_free(struct rcu_head *head);
@@ -60,9 +66,10 @@ extern void radix_tree_node_rcu_free(struct rcu_head *head);
 
 /*
  * Xeneva has no shmem filesystem, so there are no page-cache folios to
- * back a GEM object with; and no file-backed mmap, so a fake mmap offset
- * has nothing to be handed to.  Both halves of mainline's design are
- * rebuilt here from the primitives this target does have.
+ * back a GEM object with; and no file-backed mmap, so mainline's fake mmap
+ * offset is not itself usable.  Both halves of mainline's design are
+ * rebuilt here from the primitives this target does have, and MAP_DUMB's
+ * hook below turns the offset into a real user mapping.
  *
  * The backing range is one contiguous buddy allocation: physically
  * contiguous means the kernel linear map (P2V) already is the single
@@ -257,52 +264,75 @@ drm_gem_shmem_prime_import_no_map(struct drm_device *dev,
 }
 
 /*
+ * dcl_drm_map_user_pages -- map one contiguous backing range into the
+ * current process.
+ *
+ * Both dumb-buffer kinds DCL can hand out end in this: dcl_gem_dumb's own
+ * range and the shmem object's range.  The cursor is monotonic for the same
+ * reason it always was -- the band is wide, and nothing has asked for an
+ * address back yet.  AuMapPage() refuses a leaf that is already valid, so a
+ * collision fails the ioctl instead of aliasing memory.
+ */
+long dcl_drm_map_user_pages(uint64_t phys, size_t size, uint64_t *uva)
+{
+	uint64_t va;
+	size_t i, npages;
+
+	if (!phys || !size || !uva || (size & (PAGE_SIZE - 1)))
+		return -EINVAL;
+	if (*uva)
+		return 0;
+
+	va = dcl_drm_buf_va;
+	npages = size / PAGE_SIZE;
+
+	for (i = 0; i < npages; i++) {
+		if (!AuMapPage(phys + (uint64_t)i * PAGE_SIZE,
+			       va + (uint64_t)i * PAGE_SIZE,
+			       PTE_NORMAL_MEM | PTE_AP_RW_USER)) {
+			if (i)
+				AuFreePages(va, false, i * PAGE_SIZE);
+			return -ENOMEM;
+		}
+	}
+	dcl_drm_buf_va += (uint64_t)size;
+	*uva = va;
+	return 0;
+}
+
+/*
  * dcl_drm_map_dumb_post -- MAP_DUMB's second half.
  *
  * mainline put the fake mmap offset in args->offset; this maps the object's
  * frames into the calling process as user pages and replaces the offset with
- * that address.  AuMapPage() refuses a leaf that is already valid, so a
- * colliding address fails the ioctl instead of aliasing memory.
+ * that address.  The first branch is the dumb object vkms and bochs use; the
+ * second is the shmem object virtio-gpu subclasses, which until now was left
+ * holding a fake offset because DCL had no map path for it.
  */
 static long dcl_drm_map_dumb_post(struct file *filp,
 				  struct drm_mode_map_dumb *maparg)
 {
 	struct drm_gem_object *obj;
 	struct dcl_gem_dumb *d;
-	uint64_t va;
-	size_t i, npages;
+	uint64_t uva;
 	int ret = 0;
 
 	obj = drm_gem_object_lookup(filp->private_data, maparg->handle);
 	if (!obj)
 		return -ENOENT;
-	if (obj->funcs != &dcl_gem_dumb_funcs) {
+	if (obj->funcs == &dcl_gem_dumb_funcs) {
+		d = to_dcl_dumb(obj);
+		ret = dcl_drm_map_user_pages(d->phys, d->size, &d->uva);
+		if (!ret)
+			maparg->offset = d->uva;
+	} else if (dcl_gem_is_shmem(obj)) {
+		ret = dcl_shmem_map_user(obj, &uva);
+		if (!ret)
+			maparg->offset = uva;
+	} else {
 		/* Not a buffer this file knows how to map: leave mainline's
 		 * fake offset, which is what a client with mmap consumes. */
-		drm_gem_object_put(obj);
-		return 0;
 	}
-	d = to_dcl_dumb(obj);
-
-	if (!d->uva) {
-		va = dcl_drm_buf_va;
-		npages = d->size / PAGE_SIZE;
-
-		for (i = 0; i < npages; i++) {
-			if (!AuMapPage(d->phys + (uint64_t)i * PAGE_SIZE,
-				       va + (uint64_t)i * PAGE_SIZE,
-				       PTE_NORMAL_MEM | PTE_AP_RW_USER)) {
-				if (i)
-					AuFreePages(va, false, i * PAGE_SIZE);
-				ret = -ENOMEM;
-				goto out;
-			}
-		}
-		dcl_drm_buf_va += (uint64_t)d->size;
-		d->uva = va;
-	}
-	maparg->offset = d->uva;
-out:
 	drm_gem_object_put(obj);
 	return ret;
 }
@@ -437,7 +467,7 @@ static const struct drm_mode_config_helper_funcs dcl_drm_mode_config_helpers = {
  * bound first (CREATE_DUMB, ADDFB2, MAP_DUMB), each through here.
  * Idempotent, so every later call is one pointer compare.
  */
-static void dcl_drm_tail_install(struct drm_device *dev)
+void dcl_drm_tail_install(struct drm_device *dev)
 {
 	if (!dev || dev->mode_config.helper_private == &dcl_drm_mode_config_helpers)
 		return;
