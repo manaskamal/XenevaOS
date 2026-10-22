@@ -575,9 +575,16 @@ int main(int argc, char* argv[]) {
 			if (first < take)
 				memcpy(buf + first, g_ring_data, take - first);
 			for (unsigned i = 0; i < take; i++)
-				sum += buf[i]; /* additive checksum of the PCM actually consumed */
-			if (tx_period(buf, take))
+				sum += buf[i];                    /* additive checksum of the PCM actually consumed */
+			if (tx_period(buf, take)) {
 				errors++;
+				/* Do not advance tail after a timeout or device error: the
+				 * descriptor may still be owned by virtio-sound. Stop using
+				 * the shared buffers and let the supervisor hand the device
+				 * back instead of reusing an in-flight DMA chain. */
+				give_back("virtio-sound transfer failed");
+				return 1;
+			}
 			reported = false;
 			quiet = 0;
 			dmb();
