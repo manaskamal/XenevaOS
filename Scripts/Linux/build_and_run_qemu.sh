@@ -94,6 +94,8 @@ set -e
 #   --data-size-mb=N        Size of the persistent data.img virtio-blk disk
 #                           (default 256). Created once and reused, so files
 #                           written to /data survive across runs.
+#   GPUSRV=1                Run virtio-GPU from the supervised user-space
+#                           gpusrv server; kernel virtgpu remains handback.
 #   --no-data-disk          Don't attach the persistent data disk.
 #   --force-data-disk       Recreate data.img, wiping persisted files.
 #   --headless              Run QEMU with -display none, bounded by a timeout,
@@ -187,6 +189,7 @@ CLIPBOARD=1
 DATA_SIZE_MB=256
 NO_DATA_DISK=0
 FORCE_DATA_DISK=0
+GPUSRV=${GPUSRV:-0}
 
 print_help(){
     printf "${STY_CYAN}"
@@ -682,6 +685,11 @@ if [ "$HEADLESS" -eq 1 ] && [ "$EGL_HEADLESS" -eq 1 ]; then
 	exit 1
 fi
 
+if [ "$STATIC_COMPONENTS" -eq 1 ] && [ "$GPUSRV" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --static-components and GPUSRV=1 are mutually exclusive; the GPU must be unloadable for user-space handoff.${STY_RST}\n"
+	exit 1
+fi
+
 requested_userspace_profile="${TOOLCHAIN}-normal"
 if [ "$BLEED" -eq 1 ]; then
 	requested_userspace_profile="${TOOLCHAIN}-bleed"
@@ -693,7 +701,11 @@ if [ "$UNIKERNEL" -eq 1 ]; then
 	requested_userspace_profile="${requested_userspace_profile}-unikernel"
 fi
 if [ "$OPENXR" -eq 1 ]; then
-	requested_userspace_profile="${requested_userspace_profile}-openxr"
+    requested_userspace_profile="${requested_userspace_profile}-openxr"
+fi
+if [ "$GPUSRV" -eq 1 ]; then
+    requested_userspace_profile="${requested_userspace_profile}-gpusrv"
+    BUILD_USER_APPS=1
 fi
 
 if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
@@ -829,7 +841,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU
+    export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR GPUSRV NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -1114,8 +1126,8 @@ echo "[+] Guest memory: $qemu_memory"
 # which backends it actually has and fall back to a silent one. The
 # virtio-sound-pci device itself is still added, so the guest sees the same
 # audio hardware either way. --axiss
-QEMU_AUDIO_BACKEND="pa"
-if ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
+QEMU_AUDIO_BACKEND="${QEMU_AUDIO_BACKEND:-pa}"
+if [ "$QEMU_AUDIO_BACKEND" = "pa" ] && ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
     QEMU_AUDIO_BACKEND="none"
     echo "[+] Audio: this QEMU has no 'pa' backend, using 'none' (silent guest sound)."
 fi
@@ -1199,9 +1211,9 @@ if [ "$NO_DATA_DISK" -eq 0 ]; then
     echo "[+] Persistent data disk attached (data.img -> guest /data)."
 fi
 
-# virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
-# [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
-# and the virtsnd driver's AuPCIEScanClass probe. Skipped under --no-audio
+# virtio-sound-pci (vendor 1AF4/device 1059, multimedia-audio class 04/01)
+# matches audrv.cnf's [6900,4185]/virtsnd.dll vendor entry and the virtsnd
+# driver's AuPCIEScanClass probe. Skipped under --no-audio
 # so the guest never enumerates a sound card it was told not to have. --axiss
 if [ "$NO_AUDIO" -eq 1 ]; then
     echo "[+] Audio: virtio-sound-pci omitted (--no-audio)"
@@ -1209,7 +1221,8 @@ elif qemu-system-aarch64 -device help 2>&1 | grep -q 'virtio-sound-pci'; then
     QEMU_ARGS+=(-audiodev "$QEMU_AUDIO_BACKEND",id=snd0)
     QEMU_ARGS+=(-device virtio-sound-pci,audiodev=snd0,disable-legacy=on)
 else
-    echo "[+] Audio: this QEMU has no 'virtio-sound-pci' device (needs QEMU 8.2+), omitting sound device."
+    printf "${STY_RED}[audio] This QEMU build has no virtio-sound-pci device; install a QEMU build with virtio-sound support before running SNDSRV.${STY_RST}\n"
+    exit 1
 fi
 bt_power_off_for_proxy() {
     local i prop
