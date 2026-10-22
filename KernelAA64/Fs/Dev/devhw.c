@@ -19,10 +19,12 @@
 #include <Mm/pmmngr.h>
 #include <Mm/vmmngr.h>
 #include <Drivers/uart.h>
+#include <Drivers/virtio.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <aucomponent.h>
 #include <Sound/sndproxy.h>
 #include <Net/netproxy.h>
+#include <Fs/Dev/devgpu.h>
 #include <hwdev.h>
 #include <pcie.h>
 #include <string.h>
@@ -42,6 +44,8 @@ typedef struct _hw_map_ {
 	struct _hw_map_* next;
 	uint64_t uaddr;
 	uint64_t len;
+	uint8_t bar;
+	uint64_t offset;
 } HwMap;
 
 typedef struct _hw_dma_ {
@@ -59,6 +63,7 @@ typedef struct _hw_bar_ {
 
 typedef struct _hw_pci_ {
 	int bus, dev, func;
+	uint16_t vendor, device_id;
 	uint64_t device;
 	HwBar bars[6];
 	HwMap* maps;
@@ -81,6 +86,7 @@ static HwPci* spi_owner[HW_MAX_SPI];
  * user space can be opened. In-kernel claim tracking cannot see devices bound
  * by the Linux-compat (DCL) drivers, so it is a second layer, not the gate. */
 static const struct { uint16_t vendor, device; } hw_allow[] = {
+	{0x1AF4, 0x1050},   /* virtio-gpu (modern) */
 	{0x1AF4, 0x1059},   /* virtio-sound (modern) */
 	{0x1AF4, 0x1052},   /* virtio-input (modern): keyboard and tablet */
 	{0x1AF4, 0x1041},   /* virtio-net (modern) */
@@ -90,6 +96,15 @@ static bool hw_allowed_device(uint16_t vendor, uint16_t device) {
 	for (size_t i = 0; i < sizeof(hw_allow) / sizeof(hw_allow[0]); i++)
 		if (hw_allow[i].vendor == vendor && hw_allow[i].device == device)
 			return true;
+	return false;
+}
+
+bool AuHwdevClaimsPci(int bus, int dev, int func) {
+	for (int i = 0; i < HW_MAX_CLAIMS; i++) {
+		HwPci* h = claims[i];
+		if (h && h->bus == bus && h->dev == dev && h->func == func)
+			return true;
+	}
 	return false;
 }
 
@@ -129,7 +144,72 @@ static void hw_cfg_write(HwPci* h, uint32_t off, uint32_t size, uint32_t val) {
 	AuPCIEWrite64(h->device, off, size, val, h->bus, h->dev, h->func);
 }
 
+static bool hw_find_virtio_cap(HwPci* h, uint8_t type, uint8_t* bar,
+	uint32_t* offset, uint32_t* length) {
+	uint32_t ptr = hw_cfg_read(h, PCI_CAPABILITIES_PTR, 1) & 0xFF;
+	for (uint32_t count = 0; ptr && count < 48; count++) {
+		if (ptr < 0x40 || ptr > 0xFC || (ptr & 1))
+			return false;
+		uint32_t id = hw_cfg_read(h, ptr, 1) & 0xFF;
+		uint32_t next = hw_cfg_read(h, ptr + 1, 1) & 0xFF;
+		if (id == VIRTIO_PCI_CAP_VENDOR_ID) {
+			uint32_t cap_len = hw_cfg_read(h, ptr + 2, 1) & 0xFF;
+			if (cap_len < 16 || ptr + cap_len > 0x100)
+				return false;
+			if ((hw_cfg_read(h, ptr + 3, 1) & 0xFF) == type) {
+				*bar = (uint8_t)(hw_cfg_read(h, ptr + 4, 1) & 0xFF);
+				*offset = hw_cfg_read(h, ptr + 8, 4);
+				*length = hw_cfg_read(h, ptr + 12, 4);
+				return true;
+			}
+		}
+		ptr = next;
+	}
+	return false;
+}
+
+/* The server maps the modern common-config capability before it allocates
+ * queues. Use that device mapping during teardown so the kernel can reset the
+ * device without consuming another permanent AuMapMMIO window per restart. */
+static bool hw_reset_virtio_gpu(HwPci* h) {
+	if (h->vendor != 0x1AF4 || h->device_id != 0x1050)
+		return true;
+	uint8_t bar;
+	uint32_t offset, length;
+	if (!hw_find_virtio_cap(h, VIRTIO_PCI_CAP_COMMON_CFG, &bar, &offset, &length) ||
+		bar >= 6 || !length || offset + 0x15 < offset)
+		return false;
+	for (HwMap* m = h->maps; m; m = m->next) {
+		if (m->bar != bar || offset < m->offset)
+			continue;
+		uint64_t within = (uint64_t)offset - m->offset;
+		if (within + 0x15 < within || within + 0x15 > m->len)
+			continue;
+		volatile uint8_t* common = (volatile uint8_t*)(m->uaddr + within);
+		common[0x14] = 0;
+		dsb_ish();
+		isb_flush();
+		uint8_t status = common[0x14];
+		if (status != 0)
+			UARTDebugOut("[hwdev]: virtio-gpu reset status remained %x\r\n", status);
+		else
+			UARTDebugOut("[hwdev]: virtio-gpu reset complete\r\n");
+		return status == 0;
+	}
+	/* No common-config mapping means the server could not have configured a
+	 * queue through this capability. The PCI stop below still prevents new DMA,
+	 * but report the missing reset for diagnosis rather than dereferencing an
+	 * unknown virtual address. */
+	UARTDebugOut("[hwdev]: virtio-gpu release has no common-config mapping\r\n");
+	return false;
+}
+
 static void hw_stop_device(HwPci* h) {
+	/* In-flight virtio descriptors must be invalidated while the common config
+	 * BAR is still decoded. Only then is it safe to disable bus mastering and
+	 * release the server-owned descriptor and backing pages. */
+	if (!hw_reset_virtio_gpu(h))
+		UARTDebugOut("[hwdev]: continuing GPU release after reset could not be verified\r\n");
 	/* no more DMA, no more MMIO decode, before any of its memory is freed */
 	uint32_t cmd = hw_cfg_read(h, 0x04, 2);
 	cmd &= ~(PCI_CMD_MEM | PCI_CMD_MASTER | PCI_CMD_IO);
@@ -158,6 +238,37 @@ static AuCapability* hw_cap_for(AuProcess* proc, AuVFSNode* file) {
 			proc->caps[i].object_type == CAP_OBJ_PCIDEV)
 			return &proc->caps[i];
 	return NULL;
+}
+
+static HwPci* hw_handle_for(AuProcess* proc, int fd) {
+	if (!proc || fd < 0 || fd >= FILE_DESC_PER_PROCESS)
+		return NULL;
+	AuVFSNode* file = proc->fds[fd];
+	if (!file)
+		return NULL;
+	AuCapability* cap = hw_cap_for(proc, file);
+	return cap ? (HwPci*)cap->object : NULL;
+}
+
+bool AuHwdevHandleIsDevice(AuProcess* proc, int fd, uint16_t vendor,
+	uint16_t device) {
+	HwPci* h = hw_handle_for(proc, fd);
+	return h && h->vendor == vendor && h->device_id == device;
+}
+
+void* AuHwdevHandleObject(AuProcess* proc, int fd) {
+	return (void*)hw_handle_for(proc, fd);
+}
+
+bool AuHwdevHandleOwnsDma(AuProcess* proc, int fd, uint64_t phys,
+	uint64_t len) {
+	HwPci* h = hw_handle_for(proc, fd);
+	if (!h || !len || phys + len < phys)
+		return false;
+	for (HwDma* d = h->dmas; d; d = d->next)
+		if (phys >= d->phys && phys + len <= d->phys + d->pages * 4096)
+			return true;
+	return false;
 }
 
 static uint64_t hw_reserve_va(AuProcess* proc, uint64_t len) {
@@ -308,6 +419,8 @@ static int hw_handle_ioctl(AuVFSNode* file, int code, void* arg) {
 		dsb_ish();
 		rec->uaddr = va;
 		rec->len = len;
+		rec->bar = m->bar;
+		rec->offset = m->offset;
 		rec->next = h->maps;
 		h->maps = rec;
 		h->nmaps++;
@@ -329,14 +442,19 @@ static int hw_handle_ioctl(AuVFSNode* file, int code, void* arg) {
 		if (!rec)
 			return HWDEV_E_NOMEM;
 		uint64_t phys = AuPmmngrAllocPages((uint32_t)pages, 1, UINT64_MAX, AURORA_PAGE_NORMAL);
-		if (!phys) {
+		if (!phys || phys == PMM_INVALID_PHYS) {
 			kfree(rec);
 			return HWDEV_E_NOMEM;
 		}
 		memset((void*)P2V(phys), 0, pages * 4096);
+		aa64_data_cache_clean_range((void*)P2V(phys), pages * 4096);
 		uint64_t va = hw_reserve_va(proc, pages * 4096);
+		/* DMA buffers are shared with devices. Keep the user mapping
+		 * non-cacheable so user-space drivers do not need privileged cache
+		 * maintenance instructions for descriptor, command, or response data. */
 		for (uint64_t p = 0; p < pages; p++)
-			AuMapPage(phys + p * 4096, va + p * 4096, PTE_NORMAL_MEM | PTE_AP_RW_USER);
+			AuMapPage(phys + p * 4096, va + p * 4096,
+				PTE_NORMAL_NON_CACHEABLE | PTE_AP_RW_USER);
 		isb_flush();
 		dsb_ish();
 		rec->uaddr = va;
@@ -427,6 +545,10 @@ void AuHwdevCapReleased(void* procptr, AuCapability* cap) {
 	AuSndProxyOwnerGone(proc);
 	AuNetProxyOwnerGone(proc);
 	hw_stop_device(h);
+	/* GPU proxy teardown must happen after bus mastering is stopped and before
+	 * this handle's DMA buffers are released. It is a no-op until GPUSRV's
+	 * hardware handoff slice is enabled. */
+	AuGpuProxyOwnerGone(proc, h);
 	if (h->spi >= 0) {
 		/* the device is quiet now; stop routing its interrupt here */
 		uint64_t daif = read_daif();
@@ -490,11 +612,11 @@ static int hw_ctrl_ioctl(AuVFSNode* file, int code, void* arg) {
 		return HWDEV_E_BUSY;
 	int slot = -1;
 	for (int i = 0; i < HW_MAX_CLAIMS; i++) {
-		if (claims[i] && claims[i]->bus == bus && claims[i]->dev == dev && claims[i]->func == func)
-			return HWDEV_E_BUSY;
 		if (!claims[i] && slot < 0)
 			slot = i;
 	}
+	if (AuHwdevClaimsPci(bus, dev, func))
+		return HWDEV_E_BUSY;
 	if (slot < 0)
 		return HWDEV_E_NOMEM;
 
@@ -510,7 +632,8 @@ static int hw_ctrl_ioctl(AuVFSNode* file, int code, void* arg) {
 	}
 	memset(h, 0, sizeof(*h));
 	memset(node, 0, sizeof(*node));
-	h->bus = bus; h->dev = dev; h->func = func; h->device = device; h->owner = proc;
+	h->bus = bus; h->dev = dev; h->func = func; h->vendor = req->vendor;
+	h->device_id = req->device; h->device = device; h->owner = proc;
 	h->spi = -1;
 	hw_probe_bars(h);
 
