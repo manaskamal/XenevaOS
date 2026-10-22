@@ -34,6 +34,7 @@
 #include <_xeneva.h>
 #include <sys/_kefile.h>
 #include <sys/iocodes.h>
+#include <gpusrv.h>
 
 static uint32_t _dirty_count = 0;
 Rect dirtyRect[100];
@@ -68,6 +69,7 @@ static Rect rect_union(const Rect* a, const Rect* b) {
 extern int _get_gpu_fd();
 extern int _get_gpu_display_id();
 extern bool _is_gpu_enabled();
+extern bool _is_gpu_userspace();
 
 void InitialiseDirtyClipList() {
 	for (int i = 0; i < 100; i++) {
@@ -155,12 +157,22 @@ static void DirtyBoundingBox(const Rect* rects, uint32_t count,
 static void DirtyFlushBounding(int display_id, const Rect* rects, uint32_t count) {
 	int64_t left, top, right, bottom;
 	DirtyBoundingBox(rects, count, &left, &top, &right, &bottom);
-	ioctl.uint_1 = display_id;
-	ioctl.ushort_1 = (uint16_t)left;
-	ioctl.ushort_2 = (uint16_t)top;
-	ioctl.ulong_1 = (uint64_t)(right - left);
-	ioctl.ulong_2 = (uint64_t)(bottom - top);
-	_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+	if (_is_gpu_userspace()) {
+		GpuSrvDamage damage;
+		damage.x = (uint32_t)left;
+		damage.y = (uint32_t)top;
+		damage.width = (uint32_t)(right - left);
+		damage.height = (uint32_t)(bottom - top);
+		(void)display_id;
+		_KeFileIoControl(_get_gpu_fd(), GPUSRV_IOC_DAMAGE, &damage);
+	} else {
+		ioctl.uint_1 = display_id;
+		ioctl.ushort_1 = (uint16_t)left;
+		ioctl.ushort_2 = (uint16_t)top;
+		ioctl.ulong_1 = (uint64_t)(right - left);
+		ioctl.ulong_2 = (uint64_t)(bottom - top);
+		_KeFileIoControl(_get_gpu_fd(), 0x202, &ioctl);
+	}
 }
 
 void DirtyScreenUpdate(ChCanvas* canvas) {
@@ -224,6 +236,16 @@ void DirtyScreenUpdate(ChCanvas* canvas) {
 		ioctl.ulong_2 = (uint64_t)(bottom - top);
 		_KeFileIoControl(canvas->graphics_fd, SCREEN_UPDATE, &ioctl);
 		return;
+	}
+
+	if (_is_gpu_userspace() && !XrPresentEnabled()) {
+		/* /dev/graph is the kernel-owned staging surface in the user-space
+		 * path. Copy through its real GOP pitch before publishing damage; the
+		 * server then copies that stable surface into its DMA backing. */
+		for (uint32_t i = 0; i < valid; i++)
+			ChCanvasScreenUpdate(
+				canvas, dirtyRect[i].x, dirtyRect[i].y, dirtyRect[i].w, dirtyRect[i].h);
+		ChCanvasScreenCommit();
 	}
 
 	DirtyFlushBounding(display_id, dirtyRect, valid);

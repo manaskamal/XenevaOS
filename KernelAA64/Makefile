@@ -12,6 +12,10 @@ endif
 TOOLCHAIN ?= gcc
 
 BLEED ?= 0
+GPUSRV ?= 0
+ifeq ($(GPUSRV),1)
+    GPUSRV_FLAGS = -D__XENEVA_GPUSRV__
+endif
 DRV_SELFTEST ?= 0
 ifeq ($(DRV_SELFTEST),1)
     DRV_SELFTEST_FLAGS = -D__XENEVA_DRV_SELFTEST__
@@ -77,7 +81,7 @@ ifeq ($(TOOLCHAIN), llvm)
     # pulls compiler_types in first so its fallbacks never shadow them.
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -108,7 +112,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) \
               $(INCLUDES)
 endif
 

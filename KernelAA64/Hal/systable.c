@@ -295,6 +295,9 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();
 	uint64_t vector = regs->x16;
 	uint64_t retcode = 0;
+	uint64_t syscall_elr;
+	uint64_t syscall_spsr = read_spsr_el1();
+	__asm__ volatile("mrs %0, elr_el1" : "=r"(syscall_elr));
 
 	/* Musl puts the Linux number in x8. PE programs still use x16. */
 	{
@@ -362,6 +365,12 @@ skip_1:
 	AuSrvfsSyscallEnter(currThr);
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
 	AuSrvfsSyscallExit(currThr);
+	/* A syscall may synchronously invoke a component that enables interrupts.
+	 * If an IRQ schedules the current thread while that component is running,
+	 * ELR_EL1 can retain the component's kernel PC instead of the user SVC
+	 * return address. Restore the entry PC before the exception return path. */
+	__asm__ volatile("msr elr_el1, %0" : : "r"(syscall_elr));
+	__asm__ volatile("msr spsr_el1, %0" : : "r"(syscall_spsr));
 	regs->x0 = retcode;
 	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;

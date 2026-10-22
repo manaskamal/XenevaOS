@@ -46,6 +46,7 @@
 #include <aucon.h>
 #include <Log/klog.h>
 #include <Fs/srvfs.h>
+#include <Fs/Dev/devfs.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -132,6 +133,10 @@ int OpenFile(char* filename, int mode) {
 
 	if (fd == -1) {
 		UARTDebugOut("[fserv]: open '%s' failed: no free fd\r\n", fname);
+		return -1;
+	}
+	if ((file->flags & FS_FLAG_DEVICE) && !AuDevFSNodeOpen(file)) {
+		UARTDebugOut("[fserv]: open '%s' failed: device is unloading\r\n", fname);
 		return -1;
 	}
 
@@ -440,6 +445,13 @@ int CloseFile(int fd) {
 			kfree(file);
 		else
 			file->fileCopyCount -= 1;
+		return 0;
+	}
+
+	if (file->flags & FS_FLAG_DEVICE) {
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		AuDevFSNodeClose(file);
 		return 0;
 	}
 

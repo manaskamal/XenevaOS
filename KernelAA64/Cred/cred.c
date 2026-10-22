@@ -324,8 +324,15 @@ int AuCredCheckPermissions(AuVFSNode* node, AuProcCredentials* cred) {
 	/** root get access to everything */
 	if (cred->uid == 0)
 		return 0;
+	/* /dev/graph is the normal user's stable desktop staging surface. It is
+	 * deliberately not a hardware capability; keep the compositor and gpusrv
+	 * usable even when the boot-time device node carries a stale/random group
+	 * value. PCI and driver-control nodes remain group-gated below. */
+	if ((node->flags & FS_FLAG_DEVICE) && !strcmp(node->filename, "graph") &&
+		cred->uid == 1000)
+		return 0;
 
-	/** maybe this process's user, created the file and owner 
+	/** maybe this process's user, created the file and owner
 	 * of this file
 	 */
 	if (cred->uid == node->uid)

@@ -208,6 +208,16 @@ void AuUnblockThread(AA64Thread* t) {
 void AuBlockThread(AA64Thread* t) {
 	t->state = THREAD_STATE_BLOCKED;
 }
+/* This fixture creates neither IPC endpoints nor per-thread wait queues.
+ * Keep those newer teardown hooks explicit rather than requiring a scheduler
+ * or IPC server in this focused memory-lifecycle test. */
+void AuIpcProcessGone(AuProcess* proc) {
+	assert(proc);
+}
+void AuThreadAwakeWaiters(AA64Thread* thread) {
+	assert(thread);
+	assert(!thread->waitlist || thread->waitlist->pointer == 0);
+}
 void AuSoundRemoveDSP(uint16_t id) {
 	(void)id;
 }
@@ -223,6 +233,9 @@ void AuroraTimerCancel(int id) {
 }
 void BordoisilaCapCleanupProcess(void* proc) {
 	(void)proc;
+}
+void AuDevFSNodeClose(AuVFSNode* node) {
+	(void)node;
 }
 uint64_t AuGetCurrentUS(void) {
 	return 0;

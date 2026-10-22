@@ -232,6 +232,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuAA64BoardInitialize();
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+	/* Device nodes published by AuConsolePostInitialise (notably /dev/graph)
+	 * use the global group table.  Initialize it before those nodes are
+	 * created so user-space compositor and GPU services receive the same
+	 * world-group ID as their credentials. */
+	AuCredGroupInitialize();
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
 
@@ -244,16 +249,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitialiseSHMMan();
 	AuMmngrFileCacheInit();
 
-	/* initialize kernel credentials
-	 * note: untill here ensure no file gets opened
-	 * because file system may use credentials 
-	 */
-	AuCredGroupInitialize();
-
 	/* /dev/clipboard registers here rather than from devfs: its group comes
-	 * from the table above, which is empty until this line. Registering with
-	 * devfs gave the node group 0, and AuCredCheckPermissions admits only
-	 * root or a matching group, so no ordinary process could open it. */
+	 * from the initialized table. Registering with devfs before the group
+	 * table was ready gave the node group 0, and AuCredCheckPermissions admits
+	 * only root or a matching group, so no ordinary process could open it. */
 	AuDevClipInitialise();
 
 	/* initialize the network layer */
