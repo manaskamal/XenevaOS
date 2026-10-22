@@ -51,6 +51,7 @@
 #include <Fs/Dev/devfs.h>
 #include <Fs/Dev/devinput.h>
 #include <Fs/Dev/devclip.h>
+#include <Fs/Dev/devgpu.h>
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/aa64lowlevel.h>
@@ -116,8 +117,25 @@ static void AuConsoleFlushMirror(void) {
 	if (!mirror_dirty_valid)
 		return;
 	mirror_dirty_valid = false;
-	if (!present_hook || display_owned || !aucon)
+	if (display_owned || !aucon)
 		return;
+	if (!present_hook) {
+#ifdef __XENEVA_GPUSRV__
+		/* TERM has no compositor/token owner. Keep console damage flowing to
+		 * the user-space GPU proxy without waiting for its server. */
+		if (mirror_dirty_bot == 0x7fffffff)
+			AuGpuProxyDamage(0, 0, (int)aucon->width, (int)aucon->height);
+		else {
+			y_px = mirror_dirty_top * 16;
+			bot_px = (mirror_dirty_bot + 1) * 16;
+			if (y_px < 0) y_px = 0;
+			if (bot_px > (int)aucon->height) bot_px = aucon->height;
+			if (bot_px > y_px)
+				AuGpuProxyDamage(0, y_px, (int)aucon->width, bot_px - y_px);
+		}
+#endif
+		return;
+	}
 	if (mirror_dirty_bot == 0x7fffffff) {
 		present_hook(aucon->buffer, aucon->pitch, 0, 0,
 			(int)aucon->width, (int)aucon->height);
@@ -518,11 +536,17 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	 * else the GOP mode. Text output keeps using width/height above. --axiss */
 	aucon->desktop_width = info->X_Resolution;
 	aucon->desktop_height = info->Y_Resolution;
+	#ifdef __XENEVA_GPUSRV__
+	/* GPUSRV starts with the firmware framebuffer as its stable staging
+	 * surface. Do not expose a loader-only desktop override until the user
+	 * server owns a suitably sized backing surface. */
+	#else
 	if (info->DesktopOverrideWidth >= 640 && info->DesktopOverrideWidth <= 4096 &&
 		info->DesktopOverrideHeight >= 480 && info->DesktopOverrideHeight <= 4096) {
 		aucon->desktop_width = info->DesktopOverrideWidth;
 		aucon->desktop_height = info->DesktopOverrideHeight;
 	}
+	#endif
 	aucon->bpp = 32;
 	aucon->scanline = info->pixels_per_line;
 	aucon->pitch = 4 * info->pixels_per_line;
@@ -554,6 +578,11 @@ void AuConsolePostInitialise(PKERNEL_BOOT_INFO info) {
 	memset(file, 0, sizeof(AuVFSNode));
 	strcpy(file->filename, "graph");
 	file->flags = FS_FLAG_DEVICE;
+	file->uid = 0;
+	/* The stable staging framebuffer is a desktop-user surface, not a hardware
+	 * capability. Hardware ownership remains gated by /dev/hwdev and
+	 * /dev/gpusrv. */
+	file->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
 	file->device = fsys;
 	file->read = 0;
 	file->write = 0;
@@ -1150,6 +1179,8 @@ int AuConsoleRestoreBootFb(void) {
 	aucon->buffer = bootfb_virt;
 	aucon->width = bootfb_w;
 	aucon->height = bootfb_h;
+	aucon->desktop_width = bootfb_w;
+	aucon->desktop_height = bootfb_h;
 	aucon->scanline = (uint16_t)bootfb_scanline;
 	aucon->pitch = (uint32_t)bootfb_pitch;
 	aucon->size = bootfb_size;
