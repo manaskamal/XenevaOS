@@ -847,6 +847,16 @@ if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
     fi
 fi
 
+if [ "$BUILD_USER_APPS" -eq 0 ] && [ "$FORCE_LEGACY_BUILD" -eq 0 ] && [ ! -f "$REPO_ROOT/Process/Init/init.exe" ]; then
+    if [ "$SKIP_BUILD" -eq 1 ]; then
+        printf "${STY_RED}[%s]: Process/Init/init.exe is missing, so --skip-build has nothing to pack.${STY_RST}\n" "$0"
+        printf "${STY_YELLOW}[%s]: Rerun without --skip-build so user space can be built.${STY_RST}\n" "$0"
+        exit 1
+    fi
+    echo "[+] Process/Init/init.exe not found; building user space automatically (same as --force-user-apps)."
+    BUILD_USER_APPS=1
+fi
+
 if [ -n "$INITRD_SIZE_MB" ]; then
     case "$INITRD_SIZE_MB" in
         *[!0-9]*)

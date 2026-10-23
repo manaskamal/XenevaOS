@@ -1,2 +1,0 @@
-# name path handback max_restarts window_s cooldown_s stable_s groups
-netsrv /netsrv.exe load_virtnet 3 60 30 20 daemons
