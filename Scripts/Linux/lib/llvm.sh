@@ -2,14 +2,6 @@
 
 printf "${STY_CYAN}compiling Xeneva for AArch64 using LLVM/Clang.${STY_RST}\n"
 
-# The EFI bootloader needs the gnu-efi sources (headers) checked out next to
-# the repository root. See Docs/BuildInstructions(Linux).md.
-if [ ! -d ../../gnu-efi ]; then
-    printf "${STY_RED}[llvm] gnu-efi not found at repo-root/gnu-efi.${STY_RST}\n"
-    printf "${STY_YELLOW}[llvm] Clone it first: git clone https://github.com/vathpela/gnu-efi.git${STY_RST}\n"
-    exit 1
-fi
-
 # EFI bootloader
 ( cd ../../BootAA64 && make clean && make BLEED="${BLEED:-0}" llvm )
 

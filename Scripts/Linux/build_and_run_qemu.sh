@@ -113,6 +113,9 @@ set -e
 #
 # Known gap: x86_64 (Boot/Kernel) has no QEMU boot path here yet.
 
+ORIG_PWD="$PWD"
+ORIG_ARGS=("$@")
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT_DIR="$REPO_ROOT/Scripts/Linux"
 USERSPACE_PROFILE_STAMP="$REPO_ROOT/Build/aarch64-userspace.profile"
@@ -146,7 +149,7 @@ XR_GAIN=20000
 XR_SCALE="sharp"
 XR_VNC=1
 XR_TELNET=0
-TERM=0
+TERM_MODE=0
 TERM_CMD=""
 TEST_MUSL=0
 INITRD_SIZE_MB=""
@@ -177,6 +180,77 @@ CLIPBOARD=1
 DATA_SIZE_MB=256
 NO_DATA_DISK=0
 FORCE_DATA_DISK=0
+EXTRA_DISKS=()
+LOG_ENABLED=1
+LOG_DIR="${XENEVA_LOG_DIR:-}"
+LOG_KEEP=5
+LOG_FILE=""
+
+abs_path() {
+    case "$1" in
+        "~") printf '%s\n' "$HOME" ;;
+        "~/"*) printf '%s\n' "$HOME/${1#\~/}" ;;
+        /*) printf '%s\n' "$1" ;;
+        *) printf '%s\n' "$ORIG_PWD/$1" ;;
+    esac
+}
+
+add_extra_disk() {
+    local mode="$1" path="$2"
+    if [ -z "$path" ]; then
+        printf "${STY_RED}[%s]: --disk/--disk-ro needs a path.${STY_RST}\n" "$0"
+        exit 1
+    fi
+    EXTRA_DISKS+=("$mode:$(abs_path "$path")")
+}
+
+disk_format_for() {
+    local lower
+    lower="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+    case "$lower" in
+        *.qcow2|*.qcow) echo qcow2 ;;
+        *.vmdk) echo vmdk ;;
+        *.vdi) echo vdi ;;
+        *.vhdx) echo vhdx ;;
+        *.vhd|*.vpc) echo vpc ;;
+        *) echo raw ;;
+    esac
+}
+
+rotate_logs() {
+    local dir="$1" keep="$2" i excess
+    local logs=()
+    local had_nullglob=0
+    shopt -q nullglob && had_nullglob=1
+    shopt -s nullglob
+    logs=("$dir"/run-*.log)
+    [ "$had_nullglob" -eq 1 ] || shopt -u nullglob
+    excess=$(( ${#logs[@]} - keep ))
+    for (( i = 0; i < excess; i++ )); do
+        rm -f -- "${logs[$i]}"
+    done
+}
+
+start_logging() {
+    [ "$LOG_ENABLED" -eq 1 ] || return 0
+    local dir="${LOG_DIR:-$REPO_ROOT/Build/logs}"
+    if ! mkdir -p "$dir" 2>/dev/null || [ ! -w "$dir" ]; then
+        printf "${STY_YELLOW}[%s]: cannot write logs to %s; continuing without a log file.${STY_RST}\n" "$0" "$dir"
+        return 0
+    fi
+    LOG_FILE="$dir/run-$(date +%Y%m%d-%H%M%S)-$$.log"
+    {
+        echo "=== XenevaOS build_and_run_qemu.sh ==="
+        echo "Started : $(date '+%Y-%m-%d %H:%M:%S %z')"
+        echo "Command : $0 ${ORIG_ARGS[*]}"
+        echo "Cwd     : $ORIG_PWD"
+        echo "Commit  : $(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+        echo "======================================"
+    } > "$LOG_FILE"
+    rotate_logs "$dir" "$LOG_KEEP"
+    exec > >(trap '' INT TERM; exec 9>&-; exec tee -a "$LOG_FILE") 2>&1
+    echo "[+] Logging this run to $LOG_FILE (keeping the last $LOG_KEEP)"
+}
 
 print_help(){
     printf "${STY_CYAN}"
@@ -199,7 +273,7 @@ run_build_tui() {
         runmode_choice="headless"
     elif [ "$EGL_HEADLESS" -eq 1 ]; then
         runmode_choice="egl-headless"
-    elif [ "$TERM" -eq 1 ]; then
+    elif [ "$TERM_MODE" -eq 1 ]; then
         runmode_choice="term"
     elif [ "$ISO" -eq 1 ]; then
         runmode_choice="iso"
@@ -276,12 +350,12 @@ run_build_tui() {
         [ "$profile_choice" = bleed ] && BLEED=1
         HEADLESS=0
         EGL_HEADLESS=0
-        TERM=0
+        TERM_MODE=0
         ISO=0
         case "$runmode_choice" in
             headless) HEADLESS=1 ;;
             egl-headless) EGL_HEADLESS=1 ;;
-            term) TERM=1 ;;
+            term) TERM_MODE=1 ;;
             iso) ISO=1 ;;
             xr-demo) OPENXR=1; XR_DEMO=1; XR_DEMO_MENU=1 ;;
         esac
@@ -432,7 +506,7 @@ while [ $# -gt 0 ]; do
         --install-deps) INSTALL_DEPS=1 ;;
         --headless) HEADLESS=1 ;;
         --term)
-            TERM=1
+            TERM_MODE=1
             shift
             # Guest argv (ping -6, iptable -A, ...) may start with '-'.
             # Stop only at the next host option (--foo, -h, -xr-demo).
@@ -489,15 +563,79 @@ while [ $# -gt 0 ]; do
         --data-size-mb=*) DATA_SIZE_MB="${1#--data-size-mb=}" ;;
         --no-data-disk) NO_DATA_DISK=1 ;;
         --force-data-disk) FORCE_DATA_DISK=1 ;;
+        --disk=*) add_extra_disk rw "${1#--disk=}" ;;
+        --disk-ro=*) add_extra_disk ro "${1#--disk-ro=}" ;;
+        --disk|--disk-ro)
+            mode=rw
+            [ "$1" = --disk-ro ] && mode=ro
+            add_extra_disk "$mode" "${2:-}"
+            [ $# -ge 2 ] && shift
+            ;;
+        --log-dir=*) LOG_DIR="${1#--log-dir=}" ;;
+        --log-keep=*) LOG_KEEP="${1#--log-keep=}" ;;
+        --no-log) LOG_ENABLED=0 ;;
         -h|--help) print_help; exit 0 ;;
         *)
-            printf "${STY_RED}[$0]: Unknown option \"$1\".${STY_RST}\n"
+            printf "${STY_RED}[%s]: Unknown option \"%s\".${STY_RST}\n" "$0" "$1"
             print_help
             exit 1
         ;;
     esac
     shift
 done
+
+[ -n "$ISO_OUTPUT" ] && ISO_OUTPUT="$(abs_path "$ISO_OUTPUT")"
+[ -n "$LOG_DIR" ] && LOG_DIR="$(abs_path "$LOG_DIR")"
+[ -n "$BT_SERIAL" ] && BT_SERIAL="$(abs_path "$BT_SERIAL")"
+if [ -n "${XENEVA_QEMU_FIRMWARE:-}" ]; then
+    XENEVA_QEMU_FIRMWARE="$(abs_path "$XENEVA_QEMU_FIRMWARE")"
+fi
+if [ -n "${XENEVA_XR_RUNTIME_JSON:-}" ]; then
+    XENEVA_XR_RUNTIME_JSON="$(abs_path "$XENEVA_XR_RUNTIME_JSON")"
+fi
+
+case "$LOG_KEEP" in
+    ''|*[!0-9]*|0)
+        printf "${STY_RED}[%s]: --log-keep must be a positive whole number.${STY_RST}\n" "$0"
+        exit 1
+    ;;
+esac
+
+if [ "${#EXTRA_DISKS[@]}" -gt 0 ]; then
+    seen_disks=" "
+    for entry in "${EXTRA_DISKS[@]}"; do
+        mode="${entry%%:*}"
+        path="${entry#*:}"
+        if [ ! -e "$path" ]; then
+            printf "${STY_RED}[%s]: --disk: %s does not exist.${STY_RST}\n" "$0" "$path"
+            exit 1
+        fi
+        if [ ! -f "$path" ] && [ ! -b "$path" ]; then
+            printf "${STY_RED}[%s]: --disk: %s is not a regular file or block device.${STY_RST}\n" "$0" "$path"
+            exit 1
+        fi
+        if [ ! -r "$path" ] || { [ "$mode" = rw ] && [ ! -w "$path" ]; }; then
+            printf "${STY_RED}[%s]: --disk: no permission to open %s %s.${STY_RST}\n" \
+                "$0" "$path" "$([ "$mode" = rw ] && echo read-write || echo read-only)"
+            [ "$mode" = rw ] && printf "${STY_YELLOW}[%s]: Use --disk-ro=PATH if the guest only needs to read it.${STY_RST}\n" "$0"
+            exit 1
+        fi
+        canon="$(readlink -f -- "$path")"
+        for own in fat.img initrd2.img data.img; do
+            if [ "$canon" = "$(readlink -f -- "$REPO_ROOT/$own")" ]; then
+                printf "${STY_RED}[%s]: --disk: %s is the script's own %s; pick a different image.${STY_RST}\n" "$0" "$path" "$own"
+                exit 1
+            fi
+        done
+        case "$seen_disks" in
+            *" $canon "*)
+                printf "${STY_RED}[%s]: --disk: %s was given twice.${STY_RST}\n" "$0" "$path"
+                exit 1
+            ;;
+        esac
+        seen_disks="$seen_disks$canon "
+    done
+fi
 
 # Interactive picker. Runs after flag parsing so CLI flags preselect menu
 # entries, and falls through into the normal flow (including the XR demo
@@ -571,6 +709,8 @@ if [ "$XR_DEMO_MENU" -eq 1 ]; then
     exec "$SCRIPT_DIR/xr-demo.sh"
 fi
 
+start_logging
+
 case "$XR_RESOLUTION" in
     1024x768|800x600|640x480|manual) ;;
     *)
@@ -595,6 +735,15 @@ case "$XR_SCALE" in
         exit 1
     ;;
 esac
+
+if [ "$STATIC_COMPONENTS" = 1 ] && [ "$TOOLCHAIN" != llvm ]; then
+    printf "${STY_RED}[%s]: --static-components is supported only by the LLVM build.${STY_RST}\n" "$0"
+    exit 1
+fi
+
+if [ "$ISO" -eq 1 ] && [ "${#EXTRA_DISKS[@]}" -gt 0 ]; then
+    printf "${STY_YELLOW}[%s]: --disk is ignored with --iso (the ISO holds only the ESP).${STY_RST}\n" "$0"
+fi
 
 if [ "$BLEED" -eq 1 ]; then
     if [ "$TOOLCHAIN" != llvm ]; then
@@ -661,7 +810,7 @@ if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] ||
 fi
 
 if [ "$XR_DEMO" -eq 1 ] && { [ "$HEADLESS" -eq 1 ] || [ "$EGL_HEADLESS" -eq 1 ] ||
-	[ "$TERM" -eq 1 ] || [ "$ISO" -eq 1 ]; }; then
+	[ "$TERM_MODE" -eq 1 ] || [ "$ISO" -eq 1 ]; }; then
 	printf "${STY_RED}[$0]: -xr-demo/--xr-demo owns the display and cannot be combined with --headless, --egl-headless, --term, or --iso.${STY_RST}\n"
 	exit 1
 fi
@@ -696,6 +845,16 @@ if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
         echo "[+] User-space profile changed: ${previous_userspace_profile} -> ${requested_userspace_profile}; forcing a clean rebuild."
         BUILD_USER_APPS=1
     fi
+fi
+
+if [ "$BUILD_USER_APPS" -eq 0 ] && [ "$FORCE_LEGACY_BUILD" -eq 0 ] && [ ! -f "$REPO_ROOT/Process/Init/init.exe" ]; then
+    if [ "$SKIP_BUILD" -eq 1 ]; then
+        printf "${STY_RED}[%s]: Process/Init/init.exe is missing, so --skip-build has nothing to pack.${STY_RST}\n" "$0"
+        printf "${STY_YELLOW}[%s]: Rerun without --skip-build so user space can be built.${STY_RST}\n" "$0"
+        exit 1
+    fi
+    echo "[+] Process/Init/init.exe not found; building user space automatically (same as --force-user-apps)."
+    BUILD_USER_APPS=1
 fi
 
 if [ -n "$INITRD_SIZE_MB" ]; then
@@ -783,7 +942,7 @@ if [ "$XR_DEMO" -eq 1 ]; then
     fi
 fi
 
-if [ "$SKIP_BUILD" -eq 0 ] && [ ! -d "$REPO_ROOT/gnu-efi" ]; then
+if [ "$SKIP_BUILD" -eq 0 ] && [ "$TOOLCHAIN" != llvm ] && [ ! -d "$REPO_ROOT/gnu-efi" ]; then
     printf "${STY_RED}[$0]: gnu-efi not found at repo-root/gnu-efi.${STY_RST}\n"
     printf "${STY_YELLOW}[$0]: Clone it first: git clone https://github.com/vathpela/gnu-efi.git${STY_RST}\n"
     exit 1
@@ -868,7 +1027,7 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         mkdir -p "$(dirname "$USERSPACE_PROFILE_STAMP")"
         printf '%s\n' "$requested_userspace_profile" > "$USERSPACE_PROFILE_STAMP"
     fi
-    if [ "$TERM" -eq 1 ]; then
+    if [ "$TERM_MODE" -eq 1 ]; then
         term_flags="-D__XENEVA_TERM__"
         if [ "$BLEED" -eq 1 ]; then
             term_flags="-D__XENEVA_BLEED__ -D__XENEVA_TERM__"
@@ -973,6 +1132,10 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
     done
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
 else
+    if [ ! -f initrd2.img ]; then
+        printf "${STY_RED}[%s]: --force-legacy-build needs an existing initrd2.img, and there is none in %s.${STY_RST}\n" "$0" "$REPO_ROOT"
+        exit 1
+    fi
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
     echo "    (Omit --force-legacy-build to rebuild it.)"
 fi
@@ -1082,6 +1245,12 @@ if ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
     echo "[+] Audio: this QEMU has no 'pa' backend, using 'none' (silent guest sound)."
 fi
 
+NET_DEVICE="virtio-net-pci,netdev=net0"
+case "${NETSRV:-0}" in
+    0|'') ;;
+    *) NET_DEVICE="$NET_DEVICE,disable-legacy=on" ;;
+esac
+
 QEMU_ARGS=(
     -machine virt,gic-version=2,highmem=off
     -cpu cortex-a72
@@ -1094,7 +1263,7 @@ QEMU_ARGS=(
     -drive file=fat.img,format=raw,if=none,id=blk0
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0,ipv4=on,net=10.0.2.0/24,host=10.0.2.2,dhcpstart=10.0.2.15,dns=10.0.2.3,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
-    -device virtio-net-pci,netdev=net0${NETSRV:+,disable-legacy=on}     # NETSRV=1: modern-only so it is 1af4:1041 (the hwdev allowlist id)
+    -device "$NET_DEVICE"     # NETSRV=1: modern-only so it is 1af4:1041 (the hwdev allowlist id)
     -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
     -monitor unix:/tmp/xeneva-mon.sock,server,nowait
     # Register virtio-gpu first so QEMU's VNC server follows the display the
@@ -1155,6 +1324,23 @@ if [ "$NO_DATA_DISK" -eq 0 ]; then
     QEMU_ARGS+=(-device virtio-blk-pci,drive=blk1,disable-legacy=on)
     echo "[+] Persistent data disk attached (data.img -> guest /data)."
 fi
+
+disk_index=0
+for entry in "${EXTRA_DISKS[@]}"; do
+    mode="${entry%%:*}"
+    path="${entry#*:}"
+    fmt="$(disk_format_for "$path")"
+    drive_opts="file=${path//,/,,},format=$fmt,if=none,id=xdisk$disk_index"
+    if [ "$mode" = ro ]; then
+        drive_opts="$drive_opts,readonly=on"
+    else
+        drive_opts="$drive_opts,cache=writethrough"
+    fi
+    QEMU_ARGS+=(-drive "$drive_opts")
+    QEMU_ARGS+=(-device "virtio-blk-pci,drive=xdisk$disk_index,disable-legacy=on")
+    echo "[+] Extra disk $disk_index: $path ($fmt, $([ "$mode" = ro ] && echo read-only || echo read-write))"
+    disk_index=$((disk_index + 1))
+done
 
 # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
 # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
@@ -1221,7 +1407,7 @@ if [ "$XR_DEMO" -eq 1 ]; then
         # QEMU rejects VNC whenever a GL display context exists. Use its
         # CPU-backed D-Bus scanout so VNC and the XR capture listener can
         # consume the same console concurrently. --axiss
-        QEMU_ARGS+=(-display dbus,gl=off -vnc :0)
+        QEMU_ARGS+=(-display dbus,gl=off -vnc 127.0.0.1:0)
         XR_DISPLAY_DESC="D-Bus CPU scanout + VNC localhost:0"
         XR_QEMU_CONSOLE=0
     else
@@ -1376,7 +1562,13 @@ if [ "$HEADLESS" -eq 1 ]; then
     # Ordinary builds still block at the interactive resolution menu. Bleed
     # selects its low-memory mode in the bootloader and can therefore complete
     # an automated headless boot; the timeout bounds both cases for CI.
-    timeout "${QEMU_TIMEOUT:-120}" qemu-system-aarch64 "${QEMU_ARGS[@]}"
+    qemu_timeout="${QEMU_TIMEOUT:-120}"
+    qemu_status=0
+    timeout --foreground "$qemu_timeout" qemu-system-aarch64 "${QEMU_ARGS[@]}" || qemu_status=$?
+    if [ "$qemu_status" -eq 124 ]; then
+        echo "[+] Headless run stopped by the ${qemu_timeout}s timeout (QEMU_TIMEOUT)."
+    fi
+    exit "$qemu_status"
 else
     if [ "$EGL_HEADLESS" -eq 1 ]; then
         # addr= is a bus QEMU *connects to*, not a socket it creates.
