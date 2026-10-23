@@ -180,7 +180,6 @@ CLIPBOARD=1
 DATA_SIZE_MB=256
 NO_DATA_DISK=0
 FORCE_DATA_DISK=0
-<<<<<<< HEAD
 EXTRA_DISKS=()
 LOG_ENABLED=1
 LOG_DIR="${XENEVA_LOG_DIR:-}"
@@ -252,8 +251,6 @@ start_logging() {
     exec > >(trap '' INT TERM; exec 9>&-; exec tee -a "$LOG_FILE") 2>&1
     echo "[+] Logging this run to $LOG_FILE (keeping the last $LOG_KEEP)"
 }
-=======
->>>>>>> 32158c736972ad34b694530b9f83748fc1f5390a
 
 print_help(){
     printf "${STY_CYAN}"
@@ -566,7 +563,6 @@ while [ $# -gt 0 ]; do
         --data-size-mb=*) DATA_SIZE_MB="${1#--data-size-mb=}" ;;
         --no-data-disk) NO_DATA_DISK=1 ;;
         --force-data-disk) FORCE_DATA_DISK=1 ;;
-<<<<<<< HEAD
         --disk=*) add_extra_disk rw "${1#--disk=}" ;;
         --disk-ro=*) add_extra_disk ro "${1#--disk-ro=}" ;;
         --disk|--disk-ro)
@@ -578,8 +574,6 @@ while [ $# -gt 0 ]; do
         --log-dir=*) LOG_DIR="${1#--log-dir=}" ;;
         --log-keep=*) LOG_KEEP="${1#--log-keep=}" ;;
         --no-log) LOG_ENABLED=0 ;;
-=======
->>>>>>> 32158c736972ad34b694530b9f83748fc1f5390a
         -h|--help) print_help; exit 0 ;;
         *)
             printf "${STY_RED}[%s]: Unknown option \"%s\".${STY_RST}\n" "$0" "$1"
@@ -1259,11 +1253,7 @@ QEMU_ARGS=(
     -drive file=fat.img,format=raw,if=none,id=blk0
     -device virtio-blk-pci,drive=blk0,disable-legacy=on
     -netdev user,id=net0,ipv4=on,net=10.0.2.0/24,host=10.0.2.2,dhcpstart=10.0.2.15,dns=10.0.2.3,ipv6=on,ipv6-net=fec0::/64,ipv6-host=fec0::2
-<<<<<<< HEAD
     -device "$NET_DEVICE"     # NETSRV=1: modern-only so it is 1af4:1041 (the hwdev allowlist id)
-=======
-    -device virtio-net-pci,netdev=net0${NETSRV:+,disable-legacy=on}     # NETSRV=1: modern-only so it is 1af4:1041 (the hwdev allowlist id)
->>>>>>> 32158c736972ad34b694530b9f83748fc1f5390a
     -object filter-dump,id=netdump,netdev=net0,file=/tmp/xeneva-net.pcap,queue=all
     -monitor unix:/tmp/xeneva-mon.sock,server,nowait
     # Register virtio-gpu first so QEMU's VNC server follows the display the
@@ -1325,7 +1315,6 @@ if [ "$NO_DATA_DISK" -eq 0 ]; then
     echo "[+] Persistent data disk attached (data.img -> guest /data)."
 fi
 
-<<<<<<< HEAD
 disk_index=0
 for entry in "${EXTRA_DISKS[@]}"; do
     mode="${entry%%:*}"
@@ -1343,8 +1332,6 @@ for entry in "${EXTRA_DISKS[@]}"; do
     disk_index=$((disk_index + 1))
 done
 
-=======
->>>>>>> 32158c736972ad34b694530b9f83748fc1f5390a
 # virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
 # [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
 # and the virtsnd driver's AuPCIEScanClass probe. Skipped under --no-audio
