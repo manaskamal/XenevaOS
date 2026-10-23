@@ -170,6 +170,8 @@ void AuDevFSListDir(AuVFSNode* fs, AuVFSNode* dir) {
 	UARTDebugOut("Listing Directory -> %s \r\n", dir->filename);
 	for (int i = 0; i < entries->childs->pointer; i++) {
 		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, i);
+		if (!node_)
+			continue;
 		char* mode = "";
 		if (node_->flags & FS_FLAG_DEVICE)
 			mode = "Device";
@@ -283,8 +285,7 @@ static AuDriver* AuDevFSNodeDriver(AuVFSNode* node) {
 }
 
 bool AuDevFSNodeOpen(AuVFSNode* node) {
-	if (!node || !(node->flags & FS_FLAG_DEVICE) ||
-		node->fileCopyCount == UINT16_MAX)
+	if (!node || !(node->flags & FS_FLAG_DEVICE) || node->fileCopyCount == UINT16_MAX)
 		return false;
 	if (node->fileCopyCount == 0) {
 		AuDriver* driver = AuDevFSNodeDriver(node);

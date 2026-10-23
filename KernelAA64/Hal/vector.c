@@ -44,6 +44,7 @@
 #include <Hal/AA64/profile.h>
 #include <audrv.h>
 #include <timer.h>
+#include <fixup.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -85,23 +86,6 @@ void sync_el1_handler(AA64Registers* regs) {
 
 	uint32_t dfsc = esr & 0x3F;
 
-	/*  switch (dfsc) {
-    case 0b000000: AuTextOut("Address size, fault level 0 \r\n"); break;
-    case 0b000001: AuTextOut("Address Size, fault level 1 \r\n"); break;
-    case 0b000010: AuTextOut("Address size, fault level 2 \r\n"); break;
-    case 0b000011: AuTextOut("Address size, fault level 3 \r\n"); break;
-    case 0b000100: AuTextOut("translation, fault level 0 \r\n"); break;
-    case 0b000101: AuTextOut("translation, fault level 1 \r\n"); break;
-    case 0b000110: AuTextOut("translation, fault level 2 \r\n"); break;
-    case 0b000111: AuTextOut("translation, fault level 3 \r\n"); break;
-    case 0b001001: AuTextOut("access flag, fault level 1 \r\n"); break;
-    case 0b001010: AuTextOut("access flag, fault level 2 \r\n"); break;
-    case 0b001011: AuTextOut("access flag, fault level 3 \r\n"); break;
-    case 0b001101: AuTextOut("permission fault, level 1 \r\n"); break;
-    case 0b001110: AuTextOut("permission fault, level 2 \r\n"); break;
-    case 0b001111: AuTextOut("permission fault, level 3 \r\n"); break;
-    default: AuTextOut("Unknown fault code \r\n"); break;
-    }*/
 	UARTDebugOut("=======Synchronous Exception occured========= \r\n");
 	//AuTextOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
 	UARTDebugOut("Fault Address (FAR_EL1): %x \r\n", read_far_el1());
@@ -175,6 +159,21 @@ void sync_el1_handler(AA64Registers* regs) {
 		}
 		AuScheduleThread(regs);
 		return;
+	}
+
+	if (ec == 0x25) {
+		/** data abort */
+		uint64_t fixup = __search_fixup_table(read_elr_el1());
+		UARTDebugOut("__search_fixup_table: found fixup address : %x \r\n", fixup);
+		if (fixup) {
+			regs->elr = fixup;
+			return;
+		}
+
+		//real kernel panic, bug in kernel pointers or somewhere
+		UARTDebugOut("[aurora]: kernel failed to recover from kernel data abort \r\n");
+		for (;;)
+			;
 	}
 
 	switch (dfsc) {

@@ -154,9 +154,8 @@ void ChCanvasScreenUpdate(ChCanvas* canvas, int _x, int _y, int _w, int _h) {
 		h = canvas->screenHeight - y;
 
 	uint32_t bytes_per_pixel = canvas->bpp / 8;
-	uint32_t pitch_pixels = canvas->pitch && bytes_per_pixel
-		? canvas->pitch / bytes_per_pixel
-		: canvas->screenWidth;
+	uint32_t pitch_pixels =
+		canvas->pitch && bytes_per_pixel ? canvas->pitch / bytes_per_pixel : canvas->screenWidth;
 
 	for (int64_t i = 0; i < h; i++) {
 		void* fb_mem = (fb + (y + i) * pitch_pixels + x);
@@ -215,7 +214,7 @@ void ChDrawPixel(ChCanvas* canvas, int x, int y, uint32_t color) {
 #else
 	/* No pixel format selected: fail loudly instead of silently dropping
 	 * every pixel this function is asked to draw. --axiss */
-	#error "Chitralekha pixel format not selected: define COLOR_RGBA or COLOR_BGRA"
+#error "Chitralekha pixel format not selected: define COLOR_RGBA or COLOR_BGRA"
 #endif
 }
 

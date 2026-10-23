@@ -975,10 +975,13 @@ void AuThreadAwakeWaiters(AA64Thread* thread) {
 	/** remove all waiters */
 	while (thread->waitlist->pointer > 0) {
 		AA64Thread* unblockable = (AA64Thread*)list_remove(thread->waitlist, 0);
+		if (!unblockable)
+			continue;
 		UARTDebugOut("unblocking thread : %s \r\n", unblockable->name);
 		unblockable->wait_ref_count -= 1;
 		AuProcess* proc = AuProcessFindThread(unblockable);
-
+		if (!proc)
+			return;
 		/* what if process if not found, kernel will get lot's of garbage 
 		 * thread vs process allocation be carefull, it should get
 		 * on thread's procSlot -- security concern */

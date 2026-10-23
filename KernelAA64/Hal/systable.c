@@ -53,7 +53,10 @@
 #include <proctoken.h>
 #include <Fs/pipe.h>
 #include <power.h>
+#include <Log/_print.h>
+#include <Log/klog.h>
 #include <timer.h>
+#include <bordoisila_ptr.h>
 
 AA64Registers* svcCurrentRegs;
 
@@ -96,6 +99,10 @@ struct utsname {
 int ExecUname(struct utsname* name) {
 	if (!name)
 		return 1;
+	if (!__BORDOISILA_UBUF_VALIDATE(name, sizeof(struct utsname))) {
+		UARTDebugOut("ExecUname system call, invalid user buffer : %x \r\n", name);
+		return 1;
+	}
 	//check for pointer validation of name
 	strcpy(name->sysname, XENEVA_OS_NAME);
 	strcpy(name->nodename, XENEVA_OS_NODENAME);

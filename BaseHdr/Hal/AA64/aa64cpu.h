@@ -36,18 +36,20 @@
 #include <aurora.h>
 #include <time.h>
 
-#define CPU_IMPLEMENTER_ARM      0x41
-#define CPU_IMPLEMENTER_BROADCOM 0x42
-#define CPU_IMPLEMENTER_CAVIUM   0x43
-#define CPU_IMPLEMENTER_FUJITSU  0x46
-#define CPU_IMPLEMENTER_INTEL    0x49
+#define CPU_IMPLEMENTER_ARM			  0x41
+#define CPU_IMPLEMENTER_BROADCOM	  0x42
+#define CPU_IMPLEMENTER_CAVIUM		  0x43
+#define CPU_IMPLEMENTER_FUJITSU		  0x46
+#define CPU_IMPLEMENTER_INTEL		  0x49
 #define CPU_IMPLEMENTER_APPLIED_MICRO 0x50
-#define CPU_IMPLEMENTER_QUALCOMM 0x51
-#define CPU_IMPLEMENTER_MARVELL  0x56
-#define CPU_IMPLEMENTER_APPLE    0x61
+#define CPU_IMPLEMENTER_QUALCOMM	  0x51
+#define CPU_IMPLEMENTER_MARVELL		  0x56
+#define CPU_IMPLEMENTER_APPLE		  0x61
 
 //#pragma pack(push,1)
 typedef struct _aa64_regs_ {
+	int64_t elr;
+	int64_t spsr;
 	int64_t x30;   //0
 	int64_t EL0SP; //8
 	int64_t x28;   //16
@@ -58,29 +60,29 @@ typedef struct _aa64_regs_ {
 	int64_t x25;   //56
 	int64_t x22;   //64
 	int64_t x23;   //72
-	int64_t x20;  //80
-	int64_t x21;  //88
-	int64_t x18;  //96
-	int64_t x19;  //104
-	int64_t x16;  //112
-	int64_t x17;  //120
-	int64_t x14;  //128
-	int64_t x15; //136
-	int64_t x12; //144
-	int64_t x13; //152
-	int64_t x10; //160
-	int64_t x11; //168
-	int64_t x8; //176
-	int64_t x9; //184
-	int64_t x6; //192
-	int64_t x7; //200
-	int64_t x4; //208
-	int64_t x5; //216
-	int64_t x2; //224
-	int64_t x3; //232
-	int64_t x0; //240
-	int64_t x1; //248
-}AA64Registers;
+	int64_t x20;   //80
+	int64_t x21;   //88
+	int64_t x18;   //96
+	int64_t x19;   //104
+	int64_t x16;   //112
+	int64_t x17;   //120
+	int64_t x14;   //128
+	int64_t x15;   //136
+	int64_t x12;   //144
+	int64_t x13;   //152
+	int64_t x10;   //160
+	int64_t x11;   //168
+	int64_t x8;	   //176
+	int64_t x9;	   //184
+	int64_t x6;	   //192
+	int64_t x7;	   //200
+	int64_t x4;	   //208
+	int64_t x5;	   //216
+	int64_t x2;	   //224
+	int64_t x3;	   //232
+	int64_t x0;	   //240
+	int64_t x1;	   //248
+} AA64Registers;
 //#pragma pack(pop)
 
 /* Saved immediately on exception entry, before any C code can use NEON/FP.
@@ -95,15 +97,13 @@ typedef struct AU_ALIGN(16) _aa64_fp_frame_ {
 static_assert(sizeof(AA64Registers) == 256, "AA64 register frame layout changed");
 static_assert(sizeof(AA64FpFrame) == 528, "AA64 FP frame layout changed");
 #else
-_Static_assert(sizeof(AA64Registers) == 256, "AA64 register frame layout changed");
+_Static_assert(sizeof(AA64Registers) == 272, "AA64 register frame layout changed");
 _Static_assert(sizeof(AA64FpFrame) == 528, "AA64 FP frame layout changed");
 #endif
 
 static inline AA64FpFrame* AA64ExceptionFpFrame(AA64Registers* regs) {
 	return (AA64FpFrame*)((uint8_t*)regs - sizeof(AA64FpFrame));
 }
-
-
 
 /**
  * @brief AA64CpuInitialize -- initialize aa64 cpu
@@ -139,7 +139,10 @@ extern void AuAA64SyscallHandler(AA64Registers* regs);
  * @param seconds -- amount of seconds
  * @param out_milliseconds -- where to store the number of ticks
  */
-extern void aa64_calculate_ticks(uint64_t seconds, uint64_t subsec, uint64_t* out_seconds, uint64_t* out_subsec);
+extern void aa64_calculate_ticks(uint64_t seconds,
+								 uint64_t subsec,
+								 uint64_t* out_seconds,
+								 uint64_t* out_subsec);
 
 extern uint64_t AA64CPUGetFreqencyHz();
 #endif

@@ -82,31 +82,49 @@ void SharedMemMapListInitialise() {
  * @brief AuCreateSharedMmapObject -- create a global object
  */
 AuSharedMmapObject* AuCreateSharedMmapObject(char* name) {
+	if (!name)
+		return NULL;
 	AuSharedMmapObject* obj = (AuSharedMmapObject*)kmalloc(sizeof(AuSharedMmapObject));
+	if (!obj)
+		return NULL;
 	memset(obj, 0, sizeof(AuSharedMmapObject));
 	obj->objectName = (char*)kmalloc(strlen(name) + 1);
+	if (!obj->objectName) {
+		kfree(obj);
+		return NULL;
+	}
 	strcpy(obj->objectName, name);
 	obj->linkCount += 1;
 	return obj;
 }
 
 void AuAddSharedMmapObject(AuSharedMmapObject* obj) {
+	if (!obj)
+		return;
 	list_add(shmmaplist, obj);
 }
 
 void AuRemoveSharedMmapObject(AuSharedMmapObject* obj) {
-	for (int i = 0; i < shmmaplist->pointer; i++) {
+	if (!obj)
+		return;
+	for (unsigned int i = 0; i < shmmaplist->pointer; i++) {
 		AuSharedMmapObject* obj_ = (AuSharedMmapObject*)list_get_at(shmmaplist, i);
-		if (obj_ == obj)
+		if (obj_ == obj) {
 			list_remove(shmmaplist, i);
+			break;
+		}
 	}
 	kfree(obj->objectName);
 	kfree(obj);
 }
 
 AuSharedMmapObject* AuSharedMmapObjectFindByName(char* name) {
-	for (int i = 0; i < shmmaplist->pointer; i++) {
+	if (!name)
+		return NULL;
+	for (unsigned int i = 0; i < shmmaplist->pointer; i++) {
 		AuSharedMmapObject* obj_ = (AuSharedMmapObject*)list_get_at(shmmaplist, i);
+		if (!obj_ || !obj_->objectName)
+			continue;
 		if (strcmp(obj_->objectName, name) == 0)
 			return obj_;
 	}
@@ -130,7 +148,7 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 
 	/* for now, memory mapping doesn't support lazy loading
 	 * so everything works at pre-paging */
-//I'll get on it soon-ish, because the unikernel plan would need it anyway. --axiss
+	//I'll get on it soon-ish, because the unikernel plan would need it anyway. --axiss
 	AA64Thread* curr_thr = AuGetCurrentThread();
 	AuProcess* proc = AuProcessFindThread(curr_thr);
 	if (!proc) {
@@ -189,10 +207,12 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 						 file->first_block,
 						 file->current);
 			fb = (AuMMFileBack*)kmalloc(sizeof(AuMMFileBack));
-			memset(fb, 0, sizeof(AuMMFileBack));
-			UARTDebugOut("mmap: file flag : %x \r\n", file->flags);
-			fb->file = file;
-			AuMmngrAddFileBack(fb);
+			if (fb) {
+				memset(fb, 0, sizeof(AuMMFileBack));
+				UARTDebugOut("mmap: file flag : %x \r\n", file->flags);
+				fb->file = file;
+				AuMmngrAddFileBack(fb);
+			}
 		}
 
 		if (flags & MEMMAP_FLAG_SHARED) {
@@ -201,12 +221,14 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 			 * new one */
 			if (!shobj) {
 				shobj = AuCreateSharedMmapObject(file->filename);
-				shobj->flags = flags;
-				shobj->len = 0;
-				shobj->prot_flags = prot;
-				shobj->ownerProc = proc->proc_id;
-				AuAddSharedMmapObject(shobj);
-				shobj_new_create = true;
+				if (shobj) {
+					shobj->flags = flags;
+					shobj->len = 0;
+					shobj->prot_flags = prot;
+					shobj->ownerProc = proc->proc_id;
+					AuAddSharedMmapObject(shobj);
+					shobj_new_create = true;
+				}
 			}
 			/* okay, already there is an shared object with this
 			 * particular name, so check further
@@ -237,7 +259,8 @@ void* CreateMemMapping(void* address, size_t len, int prot, int flags, int fd, u
 				} else {
 					if (flags & MEMMAP_FLAG_COW) {
 						uint64_t datablk = AuMmngrFileCacheGetPhysicalBlock(fb, offset);
-						phys = (uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
+						phys =
+							(uint64_t)AuPmmngrAllocPageForOwner(AURORA_PAGE_NORMAL, proc->proc_id);
 						memcpy((void*)P2V(phys), (void*)P2V(datablk), PAGE_SIZE);
 
 					} else {
@@ -380,7 +403,9 @@ void MemMapDirty(void* startingVaddr, size_t len, int flags, int prot) {
 	if (!AuVMAreaGet(proc, (size_t)startingVaddr)) {
 		AuVMArea* area =
 			AuVMAreaCreate((size_t)startingVaddr, ((uint64_t)startingVaddr + len), 0, len, VM_EXEC);
-		list_add(proc->vmareas, area);
+		if (area) {
+			list_add(proc->vmareas, area);
+		}
 	}
 }
 

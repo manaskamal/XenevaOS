@@ -236,6 +236,8 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 */
 AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
+	if (!proc)
+		return NULL;
 	memset(proc, 0, sizeof(AuProcess));
 	if (name)
 		strncpy(proc->name, name, sizeof(proc->name) - 1);

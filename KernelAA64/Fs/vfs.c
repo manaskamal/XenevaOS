@@ -101,7 +101,7 @@ AuVFSNode* AuVFSFind(char* path) {
 
 	char pathname[16];
 	int i;
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < 15; i++) {
 		if (next[i] == '/' || next[i] == '\0')
 			break;
 		pathname[i] = next[i];
@@ -111,6 +111,8 @@ AuVFSNode* AuVFSFind(char* path) {
 
 	for (int j = 0; j < __RootContainer->childs->pointer; j++) {
 		AuVFSNode* node = (AuVFSNode*)list_get_at(__RootContainer->childs, j);
+		if (!node)
+			continue;
 		if ((strcmp(node->filename, pathname) == 0) && (node->flags & FS_FLAG_FILE_SYSTEM)) {
 			Returnable = node;
 			break;
@@ -203,7 +205,7 @@ AU_EXTERN AU_EXPORT AuVFSNode* AuVFSOpen(char* path) {
 		char pathname[16];
 		//UARTDebugOut("[aurora]: vfs pathname : %s \r\n", path);
 		int i = 0;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 			if ((next[i] == '/') || (next[i] == '\0'))
 				break;
 			pathname[i] = next[i];
@@ -382,15 +384,20 @@ AU_EXTERN AU_EXPORT void AuVFSNodeClose(AuVFSNode* node, AuVFSNode* file) {
  * @param node -- file system node to remove
  */
 AU_EXTERN AU_EXPORT int AuVFSRemoveFileSystem(AuVFSNode* node) {
-	int index = 0;
-	for (int i = 0; i < __RootContainer->childs->pointer; i++) {
+	if (!node)
+		return -1;
+	int index = -1;
+	for (unsigned int i = 0; i < __RootContainer->childs->pointer; i++) {
 		AuVFSNode* _node = (AuVFSNode*)list_get_at(__RootContainer->childs, i);
 		if (_node == node) {
-			index = i;
+			index = (int)i;
 			break;
 		}
 	}
-	list_remove(__RootContainer->childs, index);
+
+	if (index < 0)
+		return -1;
+	list_remove(__RootContainer->childs, (unsigned int)index);
 	if (node->close)
 		return node->close(node, NULL);
 	else {

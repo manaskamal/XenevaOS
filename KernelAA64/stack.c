@@ -40,6 +40,8 @@
  */
 AuStack* AuStackCreate() {
 	AuStack* stack = (AuStack*)kmalloc(sizeof(AuStack));
+	if (!stack)
+		return NULL;
 	memset(stack, 0, sizeof(AuStack));
 	return stack;
 }
@@ -50,7 +52,11 @@ AuStack* AuStackCreate() {
  * @param data -- data to be pushed
  */
 void AuStackPush(AuStack* stack, void* data) {
+	if (!stack)
+		return;
 	AuStackItem* newItem = (AuStackItem*)kmalloc(sizeof(AuStackItem));
+	if (!newItem)
+		return;
 	newItem->data = data;
 	newItem->link = NULL;
 
@@ -68,6 +74,8 @@ void AuStackPush(AuStack* stack, void* data) {
  * @param stack -- pointer to the stack from where to pop
  */
 void* AuStackPop(AuStack* stack) {
+	if (!stack)
+		return NULL;
 	void* data = NULL;
 	if (!stack->top)
 		return NULL;

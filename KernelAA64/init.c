@@ -72,6 +72,7 @@
 #include <Fs/Fat/FatDir.h>
 #include <Log/klog.h>
 #include <linux/module_loader.h>
+#include <fixup.h>
 
 extern void AuBtInitialize(void);
 
@@ -327,6 +328,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
+
+	/* check the fixup table */
+	__bordoisila_fixup_table_check();
 
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n",
