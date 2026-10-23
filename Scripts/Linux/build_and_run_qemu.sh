@@ -932,7 +932,7 @@ if [ "$XR_DEMO" -eq 1 ]; then
     fi
 fi
 
-if [ "$SKIP_BUILD" -eq 0 ] && [ ! -d "$REPO_ROOT/gnu-efi" ]; then
+if [ "$SKIP_BUILD" -eq 0 ] && [ "$TOOLCHAIN" != llvm ] && [ ! -d "$REPO_ROOT/gnu-efi" ]; then
     printf "${STY_RED}[$0]: gnu-efi not found at repo-root/gnu-efi.${STY_RST}\n"
     printf "${STY_YELLOW}[$0]: Clone it first: git clone https://github.com/vathpela/gnu-efi.git${STY_RST}\n"
     exit 1
