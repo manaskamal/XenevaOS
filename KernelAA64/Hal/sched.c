@@ -201,16 +201,20 @@ void AA64NextThread() {
 	 * AuScheduleThread): resuming SLEEP/BLOCKED/KILLABLE threads here
 	 * breaks whatever parked them. The walk is bounded so a cyclic list
 	 * can never wedge the tick; with nothing runnable we park on idle. --axiss */
-	AA64Thread* cursor = current_thread ? current_thread->next : NULL;
-	for (int i = 0; i < SCHED_VALIDATE_STEPS; i++) {
-		if (!cursor)
-			cursor = _idle_thr;
-		if (cursor == _idle_thr || cursor->state == THREAD_STATE_READY ||
-			cursor->state == THREAD_STATE_LEFT_IN_KERNEL) {
+	AA64Thread* start =
+		(current_thread && current_thread->next) ? current_thread->next : thread_list_head;
+
+	AA64Thread* cursor = start; //current_thread ? current_thread->next : NULL;
+	for (int i = 0; i < SCHED_VALIDATE_STEPS && cursor; i++) {
+		if (cursor != _idle_thr &&
+			(cursor->state == THREAD_STATE_READY || cursor->state == THREAD_STATE_LEFT_IN_KERNEL)) {
 			current_thread = cursor;
 			return;
 		}
-		cursor = cursor->next;
+
+		cursor = cursor->next ? cursor->next : thread_list_head;
+		if (cursor == start)
+			break;
 	}
 	current_thread = _idle_thr;
 }
@@ -570,6 +574,7 @@ void AuScheduleNext() {
 	current_thread->state = THREAD_STATE_LEFT_IN_KERNEL;
 	AA64Thread* storeThr = current_thread;
 	aa64_store_fp(storeThr->fp_regs, &storeThr->fpcr, &storeThr->fpsr);
+	__asm__ volatile("msr cntv_tval_el0, %0\n isb" ::"r"(1ULL));
 	current_thread = _idle_thr;
 	aa64_schedule_init(storeThr, current_thread, V2P(current_thread->pml));
 }
