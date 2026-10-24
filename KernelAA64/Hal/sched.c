@@ -274,8 +274,11 @@ AA64Thread* AuCreateSubKthread(void (*entry)(uint64_t), uint64_t stack, uint64_t
 	t->name[7] = '\0';
 	t->elr_el1 = (uint64_t)entry;
 	t->x30 = (uint64_t)entry;
-	/* EL1h, IRQ unmasked -- see AuCreateKthread */
-	t->spsr_el1 = 0x345;
+	/* EL1h, DAIF masked. This entry runs AuProcessEntSubThread and then
+	 * aa64_enter_user, which installs the EL0 PSTATE. Leaving IRQs unmasked
+	 * here (0x345) let the timer preempt a thread that had no exception
+	 * frame yet. */
+	t->spsr_el1 = 0x3C5;
 	//t->sp = stack;
 	t->pml = (uint64_t)pml;
 	t->sp = stack;

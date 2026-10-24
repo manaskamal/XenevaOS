@@ -18,10 +18,10 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 
 INCLUDES = -I. -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include \
            -I../../Ports/CssLibs/libcss/include -I../../Ports/CssLibs/libparserutils/include -I../../Ports/CssLibs/libwapcaplet/include \
-           -I../../Ports/mbedtls/port
+           -I../../Ports/mbedtls/port -I../../Ports/quickjs/include -Iminiz -DMINIZ_EXPORT=
 
 CPP_SRCS = main.cpp
-C_SRCS = css.c
+C_SRCS = css.c js.c pngdec.c svgdec.c miniz/miniz_tinfl.c
 S_SRCS =
 
 OBJDIR = obj
@@ -38,7 +38,7 @@ ifeq ($(TOOLCHAIN), llvm)
     CC  = clang
     LD  = clang++
     LLVM_TARGET = -target aarch64-unknown-windows
-    CXXFLAGS = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
+    CXXFLAGS = -Wall -Wextra -D_FORTIFY=0 -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
                -O2 -fno-exceptions -fno-rtti $(LLVM_TARGET) \
                $(COMMON_DEFS) \
                -U_WIN32 \
@@ -46,16 +46,23 @@ ifeq ($(TOOLCHAIN), llvm)
                -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
                -Wno-implicit-function-declaration -Wno-c++11-narrowing \
                -Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable \
+               -Wno-unused-parameter \
                -Wno-macro-redefined \
                $(INCLUDES)
     LDFLAGS = $(LLVM_TARGET) -fuse-ld=lld -nostdlib -Wl,-entry:_aumain -Wl,-base:0x600000000 -Wl,-subsystem:native -Wl,-filealign:0x1000
 endif
 
 CSSLIB = ../../Ports/CssLibs/libcssport.a
+QJSLIB = ../../Ports/quickjs/libquickjs.a
 
 .PHONY: all clean llvm
 
 all: $(TARGET)
+
+# libcss, libdom, libhubbub, libparserutils, and libwapcaplet are one
+# archive. Building netsurf.exe builds it.
+$(CSSLIB):
+	$(MAKE) -C ../../Ports/CssLibs llvm
 
 llvm:
 	@$(MAKE) TOOLCHAIN=llvm all
@@ -72,9 +79,9 @@ $(CRT_OBJ): ../../Process/Init/crt0arm64.s
 	@mkdir -p $(dir $@)
 	$(CC) $(CXXFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 
-$(TARGET): $(OBJS) $(CSSLIB)
+$(TARGET): $(OBJS) $(CSSLIB) $(QJSLIB)
 	@echo "Linking $@ (LLVM)..."
-	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) ../../Libs/Chitralekha/libChitralekha.a ../../Ports/mbedtls/libmbedtls.a ../../Libs/XEClib/libXEClib.a -o $@
+	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) $(QJSLIB) ../../Libs/Chitralekha/libChitralekha.a ../../Ports/mbedtls/libmbedtls.a ../../Libs/XEClib/libXEClib.a -o $@
 
 clean:
 	rm -rf $(OBJDIR) $(TARGET)

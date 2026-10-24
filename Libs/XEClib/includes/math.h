@@ -152,16 +152,12 @@ XE_EXTERN {
 
 #define FORCE_EVAL(x)                                                                              \
 	do {                                                                                           \
-		if (sizeof(x) == sizeof(float)) {                                                          \
-			_KePrint("Evaluating float \r\n");                                                     \
+		if (sizeof(x) == sizeof(float))                                                            \
 			fp_force_evalf(x);                                                                     \
-		} else if (sizeof(x) == sizeof(double)) {                                                  \
-			_KePrint("FORCE EVAL double \r\n");                                                    \
+		else if (sizeof(x) == sizeof(double))                                                      \
 			fp_force_eval(x);                                                                      \
-		} else {                                                                                   \
-			_KePrint("Force eval long \r\n");                                                      \
+		else                                                                                       \
 			fp_force_evall(x);                                                                     \
-		}                                                                                          \
 	} while (0)
 
 	XE_LIB double ceil(double);

@@ -80,14 +80,20 @@ static int xe_recv(int fd, void* buf, size_t len) {
 struct xe_url {
 	int https;
 	char host[256];
-	char path[1024];
+	char path[3072];
 	uint16_t port;
+};
+
+struct xe_tls_slot {
+	mbedtls_ssl_context ssl;
+	mbedtls_ssl_config conf;
 };
 
 struct xe_reader {
 	int tls;
 	int fd;
 	mbedtls_ssl_context* ssl;
+	struct xe_tls_slot* slot;
 	unsigned char buf[2048];
 	int len;
 	int pos;
@@ -122,6 +128,8 @@ static int ensure_rng(xe_http_response* out) {
 	ret = mbedtls_ctr_drbg_seed(&g_drbg, mbedtls_entropy_func, &g_entropy,
 								(const unsigned char*)"xeneva-https", 12);
 	if (ret != 0) {
+		mbedtls_ctr_drbg_free(&g_drbg);
+		mbedtls_entropy_free(&g_entropy);
 		set_err(out, "entropy unavailable");
 		return -1;
 	}
@@ -424,15 +432,28 @@ static void tls_error(int ret, uint32_t flags, xe_http_response* out) {
 		snprintf(out->error, sizeof(out->error), "TLS handshake failed (%d)", ret);
 }
 
-/* ssl keeps a pointer to its config, so both live until the response is read. */
-static mbedtls_ssl_context g_ssl;
-static mbedtls_ssl_config g_conf;
+/* One handshake owns its ssl context. The old globals made a second
+ * socket overwrite the first in the middle of TLS. */
+static volatile int g_rng_lock;
+
+static int tls_rng(void* ctx, unsigned char* buf, size_t len) {
+	int rc;
+	while (__atomic_exchange_n(&g_rng_lock, 1, __ATOMIC_ACQUIRE))
+		;
+	rc = mbedtls_ctr_drbg_random(ctx, buf, len);
+	__atomic_store_n(&g_rng_lock, 0, __ATOMIC_RELEASE);
+	return rc;
+}
+
+static volatile int g_dns_lock;
 
 static void tls_free(struct xe_reader* r) {
-	if (!r || !r->ssl)
+	if (!r || !r->slot)
 		return;
-	mbedtls_ssl_free(&g_ssl);
-	mbedtls_ssl_config_free(&g_conf);
+	mbedtls_ssl_free(&r->slot->ssl);
+	mbedtls_ssl_config_free(&r->slot->conf);
+	free(r->slot);
+	r->slot = NULL;
 	r->ssl = NULL;
 	r->tls = 0;
 }
@@ -449,40 +470,46 @@ static int tls_handshake(struct xe_reader* r, const char* host, xe_http_response
 	if (ensure_rng(out) < 0 || ensure_ca(out) < 0)
 		return -1;
 
-	mbedtls_ssl_init(&g_ssl);
-	mbedtls_ssl_config_init(&g_conf);
-	r->ssl = &g_ssl;
+	r->slot = (struct xe_tls_slot*)malloc(sizeof(struct xe_tls_slot));
+	if (!r->slot) {
+		set_err(out, "TLS alloc failed");
+		return -1;
+	}
+	memset(r->slot, 0, sizeof(*r->slot));
+	mbedtls_ssl_init(&r->slot->ssl);
+	mbedtls_ssl_config_init(&r->slot->conf);
+	r->ssl = &r->slot->ssl;
 	r->tls = 1;
-	ret = mbedtls_ssl_config_defaults(&g_conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM,
+	ret = mbedtls_ssl_config_defaults(&r->slot->conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM,
 									 MBEDTLS_SSL_PRESET_DEFAULT);
 	if (ret != 0) {
 		set_err(out, "TLS config failed");
 		goto fail;
 	}
-	mbedtls_ssl_conf_authmode(&g_conf, MBEDTLS_SSL_VERIFY_REQUIRED);
-	mbedtls_ssl_conf_ca_chain(&g_conf, &g_cacert, NULL);
-	mbedtls_ssl_conf_rng(&g_conf, mbedtls_ctr_drbg_random, &g_drbg);
-	if (mbedtls_ssl_conf_alpn_protocols(&g_conf, (const char**)alpn) != 0) {
+	mbedtls_ssl_conf_authmode(&r->slot->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+	mbedtls_ssl_conf_ca_chain(&r->slot->conf, &g_cacert, NULL);
+	mbedtls_ssl_conf_rng(&r->slot->conf, tls_rng, &g_drbg);
+	if (mbedtls_ssl_conf_alpn_protocols(&r->slot->conf, (const char**)alpn) != 0) {
 		set_err(out, "ALPN rejected");
 		goto fail;
 	}
-	if (mbedtls_ssl_setup(&g_ssl, &g_conf) != 0) {
+	if (mbedtls_ssl_setup(&r->slot->ssl, &r->slot->conf) != 0) {
 		set_err(out, "TLS setup failed");
 		goto fail;
 	}
-	if (mbedtls_ssl_set_hostname(&g_ssl, host) != 0) {
+	if (mbedtls_ssl_set_hostname(&r->slot->ssl, host) != 0) {
 		set_err(out, "SNI rejected");
 		goto fail;
 	}
-	mbedtls_ssl_set_bio(&g_ssl, r, tls_send, tls_recv, NULL);
-	while ((ret = mbedtls_ssl_handshake(&g_ssl)) != 0) {
+	mbedtls_ssl_set_bio(&r->slot->ssl, r, tls_send, tls_recv, NULL);
+	while ((ret = mbedtls_ssl_handshake(&r->slot->ssl)) != 0) {
 		if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
 			continue;
-		flags = mbedtls_ssl_get_verify_result(&g_ssl);
+		flags = mbedtls_ssl_get_verify_result(&r->slot->ssl);
 		tls_error(ret, flags, out);
 		goto fail;
 	}
-	flags = mbedtls_ssl_get_verify_result(&g_ssl);
+	flags = mbedtls_ssl_get_verify_result(&r->slot->ssl);
 	if (flags != 0) {
 		tls_error(ret, flags, out);
 		goto fail;
@@ -498,16 +525,18 @@ static int connect_host(const struct xe_url* u, xe_http_response* out) {
 	int sock;
 	sockaddr_in dest;
 	uint32_t ip;
+	while (__atomic_exchange_n(&g_dns_lock, 1, __ATOMIC_ACQUIRE))
+		;
 	ent = gethostbyname(u->host);
-	if (!ent) {
-		snprintf(out->error, sizeof(out->error), "DNS failed for %s", u->host);
-		return -1;
-	}
-	if (ent->h_addrtype != AF_INET || ent->h_length != 4 || !ent->h_addr_list[0]) {
+	if (ent && ent->h_addr_list && ent->h_addr_list[0] && ent->h_length == 4)
+		ip = *(uint32_t*)ent->h_addr_list[0];
+	else
+		ip = 0;
+	__atomic_store_n(&g_dns_lock, 0, __ATOMIC_RELEASE);
+	if (!ip) {
 		snprintf(out->error, sizeof(out->error), "No IPv4 address for %s", u->host);
 		return -1;
 	}
-	ip = *(uint32_t*)ent->h_addr_list[0];
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
 		set_err(out, "socket() failed");
@@ -588,16 +617,21 @@ static int read_body(struct xe_reader* r, int chunked, long content_len, int wan
 				size_t room = (got < cap) ? (cap - got) : 0;
 				size_t ask = sz;
 				size_t n = 0;
+				unsigned char* dst;
 				if (ask > 2048)
 					ask = 2048;
-				if (rd_copy(r, room ? body + got : NULL, ask, &n) < 0 || n == 0) {
+				/* Once the cap is full, keep reading the chunk so the
+				 * framing stays aligned, but never write past body. */
+				if (!room)
+					break;
+				if (ask > room)
+					ask = room;
+				dst = body + got;
+				if (rd_copy(r, dst, ask, &n) < 0 || n == 0) {
 					sz = 0;
 					break;
 				}
-				if (room) {
-					size_t keep = n < room ? n : room;
-					got += keep;
-				}
+				got += n;
 				sz -= n;
 				(void)took;
 			}
@@ -609,10 +643,15 @@ static int read_body(struct xe_reader* r, int chunked, long content_len, int wan
 			size_t room = (got < cap) ? (cap - got) : 0;
 			size_t ask = left > 2048 ? 2048 : left;
 			size_t n = 0;
-			if (rd_copy(r, room ? body + got : NULL, ask, &n) < 0 || n == 0)
+			unsigned char* dst;
+			if (!room)
 				break;
-			if (room)
-				got += (n < room ? n : room);
+			if (ask > room)
+				ask = room;
+			dst = body + got;
+			if (rd_copy(r, dst, ask, &n) < 0 || n == 0)
+				break;
+			got += n;
 			left -= n;
 		}
 	} else {
@@ -637,11 +676,12 @@ static int read_body(struct xe_reader* r, int chunked, long content_len, int wan
 }
 
 static int fetch_once(const struct xe_url* u, const char* method, const char* ua,
+					  const unsigned char* req_body, size_t req_body_len, const char* ctype,
 					  xe_http_response* out, size_t max_body, char* location, size_t locsz) {
 	struct xe_reader r;
 	int fd;
 	int head_only = method && strcmp(method, "HEAD") == 0;
-	char req[1600];
+	char* req = NULL;
 	char hdr[XE_HDR_RAW];
 	const char* te;
 	const char* cl;
@@ -665,11 +705,34 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 		snprintf(hosthdr, sizeof(hosthdr), "%s", u->host);
 	else
 		snprintf(hosthdr, sizeof(hosthdr), "%s:%u", u->host, u->port);
-	snprintf(req, sizeof(req),
-			 "%s %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n"
-			 "Connection: close\r\n\r\n",
-			 head_only ? "HEAD" : "GET", u->path, hosthdr, ua ? ua : "xeneva");
-	if (io_write_all(&r, (const unsigned char*)req, strlen(req)) < 0) {
+	{
+		size_t reqcap = strlen(u->path) + 640;
+		int n;
+		req = (char*)malloc(reqcap);
+		if (!req) {
+			set_err(out, "Out of memory");
+			goto fail;
+		}
+		if (req_body && req_body_len) {
+			n = snprintf(req, reqcap,
+						 "POST %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\n"
+						 "Accept: */*\r\nContent-Type: %s\r\nContent-Length: %u\r\n"
+						 "Connection: close\r\n\r\n",
+						 u->path, hosthdr, ua ? ua : "xeneva",
+						 ctype ? ctype : "application/octet-stream", (unsigned)req_body_len);
+		} else {
+			n = snprintf(req, reqcap,
+						 "%s %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n"
+						 "Connection: close\r\n\r\n",
+						 head_only ? "HEAD" : "GET", u->path, hosthdr, ua ? ua : "xeneva");
+		}
+		if (n < 0 || (size_t)n >= reqcap) {
+			set_err(out, "Request too long");
+			goto fail;
+		}
+	}
+	if (io_write_all(&r, (const unsigned char*)req, strlen(req)) < 0 ||
+		(req_body && req_body_len && io_write_all(&r, req_body, req_body_len) < 0)) {
 		set_err(out, "Send failed");
 		goto fail;
 	}
@@ -706,8 +769,10 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 		mbedtls_ssl_close_notify(r.ssl);
 	tls_free(&r);
 	_KeCloseFile(fd);
+	free(req);
 	return 0;
 fail:
+	free(req);
 	tls_free(&r);
 	_KeCloseFile(fd);
 	return -1;
@@ -715,7 +780,7 @@ fail:
 
 int xe_http_get(const char* url, const char* method, const char* user_agent,
 				xe_http_response* out, size_t max_body) {
-	char current[1600];
+	char current[3072];
 	int hops;
 	if (!out)
 		return -1;
@@ -727,8 +792,8 @@ int xe_http_get(const char* url, const char* method, const char* user_agent,
 	snprintf(current, sizeof(current), "%s", url);
 	for (hops = 0; hops <= XE_MAX_REDIRECTS; hops++) {
 		struct xe_url u;
-		char location[1200];
-		char next[1600];
+		char location[3072];
+		char next[3072];
 		int pu = parse_url(current, &u);
 		int rc;
 		xe_http_response_free(out);
@@ -743,7 +808,8 @@ int xe_http_get(const char* url, const char* method, const char* user_agent,
 			set_err(out, "Bad URL");
 			return -1;
 		}
-		rc = fetch_once(&u, method, user_agent, out, max_body, location, sizeof(location));
+		rc = fetch_once(&u, method, user_agent, NULL, 0, NULL, out, max_body, location,
+						sizeof(location));
 		if (rc < 0)
 			return -1;
 		if (out->status != 301 && out->status != 302 && out->status != 303 && out->status != 307 &&
