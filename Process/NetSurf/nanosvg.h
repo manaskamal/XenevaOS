@@ -1254,13 +1254,35 @@ static const char* nsvg__getNextPathItem(const char* s, char* it)
 	return s;
 }
 
+static int nsvg__hexDigit(char c)
+{
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+	return -1;
+}
+
 static unsigned int nsvg__parseColorHex(const char* str)
 {
-	unsigned int r=0, g=0, b=0;
-	if (sscanf(str, "#%2x%2x%2x", &r, &g, &b) == 3 )		// 2 digit hex
-		return NSVG_RGB(r, g, b);
-	if (sscanf(str, "#%1x%1x%1x", &r, &g, &b) == 3 )		// 1 digit hex, e.g. #abc -> 0xccbbaa
-		return NSVG_RGB(r*17, g*17, b*17);			// same effect as (r<<4|r), (g<<4|g), ..
+	/* Parse without sscanf: XEClib's scanf does not implement %x, so
+	 * every SVG fill used to fall through to the grey fallback and all
+	 * artwork rendered desaturated. */
+	char d[6];
+	int n = 0;
+	if (!str || *str != '#')
+		return NSVG_RGB(128, 128, 128);
+	str++;
+	while (n < 6) {
+		int v = nsvg__hexDigit(str[n]);
+		if (v < 0)
+			break;
+		d[n] = (char)v;
+		n++;
+	}
+	if (n == 6)
+		return NSVG_RGB(d[0] * 16 + d[1], d[2] * 16 + d[3], d[4] * 16 + d[5]);
+	if (n == 3)
+		return NSVG_RGB(d[0] * 17, d[1] * 17, d[2] * 17);
 	return NSVG_RGB(128, 128, 128);
 }
 

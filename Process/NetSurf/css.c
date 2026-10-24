@@ -33,20 +33,56 @@ static css_unit_ctx s_unitCtx;
 static lwc_string* s_attrClass = NULL;
 static lwc_string* s_attrId = NULL;
 
-/* UA reader defaults: white body text, sized headings, blue links. */
+/* UA reader defaults. This is a compact HTML4/CSS2.1 sheet: enough for
+ * real pages to lay out as documents rather than as a pile of words. */
 static const char kUaCss[] =
-    "html,body{color:#202124;background-color:#ffffff}"
-    "h1{font-size:22px;display:block;color:#202124}"
-    "h2{font-size:19px;display:block}h3{font-size:17px;display:block}"
-    "p,div,section,article,header,footer,nav,main,ul,ol,li,h4,h5,h6,form,table{display:block}"
-    "tr{display:table-row}td,th{display:table-cell}"
-    "center{display:block;text-align:center}"
-    "script,style,template,iframe,svg,canvas,link,meta,title{display:none}"
-    "input,textarea,button,select{display:block}"
-    "video{display:block}"
+    "html{display:block;color:#202124;background-color:#ffffff}"
+    "body{display:block;margin:8px;color:#202124;background-color:#ffffff}"
+    "head,script,style,title,meta,link,base,template,param{display:none}"
+    "noscript{display:block}"
+    "div,p,section,article,header,footer,nav,main,aside,figure,figcaption,"
+    "blockquote,pre,form,fieldset,address,dl,ul,ol,li,h1,h2,h3,h4,h5,h6,"
+    "table,thead,tbody,tfoot,tr,hr,center,details,summary{display:block}"
+    "li{display:list-item;margin:2px 0}"
+    "table{display:table;border-collapse:separate;border-spacing:2px}"
+    "thead{display:table-header-group}tbody{display:table-row-group}"
+    "tfoot{display:table-footer-group}tr{display:table-row}"
+    "td,th{display:table-cell;padding:1px;vertical-align:top}"
+    "span,a,b,i,em,strong,code,small,sub,sup,label,abbr,cite,q,u,s,"
+    "strike,font,big,tt,time,mark{display:inline}"
+    "center{text-align:center}"
+    "a{color:#1a0dab;text-decoration:underline}"
+    "a:visited{color:#551a8b}"
+    "h1{font-size:28px;font-weight:bold;margin:11px 0}"
+    "h2{font-size:22px;font-weight:bold;margin:11px 0}"
+    "h3{font-size:18px;font-weight:bold;margin:10px 0}"
+    "h4{font-size:16px;font-weight:bold;margin:10px 0}"
+    "h5{font-size:14px;font-weight:bold;margin:10px 0}"
+    "h6{font-size:13px;font-weight:bold;margin:10px 0}"
+    "p{margin:11px 0}"
+    "blockquote{margin:11px 40px}"
+    "ul,ol{margin:11px 0;padding-left:36px}ul{list-style-type:disc}ol{list-style-type:decimal}"
+    "dl{margin:11px 0}dt{font-weight:bold}dd{margin-left:36px}"
+    "pre{white-space:pre;margin:11px 0;font-family:monospace}"
+    "code,tt,kbd,samp{font-family:monospace}"
+    "hr{border:0;border-top:1px solid #c8c8c8;margin:9px 0;height:0}"
+    "img{display:inline-block}"
+    "input,button,select,textarea{display:inline-block}"
+    "input[type=hidden]{display:none}"
+    "strong,b{font-weight:bold}"
+    "i,em,cite,var{font-style:italic}"
     "small{font-size:11px;color:#5f6368}"
-    "a{color:#1a0dab}"
-    "footer,footer a,#fbar,#fbar a{color:#70757a}";
+    "sub,sup{font-size:11px}"
+    "u,ins{text-decoration:underline}s,strike,del{text-decoration:line-through}"
+    "mark{background-color:#fff2a8}"
+    "fieldset{border:1px solid #b8b8b8;margin:0 2px;padding:6px 10px}"
+    "legend{padding:0 4px;font-weight:bold}"
+    "button{background-color:#e9e9e9;border:1px solid #8a8a8a;padding:2px 8px}"
+    "input{border:1px solid #8a8a8a;background-color:#ffffff;padding:1px 3px}"
+    "textarea{border:1px solid #8a8a8a;background-color:#ffffff;padding:2px}"
+    "select{border:1px solid #8a8a8a;background-color:#ffffff;padding:1px}"
+    "table[border],table[border] td,table[border] th{border:1px solid #b0b0b0}"
+    "th{font-weight:bold;text-align:center}";
 
 static css_error ns_resolve_url(void* pw, const char* base, lwc_string* rel, lwc_string** abs) {
     (void)pw;
@@ -135,6 +171,20 @@ int NsCssBegin(void) {
     return 0;
 }
 
+void NsCssSetViewport(int width, int height) {
+    if (width <= 0)
+        width = 640;
+    if (height <= 0)
+        height = 420;
+    s_media.width = (css_fixed)((int64_t)width * (1 << CSS_RADIX_POINT));
+    s_media.height = (css_fixed)((int64_t)height * (1 << CSS_RADIX_POINT));
+    s_media.orientation = width >= height ? CSS_MEDIA_ORIENTATION_LANDSCAPE
+                                          : CSS_MEDIA_ORIENTATION_PORTRAIT;
+    s_media.aspect_ratio = height > 0
+        ? (css_fixed)(((int64_t)width * (1 << CSS_RADIX_POINT)) / height)
+        : 0;
+}
+
 int NsCssAddSheet(const char* data, size_t len) {
     css_stylesheet* sheet = NULL;
     if (!s_select || !data || len == 0)
@@ -196,6 +246,92 @@ NsCssNode* NsCssNodeCreate(NsCssNode* parent, const char* tag) {
     return n;
 }
 
+static char* ns_strdup_n(const char* s, size_t len) {
+    char* out;
+    if (!s)
+        return NULL;
+    out = (char*)malloc(len + 1);
+    if (!out)
+        return NULL;
+    memcpy(out, s, len);
+    out[len] = 0;
+    return out;
+}
+
+NsCssNode* NsCssNodeCreateText(NsCssNode* parent, const char* text, size_t len) {
+    NsCssNode* n;
+    if (!text)
+        return NULL;
+    n = (NsCssNode*)malloc(sizeof(NsCssNode));
+    if (!n)
+        return NULL;
+    memset(n, 0, sizeof(*n));
+    n->parent = parent;
+    n->is_text = true;
+    strcpy(n->tag, "#text");
+    n->text = ns_strdup_n(text, len);
+    if (!n->text) {
+        free(n);
+        return NULL;
+    }
+    n->text_len = len;
+    return n;
+}
+
+void NsCssNodeAppendChild(NsCssNode* parent, NsCssNode* child) {
+    if (!parent || !child)
+        return;
+    child->parent = parent;
+    child->prev = parent->last_child;
+    child->next = NULL;
+    if (parent->last_child)
+        parent->last_child->next = child;
+    else
+        parent->first_child = child;
+    parent->last_child = child;
+}
+
+void NsCssNodeAddAttribute(NsCssNode* n, const char* name, const char* value) {
+    uint32_t i;
+    size_t nlen;
+    if (!n || n->is_text || !name || !name[0] || !value)
+        return;
+    nlen = strlen(name);
+    if (nlen > NS_CSS_ATTR_NAME_LEN)
+        nlen = NS_CSS_ATTR_NAME_LEN;
+    for (i = 0; i < n->n_attrs; i++) {
+        if (strlen(n->attrs[i].name) == nlen && !strncasecmp(n->attrs[i].name, name, nlen)) {
+            free(n->attrs[i].value);
+            n->attrs[i].value = ns_strdup_n(value, strlen(value));
+            return;
+        }
+    }
+    if (n->n_attrs >= NS_CSS_MAX_ATTRS)
+        return;
+    n->attrs[n->n_attrs].name = ns_strdup_n(name, nlen);
+    n->attrs[n->n_attrs].value = ns_strdup_n(value, strlen(value));
+    if (!n->attrs[n->n_attrs].name || !n->attrs[n->n_attrs].value) {
+        free(n->attrs[n->n_attrs].name);
+        free(n->attrs[n->n_attrs].value);
+        return;
+    }
+    n->n_attrs++;
+}
+
+const char* NsCssNodeAttr(NsCssNode* n, const char* name) {
+    uint32_t i;
+    size_t nlen;
+    if (!n || n->is_text || !name)
+        return NULL;
+    nlen = strlen(name);
+    for (i = 0; i < n->n_attrs; i++) {
+        if (strlen(n->attrs[i].name) == nlen && !strncasecmp(n->attrs[i].name, name, nlen))
+            return n->attrs[i].value;
+    }
+    return NULL;
+}
+
+
 void NsCssNodeAddClass(NsCssNode* n, const char* cls) {
     if (!n || !cls || !cls[0] || n->n_cls >= NS_CSS_MAX_CLASSES)
         return;
@@ -222,8 +358,17 @@ void NsCssNodeSetLink(NsCssNode* n, bool link) {
 
 int NsCssNodeSetInline(NsCssNode* n, const char* style) {
     css_stylesheet* sheet = NULL;
-    if (!n || !style || !style[0])
+    if (!n)
         return -1;
+    /* setAttribute("style","") clears an inline display:none. Leaving
+     * the old sheet in place kept the element hidden. */
+    if (!style || !style[0]) {
+        if (n->inlineSheet) {
+            css_stylesheet_destroy((css_stylesheet*)n->inlineSheet);
+            n->inlineSheet = NULL;
+        }
+        return 0;
+    }
     if (ns_make_sheet(style, strlen(style), true, &sheet) != 0)
         return -1;
     if (n->inlineSheet)
@@ -244,6 +389,14 @@ void NsCssNodeDestroy(NsCssNode* n) {
         css_stylesheet_destroy((css_stylesheet*)n->inlineSheet);
         n->inlineSheet = NULL;
     }
+    for (i = 0; i < n->n_attrs; i++) {
+        free(n->attrs[i].name);
+        free(n->attrs[i].value);
+        n->attrs[i].name = NULL;
+        n->attrs[i].value = NULL;
+    }
+    free(n->text);
+    n->text = NULL;
     if (n->lwcName) {
         lwc_string_unref((lwc_string*)n->lwcName);
         n->lwcName = NULL;
@@ -259,6 +412,19 @@ void NsCssNodeDestroy(NsCssNode* n) {
         n->lwcId = NULL;
     }
     free(n);
+}
+
+void NsCssNodeDestroyTree(NsCssNode* n) {
+    NsCssNode* child;
+    if (!n)
+        return;
+    child = n->first_child;
+    while (child) {
+        NsCssNode* next = child->next;
+        NsCssNodeDestroyTree(child);
+        child = next;
+    }
+    NsCssNodeDestroy(n);
 }
 
 /* ---- select handler ---- */
@@ -334,42 +500,165 @@ static css_error ns_parent_node(void* pw, void* node, void** parent) {
     return CSS_OK;
 }
 
-static css_error ns_sibling_node(void* pw, void* node, void** sibling) {
+/* Case-insensitive tag compare against an interned qname. */
+static bool ns_qname_is_tag(const css_qname* qname, NsCssNode* n) {
+    bool match = false;
+    if (!qname || !n || n->is_text || !n->lwcName)
+        return false;
+    if (lwc_string_caseless_isequal(qname->name, (lwc_string*)n->lwcName, &match) != lwc_error_ok)
+        return false;
+    return match && qname->ns == NULL;
+}
+
+static css_error ns_named_sibling_node(void* pw, void* node, const css_qname* qname, void** sibling) {
+    NsCssNode* n = ((NsCssNode*)node)->prev;
     (void)pw;
-    (void)node;
-    *sibling = NULL;
+    while (n) {
+        if (!n->is_text && ns_qname_is_tag(qname, n))
+            break;
+        n = n->prev;
+    }
+    *sibling = n;
+    return CSS_OK;
+}
+
+static css_error ns_named_generic_sibling_node(
+    void* pw, void* node, const css_qname* qname, void** sibling) {
+    /* Generic sibling combinator scans every preceding element; the
+     * candidate still has to match the qname. */
+    return ns_named_sibling_node(pw, node, qname, sibling);
+}
+
+static css_error ns_sibling_node(void* pw, void* node, void** sibling) {
+    NsCssNode* n = ((NsCssNode*)node)->prev;
+    (void)pw;
+    while (n && n->is_text)
+        n = n->prev;
+    *sibling = n;
+    return CSS_OK;
+}
+
+static const char* ns_attr_value(NsCssNode* n, const css_qname* qname) {
+    if (!n || n->is_text || !qname || qname->ns != NULL || !qname->name)
+        return NULL;
+    return NsCssNodeAttr(n, lwc_string_data(qname->name));
+}
+
+static bool ns_ascii_eq(const char* a, const char* b, bool ci) {
+    if (!a || !b)
+        return false;
+    return ci ? (strcasecmp(a, b) == 0) : (strcmp(a, b) == 0);
+}
+
+static css_error ns_node_has_attribute(
+    void* pw, void* node, const css_qname* qname, bool* match) {
+    (void)pw;
+    *match = ns_attr_value((NsCssNode*)node, qname) != NULL;
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_equal(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    *match = attr && ns_ascii_eq(attr, lwc_string_data(value), false);
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_dashmatch(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    const char* val;
+    size_t vlen;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    val = lwc_string_data(value);
+    vlen = lwc_string_length(value);
+    *match = false;
+    if (attr && val) {
+        if (!strncmp(attr, val, vlen) && (attr[vlen] == 0 || attr[vlen] == '-'))
+            *match = true;
+    }
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_includes(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    const char* val;
+    size_t vlen;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    val = lwc_string_data(value);
+    vlen = lwc_string_length(value);
+    *match = false;
+    if (!attr || !val || vlen == 0)
+        return CSS_OK;
+    while (*attr) {
+        const char* start;
+        size_t len;
+        while (*attr == ' ' || *attr == '\t' || *attr == '\n' || *attr == '\r' || *attr == '\f')
+            attr++;
+        start = attr;
+        while (*attr && !(*attr == ' ' || *attr == '\t' || *attr == '\n' || *attr == '\r' ||
+                          *attr == '\f'))
+            attr++;
+        len = (size_t)(attr - start);
+        if (len == vlen && !strncmp(start, val, vlen)) {
+            *match = true;
+            break;
+        }
+    }
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_prefix(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    const char* val;
+    size_t vlen;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    val = lwc_string_data(value);
+    vlen = lwc_string_length(value);
+    *match = attr && val && vlen > 0 && !strncmp(attr, val, vlen);
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_suffix(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    const char* val;
+    size_t alen;
+    size_t vlen;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    val = lwc_string_data(value);
+    vlen = lwc_string_length(value);
+    *match = false;
+    if (attr && val && vlen > 0) {
+        alen = strlen(attr);
+        if (alen >= vlen && !strcmp(attr + alen - vlen, val))
+            *match = true;
+    }
+    return CSS_OK;
+}
+
+static css_error ns_node_has_attribute_substring(
+    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
+    const char* attr;
+    const char* val;
+    (void)pw;
+    attr = ns_attr_value((NsCssNode*)node, qname);
+    val = lwc_string_data(value);
+    *match = attr && val && val[0] && strstr(attr, val) != NULL;
     return CSS_OK;
 }
 
 static css_error ns_no_match_bool(void* pw, void* node, bool* match) {
     (void)pw;
     (void)node;
-    *match = false;
-    return CSS_OK;
-}
-
-static css_error ns_no_attr_bool(void* pw, void* node, const css_qname* qname, bool* match) {
-    (void)pw;
-    (void)node;
-    (void)qname;
-    *match = false;
-    return CSS_OK;
-}
-
-static css_error ns_no_attr_val_bool(
-    void* pw, void* node, const css_qname* qname, lwc_string* value, bool* match) {
-    (void)pw;
-    (void)node;
-    (void)qname;
-    (void)value;
-    *match = false;
-    return CSS_OK;
-}
-
-static css_error ns_no_lang_bool(void* pw, void* node, lwc_string* lang, bool* match) {
-    (void)pw;
-    (void)node;
-    (void)lang;
     *match = false;
     return CSS_OK;
 }
@@ -426,8 +715,7 @@ static css_error ns_node_is_root(void* pw, void* node, bool* match) {
 
 static css_error ns_node_is_empty(void* pw, void* node, bool* match) {
     (void)pw;
-    (void)node;
-    *match = false;
+    *match = ((NsCssNode*)node)->first_child == NULL;
     return CSS_OK;
 }
 
@@ -438,11 +726,41 @@ static css_error ns_node_is_link(void* pw, void* node, bool* match) {
 }
 
 static css_error ns_node_count_siblings(void* pw, void* node, bool same_name, bool after, int32_t* count) {
+    NsCssNode* n = (NsCssNode*)node;
+    int32_t c = 0;
     (void)pw;
-    (void)node;
-    (void)same_name;
-    (void)after;
-    *count = 0;
+    n = after ? n->next : n->prev;
+    for (; n; n = after ? n->next : n->prev) {
+        if (n->is_text)
+            continue;
+        if (!same_name || !strcasecmp(n->tag, ((NsCssNode*)node)->tag))
+            c++;
+    }
+    *count = c;
+    return CSS_OK;
+}
+
+static css_error ns_node_is_lang(void* pw, void* node, lwc_string* lang, bool* match) {
+    NsCssNode* n = (NsCssNode*)node;
+    const char* want = lwc_string_data(lang);
+    size_t wlen = lwc_string_length(lang);
+    (void)pw;
+    *match = false;
+    if (!want || wlen == 0)
+        return CSS_OK;
+    for (; n; n = n->parent) {
+        const char* have;
+        if (n->is_text)
+            continue;
+        have = NsCssNodeAttr(n, "lang");
+        if (!have)
+            have = NsCssNodeAttr(n, "xml:lang");
+        if (have) {
+            if (!strncasecmp(have, want, wlen) && (have[wlen] == 0 || have[wlen] == '-'))
+                *match = true;
+            break;
+        }
+    }
     return CSS_OK;
 }
 
@@ -489,20 +807,20 @@ static css_select_handler s_handler = {
     ns_node_id,
     ns_named_ancestor,
     ns_named_parent,
-    ns_no_node, /* named_sibling_node: unsupported */
-    ns_no_node, /* named_generic_sibling_node: unsupported */
+    ns_named_sibling_node,
+    ns_named_generic_sibling_node,
     ns_parent_node,
     ns_sibling_node,
     ns_node_has_name,
     ns_node_has_class,
     ns_node_has_id,
-    ns_no_attr_bool,
-    ns_no_attr_val_bool,
-    ns_no_attr_val_bool,
-    ns_no_attr_val_bool,
-    ns_no_attr_val_bool,
-    ns_no_attr_val_bool,
-    ns_no_attr_val_bool,
+    ns_node_has_attribute,
+    ns_node_has_attribute_equal,
+    ns_node_has_attribute_dashmatch,
+    ns_node_has_attribute_includes,
+    ns_node_has_attribute_prefix,
+    ns_node_has_attribute_suffix,
+    ns_node_has_attribute_substring,
     ns_node_is_root,
     ns_node_count_siblings,
     ns_node_is_empty,
@@ -515,12 +833,37 @@ static css_select_handler s_handler = {
     ns_no_match_bool, /* disabled */
     ns_no_match_bool, /* checked */
     ns_no_match_bool, /* target */
-    ns_no_lang_bool,
+    ns_node_is_lang,
     ns_no_hints,
     ns_ua_default,
     ns_set_node_data,
     ns_get_node_data,
 };
+
+NsCssNode* NsCssNodeById(NsCssNode* n, const char* id) {
+    NsCssNode* c;
+    NsCssNode* found;
+    if (!n || !id || !id[0])
+        return NULL;
+    if (!n->is_text && n->id[0] && !strcmp(n->id, id))
+        return n;
+    for (c = n->first_child; c; c = c->next) {
+        found = NsCssNodeById(c, id);
+        if (found)
+            return found;
+    }
+    return NULL;
+}
+
+void NsCssReselectTree(NsCssNode* n) {
+    NsCssNode* c;
+    if (!n)
+        return;
+    if (!n->is_text)
+        NsCssSelect(n);
+    for (c = n->first_child; c; c = c->next)
+        NsCssReselectTree(c);
+}
 
 int NsCssSelect(NsCssNode* n) {
     css_select_results* sr = NULL;
@@ -885,6 +1228,453 @@ void NsCssNodeUsed(NsCssNode* n, NsCssUsed* out) {
             if (a > 255)
                 a = 255;
             out->opacity = (uint8_t)a;
+        }
+    }
+}
+
+/* ---- fully resolved box metrics for the layout engine ---- */
+
+static int ns_resolve_len(
+    css_fixed length, css_unit unit, int base, int em, int rem, int vw, int vh) {
+    int64_t v = (int64_t)length;
+    int64_t rad = (int64_t)(1 << CSS_RADIX_POINT);
+    switch (unit) {
+    case CSS_UNIT_PX:
+        return (int)(v / rad);
+    case CSS_UNIT_EM:
+        return (int)(v * em / rad);
+    case CSS_UNIT_REM:
+        return (int)(v * rem / rad);
+    case CSS_UNIT_EX:
+    case CSS_UNIT_CH:
+        return (int)(v * em / (2 * rad));
+    case CSS_UNIT_LH:
+        return (int)(v * (em + 5) / rad);
+    case CSS_UNIT_VW:
+        return (int)(v * vw / (100 * rad));
+    case CSS_UNIT_VH:
+        return (int)(v * vh / (100 * rad));
+    case CSS_UNIT_VI:
+        return (int)(v * vw / (100 * rad));
+    case CSS_UNIT_VB:
+        return (int)(v * vh / (100 * rad));
+    case CSS_UNIT_VMIN:
+        return (int)(v * (vw < vh ? vw : vh) / (100 * rad));
+    case CSS_UNIT_VMAX:
+        return (int)(v * (vw > vh ? vw : vh) / (100 * rad));
+    case CSS_UNIT_IN:
+        return (int)(v * 96 / rad);
+    case CSS_UNIT_CM:
+        return (int)(v * 3779 / (100 * rad));
+    case CSS_UNIT_MM:
+        return (int)(v * 378 / (100 * rad));
+    case CSS_UNIT_Q:
+        return (int)(v * 378 / (400 * rad));
+    case CSS_UNIT_PT:
+        return (int)(v * 4 / (3 * rad));
+    case CSS_UNIT_PC:
+        return (int)(v * 16 / rad);
+    case CSS_UNIT_PCT:
+        return (int)(v * base / (100 * rad));
+    default:
+        return 0;
+    }
+}
+
+static int ns_side_margin(css_computed_style* st, int side, int base, int em, int rem, int vw, int vh) {
+    css_fixed len = 0;
+    css_unit unit = CSS_UNIT_PX;
+    uint8_t type;
+    switch (side) {
+    case 0: type = css_computed_margin_top(st, &len, &unit); break;
+    case 1: type = css_computed_margin_right(st, &len, &unit); break;
+    case 2: type = css_computed_margin_bottom(st, &len, &unit); break;
+    default: type = css_computed_margin_left(st, &len, &unit); break;
+    }
+    if (type != CSS_MARGIN_SET)
+        return 0;
+    return ns_resolve_len(len, unit, base, em, rem, vw, vh);
+}
+
+static int ns_side_padding(css_computed_style* st, int side, int base, int em, int rem, int vw, int vh) {
+    css_fixed len = 0;
+    css_unit unit = CSS_UNIT_PX;
+    uint8_t type;
+    switch (side) {
+    case 0: type = css_computed_padding_top(st, &len, &unit); break;
+    case 1: type = css_computed_padding_right(st, &len, &unit); break;
+    case 2: type = css_computed_padding_bottom(st, &len, &unit); break;
+    default: type = css_computed_padding_left(st, &len, &unit); break;
+    }
+    if (type != CSS_PADDING_SET)
+        return 0;
+    {
+        int px = ns_resolve_len(len, unit, base, em, rem, vw, vh);
+        return px > 0 ? px : 0;
+    }
+}
+
+static int ns_side_border_width(css_computed_style* st, int side, int em, int rem, int vw, int vh) {
+    css_fixed len = 0;
+    css_unit unit = CSS_UNIT_PX;
+    uint8_t type;
+    switch (side) {
+    case 0: type = css_computed_border_top_width(st, &len, &unit); break;
+    case 1: type = css_computed_border_right_width(st, &len, &unit); break;
+    case 2: type = css_computed_border_bottom_width(st, &len, &unit); break;
+    default: type = css_computed_border_left_width(st, &len, &unit); break;
+    }
+    switch (type) {
+    case CSS_BORDER_WIDTH_THIN: return 1;
+    case CSS_BORDER_WIDTH_MEDIUM: return 3;
+    case CSS_BORDER_WIDTH_THICK: return 5;
+    case CSS_BORDER_WIDTH_WIDTH: {
+        int px = ns_resolve_len(len, unit, em, em, rem, vw, vh);
+        return px > 0 ? px : 0;
+    }
+    default:
+        return 0;
+    }
+}
+
+static uint8_t ns_side_border_style(css_computed_style* st, int side) {
+    uint8_t type;
+    switch (side) {
+    case 0: type = css_computed_border_top_style(st); break;
+    case 1: type = css_computed_border_right_style(st); break;
+    case 2: type = css_computed_border_bottom_style(st); break;
+    default: type = css_computed_border_left_style(st); break;
+    }
+    if (type == CSS_BORDER_STYLE_NONE || type == CSS_BORDER_STYLE_HIDDEN ||
+        type == CSS_BORDER_STYLE_INHERIT)
+        return 0;
+    return type;
+}
+
+static uint32_t ns_side_border_color(css_computed_style* st, int side, uint32_t current) {
+    css_color color = 0;
+    uint8_t type;
+    switch (side) {
+    case 0: type = css_computed_border_top_color(st, &color); break;
+    case 1: type = css_computed_border_right_color(st, &color); break;
+    case 2: type = css_computed_border_bottom_color(st, &color); break;
+    default: type = css_computed_border_left_color(st, &color); break;
+    }
+    if (type == CSS_BORDER_COLOR_COLOR)
+        return (uint32_t)color;
+    if (type == CSS_BORDER_COLOR_CURRENT_COLOR)
+        return current;
+    return current;
+}
+
+void NsCssNodeBoxStyle(NsCssNode* n, int base_width, int base_height,
+                       int viewport_w, int viewport_h, NsCssBoxStyle* out) {
+    css_computed_style* st;
+    int font_px;
+    int rem_px;
+    uint32_t color;
+    int i;
+    if (!out)
+        return;
+    memset(out, 0, sizeof(*out));
+    out->display = NS_DISPLAY_INLINE;
+    out->opacity = 255;
+    out->font_px = NS_CSS_BASE_PX;
+    out->line_px = NS_CSS_BASE_PX + 5;
+    out->color = 0xff202124u;
+    if (!n)
+        return;
+    st = ns_style(n);
+    if (!st)
+        return;
+
+    font_px = NsCssNodeFontPx(n);
+    rem_px = NS_CSS_BASE_PX;
+    color = NsCssNodeColor(n);
+    out->font_px = font_px;
+    out->color = color;
+    out->background = NsCssNodeBackground(n);
+
+    {
+        uint8_t disp;
+        uint8_t pos = css_computed_position(st);
+        /* CSS blockifies floated inline boxes, but that makes a floated
+         * inline-block (Google's Sign in button, for example) paint a
+         * block-width background from its own content edge.  We do not
+         * implement float placement yet, so keep the authored display and
+         * let the inline-block path size it.  Positioned boxes still need
+         * the blockified display for out-of-flow layout. */
+        if (pos == CSS_POSITION_ABSOLUTE || pos == CSS_POSITION_FIXED || n->parent == NULL)
+            disp = css_computed_display(st, n->parent == NULL);
+        else
+            disp = css_computed_display_static(st);
+        switch (disp) {
+        case CSS_DISPLAY_NONE: out->display = NS_DISPLAY_NONE; break;
+        case CSS_DISPLAY_BLOCK:
+        case CSS_DISPLAY_GRID:
+        case CSS_DISPLAY_TABLE:
+        case CSS_DISPLAY_TABLE_CAPTION:
+        case CSS_DISPLAY_TABLE_FOOTER_GROUP:
+        case CSS_DISPLAY_TABLE_HEADER_GROUP:
+        case CSS_DISPLAY_TABLE_ROW_GROUP:
+            out->display = NS_DISPLAY_BLOCK;
+            break;
+        case CSS_DISPLAY_FLEX:
+            out->display = NS_DISPLAY_BLOCK;
+            out->flex_container = 1;
+            break;
+        case CSS_DISPLAY_LIST_ITEM:
+            out->display = NS_DISPLAY_LIST_ITEM;
+            break;
+        case CSS_DISPLAY_INLINE_BLOCK:
+        case CSS_DISPLAY_INLINE_GRID:
+        case CSS_DISPLAY_INLINE_TABLE:
+            out->display = NS_DISPLAY_INLINE_BLOCK;
+            break;
+        case CSS_DISPLAY_INLINE_FLEX:
+            out->display = NS_DISPLAY_INLINE_BLOCK;
+            out->flex_container = 1;
+            break;
+        case CSS_DISPLAY_TABLE_ROW:
+            out->display = NS_DISPLAY_TABLE_ROW;
+            break;
+        case CSS_DISPLAY_TABLE_CELL:
+            out->display = NS_DISPLAY_TABLE_CELL;
+            break;
+        default:
+            out->display = NS_DISPLAY_INLINE;
+            break;
+        }
+        if (out->flex_container) {
+            uint8_t d = css_computed_flex_direction(st);
+            uint8_t j = css_computed_justify_content(st);
+            uint8_t a = css_computed_align_items(st);
+            uint8_t w = css_computed_flex_wrap(st);
+            if (d == CSS_FLEX_DIRECTION_COLUMN || d == CSS_FLEX_DIRECTION_COLUMN_REVERSE)
+                out->flex_direction = 1;
+            out->flex_wrap = w == CSS_FLEX_WRAP_WRAP || w == CSS_FLEX_WRAP_WRAP_REVERSE;
+            if (j == CSS_JUSTIFY_CONTENT_CENTER)
+                out->justify_content = 1;
+            else if (j == CSS_JUSTIFY_CONTENT_FLEX_END)
+                out->justify_content = 2;
+            else if (j == CSS_JUSTIFY_CONTENT_SPACE_BETWEEN)
+                out->justify_content = 3;
+            else if (j == CSS_JUSTIFY_CONTENT_SPACE_AROUND)
+                out->justify_content = 4;
+            else if (j == CSS_JUSTIFY_CONTENT_SPACE_EVENLY)
+                out->justify_content = 5;
+            if (a == CSS_ALIGN_ITEMS_CENTER)
+                out->align_items = 1;
+            else if (a == CSS_ALIGN_ITEMS_FLEX_END)
+                out->align_items = 2;
+            else if (a == CSS_ALIGN_ITEMS_FLEX_START)
+                out->align_items = 3;
+        }
+        {
+            uint8_t as = css_computed_align_self(st);
+            if (as == CSS_ALIGN_SELF_CENTER)
+                out->align_self = 1;
+            else if (as == CSS_ALIGN_SELF_FLEX_END)
+                out->align_self = 2;
+            else if (as == CSS_ALIGN_SELF_FLEX_START)
+                out->align_self = 3;
+            else if (as == CSS_ALIGN_SELF_STRETCH)
+                out->align_self = 4;
+        }
+        {
+            css_fixed len = 0;
+            css_unit unit = CSS_UNIT_PX;
+            uint8_t fb = css_computed_flex_basis(st, &len, &unit);
+            if (fb == CSS_FLEX_BASIS_SET) {
+                out->flex_basis = ns_resolve_len(len, unit, base_width, font_px, rem_px,
+                                                 viewport_w, viewport_h);
+                out->flex_basis_auto = 0;
+            } else {
+                out->flex_basis = 0;
+                out->flex_basis_auto = 1;
+            }
+            {
+                css_fixed num = 0;
+                css_computed_flex_grow(st, &num);
+                out->flex_grow = (int)(num >> CSS_RADIX_POINT);
+                css_computed_flex_shrink(st, &num);
+                out->flex_shrink = (int)(num >> CSS_RADIX_POINT);
+            }
+        }
+    }
+
+    out->box_sizing = css_computed_box_sizing(st) == CSS_BOX_SIZING_BORDER_BOX ? 1 : 0;
+    {
+        css_fixed len = 0;
+        css_unit unit = CSS_UNIT_PX;
+        uint8_t type = css_computed_width(st, &len, &unit);
+        if (type == CSS_WIDTH_SET) {
+            out->width = ns_resolve_len(len, unit, base_width, font_px, rem_px, viewport_w, viewport_h);
+            out->width_auto = 0;
+        } else {
+            out->width = 0;
+            out->width_auto = 1;
+        }
+    }
+    {
+        css_fixed len = 0;
+        css_unit unit = CSS_UNIT_PX;
+        uint8_t type = css_computed_height(st, &len, &unit);
+        if (type == CSS_HEIGHT_SET && !(unit == CSS_UNIT_PCT && base_height <= 0)) {
+            out->height = ns_resolve_len(len, unit, base_height, font_px, rem_px, viewport_w, viewport_h);
+            out->height_auto = 0;
+        } else {
+            out->height = 0;
+            out->height_auto = 1;
+        }
+    }
+    {
+        css_fixed len = 0;
+        css_unit unit = CSS_UNIT_PX;
+        if (css_computed_min_width(st, &len, &unit) == CSS_MIN_WIDTH_SET)
+            out->min_width = ns_resolve_len(len, unit, base_width, font_px, rem_px, viewport_w, viewport_h);
+        len = 0;
+        unit = CSS_UNIT_PX;
+        if (css_computed_max_width(st, &len, &unit) == CSS_MAX_WIDTH_SET)
+            out->max_width = ns_resolve_len(len, unit, base_width, font_px, rem_px, viewport_w, viewport_h);
+        len = 0;
+        unit = CSS_UNIT_PX;
+        if (css_computed_min_height(st, &len, &unit) == CSS_MIN_HEIGHT_SET)
+            out->min_height = ns_resolve_len(len, unit, base_height, font_px, rem_px, viewport_w, viewport_h);
+        len = 0;
+        unit = CSS_UNIT_PX;
+        if (css_computed_max_height(st, &len, &unit) == CSS_MAX_HEIGHT_SET)
+            out->max_height = ns_resolve_len(len, unit, base_height, font_px, rem_px, viewport_w, viewport_h);
+    }
+    for (i = 0; i < 4; i++) {
+        out->margin[i] = ns_side_margin(st, i, base_width, font_px, rem_px, viewport_w, viewport_h);
+        out->padding[i] = ns_side_padding(st, i, base_width, font_px, rem_px, viewport_w, viewport_h);
+        out->border_style[i] = ns_side_border_style(st, i);
+        out->border_width[i] = out->border_style[i]
+                                   ? ns_side_border_width(st, i, font_px, rem_px, viewport_w, viewport_h)
+                                   : 0;
+        out->border_color[i] = ns_side_border_color(st, i, color);
+    }
+
+    {
+        css_fixed len = 0;
+        css_unit unit = CSS_UNIT_PX;
+        uint8_t lh = css_computed_line_height(st, &len, &unit);
+        int px = font_px + 5;
+        if (lh == CSS_LINE_HEIGHT_NUMBER)
+            px = (int)(((int64_t)len * font_px) / (1 << CSS_RADIX_POINT));
+        else if (lh == CSS_LINE_HEIGHT_DIMENSION)
+            px = ns_resolve_len(len, unit, font_px, font_px, rem_px, viewport_w, viewport_h);
+        if (px < font_px + 2)
+            px = font_px + 2;
+        if (px > 80)
+            px = 80;
+        out->line_px = px;
+    }
+
+    {
+        uint8_t a = css_computed_text_align(st);
+        if (a == CSS_TEXT_ALIGN_CENTER || a == CSS_TEXT_ALIGN_LIBCSS_CENTER)
+            out->text_align = 1;
+        else if (a == CSS_TEXT_ALIGN_RIGHT || a == CSS_TEXT_ALIGN_LIBCSS_RIGHT)
+            out->text_align = 2;
+    }
+    {
+        uint8_t ws = css_computed_white_space(st);
+        out->white_space_pre = (ws == CSS_WHITE_SPACE_PRE || ws == CSS_WHITE_SPACE_PRE_WRAP ||
+                                ws == CSS_WHITE_SPACE_PRE_LINE);
+        out->white_space_nowrap = (ws == CSS_WHITE_SPACE_NOWRAP || ws == CSS_WHITE_SPACE_PRE);
+    }
+    {
+        uint8_t lt = css_computed_list_style_type(st);
+        if (lt == CSS_LIST_STYLE_TYPE_NONE)
+            out->list_type = 0;
+        else if (lt == CSS_LIST_STYLE_TYPE_CIRCLE)
+            out->list_type = 2;
+        else if (lt == CSS_LIST_STYLE_TYPE_SQUARE)
+            out->list_type = 3;
+        else if (lt == CSS_LIST_STYLE_TYPE_DECIMAL || lt == CSS_LIST_STYLE_TYPE_DECIMAL_LEADING_ZERO)
+            out->list_type = 4;
+        else
+            out->list_type = 1;
+    }
+    {
+        uint8_t w = css_computed_font_weight(st);
+        uint8_t s = css_computed_font_style(st);
+        uint8_t d = css_computed_text_decoration(st);
+        if (w == CSS_FONT_WEIGHT_BOLD || w == CSS_FONT_WEIGHT_BOLDER || w >= CSS_FONT_WEIGHT_600)
+            out->decor |= NS_CSS_BOLD;
+        if (s == CSS_FONT_STYLE_ITALIC || s == CSS_FONT_STYLE_OBLIQUE)
+            out->decor |= NS_CSS_ITALIC;
+        if (d & CSS_TEXT_DECORATION_UNDERLINE)
+            out->decor |= NS_CSS_UNDER;
+        if (d & CSS_TEXT_DECORATION_LINE_THROUGH)
+            out->decor |= NS_CSS_STRIKE;
+        if (d & CSS_TEXT_DECORATION_OVERLINE)
+            out->decor |= NS_CSS_OVER;
+    }
+    {
+        uint8_t pos = css_computed_position(st);
+        if (pos == CSS_POSITION_ABSOLUTE)
+            out->position = NS_POS_ABSOLUTE;
+        else if (pos == CSS_POSITION_FIXED)
+            out->position = NS_POS_FIXED;
+        else if (pos == CSS_POSITION_RELATIVE)
+            out->position = NS_POS_RELATIVE;
+        out->top_auto = out->right_auto = out->bottom_auto = out->left_auto = 1;
+        {
+            css_fixed len = 0;
+            css_unit unit = CSS_UNIT_PX;
+            uint8_t t = css_computed_top(st, &len, &unit);
+            if (t == CSS_TOP_SET) {
+                out->top = ns_resolve_len(len, unit, base_height, font_px, rem_px,
+                                          viewport_w, viewport_h);
+                out->top_auto = 0;
+            }
+            len = 0;
+            unit = CSS_UNIT_PX;
+            t = css_computed_right(st, &len, &unit);
+            if (t == CSS_RIGHT_SET) {
+                out->right = ns_resolve_len(len, unit, base_width, font_px, rem_px,
+                                            viewport_w, viewport_h);
+                out->right_auto = 0;
+            }
+            len = 0;
+            unit = CSS_UNIT_PX;
+            t = css_computed_bottom(st, &len, &unit);
+            if (t == CSS_BOTTOM_SET) {
+                out->bottom = ns_resolve_len(len, unit, base_height, font_px, rem_px,
+                                             viewport_w, viewport_h);
+                out->bottom_auto = 0;
+            }
+            len = 0;
+            unit = CSS_UNIT_PX;
+            t = css_computed_left(st, &len, &unit);
+            if (t == CSS_LEFT_SET) {
+                out->left = ns_resolve_len(len, unit, base_width, font_px, rem_px,
+                                           viewport_w, viewport_h);
+                out->left_auto = 0;
+            }
+            t = css_computed_z_index(st, (int32_t*)&out->z_index);
+            out->z_index_auto = (t != CSS_Z_INDEX_SET);
+        }
+        {
+            uint8_t fl = css_computed_float(st);
+            if (fl == CSS_FLOAT_LEFT)
+                out->float_side = 1;
+            else if (fl == CSS_FLOAT_RIGHT)
+                out->float_side = 2;
+        }
+    }
+    {
+        css_fixed op = 0;
+        if (css_computed_opacity(st, &op) == CSS_OPACITY_SET) {
+            int a = (int)(((int64_t)op * 255) / (1 << CSS_RADIX_POINT));
+            if (a < 0)
+                a = 0;
+            if (a > 255)
+                a = 255;
+            out->opacity = a;
         }
     }
 }
