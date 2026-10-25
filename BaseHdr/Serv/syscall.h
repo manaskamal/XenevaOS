@@ -84,8 +84,9 @@
 #define SYS_SEND_SIGNAL_TO_THREAD		80
 #define SYS_THREAD_WAIT_FOR_TERMINATION 81
 #define SYS_KERNEL_UNAME				82
+#define SYS_FILE_POLL					83
 
-#define SYS_MAX_SYSCALL 83
+#define SYS_MAX_SYSCALL 84
 
 /* Backward-compat alias */
 #define AURORA_MAX_SYSCALL SYS_MAX_SYSCALL

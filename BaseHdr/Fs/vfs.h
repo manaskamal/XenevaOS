@@ -37,6 +37,7 @@
 #include <aurora.h>
 #include <Cred/group.h>
 #include <Cred/user.h>
+#include <Sync/poll.h>
 
 #define FS_FLAG_DIRECTORY			(1 << 1)  //temporary/freeable
 #define FS_FLAG_GENERAL				(1 << 2)  //tempoary/freeable
@@ -107,6 +108,9 @@ typedef uint32_t (*get_disk_block)(struct __VFS_NODE__* fs,
 typedef size_t (*fs_getblockfor)(struct __VFS_NODE__* fs,
 								 struct __VFS_NODE__* file,
 								 uint64_t offset);
+typedef int (*poll_callback)(struct __VFS_NODE__* fs,
+							 struct __VFS_NODE__* file,
+							 AuPollTable* table);
 
 //#pragma pack(push,1)
 typedef struct __VFS_NODE__ {
@@ -141,6 +145,7 @@ typedef struct __VFS_NODE__ {
 	get_disk_block get_disk_block;
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
+	poll_callback poll;
 } AuVFSNode;
 //#pragma pack(pop)
 
@@ -318,5 +323,12 @@ AU_EXTERN AU_EXPORT size_t AuVFSGetBlockFor(AuVFSNode* node, AuVFSNode* file, ui
  * @return zero on success, one on failure
  */
 AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node, UID_NUM uid, GID_NUM gid);
+
+/**
+ * @brief AuVFSPoll -- poll callback interface 
+ * @param file -- pointer to pollable file
+ * @param pt -- Pointer to PollTable holding information about caller
+ */
+AU_EXTERN AU_EXPORT int AuVFSPoll(AuVFSNode* file, AuPollTable* pt);
 
 #endif

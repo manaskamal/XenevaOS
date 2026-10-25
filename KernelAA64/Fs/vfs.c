@@ -436,3 +436,17 @@ AU_EXTERN AU_EXPORT int AuVFSSetCred(AuVFSNode* node, UID_NUM uid, GID_NUM gid) 
 	node->gid = gid;
 	return 0;
 }
+
+/**
+ * @brief AuVFSPoll -- poll callback interface 
+ * @param file -- pointer to pollable file
+ * @param pt -- Pointer to PollTable holding information about caller
+ */
+AU_EXTERN AU_EXPORT int AuVFSPoll(AuVFSNode* file, AuPollTable* pt) {
+	if (!file)
+		return -1;
+	if (!pt)
+		return -1;
+	if (file->poll)
+		return file->poll(file, file, pt);
+}

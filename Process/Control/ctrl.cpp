@@ -51,6 +51,7 @@
 #include <widgets/menu.h>
 #include <widgets/textbox.h>
 #include <widgets/layout/border_layout.h>
+#include <poll.h>
 
 ChitralekhaApp* app;
 ChWindow* mainWin;
@@ -103,6 +104,21 @@ int main(int argc, char* argv[]) {
 							 100,
 							 CHITRALEKHA_DEFAULT_WIN_WIDTH + 300,
 							 CHITRALEKHA_DEFAULT_WIN_HEIGHT + 300);
+
+	_KePrint("Control app started \r\n");
+	int fd = _KeOpenFile("/dev/kybrd", FILE_OPEN_READ_ONLY);
+
+	_KePrint("Polling keyboard \r\n");
+	struct pollfd fds[1];
+	fds[0].fd = fd;
+	fds[0].events = POLLIN;
+	fds[0].revents = 0;
+	int ret = poll(fds, 1, 5000);
+	if (ret < 0) {
+		printf("POLL failed \r\n");
+	} else {
+		printf("POLL received : %d , %x\r\n", ret, fds[0].revents);
+	}
 
 	ChWindowBroadcastIcon(app, "/icons/gear.bmp");
 

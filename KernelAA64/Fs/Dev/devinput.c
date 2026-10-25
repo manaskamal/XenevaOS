@@ -35,6 +35,8 @@
 #include <Mm/kmalloc.h>
 #include <aurora.h>
 #include <aucon.h>
+#include <Sync/poll.h>
+#include <Drivers/uart.h>
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -177,8 +179,8 @@ static int AuDevInputRingIoControl(AuVFSNode* file, int code, void* arg) {
 	stats->keyboard_dropped = keyboard_ring.dropped;
 	stats->mouse_pending =
 		(mouse_ring.write + NUM_INPUT_RING_PACKETS - mouse_ring.read) % NUM_INPUT_RING_PACKETS;
-	stats->keyboard_pending =
-		(keyboard_ring.write + NUM_INPUT_RING_PACKETS - keyboard_ring.read) % NUM_INPUT_RING_PACKETS;
+	stats->keyboard_pending = (keyboard_ring.write + NUM_INPUT_RING_PACKETS - keyboard_ring.read) %
+							  NUM_INPUT_RING_PACKETS;
 	return 1;
 }
 
@@ -249,6 +251,10 @@ size_t AuDevInputKybrdRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uin
 	return (sizeof(AuInputMessage));
 }
 
+int AuDevInputKybrdPoll(AuVFSNode* fs, AuVFSNode* file, AuPollTable* pt) {
+	UARTDebugOut("KybrdPolling\r\n");
+	return 0;
+}
 /*
  * AuDevMouseIoControl -- controls the mouse device by command
  * @param file -- Pointer to mouse file
@@ -307,7 +313,7 @@ void AuDevInputInitialise() {
 	memset(keybuf, 0, sizeof(AuInputMessage));
 
 	kbd_r = kbd_w = 0;
-	
+
 	kybrd_ = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	memset(kybrd_, 0, sizeof(AuVFSNode));
 	strcpy(kybrd_->filename, "kybrd");
@@ -315,6 +321,7 @@ void AuDevInputInitialise() {
 	kybrd_->device = keybuf;
 	kybrd_->read = AuDevInputKybrdRead;
 	kybrd_->write = AuDevInputKybrdWrite;
+	kybrd_->poll = &AuDevInputKybrdPoll;
 	AuDevFSAddFile(devfs, "/", kybrd_);
 
 	memset(&mouse_ring, 0, sizeof(mouse_ring));

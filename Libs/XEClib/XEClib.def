@@ -1,0 +1,498 @@
+EXPORTS
+acosf
+??_C@_02NJNOFBBI@?$CFx?$AA@
+??_C@_0M@CDHNGIPM@?$CFu?4?$CFu?4?$CFu?4?$CFu?$AA@
+??_C@_0M@PCENNPGA@?$CFd?4?$CFd?4?$CFd?4?$CFd?$AA@
+htonl
+htons
+inet_addr
+inet_ntoa
+inet_ntop
+inet_pton
+ntohl
+ntohs
+atan2f
+??_C@_0BE@HOJMODOA@Evaluating?5float?5?$AN?6?$AA@
+atanf
+??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ
+??0Init@ios_base@std@@QEAA@XZ
+??0ios_base@std@@IEAA@XZ
+??1Init@ios_base@std@@QEAA@XZ
+?refCount@Init@ios_base@std@@0HA
+?cerr@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
+?cin@std@@3V?$basic_istream@DU?$char_traits@D@std@@@1@A
+?clog@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
+?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
+??0?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
+??1?$basic_istream@DU?$char_traits@D@std@@@std@@UEAA@XZ
+??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@AEAD@Z
+??5?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@PEAD@Z
+??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@
+??_G?$basic_istream@DU?$char_traits@D@std@@@std@@UEAAPEAXI@Z
+??0?$allocator@D@std@@QEAA@AEBV01@@Z
+??0?$allocator@D@std@@QEAA@XZ
+??1?$allocator@D@std@@QEAA@XZ
+?address@?$allocator@D@std@@QEBAPEADAEAD@Z
+?address@?$allocator@D@std@@QEBAPEBDAEBD@Z
+?allocate@?$allocator@D@std@@QEBAPEAD_KPEBX@Z
+?deallocate@?$allocator@D@std@@QEBAXPEAD_K@Z
+?max_size@?$allocator@D@std@@QEBA_KXZ
+??2@YAPEAX_K@Z
+??2@YAPEAX_KPEAX@Z
+??3@YAXPEAX@Z
+??3@YAXPEAX_K@Z
+??_U@YAPEAX_K@Z
+??_V@YAXPEAX@Z
+??_V@YAXPEAX_K@Z
+??0?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA@PEAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z
+??1?$basic_ostream@DU?$char_traits@D@std@@@std@@UEAA@XZ
+??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@D@Z
+??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@P6AAEAV01@AEAV01@@Z@Z
+??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@PEBD@Z
+??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@
+??_G?$basic_ostream@DU?$char_traits@D@std@@@std@@UEAAPEAXI@Z
+?endl@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@AEAV21@@Z
+??$?5DU?$char_traits@D@std@@@std@@YAAEAV?$basic_istream@DU?$char_traits@D@std@@@0@AEAV10@AEAV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z
+??$?6DU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z
+??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV?$allocator@D@1@@Z
+??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBDAEBV?$allocator@D@1@@Z
+??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@AEBV01@@Z
+??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@D@Z
+??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@PEBD@Z
+?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ
+?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+ceilf
+?isalnum@@YAHH@Z
+?isgraph@@YAHH@Z
+?ispunct@@YAHH@Z
+isalpha
+isascii
+isdigit
+islower
+isprint
+isspace
+isupper
+isxdigit
+tolower
+toupper
+?_errno_loc@@3HA
+__errno_location
+fmodf
+__real@401921fb54442d18
+__real@c01921fb54442d18
+ceil
+cos
+cosf
+fabs
+fabsf
+floor
+floorf
+fmaxf
+fminf
+fmod
+fpclassify
+frexp
+modf
+pow
+sin
+sinf
+sqrt
+sqrtf
+tan
+tanf
+qsort
+roundf
+??_C@_04HPJPFOAK@pthr?$AA@
+??_C@_0BD@CHNIMNNH@pthread?5id?5?3?5?$CFd?5?$AN?6?$AA@
+?pthread_kill@@YAHPEAUpthread_t@@H@Z
+gettid
+pthread_attr_destroy
+pthread_attr_init
+pthread_cleanup_pop
+pthread_cleanup_push
+pthread_create
+pthread_exit
+pthread_join
+pthread_mutex_destroy
+pthread_mutex_init
+pthread_mutex_lock
+pthread_mutex_trylock
+pthread_mutex_unlock
+pthread_rwlock_destroy
+pthread_rwlock_init
+pthread_rwlock_rdlock
+pthread_rwlock_unlock
+pthread_rwlock_wrlock
+mkdir
+stat
+??_C@_01EEMJAFIK@?6?$AA@
+??_C@_01KDCPPGHE@r?$AA@
+??_C@_01MCMALHOG@a?$AA@
+??_C@_01NOFIACDB@w?$AA@
+??_C@_02BOGAIONP@ab?$AA@
+??_C@_02CBLLGHLK@r?$CL?$AA@
+??_C@_02CHHAKFFB@w?$CL?$AA@
+??_C@_02GMLFBBN@wb?$AA@
+??_C@_02JDPG@rb?$AA@
+??_C@_03BFHAFKOB@wb?$CL?$AA@
+??_C@_03CCKOKKND@rb?$CL?$AA@
+??_C@_03ELIABIOC@w?$CLb?$AA@
+??_C@_03HMFOOINA@r?$CLb?$AA@
+fclose
+fflush
+fgetc
+fopen
+fprintf
+fputc
+fputs
+fread
+fseek
+ftell
+fwrite
+getchar
+printf
+putchar
+puts
+remove
+rename
+scanf
+snprintf
+sprintf
+sscanf
+vfprintf
+vprintf
+vsnprintf
+vsprintf
+??_C@_0BB@JGGOGLEG@0123456789ABCDEF?$AA@
+??_C@_0O@MPIOBANB@Exiting?5app?5?6?$AA@
+abort
+abs
+atexit
+atof
+atoi
+exit
+getenv
+itoa_s
+mblen
+mbstowcs
+mbtowc
+rand
+setenv
+strtol
+strtoul
+system
+sztoa
+wcstombs
+wctomb
+??_C@_0BF@CCNKCALD@Not?5implemented?5yet?4?$AA@
+?memmove_aarch64@@YAPEAXPEAXPEBX_K@Z
+?memmove_x64@@YAPEAXPEAXPEBX_K@Z
+?strchrnul@@YAPEADPEBDH@Z
+bcopy
+bzero
+ffs
+memchr
+memcmp
+memcpy
+memmove
+memset
+strcasecmp
+strcasestr
+strcat
+strchr
+strcmp
+strcpy
+strdup
+strerror
+strlen
+strncasecmp
+strncat
+strncmp
+strncpy
+strnlen
+strrchr
+strspn
+strstr
+strtok
+strtok_r
+strtoll
+??_C@_07EBPGIHEF@1?41?41?41?$AA@
+??_C@_07PBILKAFL@Success?$AA@
+??_C@_08NMOCIGEE@10?40?42?43?$AA@
+??_C@_0BB@PLIOHFJO@?1etc?1resolv?4conf?$AA@
+??_C@_0BG@OGONHNL@Service?5not?5supported?$AA@
+??_C@_0BI@CPONNOAA@ai_family?5not?5supported?$AA@
+??_C@_0BK@MJIEFJMM@Memory?5allocation?5failure?$AA@
+??_C@_0BK@PDEECNKM@Name?5or?5service?5not?5known?$AA@
+??_C@_0BL@DNGFJFPA@Invalid?5value?5for?5ai_flags?$AA@
+??_C@_0CF@FIBIIKHD@Temporary?5failure?5in?5name?5resolu@
+??_C@_0CL@JIKNKGGC@Non?9recoverable?5failure?5in?5name?5@
+??_C@_0L@IGDCFOEA@nameserver?$AA@
+??_C@_0M@IALDPNG@?1resolv?4cnf?$AA@
+??_C@_0N@OKLAIGCC@?1resolv?4conf?$AA@
+??_C@_0O@NIPGCINC@Unknown?5error?$AA@
+?recv@@YA_JHPEAX_KH@Z
+__real@0000000400000001
+__real@0000001000000003
+freeaddrinfo
+gai_strerror
+getaddrinfo
+gethostbyname
+recvfrom
+sendto
+xe_dns_last_server
+??_C@_03KOIMFPNC@?3?31?$AA@
+??_C@_09IPAEKDAI@localhost?$AA@
+??_C@_09PFCHIMEP@127?40?40?41?$AA@
+??_C@_0BD@CPIIKBDH@audio?4xr?4localhost?$AA@
+??_C@_0BG@PLANOJO@tracking?4xr?4localhost?$AA@
+??_C@_0BI@MFDHFOLB@compositor?4xr?4localhost?$AA@
+??_C@_0L@NDODNOED@?4localhost?$AA@
+?xe_hosts_lookup@@YAHPEBDPEAH1QEAY0BA@EH@Z
+?xe_free_page@@YAXPEAXH@Z
+?xe_request_page@@YAPEAXH@Z
+__xmm@00000000000000400000000000001000
+calloc
+dlbulk_free
+dlcalloc
+dlfree
+dlindependent_calloc
+dlindependent_comalloc
+dlmalloc
+dlmalloc_footprint
+dlmalloc_footprint_limit
+dlmalloc_max_footprint
+dlmalloc_set_footprint_limit
+dlmalloc_trim
+dlmalloc_usable_size
+dlmallopt
+dlmemalign
+dlposix_memalign
+dlpvalloc
+dlrealloc
+dlrealloc_in_place
+dlvalloc
+free
+malloc
+realloc
+??_C@_0BA@GBPNBPAA@ptr?5?9?$DO?5?$CFx?5?5?$CFx?$AN?6?$AA@
+??_C@_0BF@NGOANCBM@Creating?5heap?5mem?5?$AN?6?$AA@
+??_C@_0BG@CNNMKHPN@ProcHeap?5end?5?9?$DO?5?$CFd?5?$AN?6?$AA@
+??_C@_0BH@JPNHMLNB@Proc?5Heap?5len?5?9?$DO?5?$CFd?5?$AN?6?$AA@
+??_C@_0BK@BNBKBHPF@Process?5Heap?5Segment?5?$CFx?$AN?6?$AA@
+??_C@_0BN@KMIJNHHL@_ProcHeapMem?5is?50?5?9?$DO?5?$CFd?5?$CFd?$AN?6?$AA@
+??_C@_0BO@DFEAOCEO@Out?5of?5Process?5Heap?5Memory?5?$AN?6?$AA@
+??_C@_0BO@MCEEAOLM@Process?5Heap?5segment?5?9?$DO?5?$CFx?5?$AN?6?$AA@
+??_C@_0BP@BOLKNAIM@Process?5Heap?5Area?5destroyed?5?$AN?6?$AA@
+??_C@_0CC@MLFDOPFJ@Returning?5error?5heap?5mem?5?9?$DO?5?$CFd?5?$AN@
+?ProcCreateHeapArea@@YAX_K@Z
+?_ProcGetHeapMem@@YA_K_K@Z
+?_ProcHeapAreaDestroy@@YAXXZ
+?_ProcHeapAreaExpand@@YAXH@Z
+?_ProcHeapMemUnmap@@YAXPEAX_K@Z
+?_initialized@@3DA
+??_C@_05JPPLNOIE@?$CFs?$DN?$CFs?$AA@
+_XEGetEnvironmentVariable
+_XEPutEnvironmentVariable
+_XESetEnvironmentVariable
+_fltused
+?dayOfWeek@@YAHIII@Z
+asctime
+clock
+ctime
+difftime
+gmtime
+mktime
+nanosleep
+sleep
+time
+??_C@_02MDDDDAID@0x?$AA@
+_xeinput
+??_C@_06LHGEHABH@?$CINULL?$CJ?$AA@
+__real@3fb999999999999a
+_dbl2str
+_digits
+_flt2str
+_ldigits
+_lnum2str
+_num2str
+_str2num
+_xeprint
+strtod
+strtof
+__CxxFrameHandler3
+__std_terminate
+longjmp
+setjmp
+_store_stack_param
+_store_stack_param_snprintf
+_store_stack_param_sprintf
+_KeCloseFile
+_KeCreateDir
+_KeCreatePipe
+_KeCreateProcess
+_KeCreateSharedMem
+_KeCreateTTY
+_KeCreateThread
+_KeCreateTimer
+_KeCredAddSGroup
+_KeCredChangeID
+_KeCredGetCap
+_KeCredSetCap
+_KeDestroyTimer
+_KeExitSubThread
+_KeFileIoControl
+_KeFileSetOffset
+_KeFileStat
+_KeGetCurrentMS
+_KeGetCurrentTime
+_KeGetCurrentUS
+_KeGetEnvironmentBlock
+_KeGetFontID
+_KeGetFontSize
+_KeGetGlobalGroupID
+_KeGetITimer
+_KeGetNumFonts
+_KeGetNumProcessCount
+_KeGetProcessHeapMem
+_KeGetProcessID
+_KeGetStorageDiskInfo
+_KeGetStoragePartitionInfo
+_KeGetSystemTimerTick
+_KeGetThreadID
+_KeGetWalltime
+_KeMemMap
+_KeMemMapDirty
+_KeMemUnmap
+_KeObtainSharedMem
+_KeOpenDir
+_KeOpenFile
+_KePauseThread
+_KePowerDown
+_KePowerReset
+_KePrint
+_KeProcessExit
+_KeProcessFetch
+_KeProcessGetFileDesc
+_KeProcessHeapUnmap
+_KeProcessLoadExec
+_KeProcessSleep
+_KeProcessTokenAddSelf
+_KeProcessTokenGetThreadID
+_KeProcessTokenRemoveSelf
+_KeProcessWaitForTermination
+_KeReadDir
+_KeReadFile
+_KeRemoveFile
+_KeSendSignal
+_KeSendSignalToThread
+_KeSetAlarm
+_KeSetFileToProcess
+_KeSetGID
+_KeSetITimer
+_KeSetSignal
+_KeSetUID
+_KeSetWalltime
+_KeStartTimer
+_KeStopTimer
+_KeThreadWaitForTermination
+_KeUnmapSharedMem
+_KeWriteFile
+_PthreadSetParam
+__chkstk
+accept
+bind
+connect
+gettimeofday
+listen
+poll
+receive
+send
+socket
+socket_setopt
+uname
+    _KePrint
+    _KeProcessExit
+    _KePauseThread
+    _KeGetThreadID
+    _KeGetProcessID
+    _KeProcessWaitForTermination
+    _KeCreateProcess
+    _KeProcessLoadExec
+    _KeProcessSleep
+    _KeCreateSharedMem
+    _KeObtainSharedMem
+    _KeUnmapSharedMem
+    _KeMemMap
+    _KeMemUnmap
+    _KeGetProcessHeapMem
+    _KeOpenFile
+    _KeReadFile
+    _KeWriteFile
+    _KeCreateDir
+    _KeRemoveFile
+    _KeCloseFile
+    _KeFileIoControl
+    _KeFileStat
+    _KeGetSystemTimerTick
+    _KeGetFontID
+    _KeGetNumFonts
+    _KeGetFontSize
+    _KeMemMapDirty
+    _KeCreateTTY
+    _KeCreateThread
+    _KeSetFileToProcess
+    _KeProcessHeapUnmap
+    _KeSendSignal
+    _KeSetSignal
+    _KeGetCurrentTime
+    _KeOpenDir
+    _KeReadDir
+    _KeCreateTimer
+    _KeStartTimer
+    _KeStopTimer
+    _KeDestroyTimer
+    _KeProcessGetFileDesc
+    _KeFileSetOffset
+    _KeProcessTokenAddSelf
+    _KeProcessTokenGetThreadID
+    _KeProcessTokenRemoveSelf
+    gettimeofday
+    socket
+    connect
+    send
+    receive
+    socket_setopt
+    bind
+    accept
+    listen
+    _KeCreatePipe
+    _KeGetStorageDiskInfo
+    _KeGetStoragePartitionInfo
+    _KeGetEnvironmentBlock
+    setjmp
+    longjmp
+    _KeGetCurrentUS
+    _KeGetCurrentMS
+    _KeSetAlarm
+    _KeGetITimer
+    _KeSetITimer
+    _KeGetNumProcessCount
+    _KeProcessFetch
+    _KeSetWalltime
+    _KeGetWalltime
+    _KeCredChangeID
+    _KeCredAddSGroup
+    _KeCredSetCap
+    _KeCredGetCap
+    _KeSetUID
+    _KeSetGID
+    _KeGetGlobalGroupID
+    _KePowerDown
+    _KePowerReset
+    _KeExitSubThread
+    _KeSendSignalToThread
+    _KeThreadWaitForTermination
+    uname
+    poll

@@ -27,6 +27,8 @@
 *
 **/
 
+#define _USE_FREETYPE 1
+
 #include <_xeneva.h>
 #include <sys/_keproc.h>
 #include <sys/_kefile.h>
