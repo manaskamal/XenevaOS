@@ -88,7 +88,7 @@ XE_EXTERN {
 		uint32_t color_hover_bg;
 		uint32_t color_label_text;
 
-		//OnSelect
+		void (*OnSelect)(struct _grid_view_* gv, ChWindow* win, int index, ChGridCell* cell);
 	} ChGridView;
 
 	XE_EXPORT ChGridView* ChGridViewCreate(

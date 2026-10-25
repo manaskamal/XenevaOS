@@ -576,6 +576,8 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 			for (int i = 0; i < win->widgets->pointer; i++) {
 				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (!widget->visible)
+					continue;
 				if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
 					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
 					widget->hover = true;
