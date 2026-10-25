@@ -77,17 +77,12 @@ void GlimpsePaintTitlebar(ChWindow* win) {
 }
 
 void GlimpseWindowPaint(ChWindow* win) {
-	GlimpBox* glimp = _Glimpse_get_main_glimp();
-
 	ChDrawRect(win->canv, 0, 0, win->info->width, win->info->height, win->color);
-
-	if (glimp)
-		_Glimpse_box_repaint(glimp, win);
 
 	/** draw all widgets */
 	for (int i = 0; i < win->widgets->pointer; i++) {
 		ChWidget* wid = (ChWidget*)list_get_at(win->widgets, i);
-		if (wid->ChPaintHandler)
+		if (wid->visible && wid->ChPaintHandler)
 			wid->ChPaintHandler(wid, win);
 	}
 
