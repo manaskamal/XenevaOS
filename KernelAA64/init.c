@@ -273,7 +273,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #if defined(__TARGET_BOARD_QEMU_VIRT__) && !defined(__XENEVA_BYPASS_VIRTIO_INPUT__)
 	/* for qemu virt board, virtIO inputs are used.  On the vendored-input
 	 * build these PCI functions belong to DCL's virtio scan instead. */
-	AuVirtIOInputInitialize();
+//	AuVirtIOInputInitialize();
 #endif
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
