@@ -37,6 +37,7 @@
 #include <process.h>
 #include <Drivers/uart.h>
 #include <_null.h>
+#include <Mm/kmalloc.h>
 
 #define POLL_MAX_FD_MONITOR 1024
 
@@ -56,6 +57,28 @@ AuVFSNode* AuPollGetFile(AA64Thread* thr, int fd) {
 	if (!file) //bad file descriptor
 		return NULL;
 	return file;
+}
+
+/**
+ * @brief AuPollWait -- helper function to create a wait queue
+ * @param q -- Pointer to queue
+ * @param pt -- Pointer to PollTable
+ */
+void AuPollWait(AuWaitQueue* q, AuPollTable* pt) {
+	if (!q || !pt)
+		return;
+	AuWaitQEntry* e = (AuWaitQEntry*)kmalloc(sizeof(AuWaitQEntry));
+	if (!e) {
+		pt->error = -1;
+		return;
+	}
+	memset(e, 0, sizeof(AuWaitQEntry));
+	e->thread = pt->thread;
+	//e->fn = pt->fn;
+	e->prev = pt->priv;
+	e->owner_next = pt->chain;
+	pt->chain = e;
+	AuWaitQueueAdd(q, e);
 }
 
 /**
@@ -83,6 +106,7 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 	pt.error = 0;
 	pt.chain = NULL;
 	pt.priv = NULL;
+	AuPollTable* config = &pt;
 
 	uint64_t deadline = 0;
 	if (timeout > 0)
@@ -90,67 +114,77 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 
 	int ready = 0;
 	uint16_t mask = 0;
-	/** check all file descriptors */
-	for (int i = 0; i < num_fd; i++) {
-		mask = 0;
-		fds[i].revents = 0;
-		if (fds[i].fd < 0)
-			continue;
-		UARTDebugOut("poll: getting file for fd: %d \r\n", fds[i].fd);
-		AuVFSNode* file = AuPollGetFile(curr_thr, fds[i].fd);
-		if (!file)
-			mask = POLLNVAL;
-		else if (file->poll) {
-			UARTDebugOut("executing file->poll %x \r\n", file->poll);
-			mask = file->poll(file, file, &pt);
+	while (1) {
+		/** check all file descriptors */
+		for (int i = 0; i < num_fd; i++) {
+			mask = 0;
+			fds[i].revents = 0;
+			if (fds[i].fd < 0)
+				continue;
+			UARTDebugOut("poll: getting file for fd: %d \r\n", fds[i].fd);
+			AuVFSNode* file = AuPollGetFile(curr_thr, fds[i].fd);
+			if (!file)
+				mask = POLLNVAL;
+			else if (file->poll) {
+				UARTDebugOut("executing file->poll %x \r\n", file->poll);
+				mask = file->poll(file, file, config);
 
-		} else
-			mask = POLLIN | POLLOUT; // regular file
+			} else
+				mask = POLLIN | POLLOUT; // regular file
 
-		/** the poll system call suggest that it revent should have
+			/** the poll system call suggest that it revent should have
             *  POLLERR | POLLHUP | POLLNVAL present
             */
-		mask &= (uint16_t)fds[i].events | POLLERR | POLLHUP | POLLNVAL;
-		fds[i].revents = mask;
-		if (mask) {
-			UARTDebugOut("making ready +=1 : %x \r\n", mask);
-			ready++;
+			mask &= (uint16_t)fds[i].events | POLLERR | POLLHUP | POLLNVAL;
+			fds[i].revents = mask;
+			if (mask) {
+				UARTDebugOut("making ready +=1 : %x \r\n", mask);
+				ready++;
+			}
 		}
-	}
+		config = NULL;
+		if (ready > 0) {
+			UARTDebugOut("ready is >0 returning : %d \r\n", ready);
+			break;
+		}
 
-	ready = 0;
-	if (ready > 0) {
-		UARTDebugOut("ready is >0 returning : %d \r\n", ready);
-		return ready;
-	}
-
-	/** check for timeout value , 0 means non-blocking and non sleeping, 
+		/** check for timeout value , 0 means non-blocking and non sleeping, 
      * -1 means forever
     */
-	if (timeout == 0) {
-		UARTDebugOut("timeout== 0, returning ready : %d \r\n", ready);
-		return ready;
+		if (timeout == 0) {
+			UARTDebugOut("timeout== 0, returning ready : %d \r\n", ready);
+			break;
+		}
+
+		if (timeout > 0 && AuGetCurrentUS() >= deadline) {
+			UARTDebugOut(
+				"timeout > 0 && currentUS > deadile : %d - %d\r\n", deadline, AuGetCurrentUS());
+			break;
+		}
+
+		/** we should also check for signal, but skipping for now */
+
+		if (timeout > 0) {
+			uint64_t now = AuGetCurrentUS();
+			uint64_t ms = (deadline > now) ? (deadline - now + 999 / 1000) : 1;
+			UARTDebugOut("timeout > 0 and sleeping now : %d ms \r\n", ms);
+			curr_thr->blocked_on_poll = 1;
+			AuSleepThread(curr_thr, ms);
+		} else {
+			UARTDebugOut("blocking thread \r\n");
+			curr_thr->blocked_on_poll = 1;
+			AuBlockThread(curr_thr);
+		}
+		AuScheduleNext();
+		curr_thr->blocked_on_poll = 0;
+		UARTDebugOut("POLL: After scheduleNext horrible??\r\n");
 	}
 
-	if (timeout > 0 && AuGetCurrentUS() >= deadline) {
-		UARTDebugOut(
-			"timeout > 0 && currentUS > deadile : %d - %d\r\n", deadline, AuGetCurrentUS());
-		return ready;
+	while (pt.chain) {
+		AuWaitQEntry* next = pt.chain->owner_next;
+		AuWaitQueueRemove(pt.chain);
+		kfree(pt.chain);
+		pt.chain = next;
 	}
-
-	/** we should also check for signal, but skipping for now */
-
-	if (timeout > 0) {
-		uint64_t now = AuGetCurrentUS();
-		uint64_t ms = (deadline > now) ? (deadline - now + 999 / 1000) : 1;
-		UARTDebugOut("timeout > 0 and sleeping now : %d ms \r\n", ms);
-		AuSleepThread(curr_thr, ms);
-	} else {
-		UARTDebugOut("blocking thread \r\n");
-		AuBlockThread(curr_thr);
-	}
-
-	AuScheduleNext();
-	UARTDebugOut("POLL: After scheduleNext horrible??\r\n");
 	return ready;
 }

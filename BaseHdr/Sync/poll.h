@@ -71,7 +71,12 @@ typedef struct _user_poll_fd {
 	short events;  /* requested events */
 	short revents; /* returned events */
 } _AuUser_PollFD;
-
+/**
+ * @brief AuPollWait -- helper function to create a wait queue
+ * @param q -- Pointer to queue
+ * @param pt -- Pointer to PollTable
+ */
+AU_EXTERN AU_EXPORT void AuPollWait(AuWaitQueue* q, AuPollTable* pt);
 /**
  * @brief AuPoll -- poll system call 
  * @param fds -- Pointer to file descriptor array

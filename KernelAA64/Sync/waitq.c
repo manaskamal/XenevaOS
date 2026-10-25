@@ -30,11 +30,20 @@
 #include <Sync/waitq.h>
 #include <_null.h>
 
+/**
+ * @brief AuWaitQueueInitialize -- initialize a queue
+ * @param queue -- Pointer to the allocated queue
+ */
 void AuWaitQueueInitialize(AuWaitQueue* queue) {
+	if (!queue)
+		return;
 	queue->head = NULL;
 }
 
 void AuWaitQueueAdd(AuWaitQueue* q, AuWaitQEntry* e) {
+	if (!q || !e)
+		return;
+
 	e->prev = NULL;
 	e->queue = q;
 	e->next = q->head;
@@ -44,6 +53,8 @@ void AuWaitQueueAdd(AuWaitQueue* q, AuWaitQEntry* e) {
 }
 
 void AuWaitQueueRemove(AuWaitQEntry* e) {
+	if (!e)
+		return;
 	//mask interrupts
 	AuWaitQueue* q = e->queue;
 	if (q) {
@@ -68,6 +79,7 @@ void AuWaitQueue_Wake(AuWaitQueue* q) {
 		AuWaitQEntry* next = e->next;
 		if (e->thread) {
 			//Unblock the thread here
+			AuThreadWakePoller(e->thread);
 		}
 		e = next;
 	}
@@ -75,6 +87,8 @@ void AuWaitQueue_Wake(AuWaitQueue* q) {
 }
 
 void AuWaitQueue_DetachAll(AuWaitQueue* q) {
+	if (!q)
+		return;
 	//mark interrupt disabled
 	AuWaitQueue_Wake(q);
 	AuWaitQEntry* e = q->head;
@@ -85,4 +99,13 @@ void AuWaitQueue_DetachAll(AuWaitQueue* q) {
 	}
 	q->head = NULL;
 	//unmask interrupts
+}
+
+void AuWaitQ_DestroyChain(AuWaitQEntry* chain) {
+	while (chain) {
+		AuWaitQEntry* n = chain->owner_next;
+		AuWaitQueueRemove(chain);
+		kfree(chain);
+		chain = n;
+	}
 }

@@ -37,6 +37,8 @@
 #include <aucon.h>
 #include <Sync/poll.h>
 #include <Drivers/uart.h>
+#include <Sync/waitq.h>
+#include <string.h>
 
 AuVFSNode* mice_;
 AuVFSNode* kybrd_;
@@ -45,6 +47,8 @@ AuVFSNode* kybrd_;
 static AuInputRing mouse_ring;
 static AuInputRing keyboard_ring;
 static uint8_t ring_read_preference;
+static AuWaitQueue* kybrdWaitQueue;
+static bool _key_test = 0;
 
 static void AuDevInputRingPublish(AuInputRing* ring, AuInputMessage* msg) {
 	if (!msg)
@@ -141,6 +145,10 @@ void AuDevWriteKybrd(AuInputMessage* outmsg) {
 	if (cnext == console_kbd_r)
 		console_kbd_r = (console_kbd_r + 1) % NUM_KEYBOARD_PACKETS;
 	memcpy(&console_kbd_q[console_kbd_w], outmsg, sizeof(AuInputMessage));
+
+	//wake all the pollers
+	AuWaitQueue_Wake(kybrdWaitQueue);
+
 	console_kbd_w = cnext;
 }
 
@@ -252,7 +260,11 @@ size_t AuDevInputKybrdRead(AuVFSNode* fs, AuVFSNode* file, uint64_t* buffer, uin
 }
 
 int AuDevInputKybrdPoll(AuVFSNode* fs, AuVFSNode* file, AuPollTable* pt) {
-	UARTDebugOut("KybrdPolling\r\n");
+	AuPollWait(kybrdWaitQueue, pt);
+	if (_key_test) {
+		_key_test = 0;
+		return POLLIN;
+	}
 	return 0;
 }
 /*
@@ -335,5 +347,8 @@ void AuDevInputInitialise() {
 	ring->read = AuDevInputRingRead;
 	ring->iocontrol = AuDevInputRingIoControl;
 	AuDevFSAddFile(devfs, "/", ring);
+	_key_test = 0;
+	kybrdWaitQueue = (AuWaitQueue*)kmalloc(sizeof(AuWaitQueue));
+
 	AuTextOut("[aurora]: device input : kybrd, mouse, and input-ring registered \r\n");
 }

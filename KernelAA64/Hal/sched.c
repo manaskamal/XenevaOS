@@ -707,6 +707,40 @@ void AuUnblockThread(AA64Thread* thread) {
 }
 
 /**
+ * @brief AuThreadWakePoller -- wake up a thread that was left
+ * in sleep/block while polling
+ * @param t -- Pointer to thread
+ */
+void AuThreadWakePoller(AA64Thread* t) {
+	if (!t || !t->blocked_on_poll)
+		return;
+	uint64_t d = AuSchedLock();
+	bool moved = false;
+	for (AA64Thread* x = blocked_thr_head; x; x = x->next)
+		if (x == t) {
+			schedUnlink(&blocked_thr_head, &blocked_thr_last, t);
+			moved = true;
+			break;
+		}
+	if (!moved) {
+		for (AA64Thread* x = sleep_thr_head; x; x = x->next) {
+			if (x == t) {
+				t->sleepQuanta = 0;
+				schedUnlink(&sleep_thr_head, &sleep_thr_last, t);
+				moved = true;
+				break;
+			}
+		}
+	}
+	if (moved) {
+		if (t->state != THREAD_STATE_LEFT_IN_KERNEL)
+			t->state = THREAD_STATE_READY;
+		schedLink(&thread_list_head, &thread_list_last, t);
+	}
+	AuSchedUnlock(d);
+}
+
+/**
  * @brief AuSleepThread -- block a running thread
  * and put it into sleep list
  * @param thread -- Pointer to AA64 Thread

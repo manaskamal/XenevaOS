@@ -42,6 +42,7 @@ typedef struct _au_waitq_entry_ {
 	struct AuWaitQueue* queue;
 	struct _au_waitq_entry_* next;
 	struct _au_waitq_entry_* prev;
+	struct _au_waitq_entry_* owner_next;
 } AuWaitQEntry;
 
 typedef struct _au_wait_queue {
@@ -57,5 +58,7 @@ extern void AuWaitQueueRemove(AuWaitQEntry* e);
 extern void AuWaitQueue_Wake(AuWaitQueue* q);
 
 extern void AuWaitQueue_DetachAll(AuWaitQueue* q);
+
+extern void AuWaitQ_DestroyChain(AuWaitQEntry* chain);
 
 #endif

@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 	fds[0].fd = fd;
 	fds[0].events = POLLIN;
 	fds[0].revents = 0;
-	int ret = poll(fds, 1, 5000);
+	int ret = poll(fds, 1, 8000);
 	if (ret < 0) {
 		printf("POLL failed \r\n");
 	} else {
