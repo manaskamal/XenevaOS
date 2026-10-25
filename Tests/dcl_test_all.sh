@@ -41,7 +41,7 @@ EXP_VEND_O=112     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
                    #   virtio_console, input core + virtio_input, and the
                    #   drm set: core, vkms, tiny/bochs, virtio-gpu,
                    #   dma-buf, lib)
-EXP_ALL_O=275      # everything under KernelAA64/obj
+EXP_ALL_O=277      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9

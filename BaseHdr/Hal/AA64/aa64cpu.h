@@ -94,7 +94,7 @@ typedef struct AU_ALIGN(16) _aa64_fp_frame_ {
 } AA64FpFrame;
 
 #if defined(__cplusplus)
-static_assert(sizeof(AA64Registers) == 256, "AA64 register frame layout changed");
+static_assert(sizeof(AA64Registers) == 272, "AA64 register frame layout changed");
 static_assert(sizeof(AA64FpFrame) == 528, "AA64 FP frame layout changed");
 #else
 _Static_assert(sizeof(AA64Registers) == 272, "AA64 register frame layout changed");
