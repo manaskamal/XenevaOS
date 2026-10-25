@@ -47,12 +47,29 @@ void NsJsRunPending(void);				 /* </script>: eval accumulated body */
 void NsJsFlushConsole(void);			 /* drain console lines to the sink */
 void NsJsEnd(void);						 /* destroy context (rarely needed) */
 
-/* Fire due timers. Returns true if anything was output (caller repaints).
- * Drives the message loop: poll every few ms when the postbox is idle. */
+/* Fire due timers and promise jobs. Returns true if a callback ran
+ * (caller repaints). Poll every few ms when the postbox is idle. */
 bool NsJsTick(void);
 int NsJsTimerCount(void); /* armed timers, for loop heuristics */
 
+/* 1 if a script asked to load another page. Copy the URL out and clear
+ * the request. The caller fetches it after the script returns. */
+int NsJsConsumeNav(char* out, size_t outsz);
+
+/* The DOM exists only after the hubbub parse. Scripts that run during
+ * the HTML scan still see a soft document; timers that fire later see
+ * this tree. A setAttribute that changes style sets the dirty flag. */
+struct NsCssNode;
+void NsJsSetDocument(struct NsCssNode* root);
+int NsJsConsumeDirty(void);
+
 const char* NsJsVersion(void); /* "QuickJS 2026-06-04" */
+
+/* 0 when this page did not start QuickJS. Bing is one of those pages. */
+int NsJsActive(void);
+
+/* 1 when the page assigned this global to an object. */
+int NsJsDefined(const char* name);
 
 #ifdef __cplusplus
 }

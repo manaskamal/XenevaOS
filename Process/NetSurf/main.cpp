@@ -27,6 +27,8 @@
 #include <ctype.h>
 
 #include "css.h"
+#include "dom.h"
+#include "layout.h"
 #include "js.h"
 
 #include "pngdec.h"
@@ -38,7 +40,7 @@
 
 extern "C" void xe_heap_check(const char* tag);
 
-#define NS_URL_MAX	256
+#define NS_URL_MAX	2048
 #define NS_BODY_MAX (256 * 1024)
 /* Watch-page player JSON starts after ~780 KiB. The text view stays smaller. */
 #define NS_RAW_MAX (1400 * 1024)
@@ -68,6 +70,13 @@ static char s_text[NS_BODY_MAX + 1];
 static char s_view[NS_BODY_MAX + 1];
 static int s_pageTop = 0;
 static size_t s_viewStart = 0;
+static int s_layoutActive = 0;
+static int s_layoutScroll = 0;
+static NsCssNode* s_domRoot = NULL;
+static char s_docUrl[NS_URL_MAX];
+/* This document's anchor had no token. Another click must not fetch it again. */
+static char s_capAnchorUrl[NS_URL_MAX];
+static int s_capAnchorMiss;
 static ChFont* s_fontBig = NULL;
 /* Per-character style for s_text, recorded during the HTML pass. */
 static uint32_t s_col[NS_BODY_MAX + 1];
@@ -112,10 +121,15 @@ static int g_runCenter = 0;
 static uint32_t g_pageBg = 0xffffffffu;
 static int g_pageCenter = 0;
 static int s_googleHome = 0;
-#define NS_IMG_MAX 12
+#define NS_IMG_MAX 32
 static uint32_t* s_imgPx[NS_IMG_MAX];
 static int s_imgW[NS_IMG_MAX];
 static int s_imgH[NS_IMG_MAX];
+/* CSS natural size of an SVG.  The bitmap may be supersampled above this
+ * (s_imgW/s_imgH) so painting stays sharp, but layout must still treat the
+ * artwork as its authored size. */
+static int s_imgIW[NS_IMG_MAX];
+static int s_imgIH[NS_IMG_MAX];
 static char s_imgUrl[NS_IMG_MAX][512];
 static int s_nimg = 0;
 
@@ -132,6 +146,10 @@ static int s_btnHave = 0;
 static int s_btnX, s_btnY, s_btnW, s_btnH;
 static int s_luckyHave = 0;
 static int s_luckyX, s_luckyY, s_luckyW, s_luckyH;
+/* Layout-mode form control with keyboard focus and its live value. */
+static NsCssNode* s_formFocus = NULL;
+static char s_formValue[512];
+static size_t s_formCursor = 0;
 /* Anchors in s_text. x/y/w/h are filled while painting the visible slice. */
 #define NS_LINK_MAX 48
 static struct {
@@ -143,6 +161,10 @@ static int s_nlinks = 0;
 static int NsFetch(char* url);
 static void NsResolveUrl(const char* base, const char* href, char* out, size_t outsz);
 static void NsEncodeQuery(const char* in, char* out, size_t outsz);
+static void NsFormClearFocus(void);
+static void NsFormSubmit(NsCssNode* submitNode);
+static void NsCaptchaOffer(NsCssNode* root);
+static void NsCaptchaActivate(void);
 static const char kNsUa[] =
 	"Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
@@ -205,6 +227,10 @@ static int NsVisibleLines(void) {
 static void NsPageRender(void) {
 	if (!s_pageBox || !s_mainWin)
 		return;
+	if (s_layoutActive) {
+		ChTextBoxUpdate(s_pageBox, s_mainWin);
+		return;
+	}
 	/* Clamp the first visible line, then slice one viewport. */
 	int vis = NsVisibleLines();
 	int total = 0;
@@ -249,9 +275,13 @@ static void NsPageRender(void) {
 }
 
 static void NsPagePaint(ChWidget* wid, ChWindow* win) {
+	ChTextBox* tb = (ChTextBox*)wid;
+	if (s_layoutActive) {
+		NsLayoutPaint(win->canv, tb->wid.x, tb->wid.y, tb->wid.w, tb->wid.h, s_layoutScroll);
+		return;
+	}
 	/* Styled page paint: per-character color/size from the CSS pass.
      * Line stride stays 19px so the NS_PAGE_LINES scroll math holds. */
-	ChTextBox* tb = (ChTextBox*)wid;
 	uint32_t bg = g_pageBg ? g_pageBg : 0xffffffffu;
 	s_qHave = 0;
 	s_btnHave = 0;
@@ -592,6 +622,19 @@ static void NsPagePaint(ChWidget* wid, ChWindow* win) {
 }
 
 static void NsPageScroll(int delta) {
+	if (s_layoutActive) {
+		int vh = s_pageBox ? s_pageBox->wid.h : 420;
+		int max = NsLayoutPageHeight() - vh;
+		if (max < 0)
+			max = 0;
+		s_layoutScroll += delta * 19;
+		if (s_layoutScroll > max)
+			s_layoutScroll = max;
+		if (s_layoutScroll < 0)
+			s_layoutScroll = 0;
+		NsPageRender();
+		return;
+	}
 	s_pageTop += delta;
 	NsPageRender();
 }
@@ -601,6 +644,7 @@ static void NsShowStatus(const char* msg) {
 		return;
 	/* Every new page/message resets the scroll to the top. */
 	if (msg != (const char*)s_text) {
+		s_layoutActive = 0;
 		strncpy(s_text, msg, sizeof(s_text) - 1);
 		s_text[sizeof(s_text) - 1] = 0;
 		/* Unstyled message: UA white on dark, base size. */
@@ -613,6 +657,8 @@ static void NsShowStatus(const char* msg) {
 		s_nlinks = 0;
 	}
 	s_pageTop = 0;
+	if (msg == (const char*)s_text)
+		s_layoutScroll = 0;
 	NsPageRender();
 }
 
@@ -656,6 +702,34 @@ static void NsShowUrl(void) {
 		return;
 	ChTextBoxSetText(s_urlBox, s_url);
 	ChTextBoxUpdate(s_urlBox, s_mainWin);
+}
+
+/* Clicking the URL bar blurs a page form and places the edit caret at the
+ * clicked character.  Keyboard input is handled globally by NsHandleKey. */
+static void NsUrlMouseEvent(ChWidget* wid, ChWindow* win, int x, int y, int button) {
+	(void)y;
+	if (!button || !wid || !win)
+		return;
+	NsFormClearFocus();
+	int rel = x - (win->info->x + wid->x) - 4;
+	size_t i = 0;
+	int w = 0;
+	ChTextBox* tb = (ChTextBox*)wid;
+	if (rel < 0)
+		rel = 0;
+	if (tb->font) {
+		while (s_url[i]) {
+			int cw = ChFontGetWidthChar(tb->font, s_url[i]);
+			if (w + cw / 2 > rel)
+				break;
+			w += cw;
+			i++;
+		}
+	} else {
+		i = strlen(s_url);
+	}
+	s_urlCursor = i;
+	NsShowUrl();
 }
 
 /* Readability-mode HTML to text (NOT a layout engine): block tags become
@@ -805,53 +879,248 @@ static int NsImgQueue(const char* href) {
 		return -1;
 	if (!NsImgKind(href))
 		return -1;
-	NsResolveUrl(s_url, href, abs, sizeof(abs));
+	NsResolveUrl(s_docUrl[0] ? s_docUrl : s_url, href, abs, sizeof(abs));
 	if (strncmp(abs, "http://", 7) && strncmp(abs, "https://", 8))
 		return -1;
 	ix = s_nimg++;
 	snprintf(s_imgUrl[ix], sizeof(s_imgUrl[ix]), "%s", abs);
 	s_imgPx[ix] = NULL;
 	s_imgW[ix] = s_imgH[ix] = 0;
+	s_imgIW[ix] = s_imgIH[ix] = 0;
 	return ix;
 }
 
-static void NsImgFill(int ix) {
-	xe_http_response resp;
+static void NsImgDecode(int ix, xe_http_response* resp) {
 	unsigned* px = NULL;
-	int w = 0, h = 0, kind, ok;
-	size_t cap;
+	int w = 0, h = 0, iw = 0, ih = 0, kind, ok;
 	kind = NsImgKind(s_imgUrl[ix]);
-	if (!kind)
+	if (!kind || !resp || !resp->body)
 		return;
-	memset(&resp, 0, sizeof(resp));
-	cap = (kind == 3) ? (2u * 1024u * 1024u) : (512u * 1024u);
-	if (xe_http_get(s_imgUrl[ix], "GET", kNsUa, &resp, cap) != 0 || !resp.body)
-		goto done;
 	if (kind == 1)
-		ok = ns_png_decode((const unsigned char*)resp.body, resp.body_len, &px, &w, &h);
+		ok = ns_png_decode((const unsigned char*)resp->body, resp->body_len, &px, &w, &h);
 	else if (kind == 2)
-		ok = NsJpegDecode((const unsigned char*)resp.body, resp.body_len, &px, &w, &h);
+		ok = NsJpegDecode((const unsigned char*)resp->body, resp->body_len, &px, &w, &h);
 	else
-		ok = ns_svg_decode(resp.body, resp.body_len, &px, &w, &h);
+		ok = ns_svg_decode(resp->body, resp->body_len, &px, &w, &h, &iw, &ih);
 	if (ok != 0 || !px || w <= 0 || h <= 0)
 		goto done;
+	if (iw <= 0 || ih <= 0) {
+		iw = w;
+		ih = h;
+	}
 	s_imgPx[ix] = (uint32_t*)px;
 	s_imgW[ix] = w;
 	s_imgH[ix] = h;
+	s_imgIW[ix] = iw;
+	s_imgIH[ix] = ih;
 	px = NULL;
 done:
 	free(px);
-	xe_http_response_free(&resp);
 }
 
 static void NsImgFetchAll(void) {
-	int i;
-	/* Worker threads fault: the subthread returns to ELR 0, and dlmalloc
-	 * is not safe on more than one thread. Fetch on this thread. */
+	int i = 0;
+	/* One thread only. A worker returns to ELR 0, and dlmalloc is not
+	 * safe on more than one thread. Overlapped GETs stay on this thread. */
 	if (s_nimg <= 0)
 		return;
-	for (i = 0; i < s_nimg; i++)
-		NsImgFill(i);
+	_KePrint("[img] parallel %d\n", s_nimg);
+	while (i < s_nimg) {
+		const char* urls[XE_HTTP_MANY_MAX];
+		xe_http_response resp[XE_HTTP_MANY_MAX];
+		size_t caps[XE_HTTP_MANY_MAX];
+		int rcs[XE_HTTP_MANY_MAX];
+		int map[XE_HTTP_MANY_MAX];
+		int n = 0;
+		int k;
+		while (n < XE_HTTP_MANY_MAX && i < s_nimg) {
+			int kind = NsImgKind(s_imgUrl[i]);
+			if (kind) {
+				urls[n] = s_imgUrl[i];
+				caps[n] = (kind == 3) ? (2u * 1024u * 1024u) : (512u * 1024u);
+				map[n] = i;
+				n++;
+			}
+			i++;
+		}
+		if (!n)
+			continue;
+		if (xe_http_get_many(urls, n, kNsUa, resp, caps, rcs) != 0)
+			continue;
+		for (k = 0; k < n; k++) {
+			if (rcs[k] == 0 && resp[k].body)
+				NsImgDecode(map[k], &resp[k]);
+			xe_http_response_free(&resp[k]);
+		}
+	}
+}
+
+/* Inline SVG support.  Google's logo (and most current headers) is an
+ * <svg> in the DOM rather than an image URL.  Serialise the small SVG
+ * subtree and rasterise it through the same decoder used for .svg files. */
+static void NsSvgAppend(char* out, size_t cap, size_t* len, const char* text) {
+	size_t n;
+	if (!out || !len || !text)
+		return;
+	n = strlen(text);
+	if (*len + n >= cap)
+		n = cap - *len - 1;
+	if (n) {
+		memcpy(out + *len, (void*)text, n);
+		*len += n;
+	}
+}
+
+static void NsSvgAppendEscaped(char* out, size_t cap, size_t* len, const char* text) {
+	char tmp[2];
+	while (text && *text) {
+		if (*text == '&')
+			NsSvgAppend(out, cap, len, "&amp;");
+		else if (*text == '"')
+			NsSvgAppend(out, cap, len, "&quot;");
+		else if (*text == '<')
+			NsSvgAppend(out, cap, len, "&lt;");
+		else {
+			tmp[0] = *text;
+			tmp[1] = 0;
+			NsSvgAppend(out, cap, len, tmp);
+		}
+		text++;
+	}
+}
+
+static const char* NsSvgTagName(const char* tag) {
+	if (!strcmp(tag, "clippath")) return "clipPath";
+	if (!strcmp(tag, "lineargradient")) return "linearGradient";
+	if (!strcmp(tag, "radialgradient")) return "radialGradient";
+	if (!strcmp(tag, "pattern")) return "pattern";
+	if (!strcmp(tag, "textpath")) return "textPath";
+	return tag;
+}
+
+static const char* NsSvgAttrName(const char* name) {
+	if (!strcmp(name, "viewbox")) return "viewBox";
+	if (!strcmp(name, "preserveaspectratio")) return "preserveAspectRatio";
+	if (!strcmp(name, "gradientunits")) return "gradientUnits";
+	if (!strcmp(name, "gradienttransform")) return "gradientTransform";
+	if (!strcmp(name, "patternunits")) return "patternUnits";
+	if (!strcmp(name, "patterncontentunits")) return "patternContentUnits";
+	if (!strcmp(name, "patterntransform")) return "patternTransform";
+	if (!strcmp(name, "markerwidth")) return "markerWidth";
+	if (!strcmp(name, "markerheight")) return "markerHeight";
+	if (!strcmp(name, "markerunits")) return "markerUnits";
+	if (!strcmp(name, "refx")) return "refX";
+	if (!strcmp(name, "refy")) return "refY";
+	return name;
+}
+
+static bool NsSvgSelfClosing(const char* tag) {
+	return !strcmp(tag, "path") || !strcmp(tag, "rect") || !strcmp(tag, "circle") ||
+	       !strcmp(tag, "ellipse") || !strcmp(tag, "line") || !strcmp(tag, "polyline") ||
+	       !strcmp(tag, "polygon") || !strcmp(tag, "stop") || !strcmp(tag, "use");
+}
+
+static void NsSvgSerializeNode(NsCssNode* n, char* out, size_t cap, size_t* len, int depth) {
+	uint32_t i;
+	bool self;
+	if (!n || n->is_text || depth > 20)
+		return;
+	NsSvgAppend(out, cap, len, "<");
+	NsSvgAppend(out, cap, len, NsSvgTagName(n->tag));
+	for (i = 0; i < n->n_attrs; i++) {
+		const char* an = n->attrs[i].name;
+		const char* av = n->attrs[i].value;
+		if (!an || !av || !an[0])
+			continue;
+		if (!strcmp(an, "class") || !strcmp(an, "id") || !strcmp(an, "role") ||
+		    !strcmp(an, "aria-label") || !strcmp(an, "focusable") ||
+		    !strcmp(an, "aria-hidden") || !strcmp(an, "tabindex"))
+			continue;
+		NsSvgAppend(out, cap, len, " ");
+		NsSvgAppend(out, cap, len, NsSvgAttrName(an));
+		NsSvgAppend(out, cap, len, "=\"");
+		NsSvgAppendEscaped(out, cap, len, av);
+		NsSvgAppend(out, cap, len, "\"");
+	}
+	self = NsSvgSelfClosing(n->tag) || !n->first_child;
+	if (self) {
+		NsSvgAppend(out, cap, len, "/>");
+		return;
+	}
+	NsSvgAppend(out, cap, len, ">");
+	for (NsCssNode* c = n->first_child; c; c = c->next) {
+		if (c->is_text) {
+			NsSvgAppendEscaped(out, cap, len, c->text);
+			continue;
+		}
+		if (!strcmp(c->tag, "script") || !strcmp(c->tag, "style"))
+			continue;
+		NsSvgSerializeNode(c, out, cap, len, depth + 1);
+	}
+	NsSvgAppend(out, cap, len, "</");
+	NsSvgAppend(out, cap, len, NsSvgTagName(n->tag));
+	NsSvgAppend(out, cap, len, ">");
+}
+
+extern "C" const uint32_t* NsInlineSvgLookup(NsCssNode* node, int* w, int* h,
+											int* iw, int* ih) {
+	static char markup[96 * 1024];
+	size_t len = 0;
+	unsigned* px = NULL;
+	int bw = 0, bh = 0, biw = 0, bih = 0;
+	if (w) *w = 0;
+	if (h) *h = 0;
+	if (iw) *iw = 0;
+	if (ih) *ih = 0;
+	if (!node)
+		return NULL;
+	markup[0] = 0;
+	NsSvgSerializeNode(node, markup, sizeof(markup) - 1, &len, 0);
+	if (!len)
+		return NULL;
+	markup[len] = 0;
+	if (ns_svg_decode(markup, len, &px, &bw, &bh, &biw, &bih) != 0 || !px)
+		return NULL;
+	if (w) *w = bw;
+	if (h) *h = bh;
+	if (iw) *iw = biw > 0 ? biw : bw;
+	if (ih) *ih = bih > 0 ? bih : bh;
+	return px;
+}
+
+/* Called by the layout engine for every <img>.  Resolve relative URLs
+ * against the document, not the current URL-bar text. */
+extern "C" const uint32_t* NsImageLookup(const char* src, int* w, int* h,
+										 int* iw, int* ih) {
+	char abs[NS_URL_MAX * 2];
+	int i;
+	if (w)
+		*w = 0;
+	if (h)
+		*h = 0;
+	if (iw)
+		*iw = 0;
+	if (ih)
+		*ih = 0;
+	if (!src || !src[0])
+		return NULL;
+	NsResolveUrl(s_docUrl[0] ? s_docUrl : s_url, src, abs, sizeof(abs));
+	for (i = 0; i < s_nimg; i++) {
+		if (!s_imgPx[i] || s_imgW[i] <= 0 || s_imgH[i] <= 0)
+			continue;
+		if (!strcmp(s_imgUrl[i], abs) || !strcmp(s_imgUrl[i], src)) {
+			if (w)
+				*w = s_imgW[i];
+			if (h)
+				*h = s_imgH[i];
+			if (iw)
+				*iw = s_imgIW[i] > 0 ? s_imgIW[i] : s_imgW[i];
+			if (ih)
+				*ih = s_imgIH[i] > 0 ? s_imgIH[i] : s_imgH[i];
+			return s_imgPx[i];
+		}
+	}
+	return NULL;
 }
 
 static void NsEmitStr(char* dst, size_t dstsz, size_t* di, const char* s) {
@@ -1173,9 +1442,11 @@ static void NsCollectCss(const char* src, size_t srclen) {
 			continue;
 		}
 		size_t j = i + 1;
-		char tag[8];
+		/* "noscript" is 8 letters. A 7-character cap stored "noscrip",
+		 * missed the element, and kept its div{display:none} rule. */
+		char tag[16];
 		int tl = 0;
-		while (j < srclen && tl < 7 &&
+		while (j < srclen && tl < 15 &&
 			   (isalpha((unsigned char)src[j]) || isdigit((unsigned char)src[j]))) {
 			char tc = src[j];
 			if (tc >= 'A' && tc <= 'Z')
@@ -1275,8 +1546,27 @@ static bool NsContainsCI(const char* h, const char* needle) {
 }
 
 /* Resolve a stylesheet href against the page URL. */
+/* Xeneva's snprintf has no %.*s support, so prefixes are copied by hand. */
+static void NsUrlPrefix(char* dst, size_t dstsz, const char* a, size_t alen,
+						const char* b, size_t blen) {
+	if (!dst || dstsz == 0)
+		return;
+	if (alen >= dstsz)
+		alen = dstsz - 1;
+	memcpy(dst, (void*)a, alen);
+	dst[alen] = 0;
+	if (b && blen) {
+		size_t room = dstsz - alen - 1;
+		if (blen > room)
+			blen = room;
+		memcpy(dst + alen, (void*)b, blen);
+		dst[alen + blen] = 0;
+	}
+}
+
 static void NsResolveUrl(const char* base, const char* href, char* out, size_t outsz) {
 	char clean[NS_URL_MAX];
+	char prefix[NS_URL_MAX];
 	char* q;
 	char* f;
 	const char* scheme;
@@ -1294,10 +1584,12 @@ static void NsResolveUrl(const char* base, const char* href, char* out, size_t o
 	}
 	if (!strncmp(href, "//", 2)) {
 		scheme = strstr(base, "://");
-		if (scheme)
-			snprintf(out, outsz, "%.*s:%s", (int)(scheme - base), base, href);
-		else
+		if (scheme) {
+			NsUrlPrefix(prefix, sizeof(prefix), base, (size_t)(scheme - base), NULL, 0);
+			snprintf(out, outsz, "%s:%s", prefix, href);
+		} else {
 			snprintf(out, outsz, "https:%s", href);
+		}
 		return;
 	}
 	snprintf(clean, sizeof(clean), "%s", base);
@@ -1312,16 +1604,74 @@ static void NsResolveUrl(const char* base, const char* href, char* out, size_t o
 	slash = strchr(host, '/');
 	origin_len = slash ? (size_t)(slash - clean) : strlen(clean);
 	if (href[0] == '/') {
-		snprintf(out, outsz, "%.*s%s", (int)origin_len, clean, href);
+		NsUrlPrefix(prefix, sizeof(prefix), clean, origin_len, NULL, 0);
+		snprintf(out, outsz, "%s%s", prefix, href);
 		return;
 	}
 	if (slash) {
 		const char* last = strrchr(slash, '/');
 		size_t dir_len = last ? (size_t)(last - slash) + 1 : 1;
-		snprintf(out, outsz, "%.*s%.*s%s", (int)origin_len, clean,
-				 (int)dir_len, slash, href);
+		NsUrlPrefix(prefix, sizeof(prefix), clean, origin_len, slash, dir_len);
+		snprintf(out, outsz, "%s%s", prefix, href);
 	} else {
-		snprintf(out, outsz, "%.*s/%s", (int)origin_len, clean, href);
+		NsUrlPrefix(prefix, sizeof(prefix), clean, origin_len, NULL, 0);
+		snprintf(out, outsz, "%s/%s", prefix, href);
+	}
+}
+
+static int NsCssAppendFetched(xe_http_response* resp) {
+	size_t at;
+	size_t n;
+	size_t room;
+	const char* css;
+	if (!resp || !resp->body || !resp->body_len)
+		return 0;
+	at = strlen(s_cssBuf);
+	css = resp->body;
+	n = resp->body_len;
+	room = sizeof(s_cssBuf) - at - 2;
+	if (n >= 3 && (unsigned char)css[0] == 0xEF &&
+		(unsigned char)css[1] == 0xBB && (unsigned char)css[2] == 0xBF) {
+		css += 3;
+		n -= 3;
+	}
+	/* A cut sheet fails data_done and the author CSS is dropped. Copy only
+	 * what still fits, and keep the bytes that did fit. */
+	if (n > room)
+		n = room;
+	if (!n)
+		return 0;
+	memcpy(s_cssBuf + at, (void*)css, n);
+	at += n;
+	s_cssBuf[at++] = '\n';
+	s_cssBuf[at] = 0;
+	return 1;
+}
+
+/* Two stylesheets share one round trip window. A failed sheet does not
+ * count, so the scan keeps going until two have been stored. */
+static void NsCssFetchBatch(char* url0, char* url1, int n, int* fetched) {
+	const char* urls[2];
+	xe_http_response resp[2];
+	size_t caps[2];
+	int rcs[2];
+	int k;
+	if (!fetched || n <= 0)
+		return;
+	urls[0] = url0;
+	if (n > 1)
+		urls[1] = url1;
+	for (k = 0; k < n; k++) {
+		caps[k] = sizeof(s_cssBuf) - 2;
+		memset(&resp[k], 0, sizeof(resp[k]));
+	}
+	if (xe_http_get_many(urls, n, kNsUa, resp, caps, rcs) != 0)
+		return;
+	for (k = 0; k < n; k++) {
+		_KePrint("[css] link %s -> %d bytes rc=%d\n", urls[k], (int)resp[k].body_len, rcs[k]);
+		if (*fetched < 2 && rcs[k] == 0 && NsCssAppendFetched(&resp[k]))
+			(*fetched)++;
+		xe_http_response_free(&resp[k]);
 	}
 }
 
@@ -1330,6 +1680,8 @@ static void NsResolveUrl(const char* base, const char* href, char* out, size_t o
 static void NsCollectCssLinks(const char* src, size_t srclen, const char* base) {
 	int fetched = 0;
 	size_t i = 0;
+	char batch[2][NS_URL_MAX * 2];
+	int nbatch = 0;
 	while (i + 7 < srclen && fetched < 2) {
 		char href[512];
 		char rel[64];
@@ -1384,39 +1736,18 @@ static void NsCollectCssLinks(const char* src, size_t srclen, const char* base) 
 			continue;
 		}
 		NsResolveUrl(base, href, abs, sizeof(abs));
-		if (!strncmp(abs, "http://", 7) || !strncmp(abs, "https://", 8)) {
-			xe_http_response cresp;
-			int crc;
-			memset(&cresp, 0, sizeof(cresp));
-			crc = xe_http_get(abs, "GET", kNsUa, &cresp, sizeof(s_cssBuf) - 2);
-			if (crc == 0 && cresp.body && cresp.body_len) {
-				size_t at = strlen(s_cssBuf);
-				const char* css = cresp.body;
-				size_t n = cresp.body_len;
-				size_t room = sizeof(s_cssBuf) - at - 2;
-				/* A cut sheet fails data_done and the author CSS is dropped,
-				 * which is why the page came out as plain UA text. */
-				if (n >= 3 && (unsigned char)css[0] == 0xEF &&
-					(unsigned char)css[1] == 0xBB && (unsigned char)css[2] == 0xBF) {
-					css += 3;
-					n -= 3;
-				}
-				if (n > room)
-					n = room;
-				if (n) {
-					memcpy(s_cssBuf + at, (void*)css, n);
-					at += n;
-					s_cssBuf[at++] = '\n';
-					s_cssBuf[at] = 0;
-					fetched++;
-				}
+		if ((!strncmp(abs, "http://", 7) || !strncmp(abs, "https://", 8)) && nbatch < 2) {
+			snprintf(batch[nbatch], sizeof(batch[nbatch]), "%s", abs);
+			nbatch++;
+			if (nbatch == 2) {
+				NsCssFetchBatch(batch[0], batch[1], nbatch, &fetched);
+				nbatch = 0;
 			}
-			_KePrint("[css] link %s -> %d bytes rc=%d\n", abs,
-					 (int)cresp.body_len, crc);
-			xe_http_response_free(&cresp);
 		}
 		i = k + 1;
 	}
+	if (nbatch && fetched < 2)
+		NsCssFetchBatch(batch[0], batch[1], nbatch, &fetched);
 	if (fetched)
 		NsCssFixLightDark();
 }
@@ -2065,20 +2396,64 @@ static void NsEnsureHttps(char* url, size_t n) {
 	snprintf(url, n, "%s", tmp);
 }
 
+static void NsLogNav(const char* url) {
+	if (url && strstr(url, "sg_ss="))
+		_KePrint("[js] navigate %d sg=1\n", (int)strlen(url));
+	else
+		_KePrint("[js] navigate %s\n", url ? url : "");
+}
+
+/* The script's document URL has to be the host that sent the body.
+ * A google.com request that lands on www.google.com otherwise stores
+ * a host-only cookie the next request never sends. */
+static void NsAdoptLanded(char* url) {
+	char landed[3072];
+	size_t n;
+	if (!url)
+		return;
+	landed[0] = 0;
+	xe_http_last_url(landed, sizeof(landed));
+	n = strlen(landed);
+	if (n == 0 || n >= NS_URL_MAX)
+		return;
+	if (strncmp(landed, "https://", 8) != 0 && strncmp(landed, "http://", 7) != 0)
+		return;
+	if (strcmp(landed, url) == 0)
+		return;
+	snprintf(url, NS_URL_MAX, "%s", landed);
+	if (url != s_url)
+		snprintf(s_url, sizeof(s_url), "%s", landed);
+	s_urlCursor = strlen(s_url);
+	NsShowUrl();
+}
+
 static int NsFetch(char* url) {
 	char status[NS_URL_MAX + 64];
+	char came_from[NS_URL_MAX];
+	char navraw[NS_URL_MAX];
+	char navabs[NS_URL_MAX];
 	xe_http_response resp;
 	const char* body;
 	size_t blen;
 	int left_tls = 0;
 	int used_tls = 0;
+	int nav_hops = 0;
 
+	snprintf(came_from, sizeof(came_from), "%s", s_docUrl);
+again:
+	s_capAnchorMiss = 0;
+	s_capAnchorUrl[0] = 0;
 	s_query[0] = 0;
 	s_qCursor = 0;
 	s_qFocus = 0;
 	NsEnsureHttps(url, NS_URL_MAX);
+	xe_http_set_referer(came_from);
+	snprintf(s_docUrl, sizeof(s_docUrl), "%s", url);
 	NsShowUrl();
-	snprintf(status, sizeof(status), "Fetching %s ...", url);
+	if (strstr(url, "sg_ss="))
+		snprintf(status, sizeof(status), "Fetching ...");
+	else
+		snprintf(status, sizeof(status), "Fetching %s ...", url);
 	NsShowStatus(status);
 
 	memset(&resp, 0, sizeof(resp));
@@ -2106,8 +2481,12 @@ static int NsFetch(char* url) {
 	used_tls = resp.tls && !left_tls;
 	xe_http_response_free(&resp);
 
-	/* Fresh JS context per page; drops the previous page's timers. */
+	/* Fresh JS context per page; drops the previous page's timers.
+	 * Point it at the URL after redirects so a cookie set here matches
+	 * the host that will be requested next. */
 	s_postPage = false;
+	NsAdoptLanded(url);
+	snprintf(s_docUrl, sizeof(s_docUrl), "%s", url);
 	NsJsBegin(url);
 	NsJsScanTitle(body, blen);
 
@@ -2116,6 +2495,8 @@ static int NsFetch(char* url) {
 	_KePrint("[css] author sheet %d bytes\n", (int)strlen(s_cssBuf));
 	xe_heap_check("post-collect");
 	NsCssBegin();
+	NsCssSetViewport(s_pageBox ? s_pageBox->wid.w : 632,
+					 s_pageBox ? s_pageBox->wid.h : 420);
 	_KePrint("[css] begin ok\n");
 	xe_heap_check("post-begin");
 	NsCssAddSheet(s_cssBuf, strlen(s_cssBuf));
@@ -2124,11 +2505,63 @@ static int NsFetch(char* url) {
 	NsShowStatus("Laying out...");
 	NsHtmlToText(body, blen, s_text, sizeof(s_text));
 	_KePrint("[css] rendered %d bytes\n", (int)strlen(s_text));
-	NsCssEnd();
+
+	/* The search wall's script sets a cookie and then location.replace()s
+	 * the same query with sei=. Follow that before painting the wall. */
+	if (strstr(body, "knitsail"))
+		_KePrint("[js] knitsail %d\n", NsJsDefined("knitsail"));
+	if (nav_hops < 3 && NsJsConsumeNav(navraw, sizeof(navraw))) {
+		NsResolveUrl(s_docUrl, navraw, navabs, sizeof(navabs));
+		if (navabs[0] && strcmp(navabs, url) != 0 &&
+			(!strncmp(navabs, "https://", 8) || !strncmp(navabs, "http://", 7))) {
+			snprintf(came_from, sizeof(came_from), "%s", s_docUrl);
+			snprintf(url, NS_URL_MAX, "%s", navabs);
+			if (url != s_url)
+				snprintf(s_url, sizeof(s_url), "%s", url);
+			s_urlCursor = strlen(s_url);
+			NsShowUrl();
+			nav_hops++;
+			NsLogNav(url);
+			goto again;
+		}
+	}
+
+	/* Real DOM + CSS box layout.  The old text pass above still runs so
+	 * scripts, image fetching and the fallback renderer keep working. */
+	NsJsSetDocument(NULL);
+	if (s_layoutActive || s_domRoot) {
+		NsLayoutDestroy();
+		if (s_domRoot) {
+			NsCssNodeDestroyTree(s_domRoot);
+			s_domRoot = NULL;
+		}
+		s_layoutActive = 0;
+	}
+	{
+		NsCssNode* root = NsDomParse(body, blen);
+		if (root) {
+			s_domRoot = root;
+			NsJsSetDocument(root);
+			NsCaptchaOffer(root);
+			if (NsLayoutBuild(root,
+							  s_pageBox ? s_pageBox->wid.w : 632,
+							  s_pageBox ? s_pageBox->wid.h : 420) == 0) {
+				s_layoutActive = 1;
+				s_layoutScroll = 0;
+			} else {
+				NsJsSetDocument(NULL);
+				NsCssNodeDestroyTree(s_domRoot);
+				s_domRoot = NULL;
+			}
+		}
+	}
+	/* Leave the select context up. The search page's timer clears an
+	 * inline style two seconds later and the tree has to be reselected. */
+	NsJsFlushConsole();
 	/* Inline scripts ran during the parse; the context (and any timers
 	 * they armed) outlives the fetch until the next page. */
-	NsJsFlushConsole();
-	_KePrint("[js] %s ok, timers=%d\n", NsJsVersion(), NsJsTimerCount());
+	if (NsJsActive())
+		_KePrint("[js] %s ok, timers=%d\n", NsJsVersion(), NsJsTimerCount());
 	s_postPage = true; /* later document.write appends at page end */
 	s_googleHome = strstr(url, "google.") && !strstr(url, "/search");
 	if (s_googleHome)
@@ -2202,7 +2635,1245 @@ static void NsUrlClampCursor(void) {
 		s_urlCursor = len;
 }
 
+/* ---- layout-mode form controls ---- */
+
+static void NsNodeTextAppend(NsCssNode* n, char* out, size_t cap, size_t* len) {
+	if (!n || !out || !len)
+		return;
+	if (n->is_text) {
+		if (n->text) {
+			size_t l = n->text_len;
+			if (*len + l >= cap)
+				l = cap - *len - 1;
+			memcpy(out + *len, n->text, l);
+			*len += l;
+			out[*len] = 0;
+		}
+		return;
+	}
+	for (NsCssNode* c = n->first_child; c; c = c->next)
+		NsNodeTextAppend(c, out, cap, len);
+}
+
+static void NsControlValue(NsCssNode* n, char* out, size_t outsz) {
+	size_t len = 0;
+	if (!out || outsz == 0)
+		return;
+	out[0] = 0;
+	if (!n)
+		return;
+	if (n == s_formFocus) {
+		strncpy(out, s_formValue, outsz - 1);
+		out[outsz - 1] = 0;
+		return;
+	}
+	if (!strcmp(n->tag, "textarea")) {
+		NsNodeTextAppend(n, out, outsz, &len);
+		out[len] = 0;
+		return;
+	}
+	const char* v = NsCssNodeAttr(n, "value");
+	if (v) {
+		strncpy(out, v, outsz - 1);
+		out[outsz - 1] = 0;
+	}
+}
+
+static void NsFormClearFocus(void) {
+	int had = s_formFocus != NULL;
+	s_formFocus = NULL;
+	s_formValue[0] = 0;
+	s_formCursor = 0;
+	NsLayoutSetEdit(NULL, NULL, 0, 0);
+	if (had && s_layoutActive && s_pageBox && s_mainWin)
+		NsPageRender();
+}
+
+static int NsFormEditable(NsCssNode* n) {
+	if (!n || n->is_text)
+		return 0;
+	if (!strcmp(n->tag, "textarea"))
+		return 1;
+	if (!strcmp(n->tag, "input")) {
+		const char* type = NsCssNodeAttr(n, "type");
+		if (!type || !type[0])
+			return 1;
+		if (!strcmp(type, "text") || !strcmp(type, "search") || !strcmp(type, "email") ||
+		    !strcmp(type, "url") || !strcmp(type, "password") || !strcmp(type, "number") ||
+		    !strcmp(type, "tel"))
+			return 1;
+	}
+	return 0;
+}
+
+static int NsFormSubmitControl(NsCssNode* n) {
+	if (!n || n->is_text)
+		return 0;
+	if (!strcmp(n->tag, "button")) {
+		const char* type = NsCssNodeAttr(n, "type");
+		return !type || !type[0] || !strcmp(type, "submit");
+	}
+	if (!strcmp(n->tag, "input")) {
+		const char* type = NsCssNodeAttr(n, "type");
+		return type && (!strcmp(type, "submit") || !strcmp(type, "button") ||
+		                !strcmp(type, "reset") || !strcmp(type, "image"));
+	}
+	return 0;
+}
+
+static NsCssNode* NsFormAncestor(NsCssNode* n) {
+	for (; n; n = n->parent) {
+		if (!n->is_text && !strcmp(n->tag, "form"))
+			return n;
+	}
+	return NULL;
+}
+
+static void NsFormFocusControl(NsCssNode* n) {
+	if (!NsFormEditable(n))
+		return;
+	s_formFocus = n;
+	NsControlValue(n, s_formValue, sizeof(s_formValue));
+	s_formCursor = strlen(s_formValue);
+	NsLayoutSetEdit(n, s_formValue, (int)s_formCursor, 1);
+	NsPageRender();
+}
+
+static void NsAppendQuery(char* url, size_t cap, const char* name, const char* value) {
+	char en[512];
+	char ev[512];
+	size_t len;
+	if (!url || cap == 0 || !name || !name[0])
+		return;
+	NsEncodeQuery(name, en, sizeof(en));
+	NsEncodeQuery(value ? value : "", ev, sizeof(ev));
+	len = strlen(url);
+	if (len + 4 >= cap)
+		return;
+	snprintf(url + len, cap - len, "%c%s=%s", strchr(url, '?') ? '&' : '?', en, ev);
+}
+
+static void NsFormAppendFields(NsCssNode* n, NsCssNode* submitNode, char* url, size_t cap) {
+	if (!n)
+		return;
+	for (NsCssNode* c = n->first_child; c; c = c->next) {
+		if (c->is_text)
+			continue;
+		if (NsCssNodeAttr(c, "disabled"))
+			continue;
+		if (!strcmp(c->tag, "input")) {
+			const char* type = NsCssNodeAttr(c, "type");
+			const char* name = NsCssNodeAttr(c, "name");
+			char value[512];
+			if (!type || !type[0])
+				type = "text";
+			if (!strcmp(type, "submit") || !strcmp(type, "button") || !strcmp(type, "reset") ||
+			    !strcmp(type, "image")) {
+				if (c != submitNode)
+					continue;
+			}
+			if ((!strcmp(type, "checkbox") || !strcmp(type, "radio")) &&
+			    !NsCssNodeAttr(c, "checked"))
+				continue;
+			NsControlValue(c, value, sizeof(value));
+			if (!value[0] && (!strcmp(type, "checkbox") || !strcmp(type, "radio")))
+				strcpy(value, "on");
+			if (name && !strcmp(name, "btnI") && c == submitNode)
+				strcpy(value, "1");
+			NsAppendQuery(url, cap, name, value);
+		} else if (!strcmp(c->tag, "textarea")) {
+			const char* name = NsCssNodeAttr(c, "name");
+			char value[512];
+			NsControlValue(c, value, sizeof(value));
+			NsAppendQuery(url, cap, name, value);
+		} else if (!strcmp(c->tag, "select")) {
+			const char* name = NsCssNodeAttr(c, "name");
+			const char* value = NULL;
+			char valuebuf[256];
+			valuebuf[0] = 0;
+			for (NsCssNode* o = c->first_child; o; o = o->next) {
+				if (o->is_text || strcmp(o->tag, "option"))
+					continue;
+				if (!value || NsCssNodeAttr(o, "selected")) {
+					size_t len = 0;
+					NsNodeTextAppend(o, valuebuf, sizeof(valuebuf), &len);
+					valuebuf[len] = 0;
+					value = valuebuf;
+					if (NsCssNodeAttr(o, "selected"))
+						break;
+				}
+			}
+			NsAppendQuery(url, cap, name, value ? value : "");
+		} else if (!strcmp(c->tag, "button")) {
+			if (c == submitNode) {
+				const char* name = NsCssNodeAttr(c, "name");
+				const char* value = NsCssNodeAttr(c, "value");
+				char text[256];
+				size_t len = 0;
+				text[0] = 0;
+				if (!value) {
+					NsNodeTextAppend(c, text, sizeof(text), &len);
+					text[len] = 0;
+					value = text;
+				}
+				NsAppendQuery(url, cap, name, value);
+			}
+		}
+		NsFormAppendFields(c, submitNode, url, cap);
+	}
+}
+
+/* Google's search wall and the unusual-traffic page. The real checkbox
+ * lives in an iframe this browser does not paint, so the clickable stand-in
+ * is an ordinary button. The click talks to the same captcha endpoint. */
+static char s_capSite[160];
+static char s_capS[1600];
+static char s_capQ[2500];
+static char s_capCont[2500];
+static char s_capAction[600];
+/* Same document already got 429. Another click would ask again. */
+static char s_capBlockUrl[NS_URL_MAX];
+static int s_capBlockCode;
+
+/* isalnum is not declared in this libc. A name byte is a letter, digit, '-' or '_'. */
+static int NsNameByte(unsigned char c) {
+	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+	       c == '-' || c == '_';
+}
+
+static int NsCaptchaPage(const char* html) {
+	if (!html)
+		return 0;
+	/* The knitsail wall hides "trouble accessing Google Search" in a div
+	 * and has no widget. Offering a checkbox there only draws a 429. */
+	if (strstr(html, "g-recaptcha") || strstr(html, "captcha-form"))
+		return 1;
+	if (strstr(html, "unusual traffic from your computer network"))
+		return 1;
+	return 0;
+}
+
+static void NsHtmlUnesc(const char* in, size_t n, char* out, size_t outsz) {
+	size_t i = 0;
+	size_t o = 0;
+	if (!out || outsz == 0)
+		return;
+	if (!in)
+		n = 0;
+	while (i < n && o + 1 < outsz) {
+		if (in[i] == '&') {
+			if (i + 5 <= n && !strncmp(in + i, "&amp;", 5)) {
+				out[o++] = '&';
+				i += 5;
+				continue;
+			}
+			if (i + 4 <= n && !strncmp(in + i, "&lt;", 4)) {
+				out[o++] = '<';
+				i += 4;
+				continue;
+			}
+			if (i + 4 <= n && !strncmp(in + i, "&gt;", 4)) {
+				out[o++] = '>';
+				i += 4;
+				continue;
+			}
+			if (i + 6 <= n && !strncmp(in + i, "&quot;", 6)) {
+				out[o++] = '"';
+				i += 6;
+				continue;
+			}
+			if (i + 6 <= n && !strncmp(in + i, "&apos;", 6)) {
+				out[o++] = '\'';
+				i += 6;
+				continue;
+			}
+			if (i + 5 <= n && !strncmp(in + i, "&#39;", 5)) {
+				out[o++] = '\'';
+				i += 5;
+				continue;
+			}
+		}
+		out[o++] = in[i++];
+	}
+	out[o] = 0;
+}
+
+/* Copy attr="value" or attr='value'. The name must end at '=' so
+ * data-s does not match data-sitekey. */
+static int NsHtmlAttr(const char* html, const char* attr, char* out, size_t outsz) {
+	size_t al;
+	const char* p;
+	if (!html || !attr || !out || outsz == 0)
+		return 0;
+	out[0] = 0;
+	al = strlen(attr);
+	p = html;
+	while ((p = strstr(p, attr)) != NULL) {
+		const char* q;
+		char quote;
+		const char* e;
+		if (p > html) {
+			unsigned char prev = (unsigned char)p[-1];
+			if (NsNameByte(prev)) {
+				p += al;
+				continue;
+			}
+		}
+		q = p + al;
+		while (*q == ' ' || *q == '\t' || *q == '\n' || *q == '\r')
+			q++;
+		if (*q != '=') {
+			p += al;
+			continue;
+		}
+		q++;
+		while (*q == ' ' || *q == '\t' || *q == '\n' || *q == '\r')
+			q++;
+		quote = 0;
+		if (*q == '"' || *q == '\'') {
+			quote = *q;
+			q++;
+		}
+		e = q;
+		if (quote) {
+			while (*e && *e != quote)
+				e++;
+		} else {
+			while (*e && *e != ' ' && *e != '\t' && *e != '>' && *e != '\n' && *e != '\r')
+				e++;
+		}
+		if ((size_t)(e - q) + 1 > outsz) {
+			out[0] = 0;
+			return 0;
+		}
+		NsHtmlUnesc(q, (size_t)(e - q), out, outsz);
+		return out[0] ? 1 : 0;
+	}
+	return 0;
+}
+
+static int NsInputNamed(const char* html, const char* name, char* out, size_t outsz) {
+	char pat[80];
+	const char* pats[2];
+	int i;
+	if (!html || !name || !out || outsz == 0)
+		return 0;
+	out[0] = 0;
+	snprintf(pat, sizeof(pat), "name=\"%s\"", name);
+	pats[0] = pat;
+	pats[1] = NULL;
+	for (i = 0; i < 2; i++) {
+		char pat2[80];
+		const char* p;
+		const char* tag;
+		const char* end;
+		char slice[4096];
+		size_t n;
+		if (i == 1)
+			snprintf(pat2, sizeof(pat2), "name='%s'", name);
+		p = strstr(html, i == 0 ? pat : pat2);
+		if (!p)
+			continue;
+		tag = p;
+		while (tag > html && tag[-1] != '<')
+			tag--;
+		end = strchr(p, '>');
+		if (!end || end < tag)
+			continue;
+		n = (size_t)(end - tag);
+		if (n >= sizeof(slice))
+			n = sizeof(slice) - 1;
+		memcpy(slice, (void*)tag, n);
+		slice[n] = 0;
+		if (NsHtmlAttr(slice, "value", out, outsz))
+			return 1;
+	}
+	return 0;
+}
+
+static int NsCaptchaUrlKey(const char* html, const char* key, char* out, size_t outsz);
+
+/* data-sitekey, or the sitekey a script passes to enterprise.render. */
+static int NsCaptchaSitekey(const char* html, char* out, size_t outsz) {
+	const char* p;
+	if (!html || !out || outsz == 0)
+		return 0;
+	out[0] = 0;
+	if (NsHtmlAttr(html, "data-sitekey", out, outsz))
+		return 1;
+	p = html;
+	while ((p = strstr(p, "sitekey")) != NULL) {
+		const char* q;
+		char quote;
+		const char* e;
+		size_t n;
+		if (p > html && NsNameByte((unsigned char)p[-1])) {
+			p += 7;
+			continue;
+		}
+		q = p + 7;
+		while (*q == ' ' || *q == '\t' || *q == '\n' || *q == '\r')
+			q++;
+		if (*q != ':' && *q != '=') {
+			p += 7;
+			continue;
+		}
+		q++;
+		while (*q == ' ' || *q == '\t' || *q == '\n' || *q == '\r')
+			q++;
+		if (*q != '"' && *q != '\'') {
+			p += 7;
+			continue;
+		}
+		quote = *q++;
+		e = q;
+		while (*e && *e != quote && NsNameByte((unsigned char)*e))
+			e++;
+		n = (size_t)(e - q);
+		if (*e == quote && n >= 20 && n + 1 <= outsz) {
+			memcpy(out, (void*)q, n);
+			out[n] = 0;
+			return 1;
+		}
+		p += 7;
+	}
+	return NsCaptchaUrlKey(html, "k", out, outsz);
+}
+
+/* ?k= or &s= on a recaptcha URL. The name is "k" or "s". */
+static int NsCaptchaUrlKey(const char* html, const char* key, char* out, size_t outsz) {
+	const char* p;
+	size_t klen;
+	if (!html || !key || !out || outsz < 8)
+		return 0;
+	out[0] = 0;
+	klen = strlen(key);
+	p = html;
+	while ((p = strstr(p, "recaptcha")) != NULL) {
+		const char* e = p;
+		const char* lim;
+		int i;
+		for (i = 0; i < 1200 && *e; i++)
+			e++;
+		lim = e;
+		e = p;
+		while (e + klen + 2 < lim) {
+			if ((e[0] == '?' || e[0] == '&') && !strncmp(e + 1, key, klen) && e[1 + klen] == '=') {
+				const char* v = e + 2 + klen;
+				size_t n = 0;
+				while (v[n] && v[n] != '&' && v[n] != '"' && v[n] != '\'' && v[n] != ' ' &&
+					   v[n] != '<' && n + 1 < outsz)
+					n++;
+				if (n >= 20) {
+					memcpy(out, (void*)v, n);
+					out[n] = 0;
+					return 1;
+				}
+			}
+			e++;
+		}
+		p += 9;
+	}
+	return 0;
+}
+
+static int NsCaptchaParse(const char* html, const char* base) {
+	char action[600];
+	const char* form;
+	s_capSite[0] = 0;
+	s_capS[0] = 0;
+	s_capQ[0] = 0;
+	s_capCont[0] = 0;
+	s_capAction[0] = 0;
+	if (!html)
+		return 0;
+	if (!NsCaptchaSitekey(html, s_capSite, sizeof(s_capSite)))
+		return 0;
+	if (!NsHtmlAttr(html, "data-s", s_capS, sizeof(s_capS)))
+		NsCaptchaUrlKey(html, "s", s_capS, sizeof(s_capS));
+	NsInputNamed(html, "q", s_capQ, sizeof(s_capQ));
+	NsInputNamed(html, "continue", s_capCont, sizeof(s_capCont));
+	action[0] = 0;
+	form = strstr(html, "captcha-form");
+	if (form) {
+		const char* tag = form;
+		const char* end;
+		char slice[1024];
+		size_t n;
+		while (tag > html && tag[-1] != '<')
+			tag--;
+		end = strchr(form, '>');
+		if (end && end > tag) {
+			n = (size_t)(end - tag);
+			if (n >= sizeof(slice))
+				n = sizeof(slice) - 1;
+			memcpy(slice, (void*)tag, n);
+			slice[n] = 0;
+			NsHtmlAttr(slice, "action", action, sizeof(action));
+		}
+	}
+	if (!action[0] || !strcmp(action, "index") || !strcmp(action, "/sorry/index"))
+		snprintf(s_capAction, sizeof(s_capAction), "https://www.google.com/sorry/index");
+	else if (!strncmp(action, "https://", 8) || !strncmp(action, "http://", 7))
+		snprintf(s_capAction, sizeof(s_capAction), "%s", action);
+	else
+		NsResolveUrl(base && base[0] ? base : "https://www.google.com/sorry/index", action,
+					 s_capAction, sizeof(s_capAction));
+	return s_capSite[0] ? 1 : 0;
+}
+
+static int NsEncFull(const char* in, char* out, size_t outsz) {
+	if (!out || outsz == 0)
+		return 0;
+	NsEncodeQuery(in ? in : "", out, outsz);
+	if (in && in[0] && !out[0])
+		return 0;
+	if (strlen(out) + 4 >= outsz)
+		return 0;
+	return 1;
+}
+
+/* co is the page origin, scheme://host, with a port only when it is not the
+ * default. XEClib snprintf has no %.*s: that specifier printed ".*" and then
+ * the host pointer as a number, so the anchor was the invalid-domain page. */
+static int NsCaptchaOrigin(const char* url, char* out, size_t outsz) {
+	const char* host;
+	const char* end;
+	const char* colon;
+	const char* scheme;
+	char hostbuf[256];
+	int port;
+	int defport;
+	size_t hlen;
+	int n;
+	if (!url || !out || outsz < 8)
+		return 0;
+	out[0] = 0;
+	if (!strncmp(url, "https://", 8)) {
+		scheme = "https";
+		host = url + 8;
+		port = 443;
+		defport = 443;
+	} else if (!strncmp(url, "http://", 7)) {
+		scheme = "http";
+		host = url + 7;
+		port = 80;
+		defport = 80;
+	} else {
+		return 0;
+	}
+	end = host;
+	while (*end && *end != '/' && *end != '?' && *end != '#')
+		end++;
+	colon = host;
+	while (colon < end && *colon != ':')
+		colon++;
+	hlen = (size_t)(colon - host);
+	if (!hlen || hlen >= sizeof(hostbuf))
+		return 0;
+	memcpy(hostbuf, (void*)host, hlen);
+	hostbuf[hlen] = 0;
+	if (colon < end && colon[1] >= '0' && colon[1] <= '9')
+		port = atoi(colon + 1);
+	if (port == defport)
+		n = snprintf(out, outsz, "%s://%s", scheme, hostbuf);
+	else
+		n = snprintf(out, outsz, "%s://%s:%d", scheme, hostbuf, port);
+	if (n < 0 || (size_t)n >= outsz)
+		return 0;
+	return out[0] ? 1 : 0;
+}
+
+static int NsB64(const char* in, char* out, size_t outsz) {
+	static const char tab[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	size_t len;
+	size_t i = 0;
+	size_t o = 0;
+	if (!in || !out || outsz == 0)
+		return 0;
+	len = strlen(in);
+	while (i < len) {
+		unsigned a = (unsigned char)in[i++];
+		unsigned b = 0;
+		unsigned c = 0;
+		int nb = 0;
+		int nc = 0;
+		if (i < len) {
+			b = (unsigned char)in[i++];
+			nb = 1;
+		}
+		if (i < len) {
+			c = (unsigned char)in[i++];
+			nc = 1;
+		}
+		if (o + 5 >= outsz) {
+			out[0] = 0;
+			return 0;
+		}
+		out[o++] = tab[a >> 2];
+		out[o++] = tab[((a & 3) << 4) | (b >> 4)];
+		out[o++] = nb ? tab[((b & 15) << 2) | (c >> 6)] : '=';
+		out[o++] = nc ? tab[c & 63] : '=';
+	}
+	out[o] = 0;
+	return 1;
+}
+
+static NsCssNode* NsFindTag(NsCssNode* n, const char* tag) {
+	NsCssNode* c;
+	NsCssNode* found;
+	if (!n || !tag)
+		return NULL;
+	if (!n->is_text && !strcmp(n->tag, tag))
+		return n;
+	for (c = n->first_child; c; c = c->next) {
+		found = NsFindTag(c, tag);
+		if (found)
+			return found;
+	}
+	return NULL;
+}
+
+static void NsPrependChild(NsCssNode* parent, NsCssNode* child) {
+	if (!parent || !child)
+		return;
+	child->parent = parent;
+	child->prev = NULL;
+	child->next = parent->first_child;
+	if (parent->first_child)
+		parent->first_child->prev = child;
+	else
+		parent->last_child = child;
+	parent->first_child = child;
+}
+
+static void NsCaptchaOffer(NsCssNode* root) {
+	NsCssNode* host;
+	NsCssNode* btn;
+	if (!root || !NsCaptchaPage(s_body))
+		return;
+	if (NsCssNodeById(root, "ns-captcha"))
+		return;
+	host = NsCssNodeById(root, "recaptcha");
+	if (!host)
+		host = NsFindTag(root, "body");
+	if (!host)
+		host = root;
+	btn = NsCssNodeCreate(NULL, "input");
+	if (!btn)
+		return;
+	NsCssNodeAddAttribute(btn, "type", "button");
+	NsCssNodeAddAttribute(btn, "value", "I'm not a robot");
+	NsCssNodeSetId(btn, "ns-captcha");
+	NsPrependChild(host, btn);
+	NsCssReselectTree(btn);
+	_KePrint("[captcha] button\n");
+}
+
+static void NsCaptchaNote(const char* label) {
+	NsCssNode* btn;
+	if (!s_domRoot || !s_layoutActive)
+		return;
+	btn = NsCssNodeById(s_domRoot, "ns-captcha");
+	if (btn && label && label[0])
+		NsCssNodeAddAttribute(btn, "value", label);
+	if (NsLayoutBuild(s_domRoot, s_pageBox ? s_pageBox->wid.w : 632,
+					  s_pageBox ? s_pageBox->wid.h : 420) == 0)
+		s_layoutActive = 1;
+	else
+		s_layoutActive = 0;
+	NsPageRender();
+}
+
+struct NsCapWork {
+	char ver[80];
+	char co[180];
+	char anchor[3072];
+	char token[16 * 1024];
+	char rtok[16 * 1024];
+	char body[40 * 1024];
+	char enc[20 * 1024];
+	char sorry[3072];
+	char finalu[3072];
+};
+
+static int NsCapAppend(struct NsCapWork* w, int* first, const char* key, const char* val) {
+	size_t used;
+	int n;
+	if (!w || !first || !key)
+		return 0;
+	if (!NsEncFull(val ? val : "", w->enc, sizeof(w->enc)))
+		return 0;
+	used = strlen(w->body);
+	n = snprintf(w->body + used, sizeof(w->body) - used, "%s%s=%s", *first ? "" : "&", key, w->enc);
+	if (n < 0 || (size_t)n >= sizeof(w->body) - used)
+		return 0;
+	*first = 0;
+	return 1;
+}
+
+/* 1 copied, 0 absent, -1 present but longer than out. */
+static int NsCaptchaTake(const char* v, const char* e, char* out, size_t outsz) {
+	if (!v || !e || e <= v || !out || outsz == 0)
+		return 0;
+	if ((size_t)(e - v) + 1 > outsz) {
+		_KePrint("[captcha] token fit\n");
+		return -1;
+	}
+	NsHtmlUnesc(v, (size_t)(e - v), out, outsz);
+	if (!out[0])
+		return 0;
+	_KePrint("[captcha] token %d\n", (int)strlen(out));
+	return 1;
+}
+
+/* value= may sit before id="recaptcha-token". Read that one tag. */
+static int NsCaptchaToken(const char* html, char* out, size_t outsz) {
+	const char* p;
+	if (!html || !out || outsz == 0)
+		return 0;
+	out[0] = 0;
+	p = html;
+	while ((p = strstr(p, "recaptcha-token")) != NULL) {
+		const char* tag = p;
+		const char* end;
+		const char* scan;
+		int saw = 0;
+		/* value= can be a long attribute in front of the id. Stop at the
+		 * tag edges so a later value= on the page is not read. */
+		while (tag > html && tag[-1] != '<' && tag[-1] != '>')
+			tag--;
+		end = strchr(p, '>');
+		if (tag > html && tag[-1] == '<' && end && (size_t)(end - tag) < 40000) {
+			scan = tag;
+			while (scan + 6 < end) {
+				const char* v;
+				const char* e;
+				char quote;
+				if (!((scan == tag || scan[-1] == ' ' || scan[-1] == '\t' || scan[-1] == '\n' ||
+					   scan[-1] == '\r' || scan[-1] == '<') &&
+					  !strncmp(scan, "value", 5))) {
+					scan++;
+					continue;
+				}
+				v = scan + 5;
+				while (v < end && (*v == ' ' || *v == '\t'))
+					v++;
+				if (v >= end || *v != '=') {
+					scan += 5;
+					continue;
+				}
+				v++;
+				while (v < end && (*v == ' ' || *v == '\t'))
+					v++;
+				quote = 0;
+				if (v < end && (*v == '"' || *v == '\'')) {
+					quote = *v;
+					v++;
+				}
+				e = v;
+				if (quote) {
+					while (e < end && *e != quote)
+						e++;
+				} else {
+					while (e < end && *e != ' ' && *e != '\t' && *e != '>')
+						e++;
+				}
+				saw = 1;
+				{
+					int took = NsCaptchaTake(v, e, out, outsz);
+					if (took != 0)
+						return took;
+				}
+				break;
+			}
+			if (!saw) {
+				const char* t = end + 1;
+				const char* te = strchr(t, '<');
+				if (te && te > t) {
+					while (t < te && (*t == ' ' || *t == '\n' || *t == '\r' || *t == '\t'))
+						t++;
+					while (te > t &&
+						   (te[-1] == ' ' || te[-1] == '\n' || te[-1] == '\r' || te[-1] == '\t'))
+						te--;
+					if (te > t) {
+						int took = NsCaptchaTake(t, te, out, outsz);
+						if (took != 0)
+							return took;
+					}
+				}
+			}
+		}
+		p += 15;
+	}
+	_KePrint("[captcha] token 0\n");
+	return 0;
+}
+
+static int NsCapHttp(const char* url) {
+	return url && url[0] &&
+		   (!strncmp(url, "https://", 8) || !strncmp(url, "http://", 7));
+}
+
+static int NsCapSorry(const char* url) {
+	return url && strstr(url, "/sorry");
+}
+
+/* A sorry link already on the page carries the q token. continue= alone does not. */
+static int NsCaptchaSorryUrl(const char* html, const char* base, char* out, size_t outsz) {
+	const char* p;
+	char raw[3072];
+	if (!html || !out || outsz < 8)
+		return 0;
+	out[0] = 0;
+	p = html;
+	while ((p = strstr(p, "sorry/index")) != NULL) {
+		const char* s = p;
+		size_t n = 0;
+		while (s > html && s[-1] != '"' && s[-1] != '\'' && s[-1] != ' ' && s[-1] != '\n' &&
+			   s[-1] != '\r' && s[-1] != '=' && s[-1] != '>' && s[-1] != '<')
+			s--;
+		while (s[n] && s[n] != '"' && s[n] != '\'' && s[n] != ' ' && s[n] != '<' && s[n] != '>' &&
+			   s[n] != '\n' && s[n] != '\r' && n + 1 < sizeof(raw))
+			n++;
+		if (n < 11) {
+			p += 11;
+			continue;
+		}
+		NsHtmlUnesc(s, n, raw, sizeof(raw));
+		if (!strncmp(raw, "https://", 8) || !strncmp(raw, "http://", 7)) {
+			snprintf(out, outsz, "%s", raw);
+			return out[0] ? 1 : 0;
+		}
+		if (raw[0] == '/' || !strncmp(raw, "sorry/", 6)) {
+			NsResolveUrl(base && base[0] ? base : "https://www.google.com/sorry/index", raw, out,
+						 outsz);
+			return out[0] ? 1 : 0;
+		}
+		p += 11;
+	}
+	return 0;
+}
+
+/* Search words from q=. The sorry payload also uses q= and starts with Eg. */
+static int NsCaptchaQuery(const char* url, char* out, size_t outsz) {
+	const char* p;
+	size_t n = 0;
+	if (!url || !out || outsz < 2)
+		return 0;
+	out[0] = 0;
+	p = strstr(url, "q=");
+	while (p) {
+		if (p == url || p[-1] == '?' || p[-1] == '&' || p[-1] == ';')
+			break;
+		p = strstr(p + 2, "q=");
+	}
+	if (!p)
+		return 0;
+	p += 2;
+	while (p[n] && p[n] != '&' && p[n] != '#' && n + 1 < outsz)
+		n++;
+	if (!n || (n > 40 && p[0] == 'E' && p[1] == 'g'))
+		return 0;
+	memcpy(out, (void*)p, n);
+	out[n] = 0;
+	return 1;
+}
+
+static int NsCaptchaSearchUrl(const char* doc, char* out, size_t outsz) {
+	char q[400];
+	int n;
+	if (!NsCaptchaQuery(doc, q, sizeof(q)))
+		return 0;
+	n = snprintf(out, outsz, "https://www.google.com/search?q=%s&hl=en", q);
+	return n > 0 && (size_t)n < outsz;
+}
+
+static int NsCaptchaRresp(const char* html, char* out, size_t outsz) {
+	const char* p;
+	const char* e;
+	if (!html || !out || outsz == 0)
+		return 0;
+	out[0] = 0;
+	p = strstr(html, "\"rresp\"");
+	if (!p)
+		return 0;
+	p += 7;
+	while (*p && *p != '"')
+		p++;
+	if (*p != '"')
+		return 0;
+	p++;
+	e = p;
+	while (*e && *e != '"')
+		e++;
+	if (e == p || (size_t)(e - p) + 1 > outsz)
+		return 0;
+	memcpy(out, (void*)p, (size_t)(e - p));
+	out[e - p] = 0;
+	return 1;
+}
+
+static void NsCaptchaActivate(void) {
+	struct NsCapWork* w;
+	xe_http_response resp;
+	char note[96];
+	char dest[3072];
+	const char* base;
+	int navigated = 0;
+	int rc;
+
+	_KePrint("[captcha] click\n");
+	NsCaptchaNote("Checking...");
+	snprintf(note, sizeof(note), "Check failed, click to try again");
+	dest[0] = 0;
+	w = (struct NsCapWork*)malloc(sizeof(*w));
+	if (!w) {
+		NsCaptchaNote(note);
+		return;
+	}
+	memset(w, 0, sizeof(*w));
+	memset(&resp, 0, sizeof(resp));
+	base = s_docUrl[0] ? s_docUrl : s_url;
+	xe_http_set_referer(base);
+
+	if (!NsCaptchaParse(s_body, base)) {
+		int n;
+		char search[600];
+		/* This document already drew a 429. Asking sorry/index again digs in. */
+		if (s_capBlockCode == 429 && base[0] && !strcmp(s_capBlockUrl, base)) {
+			snprintf(note, sizeof(note), "Google refused the check (429)");
+			_KePrint("[captcha] skip %d\n", s_capBlockCode);
+			free(w);
+			NsCaptchaNote(note);
+			return;
+		}
+		/* A full homepage URL as continue is what sorry/index answers with 429.
+		 * The check wants the plain search address. */
+		search[0] = 0;
+		if (!NsCaptchaSorryUrl(s_body, base, w->sorry, sizeof(w->sorry))) {
+			if (!NsCaptchaSearchUrl(base, search, sizeof(search)) ||
+				!NsEncFull(search, w->enc, sizeof(w->enc))) {
+				snprintf(note, sizeof(note), "Could not open the check");
+				free(w);
+				NsCaptchaNote(note);
+				return;
+			}
+			n = snprintf(w->sorry, sizeof(w->sorry),
+						 "https://www.google.com/sorry/index?continue=%s", w->enc);
+			if (n < 0 || (size_t)n >= sizeof(w->sorry)) {
+				snprintf(note, sizeof(note), "Check link is too long");
+				free(w);
+				NsCaptchaNote(note);
+				return;
+			}
+		}
+		if (search[0])
+			xe_http_set_referer(search);
+		rc = xe_http_get(w->sorry, "GET", kNsUa, &resp, NS_BODY_MAX);
+		_KePrint("[captcha] sorry %d %d\n", resp.status, resp.body ? (int)resp.body_len : 0);
+		if (!resp.body || !resp.body_len || !NsCaptchaParse(resp.body, w->sorry)) {
+			if (resp.status == 429) {
+				snprintf(note, sizeof(note), "Google refused the check (429)");
+				s_capBlockCode = 429;
+				snprintf(s_capBlockUrl, sizeof(s_capBlockUrl), "%s", base);
+			} else {
+				snprintf(note, sizeof(note), "Could not open the check");
+			}
+			_KePrint("[captcha] nosite\n");
+			xe_http_response_free(&resp);
+			free(w);
+			NsCaptchaNote(note);
+			(void)rc;
+			return;
+		}
+		s_capBlockCode = 0;
+		s_capBlockUrl[0] = 0;
+		xe_http_response_free(&resp);
+		memset(&resp, 0, sizeof(resp));
+	}
+	_KePrint("[captcha] site %d\n", (int)strlen(s_capSite));
+	if (s_capAnchorMiss && base[0] && !strcmp(s_capAnchorUrl, base)) {
+		snprintf(note, sizeof(note), "Checkbox was not accepted");
+		_KePrint("[captcha] token skip\n");
+		free(w);
+		NsCaptchaNote(note);
+		return;
+	}
+
+	rc = xe_http_get("https://www.google.com/recaptcha/enterprise.js", "GET", kNsUa, &resp,
+					 NS_BODY_MAX);
+	if (resp.body) {
+		const char* p = resp.body;
+		const char* hit;
+		while ((hit = strstr(p, "releases/")) != NULL) {
+			const char* s = hit + 9;
+			size_t n = 0;
+			while (s[n] && n < sizeof(w->ver) - 1 && NsNameByte((unsigned char)s[n]))
+				n++;
+			if (n >= 8 && s[n] == '/') {
+				memcpy(w->ver, (void*)s, n);
+				w->ver[n] = 0;
+				break;
+			}
+			p = hit + 9;
+		}
+	}
+	_KePrint("[captcha] api %d ver %d\n", resp.status, (int)strlen(w->ver));
+	xe_http_response_free(&resp);
+	memset(&resp, 0, sizeof(resp));
+	(void)rc;
+	if (!w->ver[0]) {
+		snprintf(note, sizeof(note), "Could not start the check");
+		goto done;
+	}
+	{
+		char origin[180];
+		size_t colen;
+		if (!NsCaptchaOrigin(base, origin, sizeof(origin)) ||
+			!NsB64(origin, w->co, sizeof(w->co))) {
+			snprintf(note, sizeof(note), "Could not start the check");
+			goto done;
+		}
+		/* Padding turns the origin into the invalid-domain anchor, which
+		 * is 16803 bytes and has no token. */
+		colen = strlen(w->co);
+		while (colen > 0 && w->co[colen - 1] == '=')
+			w->co[--colen] = 0;
+		_KePrint("[captcha] co %d\n", (int)colen);
+	}
+	{
+		char sk[200];
+		char coe[200];
+		int n;
+		if (!NsEncFull(s_capSite, sk, sizeof(sk)) || !NsEncFull(w->co, coe, sizeof(coe))) {
+			snprintf(note, sizeof(note), "Could not start the check");
+			goto done;
+		}
+		n = snprintf(w->anchor, sizeof(w->anchor),
+					 "https://www.google.com/recaptcha/enterprise/anchor?ar=1&k=%s&co=%s&hl=en&v=%s&"
+					 "size=normal",
+					 sk, coe, w->ver);
+		if (n < 0 || (size_t)n >= sizeof(w->anchor)) {
+			snprintf(note, sizeof(note), "Check link is too long");
+			goto done;
+		}
+		if (s_capS[0]) {
+			size_t used;
+			if (!NsEncFull(s_capS, w->enc, sizeof(w->enc))) {
+				snprintf(note, sizeof(note), "Could not start the check");
+				goto done;
+			}
+			used = strlen(w->anchor);
+			n = snprintf(w->anchor + used, sizeof(w->anchor) - used, "&s=%s", w->enc);
+			if (n < 0 || (size_t)n >= sizeof(w->anchor) - used) {
+				snprintf(note, sizeof(note), "Check link is too long");
+				goto done;
+			}
+		}
+	}
+	if (strlen(w->anchor) >= 3000) {
+		snprintf(note, sizeof(note), "Check link is too long");
+		goto done;
+	}
+	rc = xe_http_get(w->anchor, "GET", kNsUa, &resp, NS_BODY_MAX);
+	_KePrint("[captcha] anchor %d %d\n", resp.status, resp.body ? (int)resp.body_len : 0);
+	if (resp.body && strstr(resp.body, "ErrorMain"))
+		_KePrint("[captcha] anchor error\n");
+	if (!resp.body || NsCaptchaToken(resp.body, w->token, sizeof(w->token)) != 1) {
+		if (resp.body && base[0]) {
+			s_capAnchorMiss = 1;
+			snprintf(s_capAnchorUrl, sizeof(s_capAnchorUrl), "%s", base);
+		}
+		snprintf(note, sizeof(note), "Checkbox was not accepted");
+		xe_http_response_free(&resp);
+		goto done;
+	}
+	xe_http_response_free(&resp);
+	memset(&resp, 0, sizeof(resp));
+
+	{
+		int first = 1;
+		char reload[320];
+		w->body[0] = 0;
+		if (!NsCapAppend(w, &first, "v", w->ver) || !NsCapAppend(w, &first, "reason", "q") ||
+			!NsCapAppend(w, &first, "c", w->token) || !NsCapAppend(w, &first, "k", s_capSite) ||
+			!NsCapAppend(w, &first, "co", w->co) || !NsCapAppend(w, &first, "hl", "en") ||
+			!NsCapAppend(w, &first, "size", "normal") ||
+			(s_capS[0] && !NsCapAppend(w, &first, "s", s_capS))) {
+			_KePrint("[captcha] reload fit\n");
+			snprintf(note, sizeof(note), "Checkbox was not accepted");
+			goto done;
+		}
+		snprintf(reload, sizeof(reload), "https://www.google.com/recaptcha/enterprise/reload?k=%s",
+				 s_capSite);
+		xe_http_set_body("application/x-www-form-urlencoded", w->body, strlen(w->body));
+		rc = xe_http_get(reload, "POST", kNsUa, &resp, NS_BODY_MAX);
+	}
+	_KePrint("[captcha] reload %d %d\n", resp.status, resp.body ? (int)resp.body_len : 0);
+	if (!resp.body || !NsCaptchaRresp(resp.body, w->rtok, sizeof(w->rtok))) {
+		/* No checkbox token in the reload body. Do not fetch the anchor again. */
+		if (resp.body && base[0]) {
+			s_capAnchorMiss = 1;
+			snprintf(s_capAnchorUrl, sizeof(s_capAnchorUrl), "%s", base);
+		}
+		snprintf(note, sizeof(note), "Checkbox was not accepted");
+		xe_http_response_free(&resp);
+		goto done;
+	}
+	xe_http_response_free(&resp);
+	memset(&resp, 0, sizeof(resp));
+
+	{
+		int first = 1;
+		w->body[0] = 0;
+		if ((s_capQ[0] && !NsCapAppend(w, &first, "q", s_capQ)) ||
+			(s_capCont[0] && !NsCapAppend(w, &first, "continue", s_capCont)) ||
+			!NsCapAppend(w, &first, "g-recaptcha-response", w->rtok)) {
+			snprintf(note, sizeof(note), "Could not send the check");
+			goto done;
+		}
+	}
+	xe_http_set_body("application/x-www-form-urlencoded", w->body, strlen(w->body));
+	rc = xe_http_get(s_capAction[0] ? s_capAction : "https://www.google.com/sorry/index", "POST",
+					 kNsUa, &resp, NS_BODY_MAX);
+	xe_http_last_url(w->finalu, sizeof(w->finalu));
+	_KePrint("[captcha] post %d\n", resp.status);
+	{
+		/* A sorry URL, or another unusual-traffic document, is this page again. */
+		int blocked = !resp.body || !resp.body_len || NsCaptchaPage(resp.body);
+		const char* go = NULL;
+		if (!blocked && NsCapHttp(w->finalu) && !NsCapSorry(w->finalu))
+			go = w->finalu;
+		else if (!blocked && NsCapHttp(s_capCont) && !NsCapSorry(s_capCont))
+			go = s_capCont;
+		xe_http_response_free(&resp);
+		memset(&resp, 0, sizeof(resp));
+		(void)rc;
+		if (go) {
+			snprintf(dest, sizeof(dest), "%s", go);
+			navigated = 1;
+		} else {
+			snprintf(note, sizeof(note), "Check failed, click to try again");
+			_KePrint("[captcha] stay\n");
+		}
+	}
+
+done:
+	xe_http_response_free(&resp);
+	free(w);
+	if (navigated)
+		NsFetch(dest);
+	else
+		NsCaptchaNote(note);
+}
+
+static void NsFormSubmit(NsCssNode* submitNode) {
+	if (submitNode && submitNode->id[0] && !strcmp(submitNode->id, "ns-captcha")) {
+		NsCaptchaActivate();
+		return;
+	}
+	NsCssNode* form = NsFormAncestor(submitNode ? submitNode : s_formFocus);
+	char action[NS_URL_MAX * 2];
+	char url[NS_URL_MAX * 2];
+	const char* attr;
+	if (!form)
+		return;
+	attr = NsCssNodeAttr(form, "action");
+	action[0] = 0;
+	if (attr && attr[0]) {
+		NsResolveUrl(s_docUrl[0] ? s_docUrl : s_url, attr, action, sizeof(action));
+	} else {
+		snprintf(action, sizeof(action), "%s", s_docUrl[0] ? s_docUrl : s_url);
+	}
+	if (!action[0])
+		return;
+	snprintf(url, sizeof(url), "%s", action);
+	NsFormAppendFields(form, submitNode, url, sizeof(url));
+	snprintf(s_url, sizeof(s_url), "%s", url);
+	s_urlCursor = strlen(s_url);
+	NsShowUrl();
+	NsFormClearFocus();
+	NsFetch(s_url);
+}
+
 static void NsHandleKey(int raw) {
+	/* Layout-mode form editing takes precedence over URL-bar editing. */
+	if (s_formFocus && s_layoutActive) {
+		size_t len = strlen(s_formValue);
+		if (s_formCursor > len)
+			s_formCursor = len;
+		if (raw == NS_KEY_LEFT || raw == NS_KEY_HOME) {
+			if (raw == NS_KEY_HOME)
+				s_formCursor = 0;
+			else if (s_formCursor > 0)
+				s_formCursor--;
+			NsLayoutSetEdit(s_formFocus, s_formValue, (int)s_formCursor, 1);
+			NsPageRender();
+			return;
+		}
+		if (raw == NS_KEY_RIGHT || raw == NS_KEY_END) {
+			if (raw == NS_KEY_END)
+				s_formCursor = len;
+			else if (s_formCursor < len)
+				s_formCursor++;
+			NsLayoutSetEdit(s_formFocus, s_formValue, (int)s_formCursor, 1);
+			NsPageRender();
+			return;
+		}
+		if (raw == NS_KEY_UP) {
+			NsPageScroll(-1);
+			return;
+		}
+		if (raw == NS_KEY_DOWN) {
+			NsPageScroll(1);
+			return;
+		}
+		if (raw == NS_KEY_PGUP || raw == NS_KEY_PGDN) {
+			int vis = NsVisibleLines();
+			NsPageScroll(raw == NS_KEY_PGUP ? (vis > 1 ? -(vis - 1) : -1)
+			                                : (vis > 1 ? (vis - 1) : 1));
+			return;
+		}
+		if (raw == 0x01) { /* Escape: leave the field. */
+			NsFormClearFocus();
+			return;
+		}
+		char rawkey = ChitralekhaGetKeyPress(raw);
+		if (rawkey == KEY_RETURN) {
+			NsFormSubmit(NULL);
+			return;
+		}
+		if (rawkey == KEY_BACKSPACE) {
+			if (s_formCursor > 0) {
+				memmove(s_formValue + s_formCursor - 1, s_formValue + s_formCursor,
+				        len - s_formCursor + 1);
+				s_formCursor--;
+				NsLayoutSetEdit(s_formFocus, s_formValue, (int)s_formCursor, 1);
+				NsPageRender();
+			}
+			return;
+		}
+		if (raw == 0xE053 || raw == KEY_DELETE) {
+			if (s_formCursor < len) {
+				memmove(s_formValue + s_formCursor, s_formValue + s_formCursor + 1,
+				        len - s_formCursor);
+				NsLayoutSetEdit(s_formFocus, s_formValue, (int)s_formCursor, 1);
+				NsPageRender();
+			}
+			return;
+		}
+		int fc = ChitralekhaKeyToASCII(raw);
+		if (fc >= 32 && fc < 127 && len + 1 < sizeof(s_formValue)) {
+			memmove(s_formValue + s_formCursor + 1, s_formValue + s_formCursor,
+			        len - s_formCursor + 1);
+			s_formValue[s_formCursor] = (char)fc;
+			s_formCursor++;
+			NsLayoutSetEdit(s_formFocus, s_formValue, (int)s_formCursor, 1);
+			NsPageRender();
+		}
+		return;
+	}
 	if (s_qFocus) {
 		size_t len = strlen(s_query);
 		if (s_qCursor > len)
@@ -2338,7 +4009,43 @@ static void WindowHandleMessage(PostEvent* e) {
 		if (button && s_mainWin && s_mainWin->info) {
 			int lx = mx - s_mainWin->info->x;
 			int ly = my - s_mainWin->info->y;
-			if (s_qHave && lx >= s_qX && lx < s_qX + s_qW && ly >= s_qY && ly < s_qY + s_qH) {
+			/* DOM layout links and form controls are pixel rectangles.
+			 * Resolve links against the page URL that produced this document,
+			 * not the URL bar. */
+			if (s_layoutActive && s_pageBox && button < 5) {
+				int px = lx - s_pageBox->wid.x;
+				int py = ly - s_pageBox->wid.y;
+				if (px >= 0 && px < s_pageBox->wid.w && py >= 0 && py < s_pageBox->wid.h) {
+					NsCssNode* ctrl = NULL;
+					if (NsLayoutHitControl(px, py + s_layoutScroll, &ctrl)) {
+						if (NsFormEditable(ctrl)) {
+							NsFormFocusControl(ctrl);
+						} else if (NsFormSubmitControl(ctrl)) {
+							NsFormSubmit(ctrl);
+						}
+						memset(e, 0, sizeof(PostEvent));
+						break;
+					}
+					char href[640];
+					if (NsLayoutHitLink(px, py + s_layoutScroll, href, sizeof(href))) {
+						char abs[NS_URL_MAX];
+						NsResolveUrl(s_docUrl, href, abs, sizeof(abs));
+						if (abs[0]) {
+							snprintf(s_url, sizeof(s_url), "%s", abs);
+							s_urlCursor = strlen(s_url);
+							NsShowUrl();
+							NsFetch(s_url);
+							memset(e, 0, sizeof(PostEvent));
+							break;
+						}
+					}
+					/* A click on the page background leaves form editing. */
+					NsFormClearFocus();
+				} else if (ly < s_pageBox->wid.y) {
+					NsFormClearFocus();
+				}
+			}
+			if (!s_layoutActive && s_qHave && lx >= s_qX && lx < s_qX + s_qW && ly >= s_qY && ly < s_qY + s_qH) {
 				int rel = lx - s_qX - 8;
 				size_t i = 0;
 				int w = 0;
@@ -2436,6 +4143,8 @@ int main(int argc, char* argv[]) {
 	/* JS sink is process-wide: both the GUI page pass and the headless
 	 * --selftest run route console/document.write output through it. */
 	NsJsSetSink(NsJsSink);
+	NsLayoutSetImageLookup(NsImageLookup);
+	NsLayoutSetInlineSvgLookup(NsInlineSvgLookup);
 
 	/* Headless pipeline self-test: fetch + CSS + render with serial
      * markers, no GUI. Xeneva drops the program name: the app sees only
@@ -2461,12 +4170,69 @@ int main(int argc, char* argv[]) {
 				_KePrint("[cssselftest] FAIL: fetch never completed\n");
 				return 1;
 			}
-			_KePrint("[cssselftest] done, text %d bytes, first 120 chars:\n", (int)strlen(s_text));
+			/* "click" runs the checkbox once, then returns. Lengths only:
+			 * the page text can carry a continue link. */
+			int do_click = 0;
+			for (int b = 0; b < argc; b++) {
+				if (argv[b] && !strcmp(argv[b], "click"))
+					do_click = 1;
+			}
+			_KePrint("[cssselftest] done, text %d bytes\n", (int)strlen(s_text));
+			if (do_click) {
+				if (s_layoutActive) {
+					int nb = 0, nl = 0, nr = 0, nk = 0;
+					NsLayoutStats(&nb, &nl, &nr, &nk);
+					_KePrint("[layouttest] text=%d blocks=%d lines=%d runs=%d links=%d content=%d\n",
+							(int)strlen(NsLayoutText()), nb, nl, nr, nk, NsLayoutContentHeight());
+				} else {
+					_KePrint("[layouttest] no layout (fallback renderer)\n");
+				}
+				if (NsCaptchaPage(s_body)) {
+					_KePrint("[selftest] click\n");
+					NsCaptchaActivate();
+					_KePrint("[selftest] clicked\n");
+				} else {
+					_KePrint("[selftest] nocaptcha\n");
+				}
+				_KePrint("[cssselftest] PASS\n");
+				return 0;
+			}
 			{
 				char head[121];
 				strncpy(head, s_text, 120);
 				head[120] = 0;
 				_KePrint("%s\n", head);
+			}
+			if (s_layoutActive) {
+				int nb = 0, nl = 0, nr = 0, nk = 0;
+				const char* lt = NsLayoutText();
+				NsLayoutStats(&nb, &nl, &nr, &nk);
+				_KePrint("[layouttest] text=%d blocks=%d lines=%d runs=%d links=%d content=%d\n",
+						(int)strlen(lt), nb, nl, nr, nk, NsLayoutContentHeight());
+				if (lt[0]) {
+					char lhead[161];
+					strncpy(lhead, lt, 160);
+					lhead[160] = 0;
+					_KePrint("[layouttest] first: %s\n", lhead);
+				}
+				NsLayoutPrintLinks(8);
+				NsLayoutDumpBoxes();
+				{
+					int top = NsLayoutPaintTest(632, 420, 0);
+					int bottom = NsLayoutPaintTest(632, 420,
+							NsLayoutContentHeight() > 420 ? NsLayoutContentHeight() - 420 : 0);
+					_KePrint("[painttest] top_nonbg=%d bottom_nonbg=%d (%s)\n", top, bottom,
+							top > 0 && bottom > 0 ? "PASS" : "FAIL");
+					{
+						int d1 = NsLayoutDumpPpm("/data/ltop.ppm", 632, 420, 0);
+						int d2 = NsLayoutDumpPpm("/data/lbot.ppm", 632, 420,
+								NsLayoutContentHeight() > 420 ? NsLayoutContentHeight() - 420 : 0);
+						_KePrint("[dumptest] top=%d bottom=%d\n", d1, d2);
+					}
+				}
+				_KePrint("[layouttest] PASS\n");
+			} else {
+				_KePrint("[layouttest] no layout (fallback renderer)\n");
 			}
 			_KePrint("[cssselftest] PASS\n");
 			return 0;
@@ -2493,6 +4259,7 @@ int main(int argc, char* argv[]) {
 	ChTextBoxSetFont(s_urlBox, font);
 	ChTextBoxSetFontSize(s_urlBox, 14);
 	s_urlBox->wid.ChPaintHandler = NsUrlPaint;
+	s_urlBox->wid.ChMouseEvent = NsUrlMouseEvent;
 	ChWindowAddWidget(s_mainWin, (ChWidget*)s_urlBox);
 
 	ChButton* go = ChCreateButton(640 - 82, 2, 74, 24, (char*)"Go");
@@ -2525,6 +4292,11 @@ int main(int argc, char* argv[]) {
 
 	ChWindowPaint(s_mainWin);
 
+	/* A URL passed on the command line opens immediately; the box is
+	 * already populated, so this only saves the user pressing Enter. */
+	if (s_url[0])
+		NsFetch(s_url);
+
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
@@ -2533,10 +4305,34 @@ int main(int argc, char* argv[]) {
 		int err = _KeFileIoControl(s_app->postboxfd, POSTBOX_GET_EVENT, &e);
 		WindowHandleMessage(&e);
 		if (err == POSTBOX_NO_EVENT) {
-			/* Idle: fire due page timers (document.write appends repaint
-			 * the view), then a short sleep so the next tick lands. */
-			if (NsJsTick())
+			/* Idle: fire due page timers and promise jobs. A script that
+			 * navigates is fetched here once the callback has returned. */
+			int stepped = NsJsTick();
+			char navraw[NS_URL_MAX];
+			char navabs[NS_URL_MAX];
+			if (NsJsConsumeNav(navraw, sizeof(navraw))) {
+				NsResolveUrl(s_docUrl[0] ? s_docUrl : s_url, navraw, navabs, sizeof(navabs));
+				if (navabs[0] &&
+					(!strncmp(navabs, "https://", 8) || !strncmp(navabs, "http://", 7))) {
+					snprintf(s_url, sizeof(s_url), "%s", navabs);
+					s_urlCursor = strlen(s_url);
+					NsShowUrl();
+					NsLogNav(s_url);
+					NsFetch(s_url);
+				}
+			} else if (stepped) {
+				if (NsJsConsumeDirty() && s_domRoot) {
+					_KePrint("[js] restyle\n");
+					NsCssReselectTree(s_domRoot);
+					if (NsLayoutBuild(s_domRoot,
+									  s_pageBox ? s_pageBox->wid.w : 632,
+									  s_pageBox ? s_pageBox->wid.h : 420) == 0)
+						s_layoutActive = 1;
+					else
+						s_layoutActive = 0;
+				}
 				NsPageRender();
+			}
 			_KeProcessSleep(10);
 		}
 	}

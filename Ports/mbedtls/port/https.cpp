@@ -30,6 +30,7 @@
 /*
  * HTTP/1.1 GET and HEAD over XEClib TCP, with TLS 1.2/1.3 when the URL
  * is https. Certificate chain and hostname are checked. ALPN is http/1.1.
+ * xe_http_get_many runs several GETs at once on this same thread.
  */
 
 #include "https.h"
@@ -44,6 +45,7 @@
 #include <arpa/inet.h>
 #include <sys/_kefile.h>
 #include <sys/_keproc.h>
+#include <sys/_ketime.h>
 
 #include "mbedtls/build_info.h"
 #include "mbedtls/ssl.h"
@@ -92,6 +94,10 @@ struct xe_tls_slot {
 struct xe_reader {
 	int tls;
 	int fd;
+	/* When set, a recv or send that would wait returns WANT_* so another
+	 * socket on this thread can run. The blocking path leaves it clear. */
+	int yield;
+	int progressed;
 	mbedtls_ssl_context* ssl;
 	struct xe_tls_slot* slot;
 	unsigned char buf[2048];
@@ -106,6 +112,11 @@ static mbedtls_ctr_drbg_context g_drbg;
 static mbedtls_x509_crt g_cacert;
 static int g_rng_ready;
 static int g_ca_ready;
+static char g_referer[2048];
+static char* g_req_body = NULL;
+static size_t g_req_body_len = 0;
+static char g_req_ctype[80];
+static char g_last_url[3072];
 
 static void set_err(xe_http_response* out, const char* msg) {
 	snprintf(out->error, sizeof(out->error), "%s", msg);
@@ -237,6 +248,32 @@ static int join_location(const struct xe_url* cur, const char* loc, char* dst, s
 
 static int io_read(struct xe_reader* r, unsigned char* buf, size_t len) {
 	int idle = 0;
+	if (r->yield) {
+		int n;
+		int spins = 0;
+		for (;;) {
+			if (r->tls)
+				n = mbedtls_ssl_read(r->ssl, buf, len);
+			else
+				n = xe_recv(r->fd, buf, len);
+			if (n > 0) {
+				r->progressed = 1;
+				return n;
+			}
+			if (n == 0 || n == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
+				return 0;
+			if (r->tls && n == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+				if (++spins < 4)
+					continue;
+				return n;
+			}
+			if (r->tls && (n == MBEDTLS_ERR_SSL_WANT_READ || n == MBEDTLS_ERR_SSL_WANT_WRITE))
+				return n;
+			if (!r->tls && n < 0)
+				return MBEDTLS_ERR_SSL_WANT_READ;
+			return n;
+		}
+	}
 	while (idle < XE_IDLE_MAX) {
 		int n;
 		if (r->tls)
@@ -281,6 +318,17 @@ static int io_write_all(struct xe_reader* r, const unsigned char* buf, size_t le
 static int tls_send(void* ctx, const unsigned char* buf, size_t len) {
 	struct xe_reader* r = (struct xe_reader*)ctx;
 	int idle = 0;
+	if (r->yield) {
+		int n = (int)sendto(r->fd, buf, len, 0, NULL, 0);
+		if (n > 0) {
+			r->progressed = 1;
+			return n;
+		}
+		/* 0 means the send window took nothing. A hard error fails the handshake. */
+		if (n == 0)
+			return MBEDTLS_ERR_SSL_WANT_WRITE;
+		return MBEDTLS_ERR_SSL_CONN_EOF;
+	}
 	while (idle < XE_IDLE_MAX) {
 		int n = (int)sendto(r->fd, buf, len, 0, NULL, 0);
 		if (n > 0)
@@ -296,6 +344,16 @@ static int tls_send(void* ctx, const unsigned char* buf, size_t len) {
 static int tls_recv(void* ctx, unsigned char* buf, size_t len) {
 	struct xe_reader* r = (struct xe_reader*)ctx;
 	int idle = 0;
+	if (r->yield) {
+		int n = xe_recv(r->fd, buf, len);
+		if (n > 0) {
+			r->progressed = 1;
+			return n;
+		}
+		if (n == 0)
+			return 0;
+		return MBEDTLS_ERR_SSL_WANT_READ;
+	}
 	while (idle < XE_IDLE_MAX) {
 		int n = xe_recv(r->fd, buf, len);
 		if (n > 0)
@@ -458,10 +516,11 @@ static void tls_free(struct xe_reader* r) {
 	r->tls = 0;
 }
 
-static int tls_handshake(struct xe_reader* r, const char* host, xe_http_response* out) {
+static const char* xe_alpn[] = { "http/1.1", NULL };
+
+/* Config and bio only. The overlapped pump calls handshake one step at a time. */
+static int tls_prepare(struct xe_reader* r, const char* host, xe_http_response* out) {
 	int ret;
-	uint32_t flags = 0;
-	static const char* alpn[] = { "http/1.1", NULL };
 
 	if (time(NULL) < XE_CLOCK_MIN) {
 		set_err(out, "clock not set");
@@ -489,7 +548,7 @@ static int tls_handshake(struct xe_reader* r, const char* host, xe_http_response
 	mbedtls_ssl_conf_authmode(&r->slot->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
 	mbedtls_ssl_conf_ca_chain(&r->slot->conf, &g_cacert, NULL);
 	mbedtls_ssl_conf_rng(&r->slot->conf, tls_rng, &g_drbg);
-	if (mbedtls_ssl_conf_alpn_protocols(&r->slot->conf, (const char**)alpn) != 0) {
+	if (mbedtls_ssl_conf_alpn_protocols(&r->slot->conf, xe_alpn) != 0) {
 		set_err(out, "ALPN rejected");
 		goto fail;
 	}
@@ -502,14 +561,26 @@ static int tls_handshake(struct xe_reader* r, const char* host, xe_http_response
 		goto fail;
 	}
 	mbedtls_ssl_set_bio(&r->slot->ssl, r, tls_send, tls_recv, NULL);
-	while ((ret = mbedtls_ssl_handshake(&r->slot->ssl)) != 0) {
+	return 0;
+fail:
+	tls_free(r);
+	return -1;
+}
+
+static int tls_handshake(struct xe_reader* r, const char* host, xe_http_response* out) {
+	int ret;
+	uint32_t flags = 0;
+
+	if (tls_prepare(r, host, out) < 0)
+		return -1;
+	while ((ret = mbedtls_ssl_handshake(r->ssl)) != 0) {
 		if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
 			continue;
-		flags = mbedtls_ssl_get_verify_result(&r->slot->ssl);
+		flags = mbedtls_ssl_get_verify_result(r->ssl);
 		tls_error(ret, flags, out);
 		goto fail;
 	}
-	flags = mbedtls_ssl_get_verify_result(&r->slot->ssl);
+	flags = mbedtls_ssl_get_verify_result(r->ssl);
 	if (flags != 0) {
 		tls_error(ret, flags, out);
 		goto fail;
@@ -587,6 +658,568 @@ static int status_code(const char* hdr) {
 		p++;
 	}
 	return code;
+}
+
+/* ---------------------------------------------------------------- */
+/* Cookie jar. One process-wide table. Scripts and Set-Cookie share it,
+ * so a challenge cookie is sent on the navigation that follows. */
+/* ---------------------------------------------------------------- */
+
+#define XE_COOKIE_MAX 32
+#define XE_COOKIE_NAME 48
+#define XE_COOKIE_VALUE 2048
+#define XE_COOKIE_DOMAIN 128
+#define XE_COOKIE_PATH 160
+
+struct xe_cookie {
+	int used;
+	int host_only;
+	int secure;
+	int http_only;
+	int64_t expires; /* 0 = session */
+	char name[XE_COOKIE_NAME];
+	char value[XE_COOKIE_VALUE];
+	char domain[XE_COOKIE_DOMAIN];
+	char path[XE_COOKIE_PATH];
+};
+
+static struct xe_cookie g_ck[XE_COOKIE_MAX];
+static int g_ck_ready;
+/* Set for the whole of one xe_http_get, including its redirects. */
+static int g_ck_hold;
+static int64_t g_ck_hold_now;
+
+static void ck_init(void) {
+	if (g_ck_ready)
+		return;
+	memset(g_ck, 0, sizeof(g_ck));
+	g_ck_ready = 1;
+}
+
+static int ck_ieq(const char* a, const char* b) {
+	if (!a || !b)
+		return 0;
+	while (*a && *b) {
+		unsigned char ca = (unsigned char)*a;
+		unsigned char cb = (unsigned char)*b;
+		if (ca >= 'A' && ca <= 'Z')
+			ca = (unsigned char)(ca + 32);
+		if (cb >= 'A' && cb <= 'Z')
+			cb = (unsigned char)(cb + 32);
+		if (ca != cb)
+			return 0;
+		a++;
+		b++;
+	}
+	return *a == 0 && *b == 0;
+}
+
+static void ck_trim(char* s) {
+	char* e;
+	size_t n;
+	if (!s)
+		return;
+	while (*s == ' ' || *s == '\t')
+		memmove(s, s + 1, strlen(s));
+	n = strlen(s);
+	e = s + n;
+	while (e > s && (e[-1] == ' ' || e[-1] == '\t'))
+		*--e = 0;
+}
+
+static int ck_domain_ok(const char* host, const char* domain) {
+	size_t hl, dl;
+	if (!host || !domain || !domain[0])
+		return 0;
+	/* "com" is a suffix of "google.com" and must not match. */
+	if (!strchr(domain, '.') && !ck_ieq(host, domain))
+		return 0;
+	hl = strlen(host);
+	dl = strlen(domain);
+	if (dl == 0 || hl < dl)
+		return 0;
+	if (!ck_ieq(host + (hl - dl), domain))
+		return 0;
+	if (hl == dl)
+		return 1;
+	return host[hl - dl - 1] == '.';
+}
+
+static int64_t ck_now(void) {
+	time_t t = time(NULL);
+	if (t <= 0)
+		return 0;
+	return (int64_t)t;
+}
+
+static int ck_month(const char* s) {
+	static const char* names = "janfebmaraprmayjunjulaugsepoctnovdec";
+	char b[3];
+	int i;
+	for (i = 0; i < 3; i++) {
+		unsigned char c = (unsigned char)s[i];
+		if (!c)
+			return 0;
+		if (c >= 'A' && c <= 'Z')
+			c = (unsigned char)(c + 32);
+		b[i] = (char)c;
+	}
+	for (i = 0; i < 12; i++) {
+		if (b[0] == names[i * 3] && b[1] == names[i * 3 + 1] && b[2] == names[i * 3 + 2])
+			return i + 1;
+	}
+	return 0;
+}
+
+static int ck_num(const char** p, int* out) {
+	const char* s = *p;
+	int v = 0;
+	int any = 0;
+	while (*s >= '0' && *s <= '9') {
+		v = v * 10 + (*s - '0');
+		any = 1;
+		s++;
+	}
+	if (!any)
+		return 0;
+	*out = v;
+	*p = s;
+	return 1;
+}
+
+/* Days since 1970-01-01 for a civil Y-M-D. Howard Hinnant's algorithm. */
+static int64_t ck_days(int y, unsigned m, unsigned d) {
+	int era;
+	unsigned yoe, doy, doe;
+	y -= m <= 2;
+	era = (y >= 0 ? y : y - 399) / 400;
+	yoe = (unsigned)(y - era * 400);
+	doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+	doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+	return (int64_t)era * 146097 + (int64_t)doe - 719468;
+}
+
+static int64_t ck_http_date(const char* s) {
+	int day = 0, year = 0, hour = 0, min = 0, sec = 0, mon;
+	const char* p = s;
+	const char* comma;
+	if (!s)
+		return 0;
+	comma = strchr(s, ',');
+	if (comma)
+		p = comma + 1;
+	while (*p == ' ' || *p == '\t')
+		p++;
+	if (!ck_num(&p, &day))
+		return 0;
+	if (*p == '-' || *p == ' ')
+		p++;
+	mon = ck_month(p);
+	if (!mon)
+		return 0;
+	p += 3;
+	if (*p == '-' || *p == ' ')
+		p++;
+	if (!ck_num(&p, &year))
+		return 0;
+	while (*p == ' ' || *p == '\t')
+		p++;
+	if (!ck_num(&p, &hour) || *p != ':')
+		return 0;
+	p++;
+	if (!ck_num(&p, &min) || *p != ':')
+		return 0;
+	p++;
+	if (!ck_num(&p, &sec))
+		return 0;
+	if (year < 100)
+		year += (year >= 70) ? 1900 : 2000;
+	if (mon < 1 || mon > 12 || day < 1 || day > 31)
+		return 0;
+	return ck_days(year, (unsigned)mon, (unsigned)day) * 86400 + hour * 3600 + min * 60 + sec;
+}
+
+static void ck_req_path(const char* full, char* dst, size_t n) {
+	const char* q;
+	size_t len;
+	if (!dst || n == 0)
+		return;
+	dst[0] = '/';
+	dst[1] = 0;
+	if (!full || full[0] != '/')
+		return;
+	q = strchr(full, '?');
+	len = q ? (size_t)(q - full) : strlen(full);
+	if (len == 0)
+		return;
+	if (len >= n)
+		len = n - 1;
+	memcpy(dst, (void*)full, len);
+	dst[len] = 0;
+}
+
+static void ck_default_path(const char* full, char* dst, size_t n) {
+	char path[XE_COOKIE_PATH];
+	size_t i, slash;
+	ck_req_path(full, path, sizeof(path));
+	slash = 0;
+	for (i = 0; path[i]; i++) {
+		if (path[i] == '/')
+			slash = i;
+	}
+	if (slash + 1 >= n)
+		slash = n > 0 ? n - 2 : 0;
+	memcpy(dst, (void*)path, slash + 1);
+	dst[slash + 1] = 0;
+}
+
+static int ck_path_match(const char* req, const char* cpath) {
+	size_t n;
+	if (!cpath || !cpath[0])
+		return 1;
+	n = strlen(cpath);
+	if (strncmp(req, cpath, n) != 0)
+		return 0;
+	if (cpath[n - 1] == '/')
+		return 1;
+	return req[n] == '/' || req[n] == 0;
+}
+
+static void ck_drop(const char* name, const char* domain, const char* path, int host_only) {
+	int i;
+	for (i = 0; i < XE_COOKIE_MAX; i++) {
+		struct xe_cookie* c = &g_ck[i];
+		if (!c->used)
+			continue;
+		if (c->host_only != host_only)
+			continue;
+		if (!ck_ieq(c->name, name) || !ck_ieq(c->domain, domain) || strcmp(c->path, path) != 0)
+			continue;
+		c->used = 0;
+	}
+}
+
+static void ck_store(const struct xe_url* u, const char* line, int from_http) {
+	char buf[4096];
+	char domain[XE_COOKIE_DOMAIN];
+	char path[XE_COOKIE_PATH];
+	char* semi;
+	char* eq;
+	char* name;
+	char* value;
+	char* attr;
+	int secure = 0;
+	int http_only = 0;
+	int host_only = 1;
+	int del = 0;
+	int64_t expires = 0;
+	int64_t now;
+	size_t n = 0;
+	int slot;
+	struct xe_cookie* c;
+	if (!u || !line || !line[0])
+		return;
+	ck_init();
+	while (line[n] && line[n] != '\r' && line[n] != '\n' && n + 1 < sizeof(buf)) {
+		buf[n] = line[n];
+		n++;
+	}
+	buf[n] = 0;
+	semi = strchr(buf, ';');
+	if (semi)
+		*semi = 0;
+	eq = strchr(buf, '=');
+	if (!eq || eq == buf)
+		return;
+	*eq = 0;
+	name = buf;
+	value = eq + 1;
+	ck_trim(name);
+	ck_trim(value);
+	if (!name[0] || strlen(name) >= XE_COOKIE_NAME || strlen(value) >= XE_COOKIE_VALUE) {
+		_KePrint("[cookie] drop %s\n", name[0] ? name : "?");
+		return;
+	}
+	snprintf(domain, sizeof(domain), "%s", u->host);
+	path[0] = 0;
+	now = ck_now();
+	attr = semi ? semi + 1 : NULL;
+	while (attr && *attr) {
+		char* next = strchr(attr, ';');
+		char* aeq;
+		char* aname;
+		char* aval;
+		if (next)
+			*next = 0;
+		while (*attr == ' ' || *attr == '\t')
+			attr++;
+		aname = attr;
+		aval = (char*)"";
+		aeq = strchr(attr, '=');
+		if (aeq) {
+			*aeq = 0;
+			aval = aeq + 1;
+			while (*aval == ' ' || *aval == '\t')
+				aval++;
+		}
+		ck_trim(aname);
+		if (ck_ieq(aname, "domain") && aval[0]) {
+			if (aval[0] == '.')
+				aval++;
+			if (!ck_domain_ok(u->host, aval))
+				return;
+			snprintf(domain, sizeof(domain), "%s", aval);
+			host_only = 0;
+		} else if (ck_ieq(aname, "path") && aval[0] == '/') {
+			snprintf(path, sizeof(path), "%s", aval);
+		} else if (ck_ieq(aname, "secure")) {
+			secure = 1;
+		} else if (ck_ieq(aname, "httponly")) {
+			if (from_http)
+				http_only = 1;
+		} else if (ck_ieq(aname, "max-age")) {
+			int mag = 0;
+			int neg = aval[0] == '-';
+			const char* np = neg ? aval + 1 : aval;
+			if (ck_num(&np, &mag) && (neg || mag == 0))
+				del = 1;
+			else if (!neg && mag > 0 && now >= XE_CLOCK_MIN)
+				expires = now + mag;
+		} else if (ck_ieq(aname, "expires")) {
+			int64_t when = ck_http_date(aval);
+			if (when > 0) {
+				expires = when;
+				if (now >= XE_CLOCK_MIN && when <= now)
+					del = 1;
+			}
+		}
+		attr = next ? next + 1 : NULL;
+	}
+	if (!path[0])
+		ck_default_path(u->path, path, sizeof(path));
+	if (del) {
+		_KePrint("[cookie] clear %s\n", name[0] ? name : "?");
+		ck_drop(name, domain, path, host_only);
+		return;
+	}
+	slot = -1;
+	for (n = 0; n < XE_COOKIE_MAX; n++) {
+		c = &g_ck[n];
+		if (c->used && c->host_only == host_only && ck_ieq(c->name, name) &&
+			ck_ieq(c->domain, domain) && strcmp(c->path, path) == 0) {
+			slot = (int)n;
+			break;
+		}
+		if (!c->used && slot < 0)
+			slot = (int)n;
+	}
+	if (slot < 0) {
+		_KePrint("[cookie] jar full, drop %s\n", name);
+		return;
+	}
+	c = &g_ck[slot];
+	memset(c, 0, sizeof(*c));
+	c->used = 1;
+	c->host_only = host_only;
+	c->secure = secure;
+	c->http_only = http_only;
+	c->expires = expires;
+	snprintf(c->name, sizeof(c->name), "%s", name);
+	snprintf(c->value, sizeof(c->value), "%s", value);
+	snprintf(c->domain, sizeof(c->domain), "%s", domain);
+	snprintf(c->path, sizeof(c->path), "%s", path);
+	_KePrint("[cookie] store %s %d\n", c->name, (int)strlen(c->value));
+}
+
+static void ck_from_headers(const struct xe_url* u, const char* hdr) {
+	const char* p = hdr;
+	if (!hdr)
+		return;
+	while (*p) {
+		if (strncasecmp(p, "Set-Cookie:", 11) == 0) {
+			const char* v = p + 11;
+			while (*v == ' ' || *v == '\t')
+				v++;
+			ck_store(u, v, 1);
+		}
+		p = strstr(p, "\r\n");
+		if (!p)
+			break;
+		p += 2;
+	}
+}
+
+/* The search wall skips document.cookie when the current string plus the
+ * new pair is at least 4093 bytes, then it puts the value on the query.
+ * Keep the script view short enough to assign, and still return SG_SS. */
+#define XE_JS_COOKIE_BUDGET 2032
+
+static int ck_live(const struct xe_url* u, struct xe_cookie* c, const char* reqpath, int64_t now,
+				   int js_only) {
+	int match;
+	if (!c->used)
+		return 0;
+	if (js_only && c->http_only)
+		return 0;
+	if (c->secure && !u->https)
+		return 0;
+	if (c->expires && now >= XE_CLOCK_MIN && now >= c->expires) {
+		/* The search cookie lives 30s. A redirect on this guest can take
+		 * longer than that, so a cookie that was valid when this fetch
+		 * started is still sent on the later hops. */
+		int keep = g_ck_hold && c->expires >= g_ck_hold_now && now < c->expires + 180;
+		if (!keep) {
+			_KePrint("[cookie] expire %s\n", c->name);
+			c->used = 0;
+			return 0;
+		}
+	}
+	if (c->host_only)
+		match = ck_ieq(u->host, c->domain);
+	else
+		match = ck_domain_ok(u->host, c->domain);
+	if (!match || !ck_path_match(reqpath, c->path))
+		return 0;
+	return 1;
+}
+
+static int ck_put(char* dst, size_t dstsz, size_t* used, const struct xe_cookie* c, size_t budget) {
+	size_t cap;
+	size_t need;
+	size_t extra;
+	int n;
+	if (!dst || !used || !c || dstsz == 0)
+		return 0;
+	cap = budget < dstsz ? budget : dstsz;
+	need = strlen(c->name) + 1 + strlen(c->value);
+	extra = *used ? 2 : 0;
+	if (*used + extra + need + 1 > cap)
+		return 0;
+	if (extra) {
+		dst[(*used)++] = ';';
+		dst[(*used)++] = ' ';
+	}
+	n = snprintf(dst + *used, dstsz - *used, "%s=%s", c->name, c->value);
+	if (n < 0 || (size_t)n >= dstsz - *used)
+		return 0;
+	*used += (size_t)n;
+	return 1;
+}
+
+static int ck_fill(const struct xe_url* u, char* dst, size_t dstsz, int js_only) {
+	char reqpath[XE_COOKIE_PATH];
+	size_t used = 0;
+	int64_t now;
+	int pass;
+	int i;
+	if (!dst || dstsz == 0)
+		return 0;
+	dst[0] = 0;
+	if (!u)
+		return 0;
+	ck_init();
+	ck_req_path(u->path, reqpath, sizeof(reqpath));
+	now = ck_now();
+	/* Pass 0 is SG_SS. A full jar used to stop before that name, so the
+	 * page thought the cookie it had just stored was missing. */
+	for (pass = 0; pass < 2; pass++) {
+		for (i = 0; i < XE_COOKIE_MAX; i++) {
+			struct xe_cookie* c = &g_ck[i];
+			int sg;
+			size_t budget;
+			if (!ck_live(u, c, reqpath, now, js_only))
+				continue;
+			sg = ck_ieq(c->name, "SG_SS");
+			if (pass == 0 && !sg)
+				continue;
+			if (pass == 1 && sg)
+				continue;
+			budget = dstsz;
+			if (js_only && pass == 1)
+				budget = XE_JS_COOKIE_BUDGET;
+			ck_put(dst, dstsz, &used, c, budget);
+		}
+	}
+	return (int)used;
+}
+
+static void ck_referer_for(const struct xe_url* u, char* dst, size_t n) {
+	struct xe_url r;
+	if (!dst || n == 0)
+		return;
+	dst[0] = 0;
+	if (!g_referer[0])
+		return;
+	if (parse_url(g_referer, &r) < 0)
+		return;
+	if (!ck_ieq(r.host, u->host))
+		return;
+	if (r.https && !u->https)
+		return;
+	snprintf(dst, n, "%s", g_referer);
+}
+
+void xe_http_set_referer(const char* url) {
+	char* hash;
+	g_referer[0] = 0;
+	if (!url || !url[0])
+		return;
+	snprintf(g_referer, sizeof(g_referer), "%s", url);
+	hash = strchr(g_referer, '#');
+	if (hash)
+		*hash = 0;
+}
+
+void xe_http_set_body(const char* content_type, const void* body, size_t len) {
+	free(g_req_body);
+	g_req_body = NULL;
+	g_req_body_len = 0;
+	g_req_ctype[0] = 0;
+	if (!body || len == 0)
+		return;
+	if (len > 48 * 1024)
+		len = 48 * 1024;
+	g_req_body = (char*)malloc(len);
+	if (!g_req_body)
+		return;
+	memcpy(g_req_body, (void*)body, len);
+	g_req_body_len = len;
+	snprintf(g_req_ctype, sizeof(g_req_ctype), "%s",
+			 content_type && content_type[0] ? content_type
+											 : "application/x-www-form-urlencoded");
+}
+
+void xe_http_last_url(char* dst, size_t dstsz) {
+	if (!dst || dstsz == 0)
+		return;
+	snprintf(dst, dstsz, "%s", g_last_url);
+}
+
+void xe_cookie_set(const char* page_url, const char* set_cookie, int from_http) {
+	struct xe_url u;
+	if (!page_url || parse_url(page_url, &u) < 0)
+		return;
+	ck_store(&u, set_cookie, from_http);
+}
+
+int xe_cookie_header(const char* url, char* dst, size_t dstsz) {
+	struct xe_url u;
+	if (!url || parse_url(url, &u) < 0) {
+		if (dst && dstsz)
+			dst[0] = 0;
+		return 0;
+	}
+	return ck_fill(&u, dst, dstsz, 0);
+}
+
+int xe_cookie_document(const char* url, char* dst, size_t dstsz) {
+	struct xe_url u;
+	if (!url || parse_url(url, &u) < 0) {
+		if (dst && dstsz)
+			dst[0] = 0;
+		return 0;
+	}
+	return ck_fill(&u, dst, dstsz, 1);
 }
 
 static int read_body(struct xe_reader* r, int chunked, long content_len, int want_body,
@@ -682,6 +1315,8 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 	int fd;
 	int head_only = method && strcmp(method, "HEAD") == 0;
 	char* req = NULL;
+	char* cookie = NULL;
+	char* referer = NULL;
 	char hdr[XE_HDR_RAW];
 	const char* te;
 	const char* cl;
@@ -705,9 +1340,22 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 		snprintf(hosthdr, sizeof(hosthdr), "%s", u->host);
 	else
 		snprintf(hosthdr, sizeof(hosthdr), "%s:%u", u->host, u->port);
+	cookie = (char*)malloc(4096);
+	referer = (char*)malloc(2048);
+	if (cookie) {
+		cookie[0] = 0;
+		ck_fill(u, cookie, 4096, 0);
+	}
+	if (referer) {
+		referer[0] = 0;
+		ck_referer_for(u, referer, 2048);
+	}
 	{
-		size_t reqcap = strlen(u->path) + 640;
+		size_t extra = (cookie && cookie[0] ? strlen(cookie) : 0) +
+					   (referer && referer[0] ? strlen(referer) : 0);
+		size_t reqcap = strlen(u->path) + extra + 768;
 		int n;
+		size_t at;
 		req = (char*)malloc(reqcap);
 		if (!req) {
 			set_err(out, "Out of memory");
@@ -715,18 +1363,38 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 		}
 		if (req_body && req_body_len) {
 			n = snprintf(req, reqcap,
-						 "POST %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\n"
-						 "Accept: */*\r\nContent-Type: %s\r\nContent-Length: %u\r\n"
-						 "Connection: close\r\n\r\n",
+						 "POST %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n"
+						 "Content-Type: %s\r\nContent-Length: %u\r\n",
 						 u->path, hosthdr, ua ? ua : "xeneva",
 						 ctype ? ctype : "application/octet-stream", (unsigned)req_body_len);
 		} else {
-			n = snprintf(req, reqcap,
-						 "%s %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n"
-						 "Connection: close\r\n\r\n",
+			n = snprintf(req, reqcap, "%s %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n",
 						 head_only ? "HEAD" : "GET", u->path, hosthdr, ua ? ua : "xeneva");
 		}
 		if (n < 0 || (size_t)n >= reqcap) {
+			set_err(out, "Request too long");
+			goto fail;
+		}
+		at = (size_t)n;
+		if (cookie && cookie[0]) {
+			n = snprintf(req + at, reqcap - at, "Cookie: %s\r\n", cookie);
+			if (n < 0 || (size_t)n >= reqcap - at) {
+				set_err(out, "Request too long");
+				goto fail;
+			}
+			at += (size_t)n;
+			_KePrint("[cookie] send %s %d\n", u->host, (int)strlen(cookie));
+		}
+		if (referer && referer[0]) {
+			n = snprintf(req + at, reqcap - at, "Referer: %s\r\n", referer);
+			if (n < 0 || (size_t)n >= reqcap - at) {
+				set_err(out, "Request too long");
+				goto fail;
+			}
+			at += (size_t)n;
+		}
+		n = snprintf(req + at, reqcap - at, "Connection: close\r\n\r\n");
+		if (n < 0 || (size_t)n >= reqcap - at) {
 			set_err(out, "Request too long");
 			goto fail;
 		}
@@ -761,6 +1429,7 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 	loc = hdr_value(hdr, "Location");
 	if (loc)
 		copy_token(loc, location, locsz);
+	ck_from_headers(u, hdr);
 	if (read_body(&r, chunked, content_len, !head_only, out, max_body) < 0) {
 		set_err(out, "Body read failed");
 		goto fail;
@@ -770,26 +1439,891 @@ static int fetch_once(const struct xe_url* u, const char* method, const char* ua
 	tls_free(&r);
 	_KeCloseFile(fd);
 	free(req);
+	free(cookie);
+	free(referer);
 	return 0;
 fail:
 	free(req);
+	free(cookie);
+	free(referer);
 	tls_free(&r);
 	_KeCloseFile(fd);
 	return -1;
 }
 
+/* Several GETs, one thread. Connect still blocks in the kernel, and that
+ * wait polls the NIC, so records for sockets already open keep landing.
+ * The yield flag makes the TLS bio return instead of sleeping, and the
+ * loop below steps each open socket before it sleeps once. A second
+ * thread is not used: the allocator is not safe across threads. */
+enum {
+	XJ_FREE = 0,
+	XJ_TLS,
+	XJ_SEND,
+	XJ_HDR,
+	XJ_BODY,
+	XJ_DONE,
+	XJ_FAIL
+};
+
+enum {
+	XB_RAW = 0,
+	XB_LINE,
+	XB_DATA,
+	XB_CRLF
+};
+
+#define XE_MANY_IDLE_MS 20000
+#define XE_MANY_WAITS 750
+#define XE_STEP_BUDGET 16384
+
+struct xe_many {
+	int state;
+	int fd;
+	int idx;
+	int hops;
+	int rc;
+	int chunked;
+	int body_mode;
+	int tls_ready;
+	int waits;
+	long content_len;
+	size_t body_got;
+	size_t chunk_left;
+	size_t hdr_n;
+	size_t req_off;
+	size_t req_len;
+	size_t max_body;
+	uint64_t idle_ms;
+	struct xe_url u;
+	struct xe_reader r;
+	char url[3072];
+	char loc[3072];
+	char* req;
+	char hdr[XE_HDR_RAW];
+	unsigned char pend[2048];
+	int pend_len;
+	int pend_pos;
+	char chunk_line[64];
+	int chunk_line_n;
+	xe_http_response* out;
+	const char* ua;
+};
+
+static void job_close(struct xe_many* j) {
+	if (!j)
+		return;
+	if (j->tls_ready && j->r.ssl)
+		mbedtls_ssl_close_notify(j->r.ssl);
+	j->tls_ready = 0;
+	tls_free(&j->r);
+	if (j->fd >= 0) {
+		_KeCloseFile(j->fd);
+		j->fd = -1;
+	}
+	j->r.fd = -1;
+	free(j->req);
+	j->req = NULL;
+	j->req_off = 0;
+	j->req_len = 0;
+}
+
+static void job_fail(struct xe_many* j, const char* msg) {
+	if (!j)
+		return;
+	if (j->out) {
+		if (msg && !j->out->error[0])
+			set_err(j->out, msg);
+		free(j->out->body);
+		j->out->body = NULL;
+		j->out->body_len = 0;
+	}
+	job_close(j);
+	j->rc = -1;
+	j->state = XJ_FAIL;
+}
+
+static void job_touch(struct xe_many* j) {
+	j->idle_ms = _KeGetCurrentMS();
+	j->waits = 0;
+}
+
+static int job_stale(struct xe_many* j) {
+	uint64_t now = _KeGetCurrentMS();
+	if (j->waits > XE_MANY_WAITS ||
+		(now > j->idle_ms && now - j->idle_ms > (uint64_t)XE_MANY_IDLE_MS)) {
+		job_fail(j, "Timed out");
+		return 1;
+	}
+	return 0;
+}
+
+static int job_send_some(struct xe_reader* r, const unsigned char* buf, size_t len) {
+	int n;
+	if (!r || !len)
+		return 0;
+	r->progressed = 0;
+	if (r->tls)
+		n = mbedtls_ssl_write(r->ssl, buf, len);
+	else
+		n = (int)sendto(r->fd, buf, len, 0, NULL, 0);
+	if (n > 0) {
+		r->progressed = 1;
+		return n;
+	}
+	if (r->tls && (n == MBEDTLS_ERR_SSL_WANT_READ || n == MBEDTLS_ERR_SSL_WANT_WRITE))
+		return 0;
+	if (!r->tls && n == 0)
+		return 0;
+	return -1;
+}
+
+static int job_build_req(struct xe_many* j) {
+	char* cookie = NULL;
+	char* referer = NULL;
+	char hosthdr[300];
+	char* req;
+	size_t extra;
+	size_t reqcap;
+	size_t at;
+	int n;
+	const char* ua = j->ua && j->ua[0] ? j->ua : "xeneva";
+
+	free(j->req);
+	j->req = NULL;
+	j->req_off = 0;
+	j->req_len = 0;
+	if ((j->u.https && j->u.port == 443) || (!j->u.https && j->u.port == 80))
+		snprintf(hosthdr, sizeof(hosthdr), "%s", j->u.host);
+	else
+		snprintf(hosthdr, sizeof(hosthdr), "%s:%u", j->u.host, j->u.port);
+	cookie = (char*)malloc(4096);
+	referer = (char*)malloc(2048);
+	if (cookie) {
+		cookie[0] = 0;
+		ck_fill(&j->u, cookie, 4096, 0);
+	}
+	if (referer) {
+		referer[0] = 0;
+		ck_referer_for(&j->u, referer, 2048);
+	}
+	extra = (cookie && cookie[0] ? strlen(cookie) : 0) +
+			(referer && referer[0] ? strlen(referer) : 0);
+	reqcap = strlen(j->u.path) + extra + 768;
+	req = (char*)malloc(reqcap);
+	if (!req) {
+		free(cookie);
+		free(referer);
+		set_err(j->out, "Out of memory");
+		return -1;
+	}
+	n = snprintf(req, reqcap,
+				 "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\nAccept: */*\r\n",
+				 j->u.path, hosthdr, ua);
+	if (n < 0 || (size_t)n >= reqcap)
+		goto toolong;
+	at = (size_t)n;
+	if (cookie && cookie[0]) {
+		n = snprintf(req + at, reqcap - at, "Cookie: %s\r\n", cookie);
+		if (n < 0 || (size_t)n >= reqcap - at)
+			goto toolong;
+		at += (size_t)n;
+		_KePrint("[cookie] send %s %d\n", j->u.host, (int)strlen(cookie));
+	}
+	if (referer && referer[0]) {
+		n = snprintf(req + at, reqcap - at, "Referer: %s\r\n", referer);
+		if (n < 0 || (size_t)n >= reqcap - at)
+			goto toolong;
+		at += (size_t)n;
+	}
+	n = snprintf(req + at, reqcap - at, "Connection: close\r\n\r\n");
+	if (n < 0 || (size_t)n >= reqcap - at)
+		goto toolong;
+	at += (size_t)n;
+	j->req = req;
+	j->req_len = at;
+	j->req_off = 0;
+	free(cookie);
+	free(referer);
+	return 0;
+toolong:
+	free(req);
+	free(cookie);
+	free(referer);
+	set_err(j->out, "Request too long");
+	return -1;
+}
+
+static int job_open(struct xe_many* j) {
+	int fd;
+	int pu = parse_url(j->url, &j->u);
+	if (pu == -2) {
+		set_err(j->out, "IPv6-only hosts are not reachable yet");
+		return -1;
+	}
+	if (pu < 0) {
+		set_err(j->out, "Bad URL");
+		return -1;
+	}
+	fd = connect_host(&j->u, j->out);
+	if (fd < 0)
+		return -1;
+	memset(&j->r, 0, sizeof(j->r));
+	j->r.fd = fd;
+	j->r.yield = 1;
+	j->fd = fd;
+	j->tls_ready = 0;
+	j->out->tls = j->u.https;
+	j->idle_ms = _KeGetCurrentMS();
+	j->waits = 0;
+	if (j->u.https) {
+		if (tls_prepare(&j->r, j->u.host, j->out) < 0) {
+			job_close(j);
+			return -1;
+		}
+		j->state = XJ_TLS;
+		return 0;
+	}
+	if (job_build_req(j) < 0) {
+		job_close(j);
+		return -1;
+	}
+	j->tls_ready = 1;
+	j->state = XJ_SEND;
+	return 0;
+}
+
+static int job_follow(struct xe_many* j) {
+	char next[3072];
+	if (j->hops >= XE_MAX_REDIRECTS) {
+		set_err(j->out, "Too many redirects");
+		xe_http_response_free(j->out);
+		job_close(j);
+		j->rc = -1;
+		j->state = XJ_FAIL;
+		return 1;
+	}
+	if (join_location(&j->u, j->loc, next, sizeof(next)) < 0) {
+		set_err(j->out, "Bad redirect");
+		xe_http_response_free(j->out);
+		job_close(j);
+		j->rc = -1;
+		j->state = XJ_FAIL;
+		return 1;
+	}
+	if (j->u.https && strncmp(next, "http://", 7) == 0) {
+		j->out->https_to_http = 1;
+		_KePrint("[https] redirect left TLS for %s\r\n", next);
+	}
+	xe_http_response_free(j->out);
+	j->out->error[0] = 0;
+	j->out->headers[0] = 0;
+	j->out->status = 0;
+	job_close(j);
+	j->hops++;
+	j->hdr_n = 0;
+	j->hdr[0] = 0;
+	j->pend_len = 0;
+	j->pend_pos = 0;
+	j->chunk_line_n = 0;
+	j->chunk_left = 0;
+	j->body_got = 0;
+	j->content_len = -1;
+	j->chunked = 0;
+	j->body_mode = XB_RAW;
+	j->loc[0] = 0;
+	snprintf(j->url, sizeof(j->url), "%s", next);
+	if (job_open(j) < 0) {
+		j->rc = -1;
+		j->state = XJ_FAIL;
+		return 1;
+	}
+	return 1;
+}
+
+static int job_deliver(struct xe_many* j) {
+	int st = j->out ? j->out->status : 0;
+	if (j->out && j->out->body) {
+		j->out->body[j->body_got] = 0;
+		j->out->body_len = j->body_got;
+	}
+	if (st >= 400) {
+		snprintf(j->out->error, sizeof(j->out->error), "HTTP %d", st);
+		j->rc = 22;
+	} else {
+		if (j->out)
+			j->out->error[0] = 0;
+		j->rc = 0;
+	}
+	job_close(j);
+	j->state = XJ_DONE;
+	return 1;
+}
+
+static int job_headers_done(struct xe_many* j) {
+	const char* te;
+	const char* cl;
+	const char* loc;
+	unsigned char* body;
+	size_t cap;
+	int st;
+
+	memcpy(j->out->headers, j->hdr, sizeof(j->out->headers) - 1);
+	j->out->headers[sizeof(j->out->headers) - 1] = 0;
+	st = status_code(j->hdr);
+	j->out->status = st;
+	if (st < 0) {
+		job_fail(j, "Bad HTTP status");
+		return -1;
+	}
+	te = hdr_value(j->hdr, "Transfer-Encoding");
+	j->chunked = (te && strncasecmp(te, "chunked", 7) == 0) ? 1 : 0;
+	j->content_len = -1;
+	cl = hdr_value(j->hdr, "Content-Length");
+	if (cl) {
+		j->content_len = 0;
+		while (*cl >= '0' && *cl <= '9') {
+			j->content_len = j->content_len * 10 + (*cl - '0');
+			cl++;
+		}
+	}
+	j->loc[0] = 0;
+	loc = hdr_value(j->hdr, "Location");
+	if (loc)
+		copy_token(loc, j->loc, sizeof(j->loc));
+	ck_from_headers(&j->u, j->hdr);
+	if ((st == 301 || st == 302 || st == 303 || st == 307 || st == 308) && j->loc[0])
+		return job_follow(j);
+	cap = j->max_body ? j->max_body : 1;
+	body = (unsigned char*)malloc(cap + 1);
+	if (!body) {
+		job_fail(j, "Out of memory");
+		return -1;
+	}
+	body[0] = 0;
+	j->out->body = (char*)body;
+	j->out->body_len = 0;
+	j->body_got = 0;
+	j->chunk_left = 0;
+	j->chunk_line_n = 0;
+	j->body_mode = j->chunked ? XB_LINE : XB_RAW;
+	return 0;
+}
+
+static int job_take(struct xe_many* j, unsigned char* dst, size_t max, size_t* got) {
+	int spins = 0;
+	*got = 0;
+	if (!dst || !max)
+		return 0;
+	if (j->pend_pos < j->pend_len) {
+		size_t have = (size_t)(j->pend_len - j->pend_pos);
+		if (have > max)
+			have = max;
+		memcpy(dst, j->pend + j->pend_pos, have);
+		j->pend_pos += (int)have;
+		*got = have;
+		return 1;
+	}
+	while (spins < 4) {
+		int n = io_read(&j->r, dst, max);
+		if (n > 0) {
+			*got = (size_t)n;
+			return 1;
+		}
+		if (n == 0 || n == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
+			return -1;
+		if (n == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+			spins++;
+			continue;
+		}
+		if (n == MBEDTLS_ERR_SSL_WANT_READ || n == MBEDTLS_ERR_SSL_WANT_WRITE ||
+			n == MBEDTLS_ERR_SSL_TIMEOUT)
+			return 0;
+		return -2;
+	}
+	return 0;
+}
+
+static int job_body_raw(struct xe_many* j) {
+	size_t budget = XE_STEP_BUDGET;
+	size_t cap = j->max_body ? j->max_body : 1;
+	unsigned char* body = (unsigned char*)j->out->body;
+	int any = 0;
+	if (!body) {
+		job_fail(j, "Body read failed");
+		return 1;
+	}
+	while (budget) {
+		size_t room;
+		size_t ask;
+		size_t got = 0;
+		int tr;
+		if (j->content_len >= 0 && j->body_got >= (size_t)j->content_len) {
+			job_deliver(j);
+			return 1;
+		}
+		room = (j->body_got < cap) ? (cap - j->body_got) : 0;
+		if (!room) {
+			job_deliver(j);
+			return 1;
+		}
+		ask = room > 2048 ? 2048 : room;
+		if (ask > budget)
+			ask = budget;
+		tr = job_take(j, body + j->body_got, ask, &got);
+		if (tr == 0) {
+			if (j->r.progressed)
+				job_touch(j);
+			return any;
+		}
+		if (tr < 0) {
+			job_deliver(j);
+			return 1;
+		}
+		j->body_got += got;
+		if (budget >= got)
+			budget -= got;
+		else
+			budget = 0;
+		any = 1;
+		job_touch(j);
+	}
+	return any ? 1 : 0;
+}
+
+static int job_body_chunked(struct xe_many* j) {
+	size_t budget = XE_STEP_BUDGET;
+	size_t cap = j->max_body ? j->max_body : 1;
+	unsigned char* body = (unsigned char*)j->out->body;
+	int any = 0;
+	if (!body) {
+		job_fail(j, "Body read failed");
+		return 1;
+	}
+	while (budget) {
+		if (j->body_mode == XB_LINE) {
+			unsigned char c;
+			size_t got = 0;
+			size_t sz = 0;
+			int tr = job_take(j, &c, 1, &got);
+			if (tr == 0) {
+				if (j->r.progressed)
+					job_touch(j);
+				return any;
+			}
+			if (tr < 0) {
+				job_deliver(j);
+				return 1;
+			}
+			any = 1;
+			job_touch(j);
+			budget--;
+			if (c == '\n') {
+				j->chunk_line[j->chunk_line_n] = 0;
+				if (hex_len(j->chunk_line, &sz) < 0) {
+					job_fail(j, "Body read failed");
+					return 1;
+				}
+				j->chunk_line_n = 0;
+				if (sz == 0) {
+					job_deliver(j);
+					return 1;
+				}
+				j->chunk_left = sz;
+				j->body_mode = XB_DATA;
+			} else if (c != '\r') {
+				if (j->chunk_line_n + 1 >= (int)sizeof(j->chunk_line)) {
+					job_fail(j, "Body read failed");
+					return 1;
+				}
+				j->chunk_line[j->chunk_line_n++] = (char)c;
+			}
+			continue;
+		}
+		if (j->body_mode == XB_DATA) {
+			size_t room = (j->body_got < cap) ? (cap - j->body_got) : 0;
+			size_t ask;
+			size_t got = 0;
+			int tr;
+			if (!room) {
+				job_deliver(j);
+				return 1;
+			}
+			ask = j->chunk_left;
+			if (ask > room)
+				ask = room;
+			if (ask > 2048)
+				ask = 2048;
+			if (ask > budget)
+				ask = budget;
+			if (!ask) {
+				j->body_mode = XB_CRLF;
+				continue;
+			}
+			tr = job_take(j, body + j->body_got, ask, &got);
+			if (tr == 0) {
+				if (j->r.progressed)
+					job_touch(j);
+				return any;
+			}
+			if (tr < 0) {
+				job_deliver(j);
+				return 1;
+			}
+			j->body_got += got;
+			if (j->chunk_left >= got)
+				j->chunk_left -= got;
+			else
+				j->chunk_left = 0;
+			if (budget >= got)
+				budget -= got;
+			else
+				budget = 0;
+			any = 1;
+			job_touch(j);
+			if (j->chunk_left == 0)
+				j->body_mode = XB_CRLF;
+			continue;
+		}
+		if (j->body_mode == XB_CRLF) {
+			unsigned char c;
+			size_t got = 0;
+			int tr = job_take(j, &c, 1, &got);
+			if (tr == 0) {
+				if (j->r.progressed)
+					job_touch(j);
+				return any;
+			}
+			if (tr < 0) {
+				job_deliver(j);
+				return 1;
+			}
+			any = 1;
+			job_touch(j);
+			budget--;
+			if (c == '\n') {
+				j->chunk_line_n = 0;
+				j->body_mode = XB_LINE;
+			}
+			continue;
+		}
+		job_fail(j, "Body read failed");
+		return 1;
+	}
+	return any ? 1 : 0;
+}
+
+static int job_step_tls(struct xe_many* j) {
+	int ret;
+	int tries = 0;
+	uint32_t flags = 0;
+	if (!j->r.ssl) {
+		job_fail(j, "TLS handshake failed");
+		return 1;
+	}
+	do {
+		j->r.progressed = 0;
+		ret = mbedtls_ssl_handshake(j->r.ssl);
+		tries++;
+	} while (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET && tries < 4);
+	if (ret == 0) {
+		flags = mbedtls_ssl_get_verify_result(j->r.ssl);
+		if (flags != 0) {
+			tls_error(ret, flags, j->out);
+			job_fail(j, "certificate rejected");
+			return 1;
+		}
+		if (job_build_req(j) < 0) {
+			job_fail(j, "Out of memory");
+			return 1;
+		}
+		j->tls_ready = 1;
+		j->state = XJ_SEND;
+		job_touch(j);
+		return 1;
+	}
+	if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
+		ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+		if (j->r.progressed || ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET)
+			job_touch(j);
+		return (j->r.progressed || ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) ? 1 : 0;
+	}
+	flags = mbedtls_ssl_get_verify_result(j->r.ssl);
+	tls_error(ret, flags, j->out);
+	job_fail(j, "TLS handshake failed");
+	return 1;
+}
+
+static int job_step_send(struct xe_many* j) {
+	while (j->req && j->req_off < j->req_len) {
+		size_t left = j->req_len - j->req_off;
+		int n = job_send_some(&j->r, (const unsigned char*)j->req + j->req_off, left);
+		if (n > 0) {
+			j->req_off += (size_t)n;
+			job_touch(j);
+			continue;
+		}
+		if (n == 0) {
+			if (j->r.progressed)
+				job_touch(j);
+			return j->r.progressed ? 1 : 0;
+		}
+		job_fail(j, "Send failed");
+		return 1;
+	}
+	j->hdr_n = 0;
+	j->hdr[0] = 0;
+	j->state = XJ_HDR;
+	return 1;
+}
+
+static int job_step_hdr(struct xe_many* j) {
+	int any = 0;
+	for (;;) {
+		unsigned char tmp[2048];
+		size_t room;
+		size_t got = 0;
+		int tr;
+		char* mark;
+		size_t hdrbytes;
+		size_t extra;
+		if (j->hdr_n + 1 >= sizeof(j->hdr)) {
+			job_fail(j, "No HTTP response");
+			return 1;
+		}
+		room = sizeof(j->hdr) - 1 - j->hdr_n;
+		if (room > sizeof(tmp))
+			room = sizeof(tmp);
+		tr = job_take(j, tmp, room, &got);
+		if (tr == 0) {
+			if (j->r.progressed)
+				job_touch(j);
+			return any;
+		}
+		if (tr < 0) {
+			job_fail(j, "No HTTP response");
+			return 1;
+		}
+		memcpy(j->hdr + j->hdr_n, tmp, got);
+		j->hdr_n += got;
+		j->hdr[j->hdr_n] = 0;
+		any = 1;
+		job_touch(j);
+		mark = strstr(j->hdr, "\r\n\r\n");
+		if (!mark)
+			continue;
+		hdrbytes = (size_t)(mark - j->hdr) + 4;
+		extra = j->hdr_n - hdrbytes;
+		if (extra > sizeof(j->pend)) {
+			job_fail(j, "No HTTP response");
+			return 1;
+		}
+		if (extra) {
+			memcpy(j->pend, j->hdr + hdrbytes, extra);
+			j->pend_len = (int)extra;
+			j->pend_pos = 0;
+		}
+		j->hdr[hdrbytes] = 0;
+		j->hdr_n = hdrbytes;
+		if (job_headers_done(j) != 0)
+			return 1;
+		j->state = XJ_BODY;
+		return 1;
+	}
+}
+
+static int job_step_body(struct xe_many* j) {
+	if (j->chunked)
+		return job_body_chunked(j);
+	return job_body_raw(j);
+}
+
+static int job_step(struct xe_many* j) {
+	int prog = 0;
+	int guard = 0;
+	if (!j || j->state == XJ_FREE || j->state == XJ_DONE || j->state == XJ_FAIL)
+		return 0;
+	while (guard++ < 16) {
+		int prev = j->state;
+		int p = 0;
+		if (job_stale(j))
+			return 1;
+		if (prev == XJ_TLS)
+			p = job_step_tls(j);
+		else if (prev == XJ_SEND)
+			p = job_step_send(j);
+		else if (prev == XJ_HDR)
+			p = job_step_hdr(j);
+		else if (prev == XJ_BODY)
+			p = job_step_body(j);
+		else
+			break;
+		if (!p)
+			break;
+		prog = 1;
+		if (j->state == XJ_DONE || j->state == XJ_FAIL)
+			break;
+		if (j->state == prev && (prev == XJ_TLS || prev == XJ_BODY))
+			break;
+	}
+	return prog;
+}
+
+static int job_arm(struct xe_many* j, int idx, const char* url, xe_http_response* out,
+				   size_t cap, const char* ua) {
+	memset(j, 0, sizeof(*j));
+	j->fd = -1;
+	j->idx = idx;
+	j->out = out;
+	j->max_body = cap ? cap : 1;
+	j->ua = ua;
+	j->content_len = -1;
+	j->rc = -1;
+	if (!url)
+		url = "";
+	snprintf(j->url, sizeof(j->url), "%s", url);
+	if (job_open(j) < 0) {
+		job_close(j);
+		j->rc = -1;
+		j->state = XJ_FAIL;
+		return -1;
+	}
+	return 0;
+}
+
+static void job_retire(struct xe_many* j, int* rcs, int* active) {
+	if (rcs && j->idx >= 0)
+		rcs[j->idx] = j->rc;
+	j->state = XJ_FREE;
+	j->out = NULL;
+	j->idx = -1;
+	if (active && *active > 0)
+		(*active)--;
+}
+
+static int job_slot(struct xe_many* jobs) {
+	int i;
+	for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+		if (jobs[i].state == XJ_FREE)
+			return i;
+	}
+	return -1;
+}
+
+int xe_http_get_many(const char** urls, int n, const char* user_agent,
+					 xe_http_response* outs, const size_t* max_body, int* rcs) {
+	struct xe_many* jobs;
+	int active = 0;
+	int next = 0;
+	int spins = 0;
+	int i;
+	if (n < 0 || !urls || !outs)
+		return -1;
+	if (n == 0)
+		return 0;
+	for (i = 0; i < n; i++) {
+		memset(&outs[i], 0, sizeof(outs[i]));
+		if (rcs)
+			rcs[i] = -1;
+	}
+	jobs = (struct xe_many*)malloc(sizeof(struct xe_many) * XE_HTTP_MANY_MAX);
+	if (!jobs) {
+		for (i = 0; i < n; i++)
+			set_err(&outs[i], "Out of memory");
+		return -1;
+	}
+	memset(jobs, 0, sizeof(struct xe_many) * XE_HTTP_MANY_MAX);
+	for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+		jobs[i].fd = -1;
+		jobs[i].idx = -1;
+		jobs[i].state = XJ_FREE;
+	}
+	_KePrint("[http] overlap %d\n", n);
+	while (next < n || active > 0) {
+		int progressed = 0;
+		int started = 0;
+		for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+			struct xe_many* j = &jobs[i];
+			if (j->state == XJ_FREE)
+				continue;
+			if (j->state == XJ_DONE || j->state == XJ_FAIL) {
+				job_retire(j, rcs, &active);
+				continue;
+			}
+			if (job_step(j))
+				progressed = 1;
+			if (j->state == XJ_DONE || j->state == XJ_FAIL)
+				job_retire(j, rcs, &active);
+		}
+		if (active < XE_HTTP_MANY_MAX && next < n) {
+			int slot = job_slot(jobs);
+			size_t cap = 512 * 1024;
+			if (max_body)
+				cap = max_body[next] ? max_body[next] : 1;
+			if (slot >= 0) {
+				if (job_arm(&jobs[slot], next, urls[next], &outs[next], cap, user_agent) == 0)
+					active++;
+				else
+					job_retire(&jobs[slot], rcs, NULL);
+				next++;
+				started = 1;
+			}
+		}
+		if (!progressed && !started && active > 0) {
+			_KeProcessSleep(20);
+			spins = 0;
+			for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+				if (jobs[i].state == XJ_FREE || jobs[i].state == XJ_DONE ||
+					jobs[i].state == XJ_FAIL)
+					continue;
+				jobs[i].waits++;
+				if (jobs[i].waits > XE_MANY_WAITS)
+					job_fail(&jobs[i], "Timed out");
+			}
+		} else if (++spins > 100000) {
+			for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+				if (jobs[i].state == XJ_FREE)
+					continue;
+				job_fail(&jobs[i], "Timed out");
+				job_retire(&jobs[i], rcs, &active);
+			}
+			break;
+		}
+		active = 0;
+		for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+			if (jobs[i].state != XJ_FREE)
+				active++;
+		}
+	}
+	free(jobs);
+	return 0;
+}
+
 int xe_http_get(const char* url, const char* method, const char* user_agent,
 				xe_http_response* out, size_t max_body) {
 	char current[3072];
+	char* body;
+	size_t body_len;
+	char ctype[80];
 	int hops;
 	if (!out)
 		return -1;
 	memset(out, 0, sizeof(*out));
+	body = g_req_body;
+	body_len = g_req_body_len;
+	snprintf(ctype, sizeof(ctype), "%s", g_req_ctype);
+	g_req_body = NULL;
+	g_req_body_len = 0;
+	g_req_ctype[0] = 0;
 	if (!url || !url[0]) {
+		free(body);
 		set_err(out, "Bad URL");
 		return -1;
 	}
 	snprintf(current, sizeof(current), "%s", url);
+	snprintf(g_last_url, sizeof(g_last_url), "%s", current);
+	g_ck_hold_now = ck_now();
+	g_ck_hold = 1;
 	for (hops = 0; hops <= XE_MAX_REDIRECTS; hops++) {
 		struct xe_url u;
 		char location[3072];
@@ -801,37 +2335,70 @@ int xe_http_get(const char* url, const char* method, const char* user_agent,
 		out->headers[0] = 0;
 		out->status = 0;
 		if (pu == -2) {
+			free(body);
+			g_ck_hold = 0;
 			set_err(out, "IPv6-only hosts are not reachable yet");
 			return -1;
 		}
 		if (pu < 0) {
+			free(body);
+			g_ck_hold = 0;
 			set_err(out, "Bad URL");
 			return -1;
 		}
-		rc = fetch_once(&u, method, user_agent, NULL, 0, NULL, out, max_body, location,
-						sizeof(location));
-		if (rc < 0)
+		/* A POST body is only the first hop. A redirect is fetched as GET. */
+		rc = fetch_once(&u, method, user_agent, hops == 0 ? (const unsigned char*)body : NULL,
+						hops == 0 ? body_len : 0, hops == 0 && body ? ctype : NULL, out, max_body,
+						location, sizeof(location));
+		if (rc < 0) {
+			free(body);
+			g_ck_hold = 0;
 			return -1;
+		}
 		if (out->status != 301 && out->status != 302 && out->status != 303 && out->status != 307 &&
 			out->status != 308)
 			break;
 		if (!location[0])
 			break;
 		if (hops == XE_MAX_REDIRECTS) {
+			free(body);
+			g_ck_hold = 0;
 			set_err(out, "Too many redirects");
 			return -1;
 		}
 		if (join_location(&u, location, next, sizeof(next)) < 0) {
+			free(body);
+			g_ck_hold = 0;
 			set_err(out, "Bad redirect");
 			return -1;
 		}
-		if (u.https && !strncmp(next, "http://", 7)) {
+		if (u.https && !strncmp(next, "http://", 7))
 			out->https_to_http = 1;
-			_KePrint("[https] redirect left TLS for %s\r\n", next);
+		{
+			struct xe_url nu;
+			char path[48];
+			const char* q;
+			size_t nlen = 0;
+			path[0] = 0;
+			if (parse_url(next, &nu) == 0) {
+				q = strchr(nu.path, '?');
+				nlen = q ? (size_t)(q - nu.path) : strlen(nu.path);
+				if (nlen >= sizeof(path))
+					nlen = sizeof(path) - 1;
+				memcpy(path, (void*)nu.path, nlen);
+				path[nlen] = 0;
+				_KePrint("[https] redirect %d %s %s\n", out->status, nu.host, path);
+			} else {
+				_KePrint("[https] redirect %d\n", out->status);
+			}
 		}
 		snprintf(current, sizeof(current), "%s", next);
+		snprintf(g_last_url, sizeof(g_last_url), "%s", current);
 		xe_http_response_free(out);
 	}
+	g_ck_hold = 0;
+	free(body);
+	snprintf(g_last_url, sizeof(g_last_url), "%s", current);
 	if (out->status >= 400) {
 		snprintf(out->error, sizeof(out->error), "HTTP %d", out->status);
 		return 22;
