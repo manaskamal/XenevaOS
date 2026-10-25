@@ -656,7 +656,11 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 	AuNetProxyInitialize();
 	AuIpcInitialize();
 	AuSrvfsInitialize();
+#ifndef __XENEVA_BYPASS_VIRTIO_INPUT__
+	/* The vendored input path writes /dev/kybrd and /dev/mice directly;
+	 * a user-space input server would compete for the same functions. */
 	AuInputSrvInitialize();
+#endif
 #ifdef __XENEVA_DRV_SELFTEST__
 	{
 		extern void AuDriverSelfTest(void);

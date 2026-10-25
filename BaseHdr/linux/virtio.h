@@ -365,6 +365,7 @@ void unregister_virtio_driver(struct virtio_driver* driver);
 	module_init(drv##_init)
 
 void virtio_poll_vqs(void);
+void virtio_poll_input_vqs(void);
 
 /*
  * virtio_find_single_vq / virtio_device_ready / virtio_reset_device.
@@ -393,6 +394,7 @@ void virtio_device_ready(struct virtio_device* vdev);
 void virtio_reset_device(struct virtio_device* dev);
 
 void virtio_rng_detect(void);
+int virtio_input_detect(void);
 
 /*
  * virtio_cread(vdev, type, field, ptr) -- copy `sizeof(*ptr)` bytes of config
@@ -426,6 +428,20 @@ void virtio_rng_detect(void);
 	} while (0)
 
 /*
+ * virtio_cread_bytes() -- mainline's arbitrary-length config read.  The
+ * virtio-input driver uses it for the device name/serial and for the raw
+ * capability bitmaps, which are byte streams rather than fields of a known
+ * type.  DCL's config window is the device BAR already mapped by
+ * virtio_shim.c, so the read is the same copy virtio_cread() makes.
+ */
+static inline void virtio_cread_bytes(struct virtio_device* vdev,
+				      unsigned int offset, void* buf,
+				      size_t len)
+{
+	memcpy(buf, (char*)vdev->config->device_config_base + offset, len);
+}
+
+/*
  * struct scatterlist moved to <linux/scatterlist.h>; see the note there for
  * why DCL's is { buf, len } rather than mainline's page_link/offset/length.
  */
@@ -450,6 +466,17 @@ void virtio_del_vqs(struct virtio_device* vdev);
  */
 int virtqueue_add_inbuf(
 	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp);
+
+/*
+ * The cache-clean spelling mainline added for DMA-coherent architectures.
+ * DCL has no per-buffer cache metadata to hand the ring code, so the body
+ * is the plain add; correctness for device-written buffers is handled by
+ * the invalidate in virtqueue_get_buf().
+ */
+int virtqueue_add_inbuf_cache_clean(
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp);
+
+unsigned int virtqueue_get_vring_size(const struct virtqueue* vq);
 
 /*
  * virtqueue_add_sgs() -- mainline's multi-chain submit: `sgs[]` is an array

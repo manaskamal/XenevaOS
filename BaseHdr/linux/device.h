@@ -10,6 +10,7 @@
  */
 
 #include <linux/kernel.h>	/* umode_t */
+#include <linux/mutex.h>	/* struct mutex: <linux/input.h> puts one in input_dev */
 #include <linux/devres.h>	/* devm_*: mainline's include for these is
 				 * <linux/devres.h>, which no vendored drm
 				 * .c names -- they reach device APIs through
@@ -24,6 +25,15 @@
 				 * in the fwnode/property pair; property.h is
 				 * where DCL defines the struct and this header
 				 * is where its callers reach it. */
+
+struct device_type {
+	const char* name;
+	const struct attribute_group* const* groups;
+	int (*uevent)(const struct device* dev, struct kobj_uevent_env* env);
+	char* (*devnode)(const struct device* dev, umode_t* mode);
+	void (*release)(struct device* dev);
+	const struct dev_pm_ops* pm;
+};
 
 struct class {
 	const char* name;
@@ -46,6 +56,7 @@ void device_destroy(const void* class, unsigned int devt);
  */
 int device_add(struct device* dev);
 void device_del(struct device* dev);
+void device_initialize(struct device* dev);
 int dev_set_name(struct device* dev, const char* fmt, ...);
 
 
@@ -90,40 +101,21 @@ struct device_attribute {
 /*
  * dev_get_drvdata() / dev_set_drvdata().
  *
- * mainline stores the pointer in `dev->driver_data`.  DCL's struct device
- * (in <linux/fs.h>) is an offset-forged blob -- `kobj_name` at 0, `devt` at
- * 708, `_tail[88]` -- reproduced field-for-field so DCL and Xeneva's own
- * devfs agree about where `devt` lives.  Growing it by a pointer would move
- * nothing *and* break that agreement in the direction that matters: Xeneva
- * allocates the object with its own sizeof, and a write at offset 800 of an
- * 800-byte allocation is a heap overrun, not a warning.
- *
- * So the accessors exist and are honest about what they answer.  Nobody sets
- * drvdata anywhere in this tree -- there is no dev_set_drvdata call in DCL,
- * in 8250_port.c or in serial_core.c -- and the readers are all sysfs show
- * callbacks (8250_port.c:3026/3071, serial_core.c:2824-2898) reached only
- * when a sysfs file exists.  It does not: DCL/linux_cdev_shim.c's
- * sysfs_create_group() is a deliberate no-op with the comment "no sysfs tree;
- * success keeps add_port() on the happy path", so uart_add_one_port() succeeds
- * and creates no attributes, and these functions are unreachable.
- *
- * NULL is therefore the truthful answer today, not a placeholder waiting to
- * be filled in -- see the stage-4 note in DCL_TODO.md: when tty_io.c brings
- * device registration over, this is where a real slot has to be found for
- * drvdata, and the choice is between extending struct device (and reconciling
- * it with Xeneva's sizeof) and a side table.  Neither is needed until
- * something sets it.
+ * The input core is the first user that needs a real answer: it stores its
+ * per-device `struct virtio_input *` with input_set_drvdata() and reads it
+ * back from the LED/status callback.  struct device carries the slot at
+ * offset 88 (see <linux/fs.h>), inside the 800-byte ABI blob rather than
+ * beyond it, so the accessors can be the plain mainline pair.
  */
 static inline void* dev_get_drvdata(const struct device* dev)
 {
-	(void)dev;
-	return NULL;
+	return dev ? dev->driver_data : NULL;
 }
 
 static inline void dev_set_drvdata(struct device* dev, void* data)
 {
-	(void)dev;
-	(void)data;
+	if (dev)
+		dev->driver_data = data;
 }
 
 #define DEVICE_ATTR_RO(_name) \

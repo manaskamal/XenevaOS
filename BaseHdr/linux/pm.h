@@ -69,6 +69,29 @@
  * populated arm -- nothing else in the tree names either today.
  */
 struct dev_pm_ops {
+	int (*prepare)(struct device*);
+	void (*complete)(struct device*);
+	int (*suspend)(struct device*);
+	int (*resume)(struct device*);
+	int (*freeze)(struct device*);
+	int (*thaw)(struct device*);
+	int (*poweroff)(struct device*);
+	int (*restore)(struct device*);
+	int (*suspend_late)(struct device*);
+	int (*resume_early)(struct device*);
+	int (*freeze_late)(struct device*);
+	int (*thaw_early)(struct device*);
+	int (*poweroff_late)(struct device*);
+	int (*restore_early)(struct device*);
+	int (*suspend_noirq)(struct device*);
+	int (*resume_noirq)(struct device*);
+	int (*freeze_noirq)(struct device*);
+	int (*thaw_noirq)(struct device*);
+	int (*poweroff_noirq)(struct device*);
+	int (*restore_noirq)(struct device*);
+	int (*runtime_suspend)(struct device*);
+	int (*runtime_resume)(struct device*);
+	int (*runtime_idle)(struct device*);
 };
 
 #define SET_SYSTEM_SLEEP_PM_OPS(suspend_fn, resume_fn)

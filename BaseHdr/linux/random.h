@@ -18,4 +18,8 @@ extern const struct file_operations urandom_fops;
 
 void get_random_bytes(void* buf, unsigned long nbytes);
 
+/* Mainline credits input timing through its CRNG.  Xeneva has a hardware
+ * RNG, so the hook exists for the input core but contributes nothing. */
+void add_input_randomness(unsigned int type, unsigned int code, int value);
+
 #endif /* __LINUX_RANDOM_H__ */

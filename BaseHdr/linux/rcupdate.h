@@ -12,6 +12,8 @@
 
 #include <linux/compiler.h>
 #include <linux/types.h>
+#include <linux/cleanup.h>
+#include <linux/list.h>
 
 struct rcu_head {
 	struct rcu_head *next;
@@ -20,6 +22,12 @@ struct rcu_head {
 
 #define __rcu
 #define __rcu_alloc_check
+
+#define list_for_each_entry_rcu(pos, head, member, ...) \
+	list_for_each_entry(pos, head, member)
+#define list_add_rcu(new, head)		list_add((new), (head))
+#define list_add_tail_rcu(new, head)	list_add_tail((new), (head))
+#define list_del_rcu(entry)		list_del((entry))
 
 #define rcu_read_lock()			do { } while (0)
 #define rcu_read_unlock()		do { } while (0)
@@ -72,6 +80,15 @@ struct rcu_head {
 #define RCU_INITIALIZER(v)	((typeof(*(v)) *)(v))
 #define unrcu_pointer(p)	((typeof(*(p)) *)(p))
 #define rcu_pointer_handoff(p)	(p)
+
+typedef struct { int held; } dclg_rcu;
+static inline void dclg_rcu_release(dclg_rcu* g) { (void)g; rcu_read_unlock(); }
+static inline dclg_rcu dclg_rcu_ctor(void)
+{
+	dclg_rcu g = { .held = 1 };
+	rcu_read_lock();
+	return g;
+}
 
 static inline void synchronize_rcu(void) { }
 static inline void synchronize_rcu_expedited(void) { }

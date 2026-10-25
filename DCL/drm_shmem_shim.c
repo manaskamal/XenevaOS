@@ -62,6 +62,80 @@ static uint64_t dcl_shmem_phys(const struct drm_gem_shmem_object* shmem)
 }
 
 /*
+ * MAP_DUMB needs to tell a shmem object from vkms/bochs's dcl_gem_dumb
+ * object without including a driver's private funcs table (virtio's is
+ * static).  Keep the objects this file initialised on a short list; it is
+ * also where the process mapping address lives, since the vendored shmem
+ * object has nowhere DCL may put one.
+ */
+struct dcl_shmem_entry {
+	struct drm_gem_shmem_object* shmem;
+	uint64_t uva;
+	struct dcl_shmem_entry* next;
+};
+
+static struct dcl_shmem_entry* dcl_shmem_entries;
+
+static struct dcl_shmem_entry*
+dcl_shmem_find(const struct drm_gem_shmem_object* shmem) {
+	struct dcl_shmem_entry* e;
+
+	for (e = dcl_shmem_entries; e; e = e->next)
+		if (e->shmem == shmem)
+			return e;
+	return NULL;
+}
+
+bool dcl_gem_is_shmem(struct drm_gem_object* obj) {
+	return dcl_shmem_find(to_drm_gem_shmem_obj(obj)) != NULL;
+}
+
+/* drm_stubs.c: map one contiguous backing range into the caller's process. */
+extern long dcl_drm_map_user_pages(uint64_t phys, size_t size, uint64_t* uva);
+
+long dcl_shmem_map_user(struct drm_gem_object* obj, uint64_t* uva) {
+	struct drm_gem_shmem_object* shmem = to_drm_gem_shmem_obj(obj);
+	struct dcl_shmem_entry* e = dcl_shmem_find(shmem);
+	uint64_t phys;
+	int ret;
+
+	if (!e)
+		return -ENOENT;
+	if (e->uva) {
+		*uva = e->uva;
+		return 0;
+	}
+
+	phys = dcl_shmem_phys(shmem);
+	if (!phys)
+		return -ENOMEM;
+	ret = (int)dcl_drm_map_user_pages(phys, (size_t)shmem->base.size,
+					  &e->uva);
+	if (ret)
+		return ret;
+	*uva = e->uva;
+	return 0;
+}
+
+static void dcl_shmem_unregister(struct drm_gem_shmem_object* shmem) {
+	struct dcl_shmem_entry** pp = &dcl_shmem_entries;
+
+	while (*pp) {
+		struct dcl_shmem_entry* e = *pp;
+
+		if (e->shmem == shmem) {
+			*pp = e->next;
+			if (e->uva)
+				AuFreePages(e->uva, false,
+					    (size_t)shmem->base.size);
+			kfree(e);
+			return;
+		}
+		pp = &e->next;
+	}
+}
+
+/*
  * dcl_shmem_make_sgt() -- a fresh one-entry table over the whole range.
  *
  * mainline's tables are per-page walks of the page cache; one contiguous
@@ -120,7 +194,23 @@ static struct sg_table* dcl_shmem_make_sgt(const struct drm_gem_shmem_object* sh
 int drm_gem_shmem_init(struct drm_device* dev,
 		       struct drm_gem_shmem_object* shmem, size_t size)
 {
-	return drm_gem_object_init(dev, &shmem->base, size);
+	struct dcl_shmem_entry* e;
+	int ret;
+
+	e = kzalloc(sizeof(*e), GFP_KERNEL);
+	if (!e)
+		return -ENOMEM;
+
+	ret = drm_gem_object_init(dev, &shmem->base, size);
+	if (ret) {
+		kfree(e);
+		return ret;
+	}
+
+	e->shmem = shmem;
+	e->next = dcl_shmem_entries;
+	dcl_shmem_entries = e;
+	return 0;
 }
 
 /*
@@ -190,6 +280,8 @@ void drm_gem_shmem_free(struct drm_gem_shmem_object* shmem)
 		kfree(shmem->sgt);
 		shmem->sgt = NULL;
 	}
+
+	dcl_shmem_unregister(shmem);
 
 	if (phys)
 		AuPmmngrReleasePages(phys);
@@ -266,8 +358,8 @@ void drm_gem_shmem_vunmap_locked(struct drm_gem_shmem_object* shmem,
  * answers -ENOSYS instead of pretending a pfn remap happened. Nothing in
  * this tree can reach it -- it is only reached from drm_gem_mmap_obj(),
  * which runs from an mmap() the bridge never routes. Userspace reaches GEM
- * buffers through MAP_DUMB's hook in DCL/drm_stubs.c; a stage that teaches
- * that hook the shmem object is where a real mapping would land.
+ * buffers through MAP_DUMB's hook in DCL/drm_stubs.c, which asks
+ * dcl_shmem_map_user() below to map this object's backing directly.
  */
 int drm_gem_shmem_mmap(struct drm_gem_shmem_object* shmem,
 		       struct vm_area_struct* vma)

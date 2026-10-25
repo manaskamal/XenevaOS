@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/_kefile.h>
+#include <sys/_keproc.h>
 
 static int g_ok;
 static int g_bad;
@@ -138,6 +139,306 @@ static unsigned int kms_prop_id(int fd, unsigned int obj_id,
 			return ids[i];
 	}
 	return 0;
+}
+
+/* ── card2: the vendored virtio-gpu, driven by atomic commits ─────────────
+ *
+ * The console's boot framebuffer is created by DCL/virtgpu_console.c and
+ * committed through the driver's atomic path.  This test reads that live
+ * state, flips the primary plane to a userspace dumb buffer with the same
+ * mode, verifies the plane state changed, leaves the pattern on screen long
+ * enough for the host's gpu0 screendump, then flips back to the console fb.
+ * It deliberately does not change the mode: that would blank the console
+ * while the test FB is up and is already covered on vkms and bochs.
+ */
+static void test_virtgpu_card2(void) {
+	struct drm_version_arg {
+		int major, minor, patchlevel;
+		size_t name_len;
+		char* name;
+		size_t date_len;
+		char* date;
+		size_t desc_len;
+		char* desc;
+	} ver;
+	struct drm_mode_card_res_arg {
+		unsigned long long fb_id_ptr, crtc_id_ptr;
+		unsigned long long connector_id_ptr;
+		unsigned long long encoder_id_ptr;
+		unsigned int count_fbs, count_crtcs;
+		unsigned int count_connectors, count_encoders;
+		unsigned int min_width, max_width;
+		unsigned int min_height, max_height;
+	} res;
+	struct drm_mode_get_plane_res_arg {
+		unsigned long long plane_id_ptr;
+		unsigned int count_planes;
+	} pres;
+	struct drm_mode_get_plane_arg {
+		unsigned int plane_id, crtc_id, fb_id;
+		unsigned int possible_crtcs, gamma_size;
+		unsigned int count_format_types;
+		unsigned long long format_type_ptr;
+	} pl;
+	struct drm_mode_create_dumb_arg {
+		unsigned int height, width, bpp, flags;
+		unsigned int handle, pitch;
+		unsigned long long size;
+	} dumb;
+	struct drm_mode_map_dumb_arg {
+		unsigned int handle, pad;
+		unsigned long long offset;
+	} map;
+	struct drm_mode_fb_cmd2_arg {
+		unsigned int fb_id, width, height;
+		unsigned int pixel_format, flags;
+		unsigned int handles[4], pitches[4], offsets[4];
+		unsigned long long modifier[4];
+	} fb;
+	struct drm_mode_atomic_arg {
+		unsigned int flags, count_objs;
+		unsigned long long objs_ptr, count_props_ptr;
+		unsigned long long props_ptr, prop_values_ptr;
+		unsigned long long reserved, user_data;
+	} at;
+	struct drm_mode_crtc_arg {
+		unsigned long long set_connectors_ptr;
+		unsigned int count_connectors;
+		unsigned int crtc_id, fb_id, x, y;
+		unsigned int gamma_size, mode_valid;
+		struct {
+			unsigned int clock;
+			unsigned short hdisplay, hsync_start, hsync_end;
+			unsigned short htotal, hskew;
+			unsigned short vdisplay, vsync_start, vsync_end;
+			unsigned short vtotal, vscan;
+			unsigned int vrefresh, flags, type;
+			char name[32];
+		} mode;
+	} crtc;
+	static unsigned int crtc_ids[4], conn_ids[4], plane_ids[4];
+	static unsigned int enc_ids[4];
+	static unsigned int a_objs[2], a_counts[2];
+	static unsigned int a_props[13];
+	static unsigned long long a_vals[13];
+	unsigned int conn_crtc_id, plane_fb_id, plane_crtc_id;
+	unsigned int src_x, src_y, src_w, src_h;
+	unsigned int crtc_x, crtc_y, crtc_w, crtc_h;
+	unsigned int console_fb_id, width = 0, height = 0, p;
+	char cname[32], cdesc[64];
+	const unsigned int pattern = 0x0000BEEFu;
+	int vfd = opendev("/dev/dri/card2",
+			  FILE_OPEN_READ_ONLY | FILE_OPEN_WRITE);
+
+	if (vfd < 0)
+		return;
+
+	memset(&ver, 0, sizeof ver);
+	memset(cname, 0, sizeof cname);
+	memset(cdesc, 0, sizeof cdesc);
+	ver.name = cname;
+	ver.name_len = sizeof cname;
+	ver.desc = cdesc;
+	ver.desc_len = sizeof cdesc;
+	report("drm card2 VERSION",
+	       _KeFileIoControl(vfd, 0xC0406400, &ver), 0);
+	report("drm card2 name is virtio_gpu",
+	       (int)memcmp(cname, "virtio_gpu", 10), 0);
+
+	/* universal planes + atomic, same caps the other KMS stages set */
+	{
+		struct {
+			unsigned long long capability;
+			unsigned long long value;
+		} scc;
+		scc.capability = 2;
+		scc.value = 1;
+		report("drm card2 universal planes cap",
+		       _KeFileIoControl(vfd, 0x4010640D, &scc), 0);
+		scc.capability = 3;
+		report("drm card2 atomic cap",
+		       _KeFileIoControl(vfd, 0x4010640D, &scc), 0);
+	}
+
+	memset(&res, 0, sizeof res);
+	report("drm card2 GETRESOURCES",
+	       _KeFileIoControl(vfd, 0xC04064A0, &res), 0);
+	report("drm card2 crtcs", (int)res.count_crtcs, 1);
+	report("drm card2 connectors", (int)res.count_connectors, 1);
+
+	memset(&res, 0, sizeof res);
+	res.crtc_id_ptr = (unsigned long long)(size_t)crtc_ids;
+	res.count_crtcs = 4;
+	res.connector_id_ptr = (unsigned long long)(size_t)conn_ids;
+	res.count_connectors = 4;
+	res.encoder_id_ptr = (unsigned long long)(size_t)enc_ids;
+	res.count_encoders = 4;
+	report("drm card2 GETRESOURCES (ids)",
+	       _KeFileIoControl(vfd, 0xC04064A0, &res), 0);
+	report("drm card2 crtc id", (int)(crtc_ids[0] != 0), 1);
+	report("drm card2 connector id", (int)(conn_ids[0] != 0), 1);
+
+	memset(&crtc, 0, sizeof crtc);
+	crtc.crtc_id = crtc_ids[0];
+	report("drm card2 GETCRTC",
+	       _KeFileIoControl(vfd, 0xC06864A1, &crtc), 0);
+	report("drm card2 crtc programmed", (int)crtc.mode_valid, 1);
+	width = crtc.mode.hdisplay;
+	height = crtc.mode.vdisplay;
+	report("drm card2 console mode", (int)(width >= 640 && height >= 480), 1);
+
+	pres.plane_id_ptr = (unsigned long long)(size_t)plane_ids;
+	pres.count_planes = 4;
+	report("drm card2 GETPLANERESOURCES",
+	       _KeFileIoControl(vfd, 0xC01064B5, &pres), 0);
+	report("drm card2 primary planes", (int)pres.count_planes, 1);
+
+	memset(&pl, 0, sizeof pl);
+	pl.plane_id = plane_ids[0];
+	report("drm card2 GETPLANE",
+	       _KeFileIoControl(vfd, 0xC02064B6, &pl), 0);
+	report("drm card2 console fb bound", (int)(pl.fb_id != 0), 1);
+	console_fb_id = pl.fb_id;
+
+	conn_crtc_id = kms_prop_id(vfd, conn_ids[0], DRM_MODE_OBJECT_CONNECTOR,
+				   "CRTC_ID");
+	plane_fb_id = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE,
+				  "FB_ID");
+	plane_crtc_id = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE,
+				    "CRTC_ID");
+	src_x = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "SRC_X");
+	src_y = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "SRC_Y");
+	src_w = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "SRC_W");
+	src_h = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "SRC_H");
+	crtc_x = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "CRTC_X");
+	crtc_y = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "CRTC_Y");
+	crtc_w = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "CRTC_W");
+	crtc_h = kms_prop_id(vfd, plane_ids[0], DRM_MODE_OBJECT_PLANE, "CRTC_H");
+	report("drm card2 atomic property ids",
+	       (int)(conn_crtc_id && plane_fb_id && plane_crtc_id && src_x &&
+		     src_y && src_w && src_h && crtc_x && crtc_y && crtc_w &&
+		     crtc_h), 1);
+
+	memset(&dumb, 0, sizeof dumb);
+	dumb.width = width;
+	dumb.height = height;
+	dumb.bpp = 32;
+	report("drm card2 CREATE_DUMB",
+	       _KeFileIoControl(vfd, 0xC02064B2, &dumb), 0);
+	report("drm card2 dumb pitch", (int)dumb.pitch, (int)width * 4);
+
+	memset(&map, 0, sizeof map);
+	map.handle = dumb.handle;
+	report("drm card2 MAP_DUMB",
+	       _KeFileIoControl(vfd, 0xC01064B3, &map), 0);
+	{
+		volatile unsigned int* pix =
+			(volatile unsigned int*)(size_t)map.offset;
+		unsigned long long words = dumb.size >> 2;
+		for (unsigned long long i = 0; i < words; i++)
+			pix[i] = pattern;
+		report("drm card2 pattern written",
+		       (int)(pix[0] == pattern), 1);
+	}
+
+	memset(&fb, 0, sizeof fb);
+	fb.width = width;
+	fb.height = height;
+	fb.pixel_format = 0x34325258; /* XRGB8888 */
+	fb.handles[0] = dumb.handle;
+	fb.pitches[0] = dumb.pitch;
+	report("drm card2 ADDFB2",
+	       _KeFileIoControl(vfd, 0xC06864B8, &fb), 0);
+	report("drm card2 fb id", (int)(fb.fb_id != 0), 1);
+
+	a_objs[0] = conn_ids[0];
+	a_counts[0] = 1;
+	a_objs[1] = plane_ids[0];
+	a_counts[1] = 10;
+	p = 0;
+	a_props[p] = conn_crtc_id;
+	a_vals[p++] = crtc_ids[0];
+	a_props[p] = plane_fb_id;
+	a_vals[p++] = fb.fb_id;
+	a_props[p] = plane_crtc_id;
+	a_vals[p++] = crtc_ids[0];
+	a_props[p] = src_x;
+	a_vals[p++] = 0;
+	a_props[p] = src_y;
+	a_vals[p++] = 0;
+	a_props[p] = src_w;
+	a_vals[p++] = (unsigned long long)width << 16;
+	a_props[p] = src_h;
+	a_vals[p++] = (unsigned long long)height << 16;
+	a_props[p] = crtc_x;
+	a_vals[p++] = 0;
+	a_props[p] = crtc_y;
+	a_vals[p++] = 0;
+	a_props[p] = crtc_w;
+	a_vals[p++] = width;
+	a_props[p] = crtc_h;
+	a_vals[p++] = height;
+
+	memset(&at, 0, sizeof at);
+	at.count_objs = 2;
+	at.objs_ptr = (unsigned long long)(size_t)a_objs;
+	at.count_props_ptr = (unsigned long long)(size_t)a_counts;
+	at.props_ptr = (unsigned long long)(size_t)a_props;
+	at.prop_values_ptr = (unsigned long long)(size_t)a_vals;
+	at.flags = 0x100 | 0x400; /* TEST_ONLY | ALLOW_MODESET */
+	report("drm card2 atomic TEST_ONLY",
+	       _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+	at.flags = 0x400;
+	report("drm card2 atomic commit",
+	       _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+
+	memset(&pl, 0, sizeof pl);
+	pl.plane_id = plane_ids[0];
+	report("drm card2 GETPLANE (test fb)",
+	       _KeFileIoControl(vfd, 0xC02064B6, &pl), 0);
+	report("drm card2 test fb active", (int)(pl.fb_id == fb.fb_id), 1);
+
+	/* The bochs watcher captures just before this stage; give its monitor
+	 * connection time to close before the gpu0 watcher connects. */
+	_KeProcessSleep(2000);
+	/* let the host's gpu0 watcher take its screendump */
+	note("virtio-gpu scanout committed", 1);
+	_KeProcessSleep(4000);
+
+	/* flip back to the console framebuffer, leaving the desktop intact */
+	a_vals[1] = console_fb_id;
+	memset(&at, 0, sizeof at);
+	at.count_objs = 2;
+	at.objs_ptr = (unsigned long long)(size_t)a_objs;
+	at.count_props_ptr = (unsigned long long)(size_t)a_counts;
+	at.props_ptr = (unsigned long long)(size_t)a_props;
+	at.prop_values_ptr = (unsigned long long)(size_t)a_vals;
+	at.flags = 0x400;
+	report("drm card2 console fb restore",
+	       _KeFileIoControl(vfd, 0xC03864BC, &at), 0);
+
+	memset(&pl, 0, sizeof pl);
+	pl.plane_id = plane_ids[0];
+	report("drm card2 GETPLANE (restored)",
+	       _KeFileIoControl(vfd, 0xC02064B6, &pl), 0);
+	report("drm card2 console fb active",
+	       (int)(pl.fb_id == console_fb_id), 1);
+
+	{
+		unsigned int rmfb_id = fb.fb_id;
+		report("drm card2 RMFB",
+		       _KeFileIoControl(vfd, 0xC00464AF, &rmfb_id), 0);
+	}
+	{
+		struct {
+			unsigned int handle;
+		} dd;
+		dd.handle = dumb.handle;
+		report("drm card2 DESTROY_DUMB",
+		       _KeFileIoControl(vfd, 0xC00864B4, &dd), 0);
+	}
+
+	_KeCloseFile(vfd);
 }
 
 /* The writeback pixel pattern, and what the capture buffer must hold for
@@ -1659,6 +1960,10 @@ int main(int argc, char* argv[]) {
 			_KeCloseFile(bfd);
 		}
 	}
+
+	/* stage 6: /dev/dri/card2, the vendored virtio-gpu.  Absent images skip
+	 * silently; the bypass gate is what makes it appear. */
+	test_virtgpu_card2();
 
 	/* privileged device nodes belong to the daemons group; an ordinary process (this
 	 * one has world only) must be refused even when it asks for a write-mode open,

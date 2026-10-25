@@ -84,10 +84,7 @@ struct kobject {
 __printf(2, 3) int kobject_set_name(struct kobject *kobj, const char *name, ...);
 __printf(2, 0) int kobject_set_name_vargs(struct kobject *kobj, const char *fmt, va_list vargs);
 
-static inline const char *kobject_name(const struct kobject *kobj)
-{
-	return kobj->name;
-}
+#define kobject_name(kobj) (((const struct kobject *)(const void *)(kobj))->name)
 
 void kobject_init(struct kobject *kobj, const struct kobj_type *ktype);
 __printf(3, 4) __must_check int kobject_add(struct kobject *kobj,
@@ -111,7 +108,7 @@ void kobject_put(struct kobject *kobj);
 
 const struct ns_common *kobject_namespace(const struct kobject *kobj);
 void kobject_get_ownership(const struct kobject *kobj, kuid_t *uid, kgid_t *gid);
-char *kobject_get_path(const struct kobject *kobj, gfp_t flag);
+char *kobject_get_path(const void *kobj, gfp_t flag);
 
 struct kobj_type {
 	void (*release)(struct kobject *kobj);

@@ -8,6 +8,7 @@
 #include <Mm/vmmngr.h>
 #include <string.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 #define MAX_VIRTIO_DRIVERS 16
 #define MAX_VIRTIO_DEVICES 16
@@ -34,15 +35,36 @@ static int _num_devices = 0;
 static struct virtqueue* _live_vqs[MAX_LIVE_VQS];
 static int _num_live_vqs = 0;
 
+static void virtio_poll_vq(struct virtqueue* vq) {
+	if (!vq->used)
+		return;
+	dc_ivac((uint64_t)&vq->used->idx);
+	dsb_sy_barrier();
+	if (vq->used->idx == vq->event_idx_write)
+		return;
+	if (vq->callback)
+		vq->callback(vq);
+}
+
 void virtio_poll_vqs(void) {
+	for (int i = 0; i < _num_live_vqs; i++)
+		virtio_poll_vq(_live_vqs[i]);
+}
+
+/*
+ * virtio_poll_input_vqs() -- the timer tick's half of the input bridge.
+ * Unlike virtio_poll_vqs(), which exists for probe-time waits and console
+ * I/O and walks every queue, this walks only queues owned by a virtio-input
+ * function.  The device id is the discriminator, so a keyboard and a tablet
+ * added later both reach their own callback without the console or the GPU
+ * being re-entered from interrupt context.
+ */
+void virtio_poll_input_vqs(void) {
 	for (int i = 0; i < _num_live_vqs; i++) {
 		struct virtqueue* vq = _live_vqs[i];
-		if (!vq->used)
+		if (!vq->vdev || vq->vdev->id.device != VIRTIO_ID_INPUT)
 			continue;
-		if (vq->used->idx == vq->event_idx_write)
-			continue;
-		if (vq->callback)
-			vq->callback(vq);
+		virtio_poll_vq(vq);
 	}
 }
 
@@ -483,6 +505,18 @@ int virtqueue_add_inbuf(
 	return virtqueue_add_flat(vq, sg, num_in, true, data);
 }
 
+int virtqueue_add_inbuf_cache_clean(
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp) {
+	/* The ring code has no DMA cache metadata to carry the "clean after
+	 * write" hint; the receive-side invalidate in virtqueue_get_buf() is
+	 * where correctness is kept. */
+	return virtqueue_add_inbuf(vq, sg, num_in, data, gfp);
+}
+
+unsigned int virtqueue_get_vring_size(const struct virtqueue* vq) {
+	return vq ? vq->qsize : 0;
+}
+
 bool virtqueue_kick_prepare(struct virtqueue* vq) {
 	uint16_t used_idx = vq->used->idx;
 	uint16_t avail_idx = vq->avail->idx;
@@ -536,6 +570,8 @@ bool virtqueue_enable_cb(struct virtqueue* vq) {
 }
 
 void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
+	dc_ivac((uint64_t)&vq->used->idx);
+	dsb_sy_barrier();
 	uint16_t used_idx = vq->used->idx;
 	uint16_t last_used = vq->event_idx_write;
 
@@ -543,12 +579,31 @@ void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
 		return NULL;
 
 	struct VirtqUsedElem* elem = &vq->used->ring[last_used % vq->qsize];
+	dc_ivac((uint64_t)elem);
+	dsb_sy_barrier();
 	uint16_t desc_idx = (uint16_t)elem->id;
 
 	if (len)
 		*len = elem->len;
 
+	bool device_written = (vq->desc[desc_idx].flags & VRING_DESC_F_WRITE) != 0;
 	void* cookie = vq->cookies[desc_idx];
+
+	/*
+	 * A device-writable descriptor is the only one the device has just
+	 * stored into.  Cortex-A72 under QEMU does not snoop its caches for
+	 * virtio DMA, so invalidate the lines before the driver reads the
+	 * payload.  The range covers mainline's scatterlist length and is
+	 * rounded out to cache lines; dc_ivac is the IRQ-safe form.
+	 */
+	if (device_written && cookie && len && *len) {
+		uint64_t start = (uint64_t)cookie & ~0x3FULL;
+		uint64_t end = (uint64_t)cookie + *len;
+		for (uint64_t p = start; p < end; p += 64)
+			dc_ivac(p);
+		dsb_sy_barrier();
+	}
+
 	free_desc_chain(vq, desc_idx);
 	vq->cookies[desc_idx] = NULL;
 
@@ -568,6 +623,14 @@ void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
 #define VIRTIO_PCI_DEV_ENTROPY 0x1044
 #define VIRTIO_PCI_DEV_CONSOLE 0x1043
 #define VIRTIO_PCI_DEV_GPU     0x1050
+
+static bool virtio_pci_matches(uint64_t addr, int bus, int dev, int func,
+			       uint16_t pci_id) {
+	uint16_t vendor = AuPCIERead(addr, PCI_VENDOR_ID, bus, dev, func);
+	uint16_t device = AuPCIERead(addr, PCI_DEVICE_ID, bus, dev, func);
+
+	return vendor == VIRTIO_PCI_VENDOR_ID && device == pci_id;
+}
 
 void virtio_device_register(struct virtio_device* vdev,
 							struct VirtioPCIDevice* au_dev,
@@ -731,9 +794,7 @@ static int virtio_scan_and_register(uint16_t pci_id, const char* name, int index
 				uint64_t addr = AuPCIEGetDevice(0, b, d, f);
 				if (!addr || addr == 0xFFFFFFFF)
 					continue;
-				uint16_t vend = AuPCIERead(addr, PCI_VENDOR_ID, b, d, f);
-				uint16_t did = AuPCIERead(addr, PCI_DEVICE_ID, b, d, f);
-				if (vend != VIRTIO_PCI_VENDOR_ID || did != pci_id)
+				if (!virtio_pci_matches(addr, b, d, f, pci_id))
 					continue;
 
 				if (!AuVirtioPCIInit(addr, b, d, f, 0, au_dev)) {
@@ -747,6 +808,50 @@ static int virtio_scan_and_register(uint16_t pci_id, const char* name, int index
 		}
 	}
 	return VIRTIO_SCAN_NO_DEVICE;
+}
+
+/*
+ * virtio-input is the one virtio id that appears more than once: QEMU adds a
+ * keyboard and a tablet as two separate PCI functions, both 1AF4:1052.  The
+ * generic scan above stops at the first match by design, so this one walks
+ * the bus to completion and gives every function its own vdev/au_dev pair.
+ * Storage is static because virtio_device_register() keeps both addresses.
+ */
+#define VIRTIO_PCI_DEV_INPUT 0x1052
+#define MAX_DCL_INPUT_DEVICES 4
+
+int virtio_input_detect(void) {
+	static struct virtio_device vdevs[MAX_DCL_INPUT_DEVICES];
+	static struct VirtioPCIDevice au_devs[MAX_DCL_INPUT_DEVICES];
+	int found = 0;
+
+	UARTDebugOut("[dcl-virtio]: scanning for virtio-input\r\n");
+	for (int b = 0; b < 256 && found < MAX_DCL_INPUT_DEVICES; b++) {
+		for (int d = 0; d < 32 && found < MAX_DCL_INPUT_DEVICES; d++) {
+			for (int f = 0; f < 8 && found < MAX_DCL_INPUT_DEVICES; f++) {
+				uint64_t addr = AuPCIEGetDevice(0, b, d, f);
+				if (!addr || addr == 0xFFFFFFFF)
+					continue;
+				if (!virtio_pci_matches(addr, b, d, f,
+								VIRTIO_PCI_DEV_INPUT))
+					continue;
+
+				if (!AuVirtioPCIInit(addr, b, d, f, 0,
+									 &au_devs[found])) {
+					UARTDebugOut("[dcl-virtio]: virtio-input init failed at %d:%d.%d\r\n",
+								 b, d, f);
+					continue;
+				}
+				virtio_device_register(&vdevs[found], &au_devs[found],
+									   _num_devices);
+				found++;
+			}
+		}
+	}
+
+	if (!found)
+		UARTDebugOut("[dcl-virtio]: no virtio-input device on the bus\r\n");
+	return found;
 }
 
 void virtio_rng_detect(void) {
