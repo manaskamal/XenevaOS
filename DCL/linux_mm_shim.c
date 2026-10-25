@@ -593,6 +593,10 @@ extern int (*const __dcl_initcall_drm_core_init)(void);
 extern int (*const __dcl_initcall_vkms_init)(void);
 extern int (*const __dcl_initcall_bochs_pci_driver_init)(void);
 extern int (*const __dcl_initcall_virtio_gpu_driver_init)(void);
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+extern int (*const __dcl_initcall_virtio_input_driver_init)(void);
+void dcl_input_bridge_init(void);
+#endif
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -745,4 +749,16 @@ void DclRunInitcalls(void) {
 	dcl_run_initcall(__dcl_initcall_virtio_gpu_driver_init,
 			 "virtio_gpu register", "virtio_gpu driver registered",
 			 "virtio_gpu");
+
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+	/*
+	 * The vendored input path.  Register the handler before the driver so
+	 * input_register_device() finds it on the list; the devices themselves
+	 * arrive later from modload_test_run()'s bus scan.
+	 */
+	dcl_input_bridge_init();
+	dcl_run_initcall(__dcl_initcall_virtio_input_driver_init,
+			 "virtio_input register", "virtio_input driver registered",
+			 "virtio_input");
+#endif
 }

@@ -346,6 +346,44 @@ static inline unsigned int fls_long(unsigned long l)
 #define hweight64(w) __builtin_popcountll(w)
 #endif
 
+#ifndef change_bit
+#define change_bit(nr, addr) __change_bit((nr), (addr))
+#endif
+#ifndef __change_bit
+static inline void __change_bit(int nr, volatile unsigned long *addr)
+{
+	unsigned long mask = 1UL << (nr & (BITS_PER_LONG - 1));
+	unsigned long *p = (unsigned long *)addr + (nr / BITS_PER_LONG);
+	*p ^= mask;
+}
+#endif
+
+#ifndef bitmap_weight
+static inline unsigned int bitmap_weight(const unsigned long *src, unsigned int nbits)
+{
+	unsigned int w = 0;
+	for (unsigned int i = 0; i < nbits; i++)
+		w += test_bit(i, src) ? 1 : 0;
+	return w;
+}
+#endif
+#ifndef bitmap_subset
+static inline bool bitmap_subset(const unsigned long *src1,
+				 const unsigned long *src2, unsigned int nbits)
+{
+	for (unsigned int i = 0; i < nbits; i++)
+		if (test_bit(i, src1) && !test_bit(i, src2))
+			return false;
+	return true;
+}
+#endif
+
+#ifndef for_each_set_bit_from
+#define for_each_set_bit_from(bit, addr, size) \
+	for (; (bit) = find_next_bit((addr), (size), (bit)), \
+	       (bit) < (size); (bit)++)
+#endif
+
 #ifndef for_each_set_bit
 #define for_each_set_bit(bit, addr, size) \
 	for ((bit) = find_first_bit((addr), (size)); \

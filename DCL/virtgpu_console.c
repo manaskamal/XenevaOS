@@ -40,14 +40,30 @@
 #include <linux/types.h>
 #include <linux/virtio.h>
 #include <linux/virtio_ids.h>
+#include <linux/slab.h>
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_damage_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_framebuffer.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_modeset_helper.h>
+#include <drm/drm_modeset_lock.h>
+#include <drm/drm_plane.h>
 #include <Mm/vmmngr.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
 #include <aurora.h>
 #include "../Vendored/drivers/gpu/drm/virtio/virtgpu_drv.h"
+
+/* drm_stubs.c: the commit tail that supplies DCL's vblank tick. */
+extern void dcl_drm_tail_install(struct drm_device *dev);
 
 /*
  * The kernel window the internal driver maps its own framebuffer into
@@ -63,6 +79,187 @@ static struct virtio_gpu_object* console_bo;
 static uint32_t console_width;
 static uint32_t console_height;
 static bool console_attached;
+
+/*
+ * The console framebuffer is the driver's own virtio_gpu_framebuffer, not a
+ * generic drm_gem_framebuffer: the primary-plane update casts the fb back to
+ * that type (virtgpu_plane.c: to_virtio_gpu_framebuffer) and reads the fence
+ * carried beside the base object.  The callbacks below are the same three the
+ * driver's static virtio_gpu_fb_funcs names; they are repeated here because
+ * that table is private to virtgpu_display.c and this bridge does not edit
+ * vendored files.
+ */
+static const struct drm_framebuffer_funcs virtgpu_console_fb_funcs = {
+	.create_handle = drm_gem_fb_create_handle,
+	.destroy = drm_gem_fb_destroy,
+	.dirty = drm_atomic_helper_dirtyfb,
+};
+
+static struct drm_framebuffer*
+virtgpu_console_fb_create(struct virtio_gpu_device* vgdev,
+			  struct virtio_gpu_object* bo, uint32_t width,
+			  uint32_t height) {
+	struct drm_mode_fb_cmd2 cmd;
+	struct virtio_gpu_framebuffer* vgfb;
+	const struct drm_format_info* info;
+	int ret;
+
+	info = drm_format_info(DRM_FORMAT_HOST_XRGB8888);
+	if (!info)
+		return ERR_PTR(-EINVAL);
+
+	vgfb = kzalloc(sizeof(*vgfb), GFP_KERNEL);
+	if (!vgfb)
+		return ERR_PTR(-ENOMEM);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.width = width;
+	cmd.height = height;
+	cmd.pixel_format = DRM_FORMAT_HOST_XRGB8888;
+	cmd.pitches[0] = width * 4;
+
+	/* The object create above donated this reference to the framebuffer;
+	 * drm_gem_fb_destroy() is what puts it when the fb is retired. */
+	vgfb->base.obj[0] = &bo->base.base;
+	drm_helper_mode_fill_fb_struct(vgdev->ddev, &vgfb->base, info, &cmd);
+
+	ret = drm_framebuffer_init(vgdev->ddev, &vgfb->base,
+				   &virtgpu_console_fb_funcs);
+	if (ret) {
+		vgfb->base.obj[0] = NULL;
+		kfree(vgfb);
+		return ERR_PTR(ret);
+	}
+
+	return &vgfb->base;
+}
+
+/*
+ * First half of the console modeset: assign the output and programme the
+ * CRTC's mode.  No plane is in this request, so the driver's modeset path
+ * runs on an empty primary plane and virtio_gpu_crtc_mode_set_nofb() sends
+ * its "scanout off" command; the second half below attaches the framebuffer.
+ *
+ * The two commits are deliberate.  virtio-gpu's mode_set_nofb() disables the
+ * scanout, and the default commit order runs plane updates before that
+ * callback.  If both halves were one commit the plane would point scanout at
+ * the resource and then mode_set_nofb() would immediately clear it, leaving
+ * the desktop blank until userspace flipped again.  A plane-only commit after
+ * the CRTC is enabled has no mode change, so no mode_set_nofb(), and its
+ * plane update is the final word on scanout.
+ */
+static int virtgpu_console_atomic_enable(struct virtio_gpu_device* vgdev,
+					 uint32_t width, uint32_t height) {
+	struct drm_device* dev = vgdev->ddev;
+	struct virtio_gpu_output* output = &vgdev->outputs[0];
+	struct drm_display_mode* mode;
+	struct drm_atomic_commit* state;
+	struct drm_modeset_acquire_ctx ctx;
+	struct drm_connector_state* conn_state;
+	struct drm_crtc_state* crtc_state;
+	int ret;
+
+	mode = drm_cvt_mode(dev, (int)width, (int)height, 60, false, false,
+			    false);
+	if (!mode)
+		return -ENOMEM;
+	drm_mode_set_name(mode);
+
+	drm_modeset_acquire_init(&ctx, 0);
+	state = drm_atomic_commit_alloc(dev);
+	if (!state) {
+		ret = -ENOMEM;
+		goto out_ctx;
+	}
+	state->acquire_ctx = &ctx;
+	state->allow_modeset = true;
+
+	conn_state = drm_atomic_get_connector_state(state, &output->conn);
+	if (IS_ERR(conn_state)) {
+		ret = PTR_ERR(conn_state);
+		goto out_state;
+	}
+	crtc_state = drm_atomic_get_crtc_state(state, &output->crtc);
+	if (IS_ERR(crtc_state)) {
+		ret = PTR_ERR(crtc_state);
+		goto out_state;
+	}
+
+	ret = drm_atomic_set_crtc_for_connector(conn_state, &output->crtc);
+	if (ret)
+		goto out_state;
+	ret = drm_atomic_set_mode_for_crtc(crtc_state, mode);
+	if (ret)
+		goto out_state;
+	crtc_state->active = true;
+
+	dcl_drm_tail_install(dev);
+	ret = drm_atomic_commit(state);
+
+out_state:
+	drm_atomic_commit_put(state);
+out_ctx:
+	drm_modeset_drop_locks(&ctx);
+	drm_modeset_acquire_fini(&ctx);
+	drm_mode_destroy(dev, mode);
+	return ret;
+}
+
+/*
+ * Second half of the console modeset: attach the console framebuffer to the
+ * primary plane.  The CRTC already carries the mode, so this is a plane-only
+ * commit; with no mode change the driver's mode_set_nofb() is skipped and the
+ * primary-plane update is what programs scanout 0 with the resource.
+ */
+static int virtgpu_console_atomic_plane(struct virtio_gpu_device* vgdev,
+					struct drm_framebuffer* fb,
+					uint32_t width, uint32_t height) {
+	struct drm_device* dev = vgdev->ddev;
+	struct virtio_gpu_output* output = &vgdev->outputs[0];
+	struct drm_atomic_commit* state;
+	struct drm_modeset_acquire_ctx ctx;
+	struct drm_plane_state* plane_state;
+	int ret;
+
+	drm_modeset_acquire_init(&ctx, 0);
+	state = drm_atomic_commit_alloc(dev);
+	if (!state) {
+		ret = -ENOMEM;
+		goto out_ctx;
+	}
+	state->acquire_ctx = &ctx;
+
+	plane_state = drm_atomic_get_plane_state(state, output->crtc.primary);
+	if (IS_ERR(plane_state)) {
+		ret = PTR_ERR(plane_state);
+		goto out_state;
+	}
+
+	drm_atomic_set_fb_for_plane(plane_state, fb);
+	ret = drm_atomic_set_crtc_for_plane(plane_state, &output->crtc);
+	if (ret)
+		goto out_state;
+
+	plane_state->crtc_x = 0;
+	plane_state->crtc_y = 0;
+	plane_state->crtc_w = width;
+	plane_state->crtc_h = height;
+	plane_state->src_x = 0;
+	plane_state->src_y = 0;
+	plane_state->src_w = width << 16;
+	plane_state->src_h = height << 16;
+	plane_state->rotation = DRM_MODE_ROTATE_0;
+
+	dcl_drm_tail_install(dev);
+	ret = drm_atomic_commit(state);
+
+out_state:
+	drm_atomic_commit_put(state);
+out_ctx:
+	drm_modeset_drop_locks(&ctx);
+	drm_modeset_acquire_fini(&ctx);
+	return ret;
+}
 
 /*
  * virtgpu_console_present() -- the console's present hook.
@@ -199,8 +396,37 @@ void dcl_virtgpu_console_attach(struct virtio_device* vdev) {
 			  PTE_NORMAL_NON_CACHEABLE);
 	memset((void*)(uintptr_t)VIRTGPU_CONSOLE_FB_VA, 0, want);
 
-	virtio_gpu_cmd_set_scanout(vgdev, 0, bo->hw_res_handle, width, height, 0, 0);
-	virtio_gpu_notify(vgdev);
+	/*
+	 * Hand the same backing to DRM as a real framebuffer, then let the
+	 * driver's atomic path programme the CRTC and primary plane.  The
+	 * direct SET_SCANOUT below is only a bring-up fallback if that fails;
+	 * once the atomic half is green it is not reached.
+	 */
+	struct drm_framebuffer* fb =
+		virtgpu_console_fb_create(vgdev, bo, width, height);
+	if (!IS_ERR(fb)) {
+		ret = virtgpu_console_atomic_enable(vgdev, width, height);
+		if (!ret)
+			ret = virtgpu_console_atomic_plane(vgdev, fb, width,
+							   height);
+		if (ret) {
+			UARTDebugOut("[virtgpu-console]: atomic modeset failed (%d)\r\n",
+				     ret);
+		}
+	} else {
+		ret = PTR_ERR(fb);
+		UARTDebugOut("[virtgpu-console]: framebuffer create failed (%d)\r\n",
+			     ret);
+	}
+
+	if (IS_ERR(fb) || ret) {
+		virtio_gpu_cmd_set_scanout(vgdev, 0, bo->hw_res_handle, width,
+					   height, 0, 0);
+		virtio_gpu_notify(vgdev);
+	} else {
+		UARTDebugOut("[virtgpu-console]: KMS fb %d on card2\r\n",
+			     fb->base.id);
+	}
 
 	console_vgdev = vgdev;
 	console_bo = bo;

@@ -122,6 +122,10 @@
 
 #define __free(_name)	__cleanup(__free_##_name)
 
+#define no_free_ptr(p) \
+	({ __auto_type __ptr = (p); (p) = NULL; __ptr; })
+#define return_ptr(p) return no_free_ptr(p)
+
 #define DCL_CAT2(a, b) a##b
 #define DCL_CAT(a, b)  DCL_CAT2(a, b)
 #define DCL_UID(base)  DCL_CAT(base, __COUNTER__)

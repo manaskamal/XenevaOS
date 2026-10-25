@@ -260,6 +260,13 @@ void irq_el1_handler(AA64Registers* regs) {
 
 		/** handle expired timers **/
 		AuroraTimerTick();
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+		/* DCL virtio queues are polled; the input queue is fed from the
+		 * tick rather than an MSI because the native input drivers are
+		 * not bound on this build. */
+		extern void virtio_poll_input_vqs(void);
+		virtio_poll_input_vqs();
+#endif
 		AuScheduleThread(regs);
 		return;
 	}

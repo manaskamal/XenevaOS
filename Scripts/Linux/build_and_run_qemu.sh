@@ -57,8 +57,11 @@ set -e
 #                           virtgpu.dll nor its audrv.cnf entry, so the
 #                           internal in-tree driver never claims it. Off by
 #                           default; for bringing up the vendored DRM
-#                           virtio-gpu driver. Also reads BYPASS_VIRTGPU=1
-#                           from the environment.
+#                           virtio-gpu driver.
+#   --bypass-virtio-input   Leave the virtio keyboard/tablet functions
+#                           (1AF4:1052) to the vendored Linux input core and
+#                           virtio_input driver instead of the native
+#                           virtiokbd/virtiotablet pair.
 #   --no-virtio-serial      Skip the virtio-serial controller and its one
 #                           virtserialport, so the guest's virtio_console
 #                           driver has no device to probe. It is on by
@@ -166,7 +169,9 @@ NO_NETWORK=0
 NO_AUDIO=0
 # --bypass-virtgpu: keep the internal virtgpu.dll driver (and its audrv
 # entry) out of the image, so 1AF4:1050 is left to the kernel-side driver.
-BYPASS_VIRTGPU=${BYPASS_VIRTGPU:-0}
+BYPASS_VIRTGPU=0
+# --bypass-virtio-input: leave 1AF4:1052 to the vendored input core.
+BYPASS_VIRTIO_INPUT=0
 NO_BOOT_MENU=0
 NO_DOOM=0
 BT_SERIAL="${XENEVA_BT_SERIAL:-}"
@@ -488,6 +493,7 @@ while [ $# -gt 0 ]; do
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
         --bypass-virtgpu) BYPASS_VIRTGPU=1 ;;
+        --bypass-virtio-input) BYPASS_VIRTIO_INPUT=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         --bt) NO_BT=0 ;;
         --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
@@ -669,8 +675,8 @@ if [ "$TEST_MUSL" -eq 1 ] && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
 	exit 1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ] || [ "$BYPASS_VIRTGPU" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
-	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf/--bypass-virtgpu need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ] || [ "$BYPASS_VIRTGPU" -eq 1 ] || [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf/--bypass-virtgpu/--bypass-virtio-input need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
 
@@ -841,7 +847,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-    export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR GPUSRV NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU
+    export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR GPUSRV NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU BYPASS_VIRTIO_INPUT
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -977,6 +983,8 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
             virtgpu.dll)
                 [ "$BYPASS_VIRTGPU" -eq 1 ] && return 0 || return 1 ;;
+            inputsrv.exe)
+                [ "$BYPASS_VIRTIO_INPUT" -eq 1 ] && return 0 || return 1 ;;
         esac
         return 1
     }

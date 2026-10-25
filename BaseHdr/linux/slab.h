@@ -283,6 +283,8 @@ static inline void* dcl_kzalloc(unsigned int size) {
  * unreachable in practice, so the flag is satisfied by construction rather
  * than by the allocator. Nothing else in gfp_t is honoured either.
  */
+DEFINE_FREE(kfree, void*, kfree(_T))
+
 #define kzalloc_obj(type, ...) dcl_kzalloc((unsigned int)sizeof(type))
 
 /*

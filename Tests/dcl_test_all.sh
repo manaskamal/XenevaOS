@@ -25,16 +25,23 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# The gate tracks the vendored path now.  An explicit 0 still selects the
+# native virtiokbd/virtiotablet pair for a manual comparison, but the input
+# assertions below only run when this is 1.
+BYPASS_VIRTIO_INPUT="${BYPASS_VIRTIO_INPUT:-1}"
+export BYPASS_VIRTIO_INPUT
+
 # ─── expected tree shape ────────────────────────────────────────────────────
 # Bump deliberately, in the same change that alters the count.
-EXP_LINUX_H=243    # BaseHdr/linux/*.h
+EXP_LINUX_H=244    # BaseHdr/linux/*.h
 EXP_ASM_H=16       # BaseHdr/asm/*.h
-EXP_DCL_C=30       # DCL/*.c   (dcl_va_trampoline.s adds a 31st object)
-EXP_DCL_O=31       # KernelAA64/obj/DCL/*.o
-EXP_VEND_O=107     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
-                   #   virtio_console, and the drm set: core, vkms, tiny/
-                   #   bochs, virtio-gpu, dma-buf, lib)
-EXP_ALL_O=269      # everything under KernelAA64/obj
+EXP_DCL_C=31       # DCL/*.c   (dcl_va_trampoline.s adds a 32nd object)
+EXP_DCL_O=32       # KernelAA64/obj/DCL/*.o
+EXP_VEND_O=112     # KernelAA64/obj/Vendored/**/*.o  (rng, tty/serial,
+                   #   virtio_console, input core + virtio_input, and the
+                   #   drm set: core, vkms, tiny/bochs, virtio-gpu,
+                   #   dma-buf, lib)
+EXP_ALL_O=277      # everything under KernelAA64/obj
 
 # ─── expected boot-log results ──────────────────────────────────────────────
 EXP_MEM=9
@@ -42,6 +49,10 @@ EXP_PRIM=10
 EXP_TTYBUF=25
 EXP_SERIAL=21
 EXP_DCLTEST=186   # 44 stage-1..4 + 38 KMS objects + 22 dumb/atomic + 3 client caps + 1 wb encoder lookup + 20 writeback pixel proof + 13 page flip event + 45 stage-5 card1 (bochs)
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	# + 33 stage-6 card2 (virtio-gpu) checks
+	EXP_DCLTEST=220
+fi
 
 LOG=${LOG:-/tmp/xeneva/test_all.log}
 mkdir -p "$(dirname "$LOG")"
@@ -122,8 +133,47 @@ python3 ./Tests/dcl_screendump.py wait \
 	--out "$SHOT" --dev bochs0 --timeout 90 >/dev/null 2>&1 &
 SHOOT_PID=$!
 
+# Stage 6's pixel proof is the same host-side idea on the virtio-gpu
+# display: dcltest flips card2's primary plane to a known colour, prints
+# the marker once the atomic commit has returned, and waits long enough
+# for this watcher to attach to QEMU's monitor.  It is armed only in a
+# bypass image because card2 does not exist otherwise.
+GPU_SHOT=${GPU_SHOT:-/tmp/xeneva/virtgpu.ppm}
+GPU_SHOOT_PID=
+GPU_SHOOT_RC=2
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	rm -f "$GPU_SHOT"
+	python3 ./Tests/dcl_screendump.py wait \
+		--log "$LOG" \
+		--marker "[dcltest] info virtio-gpu scanout committed" \
+		--out "$GPU_SHOT" --dev gpu0 --timeout 90 >/dev/null 2>&1 &
+	GPU_SHOOT_PID=$!
+fi
+
+# Input injection needs a QMP socket for absolute tablet coordinates; the
+# HMP monitor can only send keys and relative motion.  The helper waits for
+# the guest's attach marker before touching either socket, so it can start
+# while the tree is still building.
+INPUT_INJECT_PID=
+INPUT_INJECT_RC=2
+INPUT_INJECT_LOG="$(dirname "$LOG")/input_inject.log"
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	rm -f /tmp/xeneva-qmp.sock "$INPUT_INJECT_LOG"
+	XENEVA_QEMU_EXTRA_ARGS="${XENEVA_QEMU_EXTRA_ARGS:-} -qmp unix:/tmp/xeneva-qmp.sock,server=on,wait=off"
+	export XENEVA_QEMU_EXTRA_ARGS
+	python3 ./Tests/dcl_input_inject.py --log "$LOG" >"$INPUT_INJECT_LOG" 2>&1 &
+	INPUT_INJECT_PID=$!
+fi
+
+QEMU_ARGS=(--llvm --headless --no-bt --no-audio)
+if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
+	QEMU_ARGS+=(--bypass-virtgpu)
+fi
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	QEMU_ARGS+=(--bypass-virtio-input)
+fi
 QEMU_TIMEOUT="${QEMU_TIMEOUT:-120}" ./Scripts/Linux/build_and_run_qemu.sh \
-	--llvm --headless --no-bt --no-audio >>"$LOG" 2>&1 </dev/null
+	"${QEMU_ARGS[@]}" >>"$LOG" 2>&1 </dev/null
 rc=$?
 
 # The helper has either already exited with the screendump, or is still
@@ -135,6 +185,28 @@ if kill -0 "$SHOOT_PID" 2>/dev/null; then
 else
 	wait "$SHOOT_PID"
 	shoot_rc=$?
+fi
+
+if [ -n "$GPU_SHOOT_PID" ]; then
+	if kill -0 "$GPU_SHOOT_PID" 2>/dev/null; then
+		kill "$GPU_SHOOT_PID" 2>/dev/null
+		wait "$GPU_SHOOT_PID" 2>/dev/null
+		GPU_SHOOT_RC=2
+	else
+		wait "$GPU_SHOOT_PID"
+		GPU_SHOOT_RC=$?
+	fi
+fi
+
+if [ -n "$INPUT_INJECT_PID" ]; then
+	if kill -0 "$INPUT_INJECT_PID" 2>/dev/null; then
+		kill "$INPUT_INJECT_PID" 2>/dev/null
+		wait "$INPUT_INJECT_PID" 2>/dev/null
+		INPUT_INJECT_RC=2
+	else
+		wait "$INPUT_INJECT_PID"
+		INPUT_INJECT_RC=$?
+	fi
 fi
 
 case $rc in
@@ -256,12 +328,59 @@ if [ "${BYPASS_VIRTGPU:-0}" -eq 1 ]; then
 	# the console at its backing and installs the present mirror. The attach
 	# marker is the whole claim; the failure marker would mean it declined.
 	expect "console on the vendored scanout" "[virtgpu-console]: console on vendored scanout"
+	expect "virtio-gpu console KMS fb"        "[virtgpu-console]: KMS fb"
 	reject "no vendored console attach failures" "[virtgpu-console]: resource create failed"
+	reject "no virtio-gpu KMS fallback"      "[virtgpu-console]: atomic modeset failed"
+	reject "no virtio-gpu fb create failure" "[virtgpu-console]: framebuffer create failed"
+	expect "virtio-gpu atomic plane commit"  "[dcltest] PASS drm card2 atomic commit (0)"
+	expect "virtio-gpu console fb restored" "[dcltest] PASS drm card2 console fb active (1)"
+	# And the same host-side pixel proof as bochs: the guest's test fb is
+	# what QEMU scanned out when the marker stopped the guest for 4s.
+	if [ "$GPU_SHOOT_RC" -eq 0 ] && [ -f "$GPU_SHOT" ]; then
+		ok "virtio-gpu screendump captured"
+	else
+		bad "virtio-gpu screendump captured" "helper exit $GPU_SHOOT_RC"
+	fi
+	if [ -f "$GPU_SHOT" ]; then
+		if pix_msg=$(python3 ./Tests/dcl_screendump.py check \
+				--ppm "$GPU_SHOT" --rgb 00beef 2>&1); then
+			ok "virtio-gpu scanout pixel proof"
+		else
+			bad "virtio-gpu scanout pixel proof" \
+				"$(printf '%s' "$pix_msg" | tail -1 | cut -c1-100)"
+		fi
+	else
+		bad "virtio-gpu scanout pixel proof" "no screendump at $GPU_SHOT"
+	fi
 	# QEMU rejects a descriptor chain it cannot map and the guest prints its
 	# own verdict when a probe-time wait expires with the reply still unread;
 	# either one is a broken queue, not a detail.
 	reject "no rejected descriptor chains"   "zero sized buffers are not allowed"
 	reject "no expired virtio-gpu waits"     "wait_event in virtio_gpu_init gave up"
+fi
+
+# Vendored input: the native board scanner is compiled out, so these lines
+# can only come from DCL's multi-function scan binding virtio_input.  The
+# key and pointer lines are the guest's own decode of host-injected events;
+# the helper above is what supplies those events after attach.
+if [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; then
+	expect "virtio_input driver registered"  "[dcl]: virtio_input driver registered"
+	expect "virtio_input is not a .ko"       "[modtest]: virtio_input built-in"
+	expect "keyboard and tablet found"       "[modtest]: virtio_input 2 device(s) registered"
+	expect "vendored keyboard attached"      "[virtio-input]: attached keyboard"
+	expect "vendored tablet attached"        "[virtio-input]: attached tablet"
+	expect "injected key decoded"            "[virtio-input]: key code 30 value 1"
+	expect "injected pointer decoded"        "[virtio-input]: pointer"
+	reject "no native virtio keyboard binding" \
+		"[virtio-keyboard]: kernel driver got key code"
+	reject "no vendored input handler failure" \
+		"[virtio-input]: handler registration failed"
+	if [ "$INPUT_INJECT_RC" -eq 0 ]; then
+		ok "host input injection"
+	else
+		bad "host input injection" \
+			"helper exit $INPUT_INJECT_RC: $(tail -1 "$INPUT_INJECT_LOG" 2>/dev/null | cut -c1-80)"
+	fi
 fi
 
 # The ELF loader is a separate guarantee from "the driver links" -- it still

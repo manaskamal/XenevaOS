@@ -157,6 +157,10 @@ static inline int del_timer_sync(struct timer_list* t) {
  * the old and new spelling drift.  There is no handler to synchronise with,
  * because no timer IRQ runs one -- see the note on add_timer() below.
  */
+static inline int timer_delete(struct timer_list* t) {
+    return del_timer(t);
+}
+
 static inline int timer_delete_sync(struct timer_list* t) {
     return del_timer_sync(t);
 }

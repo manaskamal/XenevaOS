@@ -496,6 +496,10 @@ static inline int64_t ktime_ms_delta(ktime_t later, ktime_t earlier) {
     return ktime_to_ms(ktime_sub(later, earlier));
 }
 
+#define TK_OFFS_BOOT 0
+static inline ktime_t ktime_mono_to_real(ktime_t t) { return t; }
+static inline ktime_t ktime_mono_to_any(ktime_t t, int offs) { (void)offs; return t; }
+
 static inline ktime_t ktime_get(void) {
     uint64_t cnt = get_cntpct_el0();
     uint64_t freq = get_cntfrq_el0();
@@ -556,6 +560,10 @@ UARTDebugOut("[WARN] %s:%d \r\n", __FILE__, __LINE__); \
 }                                                      \
 })
 #endif
+
+/* Mainline's stack-banner helper.  DCL's input core calls it only on an
+ * invalid event type; there is no unwinder, so the sink is silent. */
+void dump_stack(void);
 
 #define ARRAY_SIZE(a)   (sizeof(a) / sizeof((a)[0]))
 

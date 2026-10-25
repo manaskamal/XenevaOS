@@ -95,6 +95,23 @@ static inline void *devm_kzalloc(struct device *dev, size_t size, gfp_t gfp)
  * dropped in without the caller's declaration changing.
  */
 typedef void (*dr_release_t)(struct device* dev, void* res);
+typedef int (*dr_match_t)(struct device* dev, void* res, void* match_data);
+
+/*
+ * devres_destroy() -- remove a managed resource without running its release.
+ * The input core asks for this only from input_free_device()'s devres-managed
+ * arm, which no device in this tree takes: no device is ever released, so
+ * there is nothing on a list to find and the honest result is "not found".
+ */
+static inline int devres_destroy(struct device* dev, dr_release_t release,
+				 dr_match_t match, void* match_data)
+{
+	(void)dev;
+	(void)release;
+	(void)match;
+	(void)match_data;
+	return -2; /* -ENOENT */
+}
 
 static inline void* devres_alloc(dr_release_t release, size_t size, gfp_t gfp)
 {

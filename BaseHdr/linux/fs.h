@@ -40,6 +40,12 @@ struct super_block;
 #define MINOR(dev)     ((unsigned int)(dev) & 0xFFFFFu)
 #endif
 
+/* The input core's initcall is compiled but never run; these keep its body
+ * linkable without claiming a major from the DCL allocator. */
+int register_chrdev_region(unsigned int from, unsigned int count,
+						   const char* name);
+void unregister_chrdev_region(unsigned int from, unsigned int count);
+
 typedef unsigned int fop_flags_t;
 typedef unsigned int __poll_t;
 
@@ -220,6 +226,8 @@ struct cdev {
 /* Owned by <linux/of.h>; declared here only so the of_node member below has a
  * type to point at without this header having to know what a device tree is. */
 struct device_node;
+struct class;
+struct device_type;
 
 /*
  * Two DCL-only members are carved out of the padding this struct declares
@@ -245,10 +253,17 @@ struct device_node;
  * device table and no message to explain it.
  */
 struct device {
-	const char* kobj_name;                  /* 0 (kobject.name) */
-	unsigned char _head0[56];               /* 8..63 */
+	union {
+		const char* kobj_name;          /* 0 (kobject.name) */
+		unsigned char kobj[64];         /* 0..63, same as struct kobject */
+	};
 	struct device* parent;                  /* 64 (after kobj, as in mainline) */
-	unsigned char _mid[624];                /* 72..695 */
+	const struct class* class;              /* 72 */
+	const struct device_type* type;         /* 80 */
+	void* driver_data;                      /* 88 */
+	void (*release)(struct device*);        /* 96 */
+	const struct attribute_group** groups;  /* 104 */
+	unsigned char _mid[584];                /* 112..695 */
 	struct device_node* of_node;            /* 696 */
 	unsigned char _pad[4];                  /* 700..707 */
 	unsigned int devt;                      /* 708 */
@@ -261,8 +276,6 @@ _Static_assert(__builtin_offsetof(struct device, kobj_name) == 0,
                "fs.h: kobj_name is pinned at 0 (device_create writes it)");
 _Static_assert(__builtin_offsetof(struct device, devt) == 708,
                "fs.h: devt is pinned at 708 (the module's device_destroy reads it)");
-
-struct class;
 
 /* IS_ERR/PTR_ERR: same range check the module inlines from linux/err.h. */
 #define DCL_MAX_ERRNO 4095
