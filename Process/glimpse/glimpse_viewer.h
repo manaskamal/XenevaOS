@@ -23,6 +23,18 @@ typedef struct {
 	int scaled_y;
 	bool has_image;
 
+	// Zoom & Pan state
+	int base_fit_w;
+	int base_fit_h;
+	int zoom_percent;
+	int pan_x;
+	int pan_y;
+
+	// Dragging state
+	bool is_dragging;
+	int drag_last_x;
+	int drag_last_y;
+
 	// Back button geometry (relative to window)
 	int btn_x;
 	int btn_y;
@@ -30,6 +42,32 @@ typedef struct {
 	int btn_h;
 	bool btn_hover;
 	bool btn_clicked;
+
+	// Zoom Out button [-]
+	int btn_zoom_out_x;
+	int btn_zoom_out_y;
+	int btn_zoom_out_w;
+	int btn_zoom_out_h;
+	bool btn_zoom_out_hover;
+	bool btn_zoom_out_clicked;
+
+	// Zoom In button [+]
+	int btn_zoom_in_x;
+	int btn_zoom_in_y;
+	int btn_zoom_in_w;
+	int btn_zoom_in_h;
+	bool btn_zoom_in_hover;
+	bool btn_zoom_in_clicked;
+
+	// Fit / Reset button [Fit]
+	int btn_fit_x;
+	int btn_fit_y;
+	int btn_fit_w;
+	int btn_fit_h;
+	bool btn_fit_hover;
+	bool btn_fit_clicked;
+
+	int lbl_zoom_x;
 
 	GlimpseBackCallback on_back;
 	void* user_data;
@@ -40,6 +78,12 @@ GlimpseViewer* GlimpseViewerCreate(int x, int y, int w, int h, GlimpseBackCallba
 bool GlimpseViewerLoad(GlimpseViewer* viewer, const char* path);
 
 void GlimpseViewerUnload(GlimpseViewer* viewer);
+
+void GlimpseViewerResetFit(GlimpseViewer* viewer);
+
+void GlimpseViewerZoomIn(GlimpseViewer* viewer);
+
+void GlimpseViewerZoomOut(GlimpseViewer* viewer);
 
 void GlimpseViewerPaint(ChWidget* wid, ChWindow* win);
 
