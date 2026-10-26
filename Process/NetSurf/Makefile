@@ -18,10 +18,11 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 
 INCLUDES = -I. -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++ -I../../BaseHdr -I../../Libs/Chitralekha -I../../Ports/freetype2/include \
            -I../../Ports/CssLibs/libcss/include -I../../Ports/CssLibs/libparserutils/include -I../../Ports/CssLibs/libwapcaplet/include \
+           -I../../Ports/CssLibs/libdom/include -I../../Ports/CssLibs/libhubbub/include \
            -I../../Ports/mbedtls/port -I../../Ports/quickjs/include -Iminiz -DMINIZ_EXPORT=
 
 CPP_SRCS = main.cpp
-C_SRCS = css.c js.c pngdec.c svgdec.c miniz/miniz_tinfl.c
+C_SRCS = css.c dom.c layout.c js.c pngdec.c svgdec.c miniz/miniz_tinfl.c
 S_SRCS =
 
 OBJDIR = obj
@@ -54,15 +55,28 @@ endif
 
 CSSLIB = ../../Ports/CssLibs/libcssport.a
 QJSLIB = ../../Ports/quickjs/libquickjs.a
+MBEDLIB = ../../Ports/mbedtls/libmbedtls.a
+
+# Sources under Ports/. A newer file rebuilds that archive from this makefile.
+CSS_INPUTS := $(shell find ../../Ports/CssLibs \( -name '*.c' -o -name '*.h' -o -name 'Makefile' \) ! -path '*/obj/*')
+QJS_INPUTS := $(shell find ../../Ports/quickjs \( -name '*.c' -o -name '*.h' -o -name 'Makefile' \) ! -path '*/obj/*') \
+	../../Ports/quickjs/port/libm.o ../../Ports/quickjs/port/int128.o
+MBED_INPUTS := $(shell find ../../Ports/mbedtls \( -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.pem' -o -name 'Makefile' \) ! -path '*/obj/*')
 
 .PHONY: all clean llvm
 
 all: $(TARGET)
 
-# libcss, libdom, libhubbub, libparserutils, and libwapcaplet are one
-# archive. Building netsurf.exe builds it.
-$(CSSLIB):
+# Ports archives this binary links. One `make` here builds any that are missing
+# or older than their sources.
+$(CSSLIB): $(CSS_INPUTS)
 	$(MAKE) -C ../../Ports/CssLibs llvm
+
+$(QJSLIB): $(QJS_INPUTS)
+	$(MAKE) -C ../../Ports/quickjs llvm
+
+$(MBEDLIB): $(MBED_INPUTS)
+	$(MAKE) -C ../../Ports/mbedtls llvm
 
 llvm:
 	@$(MAKE) TOOLCHAIN=llvm all
@@ -79,9 +93,9 @@ $(CRT_OBJ): ../../Process/Init/crt0arm64.s
 	@mkdir -p $(dir $@)
 	$(CC) $(CXXFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 
-$(TARGET): $(OBJS) $(CSSLIB) $(QJSLIB)
+$(TARGET): $(OBJS) $(CSSLIB) $(QJSLIB) $(MBEDLIB)
 	@echo "Linking $@ (LLVM)..."
-	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) $(QJSLIB) ../../Libs/Chitralekha/libChitralekha.a ../../Ports/mbedtls/libmbedtls.a ../../Libs/XEClib/libXEClib.a -o $@
+	$(LD) $(LDFLAGS) $(OBJS) $(CSSLIB) $(QJSLIB) ../../Libs/Chitralekha/libChitralekha.a $(MBEDLIB) ../../Libs/XEClib/libXEClib.a -o $@
 
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
