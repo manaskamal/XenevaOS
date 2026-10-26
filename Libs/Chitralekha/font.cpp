@@ -229,6 +229,12 @@ static int ChFontBlitBaked(ChCanvas* canv,
 	}
 	int src_x = (int)baked->x0;
 	int src_y = (int)baked->y0;
+	/* A negative side bearing paints this glyph over the previous one,
+	 * so "pl" collapses into one mark. Keep the ink at the pen. */
+	if (left < penx) {
+		src_x += penx - left;
+		left = penx;
+	}
 	if (left < clipLeft) {
 		src_x += clipLeft - left;
 		left = clipLeft;
@@ -265,6 +271,11 @@ static void ChFontBlitGlyph(ChCanvas* canv,
 	int top = peny + glyph->yOffset;
 	int right = left + glyph->width;
 	int bottom = top + glyph->height;
+	/* A negative side bearing paints this glyph over the previous one.
+	 * Keep the ink at the pen. right stays the original edge so the
+	 * source index does not read past the bitmap. */
+	if (left < penx)
+		left = penx;
 	int clipLeft = 0;
 	int clipTop = 0;
 	int clipRight = canv->canvasWidth;
@@ -671,10 +682,8 @@ void ChFontDrawChar(
 		return;
 
 	unsigned char cp = (unsigned char)c;
-	if (font->kern) {
-		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
-		penx += (int)(kern * font->stbScale);
-	}
+	/* Width is measured one character at a time, with no previous glyph.
+	 * A kern shift here paints this glyph on top of the previous one. */
 	if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, NULL, NULL)) {
 		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
 		ChFontBlitGlyph(canv, glyph, penx, peny, color, NULL);
@@ -831,10 +840,8 @@ void ChFontDrawCharClipped(
 	if (!limit)
 		return;
 	unsigned char cp = (unsigned char)c;
-	if (font->kern) {
-		int kern = stbtt_GetCodepointKernAdvance(&font->stbFont, (int)font->kern, cp);
-		penx += (int)(kern * font->stbScale);
-	}
+	/* Same as ChFontDrawChar: the caller already advanced by
+	 * ChFontGetWidthChar, so a second kern shift stacks 'l' onto 'c'. */
 	if (!ChFontBlitBaked(canv, font, cp, penx, peny, color, limit, NULL)) {
 		ChFontGlyphCacheEntry* glyph = ChFontGetCachedGlyph(font, cp);
 		ChFontBlitGlyph(canv, glyph, penx, peny, color, limit);
@@ -930,11 +937,28 @@ int64_t ChFontGetWidthChar(ChFont* font, char c) {
 		return -1;
 	unsigned char cp = (unsigned char)c;
 	if (font->atlasReady && cp >= CH_FONT_ATLAS_FIRST &&
-		cp < CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT)
-		return (int64_t)font->atlasChars[cp - CH_FONT_ATLAS_FIRST].xadvance;
+		cp < CH_FONT_ATLAS_FIRST + CH_FONT_ATLAS_COUNT) {
+		const stbtt_bakedchar* b = &font->atlasChars[cp - CH_FONT_ATLAS_FIRST];
+		int gw = (int)b->x1 - (int)b->x0;
+		float adv = b->xadvance;
+		float right = b->xoff + (float)gw;
+		/* Truncating 5.95 to 5 puts the next stem inside 'c', so "cl"
+		 * reads as "d". Keep one pixel of air when the ink is wider
+		 * than the advance. */
+		if (gw > 0 && right > adv)
+			adv = right + 1.f;
+		if (adv < 0.f)
+			adv = 0.f;
+		return (int64_t)(adv + 0.5f);
+	}
 	int advance, lsb;
 	stbtt_GetCodepointHMetrics(&font->stbFont, cp, &advance, &lsb);
-	return (int64_t)(advance * font->stbScale);
+	{
+		float adv = advance * font->stbScale;
+		if (adv < 0.f)
+			adv = 0.f;
+		return (int64_t)(adv + 0.5f);
+	}
 #endif
 }
 
