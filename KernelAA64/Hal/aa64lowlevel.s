@@ -27,6 +27,9 @@
 *
 **/
 
+.global __chkstk
+__chkstk:
+ret
 
 .global store_x0_x7
 store_x0_x7:

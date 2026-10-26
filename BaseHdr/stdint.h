@@ -240,13 +240,25 @@ extern "C++" {
 
 #define ALIGN_UP(x, y) (DIV_ROUND_UP(x,y)*y)
 
+/*
+ * Spelled as a statement expression rather than a bare block: mainline's
+ * do_div() yields the remainder, and callers assign from it -- lib/
+ * string_helpers.c:98 is `remainder = do_div(size, divisor[units_base]);`.
+ * A `{ ... }` macro in that position leaves the assignment with no rvalue and
+ * the error lands on the call, not on the macro.  Div64's own definitions in
+ * <asm/div64.h> already work this way; this one is for TUs that reach
+ * do_div() through <linux/math.h>/<stdint.h> without them.
+ *
+ * Kept under #ifndef: <asm/div64.h> is the arch definition and wins where it
+ * is present, exactly as before.
+ */
 #ifndef do_div
-#define do_div(n, base) { \
+#define do_div(n, base) ({ \
     uint64_t __base = (base); \
     uint64_t __rem = n % __base; \
     n = n / __base; \
     __rem; \
-    }
+    })
 #endif
 
 #define clamp_t(type, val, lo, hi) \

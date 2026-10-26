@@ -50,6 +50,15 @@ static inline void np_barrier(void) {
 	__asm__ volatile("dmb ish" ::: "memory");
 }
 
+/* Kernel addresses live in the upper half. Check the range without adding
+ * len to a user pointer first, since that addition can wrap. Keep the strict
+ * upper-bound behavior used by the other device-pointer validators. */
+static bool np_user_range(const void* ptr, size_t len) {
+	const uint64_t user_top = 0x0000800000000000ULL;
+	uint64_t start = (uint64_t)ptr;
+	return start && start < user_top && len < user_top - start;
+}
+
 /* the stack calls this to send; never blocks, never trusts the ring */
 static size_t np_write(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer, uint32_t len) {
 	(void)node; (void)file;
@@ -186,8 +195,7 @@ static int np_ioctl(AuVFSNode* file, int code, void* arg) {
 
 	switch (code) {
 	case NETSRV_IOC_ATTACH: {
-		uint64_t a = (uint64_t)arg;
-		if (!a || a + sizeof(NetsrvAttach) >= 0x0000800000000000ULL)
+		if (!np_user_range(arg, sizeof(NetsrvAttach)))
 			return NETSRV_E_INVAL;
 		NetsrvAttach* req = (NetsrvAttach*)arg;
 		if (np.attached)
@@ -251,8 +259,7 @@ static int np_ioctl(AuVFSNode* file, int code, void* arg) {
 		}
 		return NETSRV_E_INVAL;
 	case NETSRV_IOC_STATS: {
-		uint64_t a = (uint64_t)arg;
-		if (!a || a + sizeof(NetsrvStats) >= 0x0000800000000000ULL)
+		if (!np_user_range(arg, sizeof(NetsrvStats)))
 			return NETSRV_E_INVAL;
 		NetsrvStats* st = (NetsrvStats*)arg;
 		st->tx_frames = np.tx_frames;

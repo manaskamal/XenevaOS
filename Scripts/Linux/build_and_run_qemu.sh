@@ -52,6 +52,16 @@ set -e
 #                           and the image. Init skips the missing daemon.
 #   --no-audio              Drop the audio userspace (deoaud daemon and
 #                           AudioPlayer) from the build and the image.
+#   --bypass-virtgpu        Leave virtio-gpu-pci (1AF4:1050) to the
+#                           kernel-side driver: the image carries neither
+#                           virtgpu.dll nor its audrv.cnf entry, so the
+#                           internal in-tree driver never claims it. Off by
+#                           default; for bringing up the vendored DRM
+#                           virtio-gpu driver.
+#   --bypass-virtio-input   Leave the virtio keyboard/tablet functions
+#                           (1AF4:1052) to the vendored Linux input core and
+#                           virtio_input driver instead of the native
+#                           virtiokbd/virtiotablet pair.
 #   --no-virtio-serial      Skip the virtio-serial controller and its one
 #                           virtserialport, so the guest's virtio_console
 #                           driver has no device to probe. It is on by
@@ -87,6 +97,8 @@ set -e
 #   --data-size-mb=N        Size of the persistent data.img virtio-blk disk
 #                           (default 256). Created once and reused, so files
 #                           written to /data survive across runs.
+#   GPUSRV=1                Run virtio-GPU from the supervised user-space
+#                           gpusrv server; kernel virtgpu remains handback.
 #   --no-data-disk          Don't attach the persistent data disk.
 #   --force-data-disk       Recreate data.img, wiping persisted files.
 #   --headless              Run QEMU with -display none, bounded by a timeout,
@@ -155,6 +167,11 @@ ISO_OUTPUT=""
 TUI=0
 NO_NETWORK=0
 NO_AUDIO=0
+# --bypass-virtgpu: keep the internal virtgpu.dll driver (and its audrv
+# entry) out of the image, so 1AF4:1050 is left to the kernel-side driver.
+BYPASS_VIRTGPU=0
+# --bypass-virtio-input: leave 1AF4:1052 to the vendored input core.
+BYPASS_VIRTIO_INPUT=0
 NO_BOOT_MENU=0
 NO_DOOM=0
 BT_SERIAL="${XENEVA_BT_SERIAL:-}"
@@ -177,6 +194,7 @@ CLIPBOARD=1
 DATA_SIZE_MB=256
 NO_DATA_DISK=0
 FORCE_DATA_DISK=0
+GPUSRV=${GPUSRV:-0}
 
 print_help(){
     printf "${STY_CYAN}"
@@ -474,6 +492,8 @@ while [ $# -gt 0 ]; do
         --no-doom) NO_DOOM=1 ;;
         --no-netsurf) NO_NETSURF=1 ;;
         --no-audio) NO_AUDIO=1 ;;
+        --bypass-virtgpu) BYPASS_VIRTGPU=1 ;;
+        --bypass-virtio-input) BYPASS_VIRTIO_INPUT=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         --bt) NO_BT=0 ;;
         --bt-serial) NO_BT=0; BT_SERIAL="/tmp/bt-server-bredr" ;;
@@ -655,8 +675,8 @@ if [ "$TEST_MUSL" -eq 1 ] && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
 	exit 1
 fi
 
-if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
-	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
+if { [ "$NO_NETWORK" -eq 1 ] || [ "$NO_AUDIO" -eq 1 ] || [ "$NO_DOOM" -eq 1 ] || [ "$NO_NETSURF" -eq 1 ] || [ "$BYPASS_VIRTGPU" -eq 1 ] || [ "$BYPASS_VIRTIO_INPUT" -eq 1 ]; } && [ "$FORCE_LEGACY_BUILD" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --no-network/--no-audio/--no-doom/--no-netsurf/--bypass-virtgpu/--bypass-virtio-input need a freshly packed initrd; they cannot be combined with --force-legacy-build.${STY_RST}\n"
 	exit 1
 fi
 
@@ -671,6 +691,11 @@ if [ "$HEADLESS" -eq 1 ] && [ "$EGL_HEADLESS" -eq 1 ]; then
 	exit 1
 fi
 
+if [ "$STATIC_COMPONENTS" -eq 1 ] && [ "$GPUSRV" -eq 1 ]; then
+	printf "${STY_RED}[$0]: --static-components and GPUSRV=1 are mutually exclusive; the GPU must be unloadable for user-space handoff.${STY_RST}\n"
+	exit 1
+fi
+
 requested_userspace_profile="${TOOLCHAIN}-normal"
 if [ "$BLEED" -eq 1 ]; then
 	requested_userspace_profile="${TOOLCHAIN}-bleed"
@@ -682,7 +707,11 @@ if [ "$UNIKERNEL" -eq 1 ]; then
 	requested_userspace_profile="${requested_userspace_profile}-unikernel"
 fi
 if [ "$OPENXR" -eq 1 ]; then
-	requested_userspace_profile="${requested_userspace_profile}-openxr"
+    requested_userspace_profile="${requested_userspace_profile}-openxr"
+fi
+if [ "$GPUSRV" -eq 1 ]; then
+    requested_userspace_profile="${requested_userspace_profile}-gpusrv"
+    BUILD_USER_APPS=1
 fi
 
 if [ -f "$USERSPACE_PROFILE_STAMP" ]; then
@@ -818,7 +847,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+    export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR GPUSRV NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF BYPASS_VIRTGPU BYPASS_VIRTIO_INPUT
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
@@ -839,8 +868,10 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
         echo "[+] Building external drivers..."
         ( cd "$REPO_ROOT/Drivers/Net/virtionet" && make clean && make )
         cp -f "$REPO_ROOT/Drivers/Net/virtionet/virtnet.dll" "$REPO_ROOT/Resources/resources/"
-        ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
-        cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        if [ "$BYPASS_VIRTGPU" -eq 0 ]; then
+            ( cd "$REPO_ROOT/Drivers/GPU/virtiogpu" && make clean && make )
+            cp -f "$REPO_ROOT/Drivers/GPU/virtiogpu/virtgpu.dll" "$REPO_ROOT/Resources/resources/"
+        fi
         ( cd "$REPO_ROOT/Drivers/Sound/virtiosnd" && make clean && make llvm )
         cp -f "$REPO_ROOT/Drivers/Sound/virtiosnd/virtsnd.dll" "$REPO_ROOT/Resources/resources/"
         fi
@@ -950,6 +981,10 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
                 [ "$TEST_MUSL" -eq 1 ] && return 1 || return 0 ;;
             deoaud.exe|audplr.exe)
                 [ "$NO_AUDIO" -eq 1 ] && return 0 || return 1 ;;
+            virtgpu.dll)
+                [ "$BYPASS_VIRTGPU" -eq 1 ] && return 0 || return 1 ;;
+            inputsrv.exe)
+                [ "$BYPASS_VIRTIO_INPUT" -eq 1 ] && return 0 || return 1 ;;
         esac
         return 1
     }
@@ -972,6 +1007,29 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         mcopy -o -s -i initrd2.img "$resource" ::/
     done
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
+    if [ "$BYPASS_VIRTGPU" -eq 1 ]; then
+        # The kernel-side virtio-gpu driver owns 1AF4:1050 -- strip the
+        # internal driver's line from the packed config too, or audrv would
+        # announce a file the image no longer carries.
+        echo "[+] Internal virtgpu driver excluded from the image (--bypass-virtgpu)."
+        # audrv walks the table by entry number -- it looks for (1), then
+        # (2), and a hole at (1) sends every lookup to the (0) terminator,
+        # which would strand virtnet/virtsnd/virtblk too. So the entry is
+        # removed and the rest renumber to stay contiguous.
+        bypass_cnf="$(mktemp)"
+        bypass_idx=0
+        while IFS= read -r bypass_line || [ -n "$bypass_line" ]; do
+            case "$bypass_line" in
+                *'/virtgpu.dll'*) continue ;;
+                '(0)') printf '%s\n' "$bypass_line" ;;
+                '('*)  bypass_idx=$((bypass_idx + 1))
+                       printf '(%d)%s\n' "$bypass_idx" "${bypass_line#*)}" ;;
+                *)     printf '%s\n' "$bypass_line" ;;
+            esac
+        done < Resources/resources/audrv.cnf > "$bypass_cnf"
+        mcopy -o -i initrd2.img "$bypass_cnf" ::/audrv.cnf
+        rm -f "$bypass_cnf"
+    fi
 else
     echo "[+] Found pre-built initrd2.img, skipping manual creation."
     echo "    (Omit --force-legacy-build to rebuild it.)"
@@ -1076,8 +1134,8 @@ echo "[+] Guest memory: $qemu_memory"
 # which backends it actually has and fall back to a silent one. The
 # virtio-sound-pci device itself is still added, so the guest sees the same
 # audio hardware either way. --axiss
-QEMU_AUDIO_BACKEND="pa"
-if ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
+QEMU_AUDIO_BACKEND="${QEMU_AUDIO_BACKEND:-pa}"
+if [ "$QEMU_AUDIO_BACKEND" = "pa" ] && ! qemu-system-aarch64 -audiodev help 2>&1 | grep -qw 'pa'; then
     QEMU_AUDIO_BACKEND="none"
     echo "[+] Audio: this QEMU has no 'pa' backend, using 'none' (silent guest sound)."
 fi
@@ -1101,6 +1159,11 @@ QEMU_ARGS=(
     # Xeneva compositor drives after boot. ramfb remains as a fallback GOP.
     -device virtio-gpu-pci,disable-legacy=on,id=gpu0
     -device ramfb,id=ramfb
+    # Scanout stage: a second, register-only display device for the DRM
+    # stack (mainline bochs.c) to own, next to the native virtio-gpu. The
+    # host has no seabios VGA ROM; EDK2 drives the device directly and the
+    # mainline driver never touches an option ROM, so romfile= is empty.
+    -device bochs-display,romfile=,id=bochs0
     -device virtio-keyboard-pci
     -device virtio-tablet-pci
     -device qemu-xhci
@@ -1156,9 +1219,9 @@ if [ "$NO_DATA_DISK" -eq 0 ]; then
     echo "[+] Persistent data disk attached (data.img -> guest /data)."
 fi
 
-# virtio-sound-pci (vendor 1AF4/device 1059) matches audrv.cnf's
-# [04,03]/virtsnd.dll class entry (with [6900,4185] vendor fallback)
-# and the virtsnd driver's AuPCIEScanClass probe. Skipped under --no-audio
+# virtio-sound-pci (vendor 1AF4/device 1059, multimedia-audio class 04/01)
+# matches audrv.cnf's [6900,4185]/virtsnd.dll vendor entry and the virtsnd
+# driver's AuPCIEScanClass probe. Skipped under --no-audio
 # so the guest never enumerates a sound card it was told not to have. --axiss
 if [ "$NO_AUDIO" -eq 1 ]; then
     echo "[+] Audio: virtio-sound-pci omitted (--no-audio)"
@@ -1166,7 +1229,8 @@ elif qemu-system-aarch64 -device help 2>&1 | grep -q 'virtio-sound-pci'; then
     QEMU_ARGS+=(-audiodev "$QEMU_AUDIO_BACKEND",id=snd0)
     QEMU_ARGS+=(-device virtio-sound-pci,audiodev=snd0,disable-legacy=on)
 else
-    echo "[+] Audio: this QEMU has no 'virtio-sound-pci' device (needs QEMU 8.2+), omitting sound device."
+    printf "${STY_RED}[audio] This QEMU build has no virtio-sound-pci device; install a QEMU build with virtio-sound support before running SNDSRV.${STY_RST}\n"
+    exit 1
 fi
 bt_power_off_for_proxy() {
     local i prop
@@ -1371,6 +1435,36 @@ fi
 if [ -n "${XENEVA_QEMU_EXTRA_ARGS:-}" ]; then
     read -r -a extra_qemu_args <<<"${XENEVA_QEMU_EXTRA_ARGS}"
     QEMU_ARGS+=("${extra_qemu_args[@]}")
+fi
+
+# Host end of the clipboard. connect() retries until QEMU's socket binds,
+# so starting before QEMU is fine; one started by hand is left alone --
+# two bi bridges would relay each other's output. Torn down with the
+# session so nothing outlives the guest it copies for.
+CLIP_BRIDGE_PID=""
+clip_bridge_stop() {
+    trap - EXIT INT TERM
+    if kill -0 "$CLIP_BRIDGE_PID" 2>/dev/null; then
+        kill "$CLIP_BRIDGE_PID" 2>/dev/null || true
+        wait "$CLIP_BRIDGE_PID" 2>/dev/null || true
+    fi
+}
+if [ "$VIRTIO_SERIAL" -eq 1 ] && [ "$CLIPBOARD" -eq 1 ]; then
+    if pgrep -f "[c]lip_bridge" >/dev/null 2>&1; then
+        echo "[+] clipboard bridge: already running, left alone"
+    else
+        mkdir -p /tmp/xeneva
+        # 300s of hello patience: an interactive boot can sit at the menu
+        # well past the 60s default, and a bridge that gives up there is
+        # the clipboard off again without anyone asking for that.
+        "$REPO_ROOT/Tests/clip_bridge.py" --dir=bi --watch --timeout 300 \
+            >/tmp/xeneva/bridge.log 2>&1 &
+        CLIP_BRIDGE_PID=$!
+        trap clip_bridge_stop EXIT
+        trap 'clip_bridge_stop; exit 130' INT
+        trap 'clip_bridge_stop; exit 143' TERM
+        echo "[+] clipboard bridge: pid $CLIP_BRIDGE_PID (log /tmp/xeneva/bridge.log)"
+    fi
 fi
 
 if [ "$HEADLESS" -eq 1 ]; then

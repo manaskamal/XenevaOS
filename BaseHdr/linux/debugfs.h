@@ -15,6 +15,16 @@
 #include <linux/fs.h>
 #include <linux/seq_file.h>
 
+/*
+ * mainline includes <linux/atomic.h> here and the port dropped it. The include
+ * is load-bearing for debugfs_create_atomic_t() below, whose only parameter is
+ * an atomic_t * -- with the include missing the parameter is an unknown type
+ * name, and because that function is itself only ever an empty stub in this
+ * tree the error surfaces as a parse failure at its declaration rather than
+ * anywhere a caller could have pointed at it.
+ */
+#include <linux/atomic.h>
+
 #include <linux/types.h>
 #include <linux/compiler.h>
 

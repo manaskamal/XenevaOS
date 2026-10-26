@@ -49,6 +49,10 @@
 				 * does too, as `struct device dev;`), and fs.h is where
 				 * DCL's is defined. fs.h includes only <stdint.h> and
 				 * <stddef.h>, so this cannot cycle. */
+#include <linux/device/driver.h>	/* struct device_driver -- shared with
+					 * pci.h since the scanout stage; see the
+					 * note where the struct used to live,
+					 * below virtio_device. */
 #include <linux/list.h>	/* struct list_head -- virtio_device.vqs, virtqueue.list */
 #include <Drivers/virtio.h>
 
@@ -179,10 +183,15 @@ struct virtio_device {
 	 *          never happens at runtime.
 	 *
 	 *   dev    mainline's embedded device. Never registered with anything
-	 *          (DCL has no device model to register it with), so its
-	 *          `parent` is NULL, which is what makes the DMA path at :433
-	 *          take its `if (!buf->dev) goto free_buf` arm -- the arm it
-	 *          should take, since that arm is rproc-only and rproc is off.
+	 *          (DCL has no device model to register it with); its
+	 *          `parent` is set by virtio_device_register() to the PCI
+	 *          fabric's device for the function behind it -- the relation
+	 *          virtio-gpu's probe reads (drm_dev_alloc()'s parent
+	 *          argument, then its dev_is_pci() quirk gate). The DMA path
+	 *          at virtio_console.c:433 reads `parent` only under
+	 *          is_rproc_serial(), whose first term is constant-false on
+	 *          this port: it never runs, and no NULL here could change
+	 *          that.
 	 *
 	 *   vqs    the head of this device's virtqueue list, so mainline's
 	 *          `virtio_device_for_each_vq()` (used once, in remove_vqs())
@@ -197,44 +206,18 @@ struct virtio_device {
 };
 
 /*
- * struct device_driver -- mainline's, reduced to the two things DCL can
- * actually lay out.
- *
- * This used to be flattened: `struct virtio_driver` carried `const char*
- * name;` followed by `unsigned char _device_driver_tail[144];`, which is the
- * same bytes in the same order but spells them the way a C struct that
- * nobody can write `.driver.name` against would. That mattered as soon as a
- * real mainline source was compiled here -- virtio-rng.c initialises
- *
- *     static struct virtio_driver virtio_rng_driver = {
- *         .driver.name = KBUILD_MODNAME,
- *         ...
- *     };
- *
- * and a flattened field is a *field designator* error ("field designator
- * 'driver' does not refer to any field in type 'struct virtio_driver'"),
- * which is what the first vendored build reported.
- *
- * Layout is unchanged, and that is the part to keep intact: `name` stays at
- * offset 0 and `_rest` is the 144 bytes that used to be `_device_driver_tail`,
- * so struct device_driver is 152 bytes exactly as the old prefix was, the
- * offset of id_table and every member after it is untouched, and the ABI the
- * prebuilt modules were assembled against still holds. Nothing outside reads
- * this flat today (register_virtio_driver() only ever touches ->probe,
- * ->scan and ->id_table), so this is a widening of what can be written, not
- * a move of anything that existed.
- *
- * mainline's continues with bus, owner, mod_name, probe, of_match_table and
- * the rest of the bind machinery. Those are not here: DCL has no bus type to
- * point at and no sysfs to bind through, and a member that is always NULL
- * plus a member nothing reads is two more offsets for a future port to have
- * to keep straight. If a driver needs one of them, adding it means deciding
- * what it should do first -- the padding is what makes that cheap.
+ * struct device_driver now lives at upstream's path, <linux/device/driver.h>
+ * (included above), because pci_driver writes `.driver.pm` too and two
+ * definitions of the tag would collide in any translation unit that includes
+ * both buses -- the vendored virtio-gpu driver includes <linux/pci.h>
+ * alongside this header. Everything this comment used to promise moved with
+ * the struct: `name` at offset 0, 152 bytes exactly, `_rest` covering
+ * mainline's unmodelled bind machinery, and virtio_driver's field offsets
+ * (id_table at 152, probe at 200) untouched. One thing changed while moving:
+ * the 144-byte tail is 136 now, and the eight bytes that went missing are
+ * `pm` -- the one field bochs.c's pci_driver initialises through the same
+ * tag. Nothing read the padding, so no existing caller sees a difference.
  */
-struct device_driver {
-	const char* name;
-	unsigned char _rest[144];
-};
 
 struct virtio_driver {
 	/*
@@ -282,6 +265,14 @@ struct virtio_driver {
 	void (*scan)(struct virtio_device* vdev);
 	void (*remove)(struct virtio_device* vdev);
 	void (*config_changed)(struct virtio_device* vdev);
+	/*
+	 * DCL delta: mainline's .shutdown slot, added with the virtio-gpu port
+	 * -- virtgpu_drv.c:178 initialises it by designator. Appended here,
+	 * after the pinned prefix the note above describes, so the offsets the
+	 * prebuilt module indexes do not move; no DCL path drives a device
+	 * shutdown, so nothing reads it.
+	 */
+	void (*shutdown)(struct virtio_device* vdev);
 	int (*freeze)(struct virtio_device* vdev);
 	int (*restore)(struct virtio_device* vdev);
 };
@@ -325,6 +316,20 @@ struct virtqueue {
 	struct list_head list;
 };
 
+/*
+ * is_virtio_device(dev) -- mainline asks `dev->bus == &virtio_bus` (v7.2
+ * virtio.h). DCL names no bus object to compare against -- struct device
+ * is fs.h's pinned ABI layout, and the bus field mainline reads is not a
+ * member the pin preserves -- and there is one device family in the tree:
+ * every struct device* a vendored driver holds here came out of this
+ * stack. Added with the virtio-gpu port, whose vram path guards its UUID
+ * work with it; any non-NULL device is one of ours.
+ */
+static inline bool is_virtio_device(struct device* dev)
+{
+	return dev != NULL;
+}
+
 int register_virtio_driver(struct virtio_driver* driver);
 void unregister_virtio_driver(struct virtio_driver* driver);
 
@@ -360,6 +365,7 @@ void unregister_virtio_driver(struct virtio_driver* driver);
 	module_init(drv##_init)
 
 void virtio_poll_vqs(void);
+void virtio_poll_input_vqs(void);
 
 /*
  * virtio_find_single_vq / virtio_device_ready / virtio_reset_device.
@@ -388,6 +394,7 @@ void virtio_device_ready(struct virtio_device* vdev);
 void virtio_reset_device(struct virtio_device* dev);
 
 void virtio_rng_detect(void);
+int virtio_input_detect(void);
 
 /*
  * virtio_cread(vdev, type, field, ptr) -- copy `sizeof(*ptr)` bytes of config
@@ -421,6 +428,20 @@ void virtio_rng_detect(void);
 	} while (0)
 
 /*
+ * virtio_cread_bytes() -- mainline's arbitrary-length config read.  The
+ * virtio-input driver uses it for the device name/serial and for the raw
+ * capability bitmaps, which are byte streams rather than fields of a known
+ * type.  DCL's config window is the device BAR already mapped by
+ * virtio_shim.c, so the read is the same copy virtio_cread() makes.
+ */
+static inline void virtio_cread_bytes(struct virtio_device* vdev,
+				      unsigned int offset, void* buf,
+				      size_t len)
+{
+	memcpy(buf, (char*)vdev->config->device_config_base + offset, len);
+}
+
+/*
  * struct scatterlist moved to <linux/scatterlist.h>; see the note there for
  * why DCL's is { buf, len } rather than mainline's page_link/offset/length.
  */
@@ -433,24 +454,60 @@ int virtio_find_vqs(struct virtio_device* vdev,
 void virtio_del_vqs(struct virtio_device* vdev);
 
 /*
- * mainline's fifth argument is gfp_t, not the `void *ctx` that add_sgs()
- * carries -- both callers pass one (virtio-rng.c:65 GFP_KERNEL,
- * virtio_console.c:490 GFP_ATOMIC), and an integer passed where a pointer is
- * declared is a constraint violation clang only waves through on
- * -Wno-error=int-conversion. It is accepted and dropped for the reason
- * slab.h drops its own flags: Xeneva's allocator has no GFP_KERNEL against
- * GFP_ATOMIC to distinguish, and `ctx` does not exist in mainline's
- * signature at all, so nothing is being given up to make this match.
+ * mainline's fifth argument is gfp_t, and both callers pass one
+ * (virtio-rng.c:65 GFP_KERNEL, virtio_console.c:490 GFP_ATOMIC). It is
+ * accepted and dropped for the reason slab.h drops its own flags: Xeneva's
+ * allocator has no GFP_KERNEL against GFP_ATOMIC to distinguish. The `sg` +
+ * `num` pair bounds the walk DCL's way: mainline wraps this chain head into
+ * a one-element sgs[] and the chain's own end bounds the walk, while DCL's
+ * scatterlist has no end marker (see <linux/scatterlist.h>), so `num` is
+ * the bound -- the same entries either way for the single-entry chains
+ * every caller passes.
  */
 int virtqueue_add_inbuf(
 	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp);
 
+/*
+ * The cache-clean spelling mainline added for DMA-coherent architectures.
+ * DCL has no per-buffer cache metadata to hand the ring code, so the body
+ * is the plain add; correctness for device-written buffers is handled by
+ * the invalidate in virtqueue_get_buf().
+ */
+int virtqueue_add_inbuf_cache_clean(
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp);
+
+unsigned int virtqueue_get_vring_size(const struct virtqueue* vq);
+
+/*
+ * virtqueue_add_sgs() -- mainline's multi-chain submit: `sgs[]` is an array
+ * of scatterlist heads, the first `out_cnt` readable by the device and the
+ * next `in_cnt` writable. The vendored virtio-gpu command path passes the
+ * array whole (virtgpu_vq.c builds `struct scatterlist *sgs[3]` at :361,
+ * :415 and :566), and an earlier spelling of this argument as one flat
+ * `struct scatterlist sg[]` is what made the shape wrong: the walk in
+ * virtio_shim.c read the pointer array as though it were buffers, QEMU
+ * rejected the control queue's first command with "zero sized buffers are
+ * not allowed", and the device went silent before the display-info wait at
+ * the end of virtio_gpu_init() could be answered.
+ *
+ * DCL's scatterlist has no chain terminator, so a chain is exactly one
+ * entry here: every producer in this tree builds single-entry chains (the
+ * vcmd/vresp/vout slots at virtgpu_vq.c:437-495, the cursor submit's
+ * :560-566), and the one longer-chain producer, the vmalloc_to_sgt()
+ * branch at :474, sits behind is_vmalloc_addr(), constant false here --
+ * arming that branch means teaching the walk to continue through the chain
+ * it produces, and nothing else reads differently.
+ *
+ * The last argument is mainline's gfp_t; the old `void *ctx` slot took the
+ * callers' GFP_ATOMIC as an integer-into-pointer constraint violation, and
+ * nothing reads the value either way, same trade as add_inbuf() above.
+ */
 int virtqueue_add_sgs(struct virtqueue* vq,
-					  struct scatterlist sg[],
+					  struct scatterlist* sgs[],
 					  unsigned int out_cnt,
 					  unsigned int in_cnt,
 					  void* data,
-					  void* ctx);
+					  gfp_t gfp);
 
 bool virtqueue_kick(struct virtqueue* vq);
 bool virtqueue_kick_prepare(struct virtqueue* vq);

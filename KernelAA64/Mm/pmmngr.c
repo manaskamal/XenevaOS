@@ -35,6 +35,7 @@ typedef struct LBMemoryRegion { uint64_t base, size, pageCount; } LBMemoryRegion
 
 static PmmPageDesc* page_desc;
 static uint64_t page_desc_phys, direct_map_base, direct_map_size, total_pages;
+extern KERNEL_BOOT_INFO* bootinfo;
 static uint64_t free_head[PMM_MAX_ORDER + 1];
 static AuPmmStats pmm_stats;
 static Spinlock* pmm_lock;
@@ -850,6 +851,13 @@ void AuPmmngrMoveHigher(void) {
 	   return; 
 	direct_map_base = PHYSICAL_MEM_BASE; 
 	higher_half = true;
+	/* Boot firmware hands the structure to the kernel in the identity map.
+	 * Once the higher-half direct map becomes authoritative, keep the global
+	 * pointer in that address space too; late driver handoff can otherwise
+	 * dereference the old low physical-style address. */
+	if (bootinfo && (uint64_t)bootinfo < KERNEL_BASE_ADDRESS) {
+		bootinfo = (KERNEL_BOOT_INFO*)P2V((uint64_t)bootinfo);
+	}
 	page_desc = (PmmPageDesc*)P2V(page_desc_phys);
 }
 void AuPmmngrDebugInfo(void) {

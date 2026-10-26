@@ -182,7 +182,7 @@ int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 	char pathname[16];
 	while (next) {
 		int i;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 			if (next[i] == '/' || next[i] == '\0')
 				break;
 			pathname[i] = next[i];
@@ -191,9 +191,13 @@ int AuPipeFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* file) {
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (!node_)
+				continue;
 			if (strcmp(node_->filename, pathname) == 0) {
-				if (node_->flags & FS_FLAG_DIRECTORY)
+				if (node_->flags & FS_FLAG_DIRECTORY) {
 					first_list = (AuVFSContainer*)node_->device;
+					break;
+				}
 			}
 		}
 
@@ -226,7 +230,7 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
 	while (next) {
 		char pathname[16];
 		int i;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 			if (next[i] == '/' || next[i] == '\0')
 				break;
 			pathname[i] = next[i];
@@ -235,10 +239,13 @@ int AuPipeFSRemoveFile(AuVFSNode* fs, char* path) {
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (!node_)
+				continue;
 			if (strcmp(node_->filename, pathname) == 0) {
-				if (node_->flags & FS_FLAG_DIRECTORY)
+				if (node_->flags & FS_FLAG_DIRECTORY) {
 					first_list = (AuVFSContainer*)node_->device;
-				else if (node_->flags & FS_FLAG_PIPE) {
+					break;
+				} else if (node_->flags & FS_FLAG_PIPE) {
 					node_to_rem = node_;
 					index = j;
 				}
@@ -369,7 +376,7 @@ AuVFSNode* AuPipeFSOpen(AuVFSNode* fs, char* path) {
 	while (next) {
 		char pathname[16];
 		int i;
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 15; i++) {
 			if (next[i] == '/' || next[i] == '\0')
 				break;
 			pathname[i] = next[i];
@@ -378,10 +385,13 @@ AuVFSNode* AuPipeFSOpen(AuVFSNode* fs, char* path) {
 
 		for (int j = 0; j < first_list->childs->pointer; j++) {
 			AuVFSNode* node_ = (AuVFSNode*)list_get_at(first_list->childs, j);
+			if (!node_)
+				continue;
 			if (strcmp(node_->filename, pathname) == 0) {
-				if (node_->flags & FS_FLAG_DIRECTORY)
+				if (node_->flags & FS_FLAG_DIRECTORY) {
 					first_list = (AuVFSContainer*)node_->device;
-				else if (node_->flags & FS_FLAG_PIPE)
+					break;
+				} else if (node_->flags & FS_FLAG_PIPE)
 					node_to_ret = node_;
 			}
 		}

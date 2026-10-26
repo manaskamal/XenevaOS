@@ -61,6 +61,7 @@
 
 #include "keybind.h"
 #include <sys/_ketime.h>
+#include <gpusrv.h>
 
 static uint32_t screen_w;
 static uint32_t screen_h;
@@ -96,6 +97,7 @@ static uint32_t* snapshotBuff;
 static int lastMouseButton;
 static int gpu_fd;
 static bool _gpu_enabled;
+static bool _gpu_userspace;
 static int gpu_display_id;
 
 #define DEODHAI_TARGET_FPS 60
@@ -1315,37 +1317,71 @@ int main(int argc, char* argv[]) {
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenCommit();
 
+	/* The copy above only lands in the console framebuffer; a scanout
+	 * mirror (the vendored virtio-gpu console bridge) only learns about
+	 * pixels through SCREEN_UPDATE. Without this first full-frame present
+	 * the scanout keeps the boot console's stale edges next to the
+	 * wallpaper. Zero width/height ask for the whole screen. --axiss */
+	{
+		XEFileIOControl startup_present;
+		memset(&startup_present, 0, sizeof(startup_present));
+		startup_present.syscall_magic = AURORA_SYSCALL_MAGIC;
+		_KeFileIoControl(canv->graphics_fd, SCREEN_UPDATE, &startup_present);
+	}
+
 	/** intialize key data structure */
 	ChitralekhaKeyInitialise();
 
 	_KePrint("Canvas updated \r\n");
 
-	char gpu_path[] = "/dev/virtiogpu";
+	/* Prefer the user-space GPU proxy when GPUSRV=1. Keep the old kernel
+	 * device as a deliberate fallback for normal builds and supervisor
+	 * hand-back. Both paths present the same stable /dev/graph framebuffer. */
+	char gpu_path[] = "/dev/gpusrv";
 	gpu_fd = _KeOpenFile(gpu_path, FILE_OPEN_READ_ONLY);
-
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;
-		gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+		_gpu_userspace = 1;
+		gpu_display_id = GPUSRV_RESOURCE;
+	} else {
+		char kernel_gpu_path[] = "/dev/virtiogpu";
+		gpu_fd = _KeOpenFile(kernel_gpu_path, FILE_OPEN_READ_ONLY);
+		if (gpu_fd != -1) {
+			_gpu_enabled = 1;
+			gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+		}
 	}
 
 	if (_gpu_enabled) {
-		/* GPU backing is tightly packed at the mode width. GOP pitch can
-		 * differ; force the compositor row layout to the GPU resource. --axiss */
-		canv->pitch = (uint32_t)screen_w * 4;
-		canv->scanline = (uint16_t)screen_w;
+		if (!_gpu_userspace) {
+			/* The kernel GPU backing is tightly packed at the mode width. GOP
+			 * pitch can differ; force the compositor row layout to the GPU
+			 * resource. The user-space path keeps the real graph/GOP pitch and
+			 * publishes through ChCanvasScreenUpdate instead. --axiss */
+			canv->pitch = (uint32_t)screen_w * 4;
+			canv->scanline = (uint16_t)screen_w;
+		}
 #ifdef __XENEVA_OPENXR__
 		/* Compose stays in RAM; OpenXR EndFrame SBS-blits into framebuff. --axiss */
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 #else
-		canv->buffer = canv->framebuff;
+		if (!_gpu_userspace)
+			canv->buffer = canv->framebuff;
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-		XEFileIOControl ctl;
-		ctl.uint_1 = gpu_display_id;
-		ctl.ushort_1 = 0;
-		ctl.ushort_2 = 0;
-		ctl.ulong_1 = canv->canvasWidth;
-		ctl.ulong_2 = canv->canvasHeight;
-		_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		if (_gpu_userspace) {
+			ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+			ChCanvasScreenCommit();
+			GpuSrvDamage damage = {0, 0, canv->canvasWidth, canv->canvasHeight};
+			_KeFileIoControl(gpu_fd, GPUSRV_IOC_DAMAGE, &damage);
+		} else {
+			XEFileIOControl ctl;
+			ctl.uint_1 = gpu_display_id;
+			ctl.ushort_1 = 0;
+			ctl.ushort_2 = 0;
+			ctl.ulong_1 = canv->canvasWidth;
+			ctl.ulong_2 = canv->canvasHeight;
+			_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		}
 #endif
 	}
 #ifdef __XENEVA_OPENXR__
@@ -1780,6 +1816,10 @@ int _get_gpu_display_id() {
 
 bool _is_gpu_enabled() {
 	return _gpu_enabled;
+}
+
+bool _is_gpu_userspace() {
+	return _gpu_userspace;
 }
 
 int _get_gpu_fd() {

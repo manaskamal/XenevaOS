@@ -83,3 +83,4 @@ EXPORTS
     _KeSendSignalToThread
     _KeThreadWaitForTermination
     uname
+    poll

@@ -56,6 +56,7 @@
 
 #include <linux/ktime.h>
 #include <linux/time.h>
+#include <linux/timerqueue.h>	/* struct timerqueue_node -- hrtimer.node below */
 
 /* mainline: uapi/asm-generic/posix_types.h gives clockid_t as an int. DCL has
  * no posix_types.h, so the typedef lands here, next to the clock IDs it
@@ -92,6 +93,17 @@ enum hrtimer_mode {
 #define HRTIMER_STATE_ENQUEUED 1
 
 struct hrtimer {
+	/*
+	 * The expiry node, first because that is where mainline puts it.
+	 *
+	 * It was not in this struct until drm_vblank.c:2311 needed it: that
+	 * line reads `vtimer->timer.node.expires` to re-read an expiry until
+	 * two reads agree, which is a member access and cannot be answered by
+	 * a stub -- the value is the point of the loop. `expires` is at the
+	 * position and of the type mainline uses, so a real queue could be
+	 * dropped in underneath without that read site changing.
+	 */
+	struct timerqueue_node node;
 	/* HRTIMER_MODE_* the arm used; recorded so the (future) queue can
 	 * decide absolute vs relative without the caller repeating it. */
 	enum hrtimer_mode mode;
@@ -127,6 +139,17 @@ static inline void hrtimer_start(struct hrtimer* timer, ktime_t tim,
 {
 	timer->mode = mode;
 	timer->_softexpires = tim;
+	/*
+	 * node.expires is the absolute expiry, as mainline stores it: for REL
+	 * that is now + tim.  drm_crtc_vblank_get_vblank_timeout()
+	 * (drm_vblank.c:2296) reads this member back as the next vblank
+	 * timestamp, so leaving it at zero would hand the timestamping path
+	 * a 1970 timestamp and a nonsense subtraction; ktime_get() is the
+	 * same generic-timer clock that stamps the vblank counts, which is
+	 * what makes that subtraction meaningful.
+	 */
+	timer->node.expires = (mode & HRTIMER_MODE_REL)
+			      ? ktime_add(ktime_get(), tim) : tim;
 	timer->state = HRTIMER_STATE_ENQUEUED;
 	timer->pending = 1;
 }
@@ -148,6 +171,36 @@ static inline int hrtimer_try_to_cancel(struct hrtimer* timer)
 static inline int hrtimer_cancel(struct hrtimer* timer)
 {
 	return hrtimer_try_to_cancel(timer);
+}
+
+/*
+ * hrtimer_active() -- mainline (kernel/time/hrtimer.c) runs a seqcount-
+ * protected read of "state != INACTIVE || the callback is running".  No
+ * callback can be running here, so the state is the whole answer, and
+ * hrtimer_try_to_cancel() above clears it -- the loop at drm_vblank.c:2238
+ * (`while (hrtimer_active()) hrtimer_try_to_cancel();`) therefore exits
+ * after one pass, which is the outcome its comment asks for ("wait for the
+ * previous cancel operation to finish" -- the cancel has taken effect).
+ */
+static inline bool hrtimer_active(const struct hrtimer* timer)
+{
+	return timer->state != HRTIMER_STATE_INACTIVE;
+}
+
+/*
+ * hrtimer_forward_now() -- "expire interval from now", mainline's wrapper
+ * around hrtimer_forward() with the clock base's current time.  DCL has no
+ * base and never invokes a callback (the only caller is
+ * drm_vblank_timer_function(), the vblank timer's own callback), so this
+ * re-arms the stored expiry the way the REL arm of hrtimer_start() above
+ * does and returns 1.  The return is mainline's overrun count, and 1 is the
+ * normal-path answer its caller expects -- it logs only when the value is
+ * something else.
+ */
+static inline u64 hrtimer_forward_now(struct hrtimer* timer, ktime_t interval)
+{
+	timer->node.expires = ktime_add(ktime_get(), interval);
+	return 1;
 }
 
 #endif /* __LINUX_HRTIMER_H__ */

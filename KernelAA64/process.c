@@ -45,6 +45,7 @@
 #include <Drivers/uart.h>
 #include <timer.h>
 #include <Cap/capability.h>
+#include <Fs/Dev/devfs.h>
 #include <Sound/sound.h>
 
 static int pid = 1;
@@ -235,6 +236,8 @@ uint64_t* CreateSubUserStack(AuProcess* proc, uint64_t* cr3) {
 */
 AuProcess* AuCreateProcessSlot(AuProcess* parent, char* name) {
 	AuProcess* proc = (AuProcess*)kmalloc(sizeof(AuProcess));
+	if (!proc)
+		return NULL;
 	memset(proc, 0, sizeof(AuProcess));
 	if (name)
 		strncpy(proc->name, name, sizeof(proc->name) - 1);
@@ -332,7 +335,6 @@ int AuCreateUserthread(AuProcess* proc, void (*entry)(), char* name, uint64_t ar
 	uentry->rsp = (uint64_t)CreateSubUserStack(proc, proc->cr3);
 	uentry->stackBase = uentry->rsp;
 	thr->uentry = uentry;
-	int thread_indx = proc->num_thread;
 	proc->threads[proc->num_thread] = thr;
 	proc->num_thread += 1;
 	return thr->thread_id;
@@ -372,7 +374,19 @@ static void AuProcessCloseFiles(AuProcess* proc) {
 				file->fileCopyCount -= 1;
 			continue;
 		}
-		if (file->flags & (FS_FLAG_DEVICE | FS_FLAG_FILE_SYSTEM))
+		if (file->flags & FS_FLAG_DEVICE) {
+			/* The node belongs to the device layer and is shared by
+			 * every open, so it is not freed here; AuDevFSNodeClose runs
+			 * the close hook (DCL routes it to the module's release, and
+			 * a DRM file's master lives there -- skipping it left
+			 * card0/card1 master set after the boot self-test exited, so
+			 * a later dcltest had every DRM_MASTER ioctl refused with
+			 * -EACCES) and keeps the driver image referenced until the
+			 * final fd release. --axiss */
+			AuDevFSNodeClose(file);
+			continue;
+		}
+		if (file->flags & FS_FLAG_FILE_SYSTEM)
 			continue;
 		if (file->flags & (FS_FLAG_GENERAL | FS_FLAG_DIRECTORY)) {
 			if (file->fileCopyCount <= 0) {
@@ -536,7 +550,8 @@ static int AuProcGetOpenFileCount(AuProcess* proc) {
 
 static uint64_t AuProcessGetLiveRuntime(AuProcess* proc, uint64_t now_us) {
 	uint64_t runtime = proc->total_runtime_us;
-	if (proc->main_thread->state == THREAD_STATE_RUNNING)
+	/* Process enumeration can observe a slot between create and exec. */
+	if (proc->main_thread && proc->main_thread->state == THREAD_STATE_RUNNING)
 		runtime += (now_us - proc->main_thread->start_time_us);
 	for (int i = 0; i < proc->num_thread; i++) {
 		AA64Thread* thr = proc->threads[i];

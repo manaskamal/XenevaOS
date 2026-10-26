@@ -295,7 +295,11 @@ char* strncat(char* destString, const char* sourceString, size_t maxLength) {
 }
 
 char* strdup(const char* c) {
+	if (!c)
+		return NULL;
 	char* out = (char*)kmalloc(strlen(c) + 1);
+	if (!out)
+		return NULL;
 	memcpy(out, (void*)c, strlen(c) + 1);
 	return out;
 }

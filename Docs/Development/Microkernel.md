@@ -22,14 +22,17 @@ was verified on QEMU `virt` (see "Testing").
 
    | server (`Process/`) | proxy node | kernel proxy | replaces |
    |---|---|---|---|
-   | `sndsrv` | `/dev/sndsrv` | `Sound/sndproxy.c` | `virtsnd.dll` |
-   | `inputsrv` | `/dev/inputsrv` | `Fs/Dev/devinputsrv.c` | `virtiokbd.c`, `virtiotablet.c` |
-   | `netsrv` | `/dev/netsrv` | `Net/netproxy.c` | `virtnet.dll` |
+| `sndsrv` | `/dev/sndsrv` | `Sound/sndproxy.c` | `virtsnd.dll` |
+| `inputsrv` | `/dev/inputsrv` | `Fs/Dev/devinputsrv.c` | `virtiokbd.c`, `virtiotablet.c` |
+| `netsrv` | `/dev/netsrv` | `Net/netproxy.c` | `virtnet.dll` |
+| `gpusrv` | `/dev/gpusrv` | `Fs/Dev/devgpu.c` | `virtgpu.dll` |
 
 3. **Supervisor (MK2).** `svcmgr` starts the servers from `/services.cnf`,
-   restarts them with backoff, and after repeated crashes hands the device back
-   to the in-kernel driver (`drvctl load ...`). Verified: crash -> restart ->
-   service resumes; crash loop -> fallback -> service resumes in-kernel.
+    restarts them with backoff, and after repeated crashes hands the device back
+    to the in-kernel driver (`drvctl load ...`). Verified: crash -> restart ->
+    service resumes. Crash-loop fallback now has signed handoff status and
+    reset/resource cleanup, but live kernel-driver recovery remains an open
+    acceptance gate.
 4. **Generic IPC and user-space file systems (MK4d/e).** `/dev/ipc`
    (`BaseHdr/auipc.h`, `KernelAA64/Ipc/auipc.c`) gives named endpoints with
    synchronous call/reply. A daemons-group server creates an endpoint; any
@@ -55,6 +58,13 @@ was verified on QEMU `virt` (see "Testing").
    See `__XENEVA_STATIC_COMPONENTS__` in PreprocessorMacros.md. Mutually
    exclusive in practice with the user-space servers (static components cannot
    be unloaded).
+6. **Raw block IPC groundwork (MK5a).** `BLKSRV=1` leaves the boot disk,
+   persistent `data.img`, and FAT/root path in the kernel, while a fresh third
+   QEMU disk is intentionally left unbound for `blkserv`. The server owns that
+   virtio-blk function through `/dev/hwdev` and exposes the `blk` endpoint over
+   generic IPC. `BLKTEST=1` runs ordinary and daemon clients through bounded
+   reads/writes, protocol rejection, and supervised restart checks. This is
+   deliberately not root-fs migration yet.
 
 ## The proxy pattern (adding the next server)
 
@@ -75,8 +85,9 @@ the ring, loop; on any setup failure `drvctl load` the kernel driver back.
 
 * the boot filesystem (FAT, devfs, VFS) and the block driver it boots from --
   `/srv` shows the mechanism but the root filesystem was not moved;
+  `BLKSRV=1` only exposes a disposable scratch disk through IPC as MK5a
+  groundwork;
 * the TCP/IP stack, sockets, routing (only the NIC driver moved);
-* the GPU driver and the compositor-facing framebuffer path;
 * the syscall surface (`Serv/*`) itself; only `/srv` is routed over IPC;
 * `/srv` limits: flat namespace (one directory), no rename or mkdir, at most one
   page per read/write operation; `RemoveFile` is implemented for `/srv` only;
@@ -96,8 +107,20 @@ Each item is its own multi-stage project:
 2. **TCP/IP stack.** A socket protocol over IPC plus shared rings for payload;
    UDP/ICMP first, TCP last. The in-kernel console and DHCP/NTP clients are
    consumers to migrate with it.
-3. **GPU driver.** Behind the compositor's framebuffer/damage path; needs a
-   cache/ownership story for scan-out buffers.
+3. **GPU driver.** **In progress for the QEMU virtio-GPU 2D path:** `gpusrv` owns the
+   PCI function through `/dev/hwdev`; `/dev/gpusrv` keeps the kernel-owned
+   `/dev/graph` staging framebuffer stable and copies bounded damage into
+   server-owned DMA backing. Zero-copy pinned graphics buffers remain future
+   optimization work. Proxy boundary regressions run with
+   `bash Tests/test_gpuproxy.sh`: authoritative framebuffer geometry, padded
+   pitch and byte extents, page-table-aware ioctl copying, request snapshots,
+   and failure-atomic ACQUIRE/TAKE replies. User-page checks and publication
+   are serialized by IRQ exclusion on the current single-CPU path; this is
+   not SMP page pinning or synchronous bus-fault recovery. Full-frame copying
+    remains IRQ-masked and needs latency measurement. Crash/restart with actual
+    repaint is verified by `Tests/test_gpurestart.sh`; kernel-driver fallback
+    remains a separate acceptance gate because a supervisor handback result or
+    "BACK" message alone does not prove presentation recovered.
 4. **Syscall layer.** Generalise `/srv`: let any `/dev` node be served over IPC.
    Kernel-internal consumers (console paste from the clipboard, TCP initial
    sequence numbers from `/dev/random`) need a kernel-side cache or a non-blocking
@@ -135,15 +158,39 @@ the sound server, `SRVTEST=1` for a user-space file system that survives its
 server dying. The reported downtime runs from noticing the death to launching the
 new process; it does not include the new server's own device setup.
 
+### GPU server restart proof
+
+The GPU restart path has a dedicated end-to-end assertion. It waits for a real
+GPU frame to be transferred, flushes and ACKed, crashes `gpusrv`, then requires
+the supervisor to start it again and the proxy to publish a new generation and
+present another frame:
+
+```
+Tests/test_gpurestart.sh
+```
+
+The script accepts the bounded QEMU timeout (`124`) but fails unless it sees
+`acquired generation=1`, a generation-1 presentation, the intentional crash,
+the supervisor DOWN/RESTART/BACK sequence, `acquired generation=2`, and a
+generation-2 presentation. This proves server restart and repaint from the
+stable compositor staging framebuffer; it does not claim that the live
+compositor can switch to a newly allocated kernel fallback framebuffer.
+
 ## Testing
 
 `Scripts/Linux/build_and_run_qemu.sh --llvm --bleed --headless` with:
 
 * `SNDSRV=1` / `INPUTSRV=1` / `NETSRV=1` -- build and pack that server (with `svcmgr`);
-* `SVCTEST=restart|fallback|recover|selfcrash|inrestart|infallback|netrestart|netfallback`
+* `SVCTEST=restart|fallback|recover|selfcrash|inrestart|infallback|netrestart|netfallback|gpurestart|gpufallback`
   -- build the crash hooks and run that supervisor scenario;
 * `NETTEST=1` -- pack `nettest` (gateway ping + sleep-accuracy probe) alone;
 * `IPCTEST=1` -- `ipcsrv`+`ipctest`, 19 checks of the generic IPC;
 * `SRVTEST=1` -- `fssrv` (under `svcmgr`) + `srvtest` run as two users, 32 checks of `/srv`: data, permissions, listing, removal, server crash and supervised recovery;
+* `BLKSRV=1 BLKTEST=1` -- build `blkserv`, leave the third scratch disk
+  unbound, claim it from user space, and run the `blk` IPC client suite (the
+  boot and persistent data disks remain kernel-owned);
+* `GPUSRV=1` -- build and supervise `gpusrv`, present the stable `/dev/graph`
+  framebuffer through user-space virtio-GPU commands, and retain `virtgpu` as
+  the supervisor hand-back fallback;
 * `HWTEST=1` -- the hwdev access test;
 * `--static-components` -- the unikernel profile.

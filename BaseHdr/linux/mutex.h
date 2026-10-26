@@ -40,6 +40,16 @@
 
 #include <linux/kernel.h>	/* mutex_init/lock/unlock, typedef int mutex */
 #include <linux/cleanup.h>
+#include <linux/atomic.h>	/* atomic_long_t -- <linux/ww_mutex.h> puts one
+				 * in struct ww_class and adds to it from
+				 * ww_mutex_lock() without naming this header.
+				 * mainline's mutex.h takes it the same way
+				 * (:18), so this is DCL catching up rather
+				 * than a divergence: without it ww_mutex.h
+				 * saw neither the type nor
+				 * atomic_long_inc_return_relaxed() and clang
+				 * reported the definition as conflicting with
+				 * its own earlier implicit declaration. */
 #include <linux/lockdep.h>	/* lockdep_set_subclass() -- called on
 				 * &tty_port.buf.lock by tty_buffer.c:618,
 				 * which includes no lockdep header itself,
@@ -55,6 +65,29 @@ struct mutex {
 #define mutex_is_locked(m)		(1)
 #define mutex_lock_killable(m)		(0)
 #define mutex_unlock_nested(m, s)	mutex_unlock(m)
+/* mainline kernel/locking/mutex.c; ww_mutex.h's ww_mutex_base_init()
+ * and drm_drv.c's teardown spell the constructor/destructor this way. */
+#define __mutex_init(m, name, key)	mutex_init(m)
+#define mutex_destroy(m)		do { (void)(m); } while (0)
+
+/*
+ * atomic_dec_and_mutex_lock(v, lock) -- mainline's "last reference takes the
+ * lock" pair (mutex.h:64): decrement, and only if the counter reached zero,
+ * lock on the way out.  drm_file.c:505 (drm_release_noglobal) is the caller,
+ * and it branches on the return value.  The lock half is a no-op in DCL
+ * (mutex_lock, kernel.h:222), so atomic_dec_and_test() is the whole of the
+ * semantics that survives: false without locking when the count is not zero,
+ * true after locking when it is.  It is called through mutex_lock() rather
+ * than skipped so the day the mutex becomes real the pairing is already
+ * spelled out here.
+ */
+static inline bool atomic_dec_and_mutex_lock(atomic_t* v, struct mutex* lock)
+{
+	if (!atomic_dec_and_test(v))
+		return false;
+	mutex_lock(lock);
+	return true;
+}
 
 DCL_LOCK_GUARD(mutex, struct mutex, mutex_lock(_T), mutex_unlock(_T))
 DCL_LOCK_GUARD_COND(mutex_intr, struct mutex,

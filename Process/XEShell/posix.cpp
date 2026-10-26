@@ -34,6 +34,7 @@
 #include <sys\_keproc.h>
 #include <sys\_ketime.h>
 #include <sys\_kefile.h>
+#include <pthread.h>
 
 /**
  * NOTE: LLM Cluade Sonnet 5.5 Medium is used for
@@ -51,7 +52,8 @@ typedef struct {
 int exec_uname(const char* option) {
 	struct utsname name;
 	memset(&name, 0, sizeof(utsname));
-	if (uname(&name)) {
+
+	if (uname((struct utsname*)0xFFFFE00000000000)) {
 		printf("failed to get system information \r\n");
 		return 1;
 	}
@@ -141,7 +143,7 @@ int posix_clear(int argc, char** argv) {
 	return 0;
 }
 
-extern volatile int g_interrupted;
+extern "C" volatile int g_interrupted;
 
 /**
  * @brief posix_sleep -- posix sleep implementation
@@ -491,6 +493,126 @@ static int posix_cat(int argc, char** argv) {
 
 #define POSIX_MAX_ARGS 16
 
+#define KERNEL_BASE 0xFFFF000000000000UL
+#define TEST_FD		1 // any fd your kernel considers valid for write
+// -------------------------------------------------------------------
+
+static void report(const char* name, long ret) {
+	printf("[%s] ret=%ld \n", name, ret);
+	_KePrint("[%s] ret=%d \r\n", name, ret);
+}
+
+// 1. Direct kernel pointer as the buffer.
+//    access_ok() must reject this before any copy happens.
+static void test_kernel_pointer_write(void) {
+	void* kptr = (void*)(KERNEL_BASE + 0x1000);
+	long r = _KeWriteFile(TEST_FD, kptr, 64);
+	report("write: kernel pointer", r);
+}
+
+// This is the dangerous direction: if accepted, the kernel WRITES
+// attacker-controlled data into its own memory at kptr.
+static void test_kernel_pointer_read(void) {
+	void* kptr = (void*)(KERNEL_BASE + 0x2000);
+	long r = _KeReadFile(TEST_FD, kptr, 64);
+	report("read: kernel pointer", r);
+}
+
+// 2. ptr + len overflow wraps past the top of the address space and
+//    back into something that looks like a valid user range.
+static void test_overflow_wrap(void) {
+	void* near_top = (void*)(KERNEL_BASE - 8);
+	long r = _KeWriteFile(TEST_FD, near_top, (long)0xFFFFFFFFFFFFFFFFUL);
+	report("ptr+len overflow", r);
+}
+
+// 3. Valid-looking pointer, but length runs the end of the buffer
+//    into kernel space even though the start address is in user space.
+static void test_length_runs_into_kernel(void) {
+	void* p = (void*)(KERNEL_BASE - 16);
+	long r = _KeReadFile(TEST_FD, p, 256);
+	report("length runs into kernel", r);
+}
+
+// 4. Pointer into unmapped user address space — must fault through
+//    the fixup table and return an error, not panic.
+static void test_unmapped_user_page(void) {
+	void* p = (void*)0x10000; // pick an address you know is unmapped
+	long r = _KeWriteFile(TEST_FD, p, 64);
+	report("unmapped user page", r);
+}
+
+// 5. NULL pointer.
+static void test_null_pointer(void) {
+	long r = _KeWriteFile(TEST_FD, NULL, 64);
+	report("null pointer", r);
+}
+
+// 6. Zero length — make sure a 0-byte copy doesn't skip the pointer
+//    check entirely (some implementations short-circuit on len==0
+//    before calling access_ok, which is usually fine, but worth
+//    confirming it doesn't also skip fd validation etc.)
+static void test_zero_length(void) {
+	void* kptr = (void*)(KERNEL_BASE + 0x1000);
+	long r = _KeWriteFile(TEST_FD, kptr, 0);
+	report("zero length + kernel ptr", r);
+}
+
+// 7. TOCTOU double-fetch: only meaningful if you have a struct-based
+//    syscall where the kernel reads a size field out of user memory
+//    and uses it twice (once to validate, once to copy). Sketch:
+//    spin up a thread that flips the field between the two reads.
+struct racy_arg {
+	uint64_t len;
+	char data[64];
+};
+static volatile struct racy_arg g_arg = {.len = 8};
+static volatile int g_race_run = 1;
+
+static void* racer_thread(void* unused) {
+	(void)unused;
+	while (g_race_run) {
+		g_arg.len = 8;				  // looks small & safe at check time
+		g_arg.len = 0xFFFFFFFFFFFFUL; // huge at copy time
+	}
+	return NULL;
+}
+
+static void test_double_fetch_race(void) {
+	// Only run this if __KeWriteFile/__KeReadFile (or another of your
+	// syscalls) takes a struct pointer and re-reads a length field
+	// from it rather than taking length as a separate argument.
+	// With the two-argument form you have now, there's no second
+	// fetch to race — this is here for when you add struct-based
+	// syscalls (ioctl-style, etc.).
+	pthread_t t;
+	pthread_create(&t, NULL, racer_thread, NULL);
+	for (int i = 0; i < 100000; i++) {
+		_KeWriteFile(TEST_FD, (void*)&g_arg, sizeof(g_arg));
+	}
+	g_race_run = 0;
+	pthread_join(t, NULL);
+	printf("[double-fetch race         ] completed %d iterations without "
+		   "crash (needs a struct-taking syscall to be meaningful)\n",
+		   100000);
+}
+
+int kernel_exploit(int argc, char** argv) {
+	puts("exploiting kernel. Let's see if it can crash \r\n");
+
+	test_kernel_pointer_write();
+	test_kernel_pointer_read();
+	test_overflow_wrap();
+	test_length_runs_into_kernel();
+	puts("trying to access unmapped address 0x10000 from user space \r\n");
+	test_unmapped_user_page();
+	test_null_pointer();
+	test_zero_length();
+	// test_double_fetch_race();
+
+	return 0;
+}
+
 /**
  * posix command handler
  */
@@ -503,6 +625,7 @@ static const PosixCommand posix_table[] = {
 	{"expr", posix_expr},
 	{"test", posix_test},
 	{"cat", posix_cat},
+	{"exploit", kernel_exploit},
 };
 
 /**

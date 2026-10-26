@@ -58,7 +58,6 @@ extern void _apply_rounded_corner(uint32_t* backbuff, int radius, int winw, int 
  */
 void ChRequestWindow(
 	ChitralekhaApp* app, int x, int y, int w, int h, char* title, uint16_t attrib, int handle) {
-	_KePrint("[Chitralekha] : Requesting window \r\n");
 	PostEvent e;
 	e.type = DEODHAI_MESSAGE_CREATEWIN;
 	e.dword = x;
@@ -71,7 +70,6 @@ void ChRequestWindow(
 	strcpy(e.charValue3, title);
 	e.from_id = app->currentID;
 	_KeFileIoControl(app->postboxfd, POSTBOX_PUT_EVENT, &e);
-	_KePrint("[Chitralekha]: Request putted \r\n");
 	memset(&e, 0, sizeof(PostEvent));
 	while (1) {
 		//_KePrint("[Chitralekha]: Getting event \r\n");
@@ -576,6 +574,8 @@ XE_EXTERN XE_EXPORT void ChWindowHandleMouse(ChWindow* win, int x, int y, int bu
 		if (y > win->info->y + 26 && y < (win->info->y + 26 + win->info->height - 26)) {
 			for (int i = 0; i < win->widgets->pointer; i++) {
 				ChWidget* widget = (ChWidget*)list_get_at(win->widgets, i);
+				if (!widget->visible)
+					continue;
 				if (x > win->info->x + widget->x && x < (win->info->x + widget->x + widget->w) &&
 					(y > win->info->y + widget->y && y < (win->info->y + widget->y + widget->h))) {
 					widget->hover = true;
@@ -1105,8 +1105,8 @@ XE_EXTERN XE_EXPORT void ChWindowHandleDestroyBuffer(ChWindow* win) {
 	e1.from_id = win->app->currentID;
 	e1.dword = win->app->backbufkey;
 	e1.dword4 = win->handle;
-	e1.dword5 = (win->flags & WINDOW_FLAG_POPUP) ? WINDOW_HANDLE_TYPE_POPUP
-														 : WINDOW_HANDLE_TYPE_NORMAL;
+	e1.dword5 =
+		(win->flags & WINDOW_FLAG_POPUP) ? WINDOW_HANDLE_TYPE_POPUP : WINDOW_HANDLE_TYPE_NORMAL;
 	_KeFileIoControl(win->app->postboxfd, POSTBOX_PUT_EVENT, &e1);
 }
 

@@ -1,4 +1,6 @@
 #include <linux/virtio.h>
+#include <linux/virtio_ids.h>	/* VIRTIO_ID_GPU: the console hand-off gate */
+#include <linux/pci.h>	/* vdev->dev.parent: the fabric's device for the function */
 #include <linux/err.h>	/* ERR_PTR -- virtio_find_single_vq reports find_vqs failures */
 #include <Drivers/virtio.h>
 #include <pcie.h>
@@ -6,6 +8,7 @@
 #include <Mm/vmmngr.h>
 #include <string.h>
 #include <Drivers/uart.h>
+#include <Hal/AA64/aa64lowlevel.h>
 
 #define MAX_VIRTIO_DRIVERS 16
 #define MAX_VIRTIO_DEVICES 16
@@ -16,30 +19,95 @@ static int _num_drivers = 0;
 static struct virtio_device _virtio_devices[MAX_VIRTIO_DEVICES];
 static int _num_devices = 0;
 
-#define MAX_LIVE_VQS 16
+/*
+ * Every queue any vendored driver sets up lands here, and the poll that
+ * reaps completions walks the whole list.  The widest device QEMU attaches
+ * to this machine is virtio-serial: virtio_console.c's init_vqs() asks for
+ * 2 + 2 * max_nr_ports queues, and QEMU advertises 31 ports, so the
+ * console alone registers 64.  At 16 the table filled up with the
+ * console's first queues, and whatever probed later -- the virtio-gpu's
+ * two control/cursor queues, which is how virtio_gpu_init()'s display-info
+ * wait came to spin out its whole budget against a reply that had already
+ * arrived -- was dropped silently.  128 holds a full virtio-serial device
+ * plus the rng, the gpu, and room to spare.
+ */
+#define MAX_LIVE_VQS 128
 static struct virtqueue* _live_vqs[MAX_LIVE_VQS];
 static int _num_live_vqs = 0;
 
+static void virtio_poll_vq(struct virtqueue* vq) {
+	if (!vq->used)
+		return;
+	dc_ivac((uint64_t)&vq->used->idx);
+	dsb_sy_barrier();
+	if (vq->used->idx == vq->event_idx_write)
+		return;
+	if (vq->callback)
+		vq->callback(vq);
+}
+
 void virtio_poll_vqs(void) {
+	for (int i = 0; i < _num_live_vqs; i++)
+		virtio_poll_vq(_live_vqs[i]);
+}
+
+/*
+ * virtio_poll_input_vqs() -- the timer tick's half of the input bridge.
+ * Unlike virtio_poll_vqs(), which exists for probe-time waits and console
+ * I/O and walks every queue, this walks only queues owned by a virtio-input
+ * function.  The device id is the discriminator, so a keyboard and a tablet
+ * added later both reach their own callback without the console or the GPU
+ * being re-entered from interrupt context.
+ */
+void virtio_poll_input_vqs(void) {
 	for (int i = 0; i < _num_live_vqs; i++) {
 		struct virtqueue* vq = _live_vqs[i];
-		if (!vq->used)
+		if (!vq->vdev || vq->vdev->id.device != VIRTIO_ID_INPUT)
 			continue;
-		if (vq->used->idx == vq->event_idx_write)
-			continue;
-		if (vq->callback)
-			vq->callback(vq);
+		virtio_poll_vq(vq);
 	}
 }
 
+/*
+ * dcl_wait_pump() -- the hook <linux/wait.h>'s bounded poll calls on every
+ * iteration; the declaration there has the why. The whole of the work is
+ * virtio_poll_vqs(), so the two are adjacent here: completions on this port
+ * are reaped by polling, and a probe-time wait with no console read loop
+ * above it would otherwise spin out its budget against a reply that has been
+ * sitting in the used ring the entire time. virtio_gpu_init()'s display-info
+ * wait is the first caller that has no other pump.
+ */
+void dcl_wait_pump(void) {
+	virtio_poll_vqs();
+}
+
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+/*
+ * The console-side half of the bypass bring-up: DCL/virtgpu_console.c hands
+ * the kernel console to the vendored virtio-gpu's scanout (as scanout 0) the
+ * moment its probe succeeds, so the desktop size the loader asked for has a
+ * scanout to land on. Only a bypass image reaches the call site.
+ */
+void dcl_virtgpu_console_attach(struct virtio_device* vdev);
+#endif
+
 /* ─── Driver registration ─── */
+
+/*
+ * The PCI device id a virtio function sits on: 0x1040 is VIRTIO_ID 0
+ * (reserved), so the entropy source is 0x1044, the console 0x1043, and the
+ * GPU 0x1050. virtio_device_type() strips the base to get the virtio id,
+ * and virtio_device_register() adds it back to ask the PCI fabric for the
+ * device behind the function.
+ */
+#define VIRTIO_PCI_DEV_BASE 0x1040
 
 static uint32_t virtio_device_type(const struct VirtioPCIDevice* au_dev) {
 	uint16_t did =
 		au_dev->address
 			? AuPCIERead(au_dev->address, PCI_DEVICE_ID, au_dev->bus, au_dev->dev, au_dev->func)
 			: 0;
-	return (uint32_t)did - 0x1040;
+	return (uint32_t)did - VIRTIO_PCI_DEV_BASE;
 }
 
 static bool virtio_id_match(const struct virtio_driver* drv, uint32_t virtio_dev) {
@@ -199,8 +267,18 @@ static int shim_find_vqs(struct virtio_device* vdev,
 		 * has nothing to do with this one.
 		 */
 		list_add(&vq->list, &vdev->vqs);
-		if (_num_live_vqs < MAX_LIVE_VQS)
+		if (_num_live_vqs < MAX_LIVE_VQS) {
 			_live_vqs[_num_live_vqs++] = vq;
+		} else {
+			/*
+			 * A queue outside this table is never polled, so its
+			 * driver waits out every budget against a completion
+			 * that is already sitting in the used ring; a full
+			 * table must be a boot that says so, not one that
+			 * limps.
+			 */
+			UARTDebugOut("[dcl-virtio]: _live_vqs full, queue %d not polled\r\n", i);
+		}
 	}
 
 	return 0;
@@ -305,39 +383,13 @@ static uint64_t buf_phys(void* va) {
 	return base ? base + (a & 0xFFF) : 0;
 }
 
-int virtqueue_add_sgs(struct virtqueue* vq,
-					  struct scatterlist sg[],
-					  unsigned int out_cnt,
-					  unsigned int in_cnt,
-					  void* data,
-					  void* ctx) {
-	(void)ctx;
-	uint16_t head = alloc_desc(vq);
-	if (head == 0xFFFF)
-		return -1;
-
-	uint16_t cur = head;
-	unsigned int total = out_cnt + in_cnt;
-	struct scatterlist* s = sg;
-	for (unsigned int i = 0; i < total; i++) {
-		vq->desc[cur].addr = buf_phys(s->buf);
-		vq->desc[cur].len = s->len;
-		vq->desc[cur].flags = VRING_DESC_F_NEXT | (i >= out_cnt ? VRING_DESC_F_WRITE : 0);
-
-		s++;
-		if (i < total - 1) {
-			uint16_t next = alloc_desc(vq);
-			if (next == 0xFFFF) {
-				free_desc_chain(vq, head);
-				return -1;
-			}
-			vq->desc[cur].next = next;
-			cur = next;
-		}
-	}
-
-	vq->desc[cur].flags &= ~VRING_DESC_F_NEXT;
-
+/*
+ * vq_publish() -- close a chain and hand its head to the avail ring. Both
+ * add walks end here so the publish order lives in one place: descriptor
+ * writes and the ring slot first, then the index that announces them, then
+ * the barriers that make the order hold for the device.
+ */
+static void vq_publish(struct virtqueue* vq, uint16_t head, void* data) {
 	vq->cookies[head] = data;
 
 	uint16_t avail_idx = vq->avail->idx;
@@ -347,17 +399,122 @@ int virtqueue_add_sgs(struct virtqueue* vq,
 	vq->avail->idx = avail_idx + 1;
 	isb_flush();
 	dsb_ish();
+}
 
+/*
+ * virtqueue_add_sgs() -- mainline's multi-chain submit: `sgs[]` holds
+ * scatterlist heads, the first `out_cnt` chains the device reads and the
+ * next `in_cnt` it writes. DCL's scatterlist has no chain terminator (see
+ * the note in <linux/scatterlist.h>), so each head is one entry and the
+ * walk is the array itself -- the shape virtgpu_vq.c hands in, and the
+ * shape the declaration in <linux/virtio.h> carries with the whole story
+ * of the flat spelling it replaced.
+ *
+ * A failed reservation tears the chain down through free_desc_chain(),
+ * which follows VRING_DESC_F_NEXT -- that is why the flag is OR-ed in only
+ * after ->next holds a real slot: a half-built chain must never say NEXT
+ * over a stale next. The return is mainline's -ENOSPC, which is exactly
+ * what virtio_gpu_queue_cursor() tests for when it waits for room and
+ * retries (virtgpu_vq.c:568).
+ */
+int virtqueue_add_sgs(struct virtqueue* vq, struct scatterlist* sgs[],
+					  unsigned int out_cnt,
+					  unsigned int in_cnt,
+					  void* data,
+					  gfp_t gfp) {
+	(void)gfp;
+	uint16_t head = alloc_desc(vq);
+	if (head == 0xFFFF)
+		return -ENOSPC;
+
+	uint16_t cur = head;
+	unsigned int total = out_cnt + in_cnt;
+	for (unsigned int n = 0; n < total; n++) {
+		struct scatterlist* sg = sgs[n];
+
+		vq->desc[cur].addr = buf_phys(sg->buf);
+		vq->desc[cur].len = sg->len;
+		vq->desc[cur].flags = n >= out_cnt ? VRING_DESC_F_WRITE : 0;
+
+		if (n < total - 1) {
+			uint16_t next = alloc_desc(vq);
+			if (next == 0xFFFF) {
+				free_desc_chain(vq, head);
+				return -ENOSPC;
+			}
+			vq->desc[cur].next = next;
+			vq->desc[cur].flags |= VRING_DESC_F_NEXT;
+			cur = next;
+		}
+	}
+
+	vq_publish(vq, head, data);
+	return 0;
+}
+
+/*
+ * virtqueue_add_flat() -- the add_inbuf()/add_outbuf() walk: `cnt`
+ * consecutive entries starting at `sg`, every one the same direction.
+ * mainline's wrappers take a chain head and let the chain's end bound the
+ * walk; DCL's scatterlist has no end marker, so the bound is the count in
+ * the wrapper's signature -- and that is the same set of entries for every
+ * caller in the tree, because each passes a chain whose entries are
+ * consecutive: sg_init_one()'s single entry, or the page chain
+ * __send_to_port() hands add_outbuf() at virtio_console.c:611. That count
+ * is load-bearing there: a one-entry walk would put only the first page of
+ * a larger write on the queue.
+ */
+static int virtqueue_add_flat(struct virtqueue* vq, struct scatterlist* sg,
+			      unsigned int cnt, bool write, void* data) {
+	uint16_t head = alloc_desc(vq);
+	if (head == 0xFFFF)
+		return -ENOSPC;
+
+	uint16_t cur = head;
+	for (unsigned int i = 0; i < cnt; i++) {
+		vq->desc[cur].addr = buf_phys(sg[i].buf);
+		vq->desc[cur].len = sg[i].len;
+		vq->desc[cur].flags = write ? VRING_DESC_F_WRITE : 0;
+
+		if (i < cnt - 1) {
+			uint16_t next = alloc_desc(vq);
+			if (next == 0xFFFF) {
+				free_desc_chain(vq, head);
+				return -ENOSPC;
+			}
+			vq->desc[cur].next = next;
+			vq->desc[cur].flags |= VRING_DESC_F_NEXT;
+			cur = next;
+		}
+	}
+
+	vq_publish(vq, head, data);
 	return 0;
 }
 
 int virtqueue_add_inbuf(
 	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp) {
-	/* gfp dropped -- see the note on the declaration. The ctx slot
-	 * virtqueue_add_sgs() still carries is DCL's own, and this is its
-	 * only caller that is not DCL's: mainline's add_inbuf never had one. */
+	/* gfp dropped -- see the note on the declaration. The walk is the flat
+	 * one: mainline's add_inbuf() wraps the chain head into a one-element
+	 * sgs[] and lets the chain's own end bound the walk, and with no end
+	 * marker in DCL's scatterlist the count in this signature does that
+	 * job instead -- num_in entries from sg, which is the same set for
+	 * the single-entry chains every caller passes (virtio-rng.c:65,
+	 * virtio_console.c:490). */
 	(void)gfp;
-	return virtqueue_add_sgs(vq, sg, 0, num_in, data, NULL);
+	return virtqueue_add_flat(vq, sg, num_in, true, data);
+}
+
+int virtqueue_add_inbuf_cache_clean(
+	struct virtqueue* vq, struct scatterlist* sg, unsigned int num_in, void* data, gfp_t gfp) {
+	/* The ring code has no DMA cache metadata to carry the "clean after
+	 * write" hint; the receive-side invalidate in virtqueue_get_buf() is
+	 * where correctness is kept. */
+	return virtqueue_add_inbuf(vq, sg, num_in, data, gfp);
+}
+
+unsigned int virtqueue_get_vring_size(const struct virtqueue* vq) {
+	return vq ? vq->qsize : 0;
 }
 
 bool virtqueue_kick_prepare(struct virtqueue* vq) {
@@ -383,7 +540,38 @@ bool virtqueue_kick(struct virtqueue* vq) {
 	return false;
 }
 
+/*
+ * virtqueue_disable_cb() / virtqueue_enable_cb() -- mainline's
+ * callback-suppression pair, added with the virtio-gpu port. That driver
+ * brackets each reclamation with them: disable, drain until get_buf()
+ * returns NULL, then enable, looping if enable reports that the ring moved
+ * while it drained (virtgpu_vq.c's dequeue functions). Mainline's
+ * callbacks are interrupts and the loop exists to not be interrupted
+ * mid-drain.
+ *
+ * There is no interrupt here: completions are reaped by the
+ * virtio_poll_vqs() pump, which re-reads the used ring on every pass and
+ * has no enable bit to test. So disable() has nothing to turn off and
+ * enable() nothing to turn back on. enable()'s answer is the one the loop
+ * reads -- mainline's "true = no buffer arrived between the last get_buf
+ * and this call" -- and true is the honest sequencing: the drain above
+ * just emptied the ring, and anything that lands after this returns
+ * advances the used index past the consumer's, which the next pump pass
+ * turns into another callback. The loop runs once past a drain; the pump
+ * covers everything after it.
+ */
+void virtqueue_disable_cb(struct virtqueue* vq) {
+	(void)vq;
+}
+
+bool virtqueue_enable_cb(struct virtqueue* vq) {
+	(void)vq;
+	return true;
+}
+
 void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
+	dc_ivac((uint64_t)&vq->used->idx);
+	dsb_sy_barrier();
 	uint16_t used_idx = vq->used->idx;
 	uint16_t last_used = vq->event_idx_write;
 
@@ -391,12 +579,31 @@ void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
 		return NULL;
 
 	struct VirtqUsedElem* elem = &vq->used->ring[last_used % vq->qsize];
+	dc_ivac((uint64_t)elem);
+	dsb_sy_barrier();
 	uint16_t desc_idx = (uint16_t)elem->id;
 
 	if (len)
 		*len = elem->len;
 
+	bool device_written = (vq->desc[desc_idx].flags & VRING_DESC_F_WRITE) != 0;
 	void* cookie = vq->cookies[desc_idx];
+
+	/*
+	 * A device-writable descriptor is the only one the device has just
+	 * stored into.  Cortex-A72 under QEMU does not snoop its caches for
+	 * virtio DMA, so invalidate the lines before the driver reads the
+	 * payload.  The range covers mainline's scatterlist length and is
+	 * rounded out to cache lines; dc_ivac is the IRQ-safe form.
+	 */
+	if (device_written && cookie && len && *len) {
+		uint64_t start = (uint64_t)cookie & ~0x3FULL;
+		uint64_t end = (uint64_t)cookie + *len;
+		for (uint64_t p = start; p < end; p += 64)
+			dc_ivac(p);
+		dsb_sy_barrier();
+	}
+
 	free_desc_chain(vq, desc_idx);
 	vq->cookies[desc_idx] = NULL;
 
@@ -405,6 +612,25 @@ void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
 }
 
 /* ─── Device registration & probe ─── */
+
+/*
+ * The vendor and the three function ids this shim scans for. They sit here
+ * rather than beside the scan because virtio_device_register() needs the
+ * vendor too: the parent lookup below turns the device's reported type back
+ * into a raw id and asks the PCI fabric for the function it came from.
+ */
+#define VIRTIO_PCI_VENDOR_ID   0x1AF4
+#define VIRTIO_PCI_DEV_ENTROPY 0x1044
+#define VIRTIO_PCI_DEV_CONSOLE 0x1043
+#define VIRTIO_PCI_DEV_GPU     0x1050
+
+static bool virtio_pci_matches(uint64_t addr, int bus, int dev, int func,
+			       uint16_t pci_id) {
+	uint16_t vendor = AuPCIERead(addr, PCI_VENDOR_ID, bus, dev, func);
+	uint16_t device = AuPCIERead(addr, PCI_DEVICE_ID, bus, dev, func);
+
+	return vendor == VIRTIO_PCI_VENDOR_ID && device == pci_id;
+}
 
 void virtio_device_register(struct virtio_device* vdev,
 							struct VirtioPCIDevice* au_dev,
@@ -431,6 +657,41 @@ void virtio_device_register(struct virtio_device* vdev,
 	 */
 	vdev->id.device = virtio_device_type(au_dev);
 	INIT_LIST_HEAD(&vdev->vqs);
+
+	/*
+	 * The device's parent: mainline's virtio-pci probe sets the same
+	 * relation when it creates a virtio device on a PCI function, and
+	 * the vendored virtio-gpu driver is the first consumer that needs
+	 * it. virtio_gpu_probe() calls
+	 * drm_dev_alloc(&driver, vdev->dev.parent), whose drm_dev_init()
+	 * refuses a NULL parent (drm_drv.c:715), and the quirk gate just
+	 * after it asks dev_is_pci(parent); drm_dev_init() also reads the
+	 * parent's name for dev->unique, and the fabric's busid string is
+	 * what that field should carry. The console's lone reader
+	 * (virtio_console.c:433) stays unreachable either way: its arm sits
+	 * behind is_rproc_serial()'s constant-false first term.
+	 *
+	 * The type virtio_device_type() just reported is the raw function
+	 * id minus the base, so adding the base back is that conversion
+	 * run the other way; pci_get_device() then finds the struct pci_dev
+	 * the fabric built for the function -- by (vendor, device)
+	 * identity, the lookup mainline's init uses, scanning the bus
+	 * itself if this is its first caller. A NULL answer (a function
+	 * the fabric never enumerated) leaves the member NULL, where
+	 * mainline leaves it for its non-PCI virtio devices.
+	 *
+	 * Set before the snapshot copy below, so the live device and the
+	 * _virtio_devices[] entry -- the one register_virtio_driver()
+	 * probes when a driver arrives after its device -- carry the same
+	 * parent.
+	 */
+	{
+		uint16_t did = (uint16_t)(vdev->id.device + VIRTIO_PCI_DEV_BASE);
+		struct pci_dev* pdev = pci_get_device(VIRTIO_PCI_VENDOR_ID, did, NULL);
+
+		if (pdev)
+			vdev->dev.parent = &pdev->dev;
+	}
 
 	static struct virtio_config_ops shim_ops = {
 		.get = shim_get,
@@ -482,15 +743,21 @@ void virtio_device_register(struct virtio_device* vdev,
 				UARTDebugOut("[dcl-virtio]: calling scan\r\n");
 				drv->scan(vdev);
 			}
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+			/*
+			 * Bypass: the vendored virtio-gpu owns 1AF4:1050 and the
+			 * internal virtgpu.dll is out of the image, so nothing has
+			 * claimed the display for the console yet. Hand it over
+			 * now that the driver is live (DCL/virtgpu_console.c).
+			 */
+			if (vdev->id.device == VIRTIO_ID_GPU)
+				dcl_virtgpu_console_attach(vdev);
+#endif
 		}
 		return;
 	}
 	UARTDebugOut("[dcl-virtio]: no driver matched\r\n");
 }
-
-#define VIRTIO_PCI_VENDOR_ID   0x1AF4
-#define VIRTIO_PCI_DEV_ENTROPY 0x1044
-#define VIRTIO_PCI_DEV_CONSOLE 0x1043
 
 /* virtio_scan_and_register() results. */
 #define VIRTIO_SCAN_NO_DEVICE  0 /* the bus has no function with this id */
@@ -527,9 +794,7 @@ static int virtio_scan_and_register(uint16_t pci_id, const char* name, int index
 				uint64_t addr = AuPCIEGetDevice(0, b, d, f);
 				if (!addr || addr == 0xFFFFFFFF)
 					continue;
-				uint16_t vend = AuPCIERead(addr, PCI_VENDOR_ID, b, d, f);
-				uint16_t did = AuPCIERead(addr, PCI_DEVICE_ID, b, d, f);
-				if (vend != VIRTIO_PCI_VENDOR_ID || did != pci_id)
+				if (!virtio_pci_matches(addr, b, d, f, pci_id))
 					continue;
 
 				if (!AuVirtioPCIInit(addr, b, d, f, 0, au_dev)) {
@@ -543,6 +808,50 @@ static int virtio_scan_and_register(uint16_t pci_id, const char* name, int index
 		}
 	}
 	return VIRTIO_SCAN_NO_DEVICE;
+}
+
+/*
+ * virtio-input is the one virtio id that appears more than once: QEMU adds a
+ * keyboard and a tablet as two separate PCI functions, both 1AF4:1052.  The
+ * generic scan above stops at the first match by design, so this one walks
+ * the bus to completion and gives every function its own vdev/au_dev pair.
+ * Storage is static because virtio_device_register() keeps both addresses.
+ */
+#define VIRTIO_PCI_DEV_INPUT 0x1052
+#define MAX_DCL_INPUT_DEVICES 4
+
+int virtio_input_detect(void) {
+	static struct virtio_device vdevs[MAX_DCL_INPUT_DEVICES];
+	static struct VirtioPCIDevice au_devs[MAX_DCL_INPUT_DEVICES];
+	int found = 0;
+
+	UARTDebugOut("[dcl-virtio]: scanning for virtio-input\r\n");
+	for (int b = 0; b < 256 && found < MAX_DCL_INPUT_DEVICES; b++) {
+		for (int d = 0; d < 32 && found < MAX_DCL_INPUT_DEVICES; d++) {
+			for (int f = 0; f < 8 && found < MAX_DCL_INPUT_DEVICES; f++) {
+				uint64_t addr = AuPCIEGetDevice(0, b, d, f);
+				if (!addr || addr == 0xFFFFFFFF)
+					continue;
+				if (!virtio_pci_matches(addr, b, d, f,
+								VIRTIO_PCI_DEV_INPUT))
+					continue;
+
+				if (!AuVirtioPCIInit(addr, b, d, f, 0,
+									 &au_devs[found])) {
+					UARTDebugOut("[dcl-virtio]: virtio-input init failed at %d:%d.%d\r\n",
+								 b, d, f);
+					continue;
+				}
+				virtio_device_register(&vdevs[found], &au_devs[found],
+									   _num_devices);
+				found++;
+			}
+		}
+	}
+
+	if (!found)
+		UARTDebugOut("[dcl-virtio]: no virtio-input device on the bus\r\n");
+	return found;
 }
 
 void virtio_rng_detect(void) {
@@ -576,6 +885,34 @@ int virtio_console_detect(void) {
 	return rc == VIRTIO_SCAN_REGISTERED;
 }
 
+/*
+ * virtio_gpu_detect() -- the DRM twin of the console scan: same walk, same
+ * skip-the-others-by-id contract, and _num_devices for the index because
+ * this is the third device DCL owns and its slot is wherever the first two
+ * left it.
+ *
+ * The driver it binds to is the vendored virtio-gpu, registered by its
+ * initcall in DclRunInitcalls() like the two character drivers'. What
+ * differs is who calls this: only a __XENEVA_BYPASS_VIRTGPU__ build does
+ * (DCL/modload_test.c), because in a default image 1AF4:1050 belongs to the
+ * internal virtgpu.dll. The vendored driver is registered there too -- that
+ * is harmless, since nothing registers a DCL virtio device with this id
+ * outside this function -- but the scan must never run.
+ *
+ * Returns 1 when the device was found and registered, 0 when the bus had
+ * none or init failed, matching virtio_console_detect()'s contract.
+ */
+int virtio_gpu_detect(void) {
+	static struct virtio_device vdev;
+	static struct VirtioPCIDevice au_dev;
+	int rc = virtio_scan_and_register(VIRTIO_PCI_DEV_GPU, "virtio-gpu",
+					  _num_devices, &vdev, &au_dev);
+
+	if (rc == VIRTIO_SCAN_NO_DEVICE)
+		UARTDebugOut("[dcl-virtio]: no virtio-gpu device on the bus\r\n");
+	return rc == VIRTIO_SCAN_REGISTERED;
+}
+
 /* ─── entry points virtio_console.c calls that DCL had no body for ──────── */
 
 /*
@@ -589,23 +926,19 @@ int virtio_console_detect(void) {
 
 /*
  * virtqueue_add_outbuf() -- the transmit-side add: `num` device-bound
- * buffers, no receive ones, which is add_sgs with the counts split the other
- * way from virtqueue_add_inbuf() directly above.
+ * buffers, no receive ones, which is virtqueue_add_flat() with the write
+ * flag the other way from virtqueue_add_inbuf() directly above.
  *
- * mainline's last parameter is gfp_t, not the `void *ctx` DCL's add_inbuf
- * carries, and that difference is not cosmetic at the call sites: the driver
- * passes GFP_ATOMIC (virtio_console.c:561, :611), an integer 1, and an
- * integer 1 into a `void *` parameter is a constraint violation that clang
- * reports at every call. The gfp is accepted and dropped for the reason
- * slab.h drops its own flags argument -- Xeneva's allocator makes no
- * GFP_KERNEL/GFP_ATOMIC distinction and a queue buffer is never allocated
- * from an interrupt context that could not have waited.
+ * The gfp is accepted and dropped for the reason slab.h drops its own
+ * flags argument -- Xeneva's allocator makes no GFP_KERNEL/GFP_ATOMIC
+ * distinction and a queue buffer is never allocated from an interrupt
+ * context that could not have waited.
  */
 int virtqueue_add_outbuf(struct virtqueue* vq, struct scatterlist sg[],
 			 unsigned int num, void* data, gfp_t gfp)
 {
 	(void)gfp;
-	return virtqueue_add_sgs(vq, sg, num, 0, data, NULL);
+	return virtqueue_add_flat(vq, sg, num, false, data);
 }
 
 /*

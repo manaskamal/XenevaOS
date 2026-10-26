@@ -140,5 +140,19 @@ struct attribute_group {
  */
 #define sysfs_create_group(dev, grp)  (0)
 #define sysfs_remove_group(dev, grp)  ((void)0)
+/*
+ * The same deal for the drm class links, drm_drv.c:1009/:1034:
+ *
+ *     ret = sysfs_create_link(minor->kdev->kobj.parent, &minor->kdev->kobj, name);
+ *
+ * ->kobj does not exist on this build's struct device (see the group
+ * comment above), the parameters never parse, and there is no sysfs tree
+ * to link into -- sysfs_create_link() answered 0 for every real caller
+ * upstream that had no bus to begin with, so 0 here keeps the "primary
+ * node is registered" branch taken.  remove is a statement-expression
+ * free no-op for the matching teardown.
+ */
+#define sysfs_create_link(parent, target, name)  (0)
+#define sysfs_remove_link(parent, name)  ((void)0)
 
 #endif /* __LINUX_SYSFS_H__ */

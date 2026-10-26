@@ -97,6 +97,12 @@ void AuroraTimerInitialize() {
 		AuGetWalltime(&sec, &nsec);
 		UARTDebugOut("[aurora]: wall clock seeded at %d sec (unix) \r\n", (int)sec);
 	}
+
+	/** also, let userspace access counter value for timing */
+	uint64_t k;
+	__asm__ volatile("mrs %0, cntkctl_el1" : "=r"(k));
+	k |= (1ULL << 0) | (1ULL << 1);
+	__asm__ volatile("msr cntkctl_el1, %0\n isb" ::"r"(k));
 }
 
 /**

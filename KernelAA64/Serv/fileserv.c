@@ -46,6 +46,9 @@
 #include <aucon.h>
 #include <Log/klog.h>
 #include <Fs/srvfs.h>
+#include <Fs/Dev/devfs.h>
+#include <bordoisila_ptr.h>
+#include <fixup.h>
 
 extern uint64_t read_sp();
 extern uint64_t read_sp_el1();
@@ -134,6 +137,10 @@ int OpenFile(char* filename, int mode) {
 		UARTDebugOut("[fserv]: open '%s' failed: no free fd\r\n", fname);
 		return -1;
 	}
+	if ((file->flags & FS_FLAG_DEVICE) && !AuDevFSNodeOpen(file)) {
+		UARTDebugOut("[fserv]: open '%s' failed: device is unloading\r\n", fname);
+		return -1;
+	}
 
 	/* just to increase the reference count */
 	if (file->open)
@@ -204,6 +211,11 @@ int FileSetOffset(int fd, size_t offset) {
  * @param length -- length in bytes
  */
 size_t ReadFile(int fd, void* buffer, size_t length) {
+	/** check for user mode buffer validity  */
+	if (!__BORDOISILA_UBUF_VALIDATE(buffer, length)) {
+		UARTDebugOut("[aurora]: Read file denied fd : %d, invalid buffer : %x \r\n", fd, buffer);
+		return 0;
+	}
 	if (fd < 0)
 		return 0;
 	if (!buffer)
@@ -266,6 +278,11 @@ size_t ReadFile(int fd, void* buffer, size_t length) {
  * @param length -- length in bytes
  */
 size_t WriteFile(int fd, void* buffer, size_t length) {
+	if (!__BORDOISILA_UBUF_VALIDATE(buffer, length)) {
+		BPrintK(
+			BORDOISILA_ERROR, "WriteFile denied, invalid buffer : %x , fd : %d \r\n", buffer, fd);
+		return 0;
+	}
 	if (fd < 0)
 		return 0;
 	if (!buffer)
@@ -334,7 +351,11 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 			size_t chunk = remaining > PAGE_SIZE ? PAGE_SIZE : remaining;
 			uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset(buff, 0, PAGE_SIZE);
-			memcpy(buff, src, chunk);
+			//memcpy(buff, src, chunk);
+			if (!__bordoisila_copy_from_user(buff, aligned_buffer, chunk)) {
+				AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
+				return remaining;
+			}
 			AuVFSNodeWrite(fsys, file, buff, chunk);
 			AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 			src += chunk;
@@ -344,8 +365,17 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 	}
 
 	if (file->flags & FS_FLAG_TTY) {
+		uint64_t* ubuff = buffer;
+		uint8_t safe_ptr[1024];
+		memset(&safe_ptr, 0, 1024);
+
+		if (__bordoisila_copy_from_user(safe_ptr, ubuff, length) != 0)
+			return ret_bytes;
+
 		if (file->write)
-			return file->write(file, file, (uint64_t*)buffer, length);
+			ret_bytes = file->write(file, file, (uint64_t*)safe_ptr, length);
+
+		return ret_bytes;
 	}
 
 	if (file->flags & FS_FLAG_DEVICE) {
@@ -395,6 +425,19 @@ int CloseFile(int fd) {
 		BordoisilaCapDestroy(current_proc, fd);
 		return 0;
 	}
+	/* Device nodes are permanent and shared between every open, so the
+	 * node is never freed here -- but the close hook must still run: DCL
+	 * routes it to the module's release, and a DRM file's master lives
+	 * there. Without this, closing /dev/dri/cardN left the master set and
+	 * the next opener had every DRM_MASTER ioctl refused with -EACCES.
+	 * See AuProcessCloseFiles for the process-exit half. --axiss */
+	if (file->flags & FS_FLAG_DEVICE) {
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		if (file->close)
+			file->close(file, file);
+		return 0;
+	}
 	if (file->flags & FS_FLAG_GENERAL) {
 		current_proc->fds[fd] = 0;
 		BordoisilaCapDestroy(current_proc, fd);
@@ -427,6 +470,13 @@ int CloseFile(int fd) {
 			kfree(file);
 		else
 			file->fileCopyCount -= 1;
+		return 0;
+	}
+
+	if (file->flags & FS_FLAG_DEVICE) {
+		current_proc->fds[fd] = 0;
+		BordoisilaCapDestroy(current_proc, fd);
+		AuDevFSNodeClose(file);
 		return 0;
 	}
 

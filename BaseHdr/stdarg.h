@@ -38,6 +38,22 @@ extern "C"
 #endif
 
 
+	/*
+	 * __clang__ is deliberately *not* tested above. mainline's
+	 * <linux/stdarg.h> forwards here, so whichever type is typedef'd
+	 * below is the one every drm source sees -- and the two drm users
+	 * want opposite things from it. drm_print.c needs the builtins
+	 * (clang's va_start rejects a hand-rolled pointer), and
+	 * KernelAA64/Drivers/uart.c:129 needs the flat one, because
+	 * `va_list args = ((va_list)reg_save_area + 8)` only compiles when
+	 * va_list is a pointer it can cast and add to.
+	 *
+	 * XEClib's userspace copy of this header
+	 * (Libs/XEClib/includes/stdarg.h) *has* moved arm-64 to the builtins,
+	 * with a note naming the forwarded-va_list cases the pointer walk gets
+	 * wrong. When this side follows it, the thing that has to change is
+	 * uart.c's register-save-area walk -- not this typedef back and forth.
+	 */
 #ifdef __GNUC__
 	typedef __builtin_va_list va_list;
 #else

@@ -152,7 +152,8 @@ resume_user:
  // ldr x8,[x0,#184]
  // mov x9,x0
 //  ldp x0,x1, [x9,#120]
-  mov sp, x1
+  add sp, x1, #16   //newly added
+  //mov sp, x1
   ldp x30, x0, [sp], #16
   msr SP_EL0, x0
   ldp x28, x29, [sp], #16
@@ -254,6 +255,7 @@ ret_from_syscall:
     * which is top of the stack
     */
    mov sp, x2 
+   add sp, sp, #16
    ldr x2,[x0,#104]
    msr ELR_EL1,x2 
    ldr x2, [x0,#112]
@@ -449,7 +451,8 @@ aa64_restore_sp:
  * frames, so we need to restore the architectural frame directly and finish with eret instead --axiss */
 .global aa64_resume_exception_frame
 aa64_resume_exception_frame:
-   mov sp, x0
+   add sp, x0, #16
+   //mov sp, x0
    msr ELR_EL1, x1
    msr SPSR_EL1, x2
    ldp x30, x0, [sp], #16

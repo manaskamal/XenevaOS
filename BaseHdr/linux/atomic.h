@@ -63,6 +63,30 @@ static inline void atomic64_inc(atomic64_t* v)
 	__atomic_add_fetch(&v->counter, 1LL, __ATOMIC_SEQ_CST);
 }
 
+/* drm_vblank.c:203 -- vblank_count_inc is 1 + a jump for a missed tick. */
+static inline void atomic64_add(long long i, atomic64_t* v)
+{
+	(void)__atomic_fetch_add(&v->counter, i, __ATOMIC_SEQ_CST);
+}
+
+/*
+ * atomic64_fetch_add(i, v) -- the value *before* the add, which is what makes
+ * it a fetch: dma-fence.c:180's dma_fence_context_alloc() returns it as the
+ * new context's id, so two contexts can never share one even though the
+ * counter is shared.  atomic64_add_return would hand back post-add and give
+ * the first caller id 1 where mainline gives 0.
+ */
+static inline long long atomic64_fetch_add(long long i, atomic64_t* v)
+{
+	return __atomic_fetch_add(&v->counter, i, __ATOMIC_SEQ_CST);
+}
+
+/* drm_file.c:144 -- file->client_id, assigned from the post-increment value. */
+static inline long long atomic64_inc_return(atomic64_t* v)
+{
+	return __atomic_add_fetch(&v->counter, 1LL, __ATOMIC_SEQ_CST);
+}
+
 static inline int atomic_read(const atomic_t* v)
 {
 	return __atomic_load_n(&v->counter, __ATOMIC_SEQ_CST);
@@ -117,6 +141,24 @@ static inline int atomic_dec_return(atomic_t* v)
 static inline bool atomic_dec_and_test(atomic_t* v)
 {
 	return atomic_dec_return(v) == 0;
+}
+
+/* drm_file.c:383 -- drm_open()'s dev->open_count, return ignored. */
+static inline int atomic_fetch_inc(atomic_t* v)
+{
+	return __atomic_fetch_add(&v->counter, 1, __ATOMIC_SEQ_CST);
+}
+
+/*
+ * atomic_read_acquire(v) -- a load the reader may not reorder with what
+ * follows.  dma-fence-array.c:122 reads num_pending this way to pair with the
+ * atomic_dec_and_test() that publishes the last pending fence, and the
+ * comment at :113 says so; both sides are seq_cst here, which is strictly
+ * stronger, so the pairing holds.
+ */
+static inline int atomic_read_acquire(const atomic_t* v)
+{
+	return __atomic_load_n(&v->counter, __ATOMIC_ACQUIRE);
 }
 
 static inline int atomic_xchg(atomic_t* v, int i)
@@ -207,6 +249,17 @@ static inline int atomic_long_dec_and_test(atomic_long_t* v)
 	return atomic_long_add_return(-1, v) == 0;
 }
 
+/*
+ * atomic_long_inc_return_relaxed -- mainline's relaxed fetch-add; the one
+ * call site in this tree is ww_acquire_init()'s lockdep stamp
+ * (linux/ww_mutex.h:203).  DCL has no weak memory to be relaxed about, so
+ * the sequential form is the same operation.
+ */
+static inline long atomic_long_inc_return_relaxed(atomic_long_t* v)
+{
+	return atomic_long_add_return(1, v);
+}
+
 static inline long atomic_long_cmpxchg(atomic_long_t* v, long old, long new_v)
 {
 	long expected = old;
@@ -240,5 +293,38 @@ static inline bool atomic_long_try_cmpxchg(atomic_long_t* v, long* old,
 	return __atomic_compare_exchange_n(&v->counter, old, new_v, 0,
 			__ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
+
+/*
+ * cmpxchg(ptr, old, new) -- mainline's generic typed compare-and-swap, the
+ * name <linux/atomic.h> re-exports from the arch.  DCL has no arch header
+ * for it, and the dma-buf port brought the two callers that need it:
+ *
+ *   dma-fence-array.c:36, :42  cmpxchg(&array->base.error, PENDING_ERROR, error)
+ *   dma-fence-chain.c:65       cmpxchg(&chain->prev, RCU_INITIALIZER(prev),
+ *                                      RCU_INITIALIZER(replacement))
+ *
+ * Those are an `int *` and a `struct dma_fence __rcu **`, which is why this
+ * cannot be an int-shaped helper: the fence-chain result is wrapped in
+ * unrcu_pointer(), whose expansion is `typeof(*(p)) *`, and an untyped
+ * return makes that dereference an int -- which is what the first build of
+ * those two files reported ("indirection requires pointer operand ('int'
+ * invalid)").  typeof(*(ptr)) gives the macro a type it can hand back
+ * without a cast at either call site.
+ *
+ * The body is clang's builtin because its contract is mainline's exactly:
+ * the second argument is where the *actual* old value is stored back, and
+ * the call's own result says whether the swap happened -- not what the value
+ * was.  So the expression's value is the local, read after the exchange, and
+ * it is the old value whether or not it matched.  Objects of 4 and 8 bytes
+ * are both supported, which covers the int and the pointer in reach.
+ */
+#define cmpxchg(ptr, old, new)						\
+({									\
+	typeof(*(ptr)) __old = (old);					\
+	typeof(*(ptr)) __new = (new);					\
+	(void)__atomic_compare_exchange_n((ptr), &__old, __new, 0,	\
+			__ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);		\
+	__old;								\
+})
 
 #endif /* __LINUX_ATOMIC_H__ */

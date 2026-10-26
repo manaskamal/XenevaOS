@@ -42,6 +42,8 @@
 static uint32_t virt_display_width;
 static uint32_t virt_display_height;
 static uint32_t* fb;
+static uint64_t fb_phys;
+static uint32_t fb_pages;
 
 /**
  * @brief virt_gpu_screen_init -- initialize screen
@@ -83,7 +85,12 @@ void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	/* ATTACH_BACKING below reports one entry spanning the whole buffer, so
 	 * the backing pages must actually be contiguous, not just individually
 	 * allocated. --axiss */
-	uint64_t fb_phys = (uint64_t)AuPmmngrAllocPages((uint32_t)fb_sz, 1, 0, AURORA_PAGE_NORMAL);
+	uint64_t allocated = (uint64_t)AuPmmngrAllocPages((uint32_t)fb_sz, 1, 0, AURORA_PAGE_NORMAL);
+	if (!allocated || allocated == UINT64_MAX)
+		return;
+	fb_phys = allocated;
+	fb_pages = (uint32_t)fb_sz;
+	fb = (uint32_t*)P2V(fb_phys);
 	for (int i = 0; i < fb_sz; i++)
 		AuMapPage(fb_phys + i * PAGE_SIZE, GPU_FB_BUFFER + i * PAGE_SIZE, PTE_NORMAL_NON_CACHEABLE);
 
@@ -93,15 +100,29 @@ void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id) {
 	attach.nr_entries = 1;
 	attach.entries[0].addr = fb_phys;
 	attach.entries[0].length = len;
-	gpu_attach_back_cmd(cfg, &attach, sizeof(virtio_gpu_resource_attach_backing), &attach.entries, sizeof(virtio_gpu_resource_attach_backing));
+	gpu_attach_back_cmd(cfg, &attach,
+		(uint32_t)OFFSETOF(virtio_gpu_resource_attach_backing, entries),
+		&attach.entries[0], (uint32_t)sizeof(attach.entries[0]));
 	KERNEL_BOOT_INFO* binfo = AuGetBootInfoStruc();
-	binfo->graphics_framebuffer = (uint32_t*)fb_phys;
-	binfo->fb_size = len;
-	binfo->X_Resolution = virt_display_width;
-	binfo->Y_Resolution = virt_display_height;
-	binfo->pixels_per_line = binfo->X_Resolution;
+	if (binfo && (uint64_t)binfo >= KERNEL_BASE_ADDRESS) {
+		binfo->graphics_framebuffer = (uint32_t*)fb_phys;
+		binfo->fb_size = len;
+		binfo->X_Resolution = virt_display_width;
+		binfo->Y_Resolution = virt_display_height;
+		binfo->pixels_per_line = binfo->X_Resolution;
+	}
 	AuConsoleSetConInfo(fb_phys, GPU_FB_BUFFER, virt_display_width, virt_display_height);
-	UARTDebugOut("[virtio-gpu]: framebuffer attached to screen id : %d %d\r\n", resource_id, binfo->fb_size);
+	UARTDebugOut("[virtio-gpu]: framebuffer attached to screen id : %d %d\r\n", resource_id, (int)len);
+}
+
+void virt_gpu_release_fb(void) {
+	if (!fb_phys || !fb_pages)
+		return;
+	AuFreePages(GPU_FB_BUFFER, false, (size_t)fb_pages * PAGE_SIZE);
+	AuPmmngrReleasePages(fb_phys);
+	fb = NULL;
+	fb_phys = 0;
+	fb_pages = 0;
 }
 
 /**

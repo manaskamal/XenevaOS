@@ -100,6 +100,17 @@ void AuVirtioTabletHandler(int spiNum) {
 	dsb_sy_barrier();
 	uint16_t them = TabletQueue->used.index;
 
+	/* The console is repointed to a different scanout size after this
+	 * driver initializes (the GPU console hand-off), so the absolute
+	 * pointer range must follow the live desktop size. Caching it at
+	 * init left the cursor stuck at the boot mode's edges. --axiss */
+	uint32_t liveW = AuConsoleGetScreenWidth();
+	uint32_t liveH = AuConsoleGetScreenHeight();
+	if (liveW && liveH) {
+		resX = (int)liveW;
+		resY = (int)liveH;
+	}
+
 	for (; tabletIndex < them; tabletIndex++) {
 		uint16_t slot = tabletIndex % tabletQueueSz;
 		dc_ivac((uint64_t)&TabletInput[slot]);
@@ -151,7 +162,10 @@ void AuVirtioTabletHandler(int spiNum) {
 				static uint32_t dbg_ptr;
 				if (dbg_ptr < 8) {
 					dbg_ptr++;
-					UARTDebugOut("[virtio-tablet]: kernel driver pointer %d,%d buttons %x\r\n", mouseX, mouseY, newmsg.button_state);
+					UARTDebugOut("[virtio-tablet]: kernel driver pointer %d,%d buttons %x\r\n",
+								 mouseX,
+								 mouseY,
+								 newmsg.button_state);
 				}
 			}
 			AuDevWriteMice(&newmsg);
@@ -261,8 +275,8 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	isb_flush();
 
 	tabletQueueSz = common->QueueSize;
-	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000);
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(
+		AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000);
 	TabletQueue = (struct VirtioQueue*)AuMapMMIO(
 		queuePhys, 1 /*((sizeof(struct VirtioQueue) * tabletQueueSz)) / 0x1000*/);
 	/* zero through the kernel mapping: queuePhys is physical and is not
