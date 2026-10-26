@@ -61,24 +61,33 @@ int mbedtls_hardware_poll(void* data, unsigned char* output, size_t len, size_t*
 
 #else
 #include <sys/_kefile.h>
+#include <sys/_keproc.h>
 
 int mbedtls_hardware_poll(void* data, unsigned char* output, size_t len, size_t* olen) {
 	int fd;
 	size_t got = 0;
+	int spins = 0;
 	(void)data;
 	*olen = 0;
 	fd = _KeOpenFile("/dev/hwrng", FILE_OPEN_READ_ONLY);
 	if (fd < 0)
 		return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
-	while (got < len) {
+	/* The first virtio-rng buffer is still in flight at boot. A read
+	 * then returns 0; the same read after the used ring lands succeeds.
+	 * Wait for that buffer instead of failing the first TLS handshake. */
+	while (got < len && spins < 40) {
 		size_t n = _KeReadFile(fd, output + got, len - got);
 		if (n == 0) {
-			_KeCloseFile(fd);
-			return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
+			spins++;
+			_KeProcessSleep(25);
+			continue;
 		}
 		got += n;
+		spins = 0;
 	}
 	_KeCloseFile(fd);
+	if (got != len)
+		return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
 	*olen = got;
 	return 0;
 }

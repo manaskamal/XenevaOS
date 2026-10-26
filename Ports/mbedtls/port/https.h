@@ -58,7 +58,39 @@ int xe_http_get(const char* url,
 				xe_http_response* out,
 				size_t max_body);
 
+/* How many independent GETs xe_http_get_many keeps open at once. */
+#define XE_HTTP_MANY_MAX 4
+
+/* Fetch n independent GETs on this thread, XE_HTTP_MANY_MAX at a time.
+ * outs[i] matches urls[i]. max_body is one cap per URL, or NULL for
+ * 512 KiB each. rcs may be NULL; otherwise rcs[i] is 0, 22, or -1,
+ * the same as xe_http_get. No request body. Does not change the last URL.
+ * Returns 0 when the pump ran, or -1 if the arguments are unusable. */
+int xe_http_get_many(const char** urls, int n, const char* user_agent,
+					 xe_http_response* outs, const size_t* max_body, int* rcs);
+
 void xe_http_response_free(xe_http_response* out);
+
+/* Page the next request was started from. A request to that same host
+ * sends it as Referer. NULL or "" clears it. */
+void xe_http_set_referer(const char* url);
+
+/* One request body for the next xe_http_get. The call consumes it.
+ * NULL or a zero length clears a pending body. Used for form POST. */
+void xe_http_set_body(const char* content_type, const void* body, size_t len);
+
+/* URL of the last completed xe_http_get, after redirects. */
+void xe_http_last_url(char* dst, size_t dstsz);
+
+/* Store one Set-Cookie line, or one document.cookie assignment.
+ * from_http is 1 for a response header and 0 for a script. */
+void xe_cookie_set(const char* page_url, const char* set_cookie, int from_http);
+
+/* "n=v; n2=v2" for a Cookie request header, including HttpOnly. */
+int xe_cookie_header(const char* url, char* dst, size_t dstsz);
+
+/* document.cookie. HttpOnly names are left out. */
+int xe_cookie_document(const char* url, char* dst, size_t dstsz);
 
 #ifdef __cplusplus
 }

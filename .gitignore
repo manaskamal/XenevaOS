@@ -1,5 +1,8 @@
 # C/C++ Build Artifacts
 *.o
+# QuickJS has no libm/int128 sources. These two objects are the port.
+!Ports/quickjs/port/libm.o
+!Ports/quickjs/port/int128.o
 *.so
 *.efi
 obj/

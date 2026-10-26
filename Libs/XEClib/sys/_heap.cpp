@@ -624,7 +624,30 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define LACKS_SYS_MMAN_H 1
 #define LACKS_FCNTL_H 1
 #define LACKS_TIME_H 1
+/* XenevaOS corruption tripwire: dlmalloc's internal consistency asserts
+ * normally compile out, so a heap corruption (UB elsewhere) goes unnoticed
+ * until weeks later, when an unrelated malloc walks a binned chunk whose
+ * fields have been overwritten and dies with heap garbage in a register -
+ * far from the actual bug. With XE_DLMALLOC_SEGWIRE flipped on, DEBUG turns
+ * on dlmalloc's normally silent assert/check machinery (do_check_* on every
+ * request path, plus fd/bk back-pointer checks in tree unlinks), so the
+ * FIRST operation that touches a corrupt chunk aborts with, in order: a
+ * UART line naming the source line of the check, the register dump, and the
+ * rest of the boot continues unaffected (this only hangs netsurf). Diag
+ * measure only: set to 0 once the underlying UB is found and fixed. */
+#ifndef XE_DLMALLOC_SEGWIRE
+#define XE_DLMALLOC_SEGWIRE 1
+#endif
+#if XE_DLMALLOC_SEGWIRE
+#define ABORT_ON_ASSERT_FAILURE 1
+#define DEBUG 1
+#endif
+#if XE_DLMALLOC_SEGWIRE
+extern "C" void _KePrint(const char* text, ...);
+#define ABORT  do { _KePrint("[dlmalloc] consistency check failed: sys/_heap.cpp line %d\n", __LINE__); for(;;); } while (0)
+#else
 #define ABORT  for(;;);
+#endif
 #define LACKS_STDLIB_H 1
 #define LACKS_STRING_H 1
 #define LACKS_WINDOWS_H 1
@@ -2733,6 +2756,11 @@ static struct malloc_params mparams;
 #define ensure_initialization() (void)(mparams.magic != 0 || init_mparams())
 
 #if !ONLY_MSPACES
+
+/* XE HEAP TRIPWIRE GUARD: sits in .bss immediately before the allocator
+ * state. Any spill from the globals linked ahead of _gm_ (mbedTLS/https
+ * contexts) lands here instead of inside the bins. Scanned by xe_heap_check. */
+unsigned char g_heap_guard[4096];
 
 /* The global malloc_state used for all non-"mspace" calls */
 static struct malloc_state _gm_;
@@ -6447,4 +6475,167 @@ void* realloc(void* ptr, unsigned int new_size) {
 */
 void* calloc(unsigned long long n_item, unsigned long long size) {
     return dlcalloc(n_item, size);
+}
+
+/* ===================== guest heap phase validator =====================
+ * Called from the NetSurf frontend between fetch/parse/layout phases.
+ * Reports (a) dirt in the guard array placed right before _gm_, and
+ * (b) tree-bin roots that are not plausible heap pointers. This pinpoints
+ * which phase performs the corrupting write on google.com.
+ */
+static int xe_plausible(const void* p) {
+    unsigned long long v = (unsigned long long)(uintptr_t)p;
+    if (v & 7ULL)
+        return 0;
+    return (v >= 0x600000000ULL && v < 0x700000000ULL) ||
+           (v >= 0x3000000000ULL && v < 0x3100000000ULL);
+}
+
+extern "C" void xe_heap_check(const char* tag) {
+    unsigned bad_guard = 0;
+    unsigned first = 0;
+    unsigned i;
+    unsigned bad = 0;
+    unsigned char* g = (unsigned char*)g_heap_guard;
+    for (i = 0; i < sizeof(g_heap_guard); i++) {
+        if (g[i]) {
+            first = i;
+            bad_guard = 1;
+            break;
+        }
+    }
+    if (!is_initialized(&_gm_)) {
+        _KePrint("[heapchk] %s uninit\n", tag);
+        return;
+    }
+    /* ---- treebin roots + treemap consistency ---- */
+    for (i = 0; i < NTREEBINS; i++) {
+        unsigned long long r = (unsigned long long)(uintptr_t)_gm_.treebins[i];
+        if (!r)
+            continue;
+        if (!xe_plausible((void*)(uintptr_t)r)) {
+            _KePrint("[heapchk] %s ROOT bin=%x ptr=%x:%x\n", tag,
+                     (size_t)(unsigned)i,
+                     (size_t)(unsigned)(r >> 32), (size_t)(unsigned)(r & 0xffffffffULL));
+            bad = 1;
+        } else if (!(_gm_.treemap & (1u << i))) {
+            _KePrint("[heapchk] %s ROOT bin=%x set but treemap bit clear\n", tag, (size_t)(unsigned)i);
+            bad = 1;
+        }
+    }
+    /* ---- walk every smallbin: validate fd/bk before following ---- */
+    for (i = 0; i < NSMALLBINS; i++) {
+        sbinptr B = smallbin_at(&_gm_, i);
+        mchunkptr p;
+        unsigned steps = 0;
+        if (!(_gm_.smallmap & (1u << i)))
+            continue; /* empty bin: B->fd may be stale in dlmalloc */
+        p = B->fd;
+        while (p != B) {
+            mchunkptr fd;
+            mchunkptr bk;
+            if (!xe_plausible(p)) {
+                _KePrint("[heapchk] %s SMALL bin=%x ptr=%x:%x\n", tag, (size_t)(unsigned)i,
+                         (size_t)(unsigned)((uintptr_t)p >> 32), (size_t)(unsigned)(uintptr_t)p);
+                bad = 1;
+                break;
+            }
+            fd = p->fd;
+            bk = p->bk;
+            if (!xe_plausible(fd) || !xe_plausible(bk)) {
+                _KePrint("[heapchk] %s SMALL bin=%x chunk=%x:%x sz=%x\n", tag, (size_t)(unsigned)i,
+                         (size_t)(unsigned)((uintptr_t)p >> 32), (size_t)(unsigned)(uintptr_t)p,
+                         (size_t)(unsigned)chunksize(p));
+                _KePrint("[heapchk] %s SMALL fd=%x:%x bk=%x:%x\n", tag,
+                         (size_t)(unsigned)((uintptr_t)fd >> 32), (size_t)(unsigned)(uintptr_t)fd,
+                         (size_t)(unsigned)((uintptr_t)bk >> 32), (size_t)(unsigned)(uintptr_t)bk);
+                bad = 1;
+                break;
+            }
+            p = fd;
+            if (++steps > 200000) {
+                _KePrint("[heapchk] %s SMALL[%u] cycle\n", tag, i);
+                bad = 1;
+                break;
+            }
+        }
+    }
+    /* ---- walk every treebin: iterative, validate child pointers first ---- */
+    {
+        tchunkptr stack[256];
+        unsigned sp = 0;
+        unsigned visited = 0;
+        for (i = 0; i < NTREEBINS; i++) {
+            tchunkptr root = (tchunkptr)_gm_.treebins[i];
+            if (!root)
+                continue;
+            sp = 0;
+            stack[sp++] = root;
+            while (sp) {
+                tchunkptr x = stack[--sp];
+                tchunkptr fd, bk, c0, c1, par;
+                if (!xe_plausible(x)) {
+                    _KePrint("[heapchk] %s TREE bin=%x ptr=%x:%x\n", tag, (size_t)(unsigned)i,
+                             (size_t)(unsigned)((uintptr_t)x >> 32), (size_t)(unsigned)(uintptr_t)x);
+                    bad = 1;
+                    break;
+                }
+                fd = x->fd;
+                bk = x->bk;
+                c0 = x->child[0];
+                c1 = x->child[1];
+                par = x->parent;
+                if (!xe_plausible(fd) || !xe_plausible(bk) ||
+                    (c0 && !xe_plausible(c0)) || (c1 && !xe_plausible(c1)) ||
+                    (par && !xe_plausible(par))) {
+                    _KePrint("[heapchk] %s TREE bin=%x node=%x:%x sz=%x\n", tag,
+                             (size_t)(unsigned)i,
+                             (size_t)(unsigned)((uintptr_t)x >> 32), (size_t)(unsigned)(uintptr_t)x,
+                             (size_t)(unsigned)chunksize(x));
+                    _KePrint("[heapchk] %s TREE fd=%x:%x bk=%x:%x\n", tag,
+                             (size_t)(unsigned)((uintptr_t)fd >> 32), (size_t)(unsigned)(uintptr_t)fd,
+                             (size_t)(unsigned)((uintptr_t)bk >> 32), (size_t)(unsigned)(uintptr_t)bk);
+                    _KePrint("[heapchk] %s TREE c0=%x:%x c1=%x:%x\n", tag,
+                             (size_t)(unsigned)((uintptr_t)c0 >> 32), (size_t)(unsigned)(uintptr_t)c0,
+                             (size_t)(unsigned)((uintptr_t)c1 >> 32), (size_t)(unsigned)(uintptr_t)c1);
+                    _KePrint("[heapchk] %s TREE par=%x:%x idx=%x\n", tag,
+                             (size_t)(unsigned)((uintptr_t)par >> 32), (size_t)(unsigned)(uintptr_t)par,
+                             (size_t)(unsigned)x->index);
+                    bad = 1;
+                    break;
+                }
+                if (x->index >= NTREEBINS) {
+                    _KePrint("[heapchk] %s TREE[%u] node=0x%x%08x bad index=%u\n", tag, i,
+                             (unsigned)((uintptr_t)x >> 32), (unsigned)(uintptr_t)x,
+                             (unsigned)x->index);
+                    bad = 1;
+                    break;
+                }
+                if (c0) {
+                    if (sp < 256) stack[sp++] = c0;
+                    else { _KePrint("[heapchk] %s stack ovf\n", tag); bad = 1; break; }
+                }
+                if (c1) {
+                    if (sp < 256) stack[sp++] = c1;
+                    else { _KePrint("[heapchk] %s stack ovf\n", tag); bad = 1; break; }
+                }
+                if (++visited > 200000) {
+                    _KePrint("[heapchk] %s tree cycle\n", tag);
+                    bad = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (bad_guard) {
+        _KePrint("[heapchk] %s GUARD dirt +%u = 0x%x (top=0x%x dv=0x%x)\n", tag,
+                 first, g[first], (unsigned)(uintptr_t)_gm_.top, (unsigned)_gm_.dvsize);
+    }
+    if (bad || bad_guard) {
+        _KePrint("[heapchk] %s smallmap=0x%x treemap=0x%x top=0x%x\n", tag,
+                 (unsigned)_gm_.smallmap, (unsigned)_gm_.treemap,
+                 (unsigned)(uintptr_t)_gm_.top);
+    } else {
+        _KePrint("[heapchk] %s ok\n", tag);
+    }
 }

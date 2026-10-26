@@ -24,12 +24,23 @@ CSSLIB_ROOT = .
 PU_SRCS = $(shell find $(CSSLIB_ROOT)/libparserutils/src $(CSSLIB_ROOT)/port -name '*.c')
 WC_SRCS = $(shell find $(CSSLIB_ROOT)/libwapcaplet/src -name '*.c')
 CSS_SRCS = $(shell find $(CSSLIB_ROOT)/libcss/src -name '*.c')
+# Latest NetSurf releases that match libcss 0.9.2 (2023-12-27):
+# libdom 0.4.2, libhubbub 0.3.8, libnsbmp 0.1.7, libnsgif 1.0.0.
+# XML bindings are omitted: they need expat or libxml2, which this OS does not have.
+DOM_SRCS = $(shell find $(CSSLIB_ROOT)/libdom/src $(CSSLIB_ROOT)/libdom/bindings -name '*.c')
+HUB_SRCS = $(shell find $(CSSLIB_ROOT)/libhubbub/src -name '*.c')
+BMP_SRCS = $(shell find $(CSSLIB_ROOT)/libnsbmp/src -name '*.c')
+GIF_SRCS = $(shell find $(CSSLIB_ROOT)/libnsgif/src -name '*.c')
 
 OBJDIR = obj
 PU_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(PU_SRCS))
 WC_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(WC_SRCS))
 CSS_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(CSS_SRCS))
-OBJS = $(PU_OBJS) $(WC_OBJS) $(CSS_OBJS)
+DOM_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(DOM_SRCS))
+HUB_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(HUB_SRCS))
+BMP_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(BMP_SRCS))
+GIF_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(GIF_SRCS))
+OBJS = $(PU_OBJS) $(WC_OBJS) $(CSS_OBJS) $(DOM_OBJS) $(HUB_OBJS) $(BMP_OBJS) $(GIF_OBJS)
 
 XE_INCLUDES = -I../../Libs/XEClib/includes -I../../Libs/XEClib/includes/c++
 PU_INCLUDES = -I$(CSSLIB_ROOT)/libparserutils/include \
@@ -43,6 +54,17 @@ CSS_INCLUDES = -I$(CSSLIB_ROOT)/libcss/include \
                -I$(CSSLIB_ROOT)/libcss/src \
                -I$(CSSLIB_ROOT)/libparserutils/include \
                -I$(CSSLIB_ROOT)/libwapcaplet/include
+DOM_INCLUDES = -I$(CSSLIB_ROOT)/libhubbub/include \
+               -I$(CSSLIB_ROOT)/libdom/include \
+               -I$(CSSLIB_ROOT)/libdom/src \
+               -I$(CSSLIB_ROOT)/libdom/bindings \
+               -I$(CSSLIB_ROOT)/libparserutils/include \
+               -I$(CSSLIB_ROOT)/libwapcaplet/include
+HUB_INCLUDES = -I$(CSSLIB_ROOT)/libhubbub/include \
+               -I$(CSSLIB_ROOT)/libhubbub/src \
+               -I$(CSSLIB_ROOT)/libparserutils/include
+BMP_INCLUDES = -I$(CSSLIB_ROOT)/libnsbmp/include -I$(CSSLIB_ROOT)/libnsbmp/src
+GIF_INCLUDES = -I$(CSSLIB_ROOT)/libnsgif/include -I$(CSSLIB_ROOT)/libnsgif/src
 
 # WITHOUT_ICONV_FILTER: parserutils' iconv path needs a C library iconv;
 # the internal codec path handles the UTF-8/ASCII CSS we feed it.
@@ -72,12 +94,20 @@ ifeq ($(TOOLCHAIN), llvm)
     PU_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(PU_INCLUDES)
     WC_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(WC_INCLUDES)
     CSS_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(CSS_INCLUDES)
+    DOM_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(DOM_INCLUDES)
+    HUB_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(HUB_INCLUDES)
+    BMP_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(BMP_INCLUDES)
+    GIF_CFLAGS = $(BASE_FLAGS) $(LLVM_TARGET) $(GIF_INCLUDES)
 else
     CC = $(CROSS_COMPILE)gcc
     AR = $(CROSS_COMPILE)ar
     PU_CFLAGS = $(BASE_FLAGS) -fPIE $(PU_INCLUDES)
     WC_CFLAGS = $(BASE_FLAGS) -fPIE $(WC_INCLUDES)
     CSS_CFLAGS = $(BASE_FLAGS) -fPIE $(CSS_INCLUDES)
+    DOM_CFLAGS = $(BASE_FLAGS) -fPIE $(DOM_INCLUDES)
+    HUB_CFLAGS = $(BASE_FLAGS) -fPIE $(HUB_INCLUDES)
+    BMP_CFLAGS = $(BASE_FLAGS) -fPIE $(BMP_INCLUDES)
+    GIF_CFLAGS = $(BASE_FLAGS) -fPIE $(GIF_INCLUDES)
 endif
 
 .PHONY: all clean llvm
@@ -98,6 +128,22 @@ $(WC_OBJS): $(OBJDIR)/%.o: %.c
 $(CSS_OBJS): $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CSS_CFLAGS) -c $< -o $@
+
+$(DOM_OBJS): $(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(DOM_CFLAGS) -c $< -o $@
+
+$(HUB_OBJS): $(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(HUB_CFLAGS) -c $< -o $@
+
+$(BMP_OBJS): $(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(BMP_CFLAGS) -c $< -o $@
+
+$(GIF_OBJS): $(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(GIF_CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJS)
 	@echo "Archiving $(TARGET)..."
