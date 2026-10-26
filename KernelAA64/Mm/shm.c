@@ -104,13 +104,32 @@ int AuCreateSHM(AuProcess* proc, uint16_t key, size_t sz, uint8_t flags) {
 			UARTDebugOut("Creating shm for proc : %s \r\n", proc->name);
 		}
 		shm = (AuSHM*)kmalloc(sizeof(AuSHM));
+		if (!shm) {
+			UARTDebugOut("AuCreateSHM: failed shm : %x, proc: %s \r\n", shm, proc->name);
+			return -1;
+		}
 		memset(shm, 0, sizeof(AuSHM));
 		shm->id = AuSHMGetID();
 		shm->key = key;
 		shm->num_frames = sz / PAGE_SIZE + (sz % PAGE_SIZE != 0);
 		shm->frames = (uint64_t*)kmalloc(sizeof(uint64_t) * shm->num_frames);
-		for (size_t i = 0; i < shm->num_frames; i++)
+		if (!shm->frames) {
+			UARTDebugOut("AuCreateSHM: failed to allocate frames \r\n");
+			kfree(shm);
+			return -1;
+		}
+		for (size_t i = 0; i < shm->num_frames; i++) {
 			shm->frames[i] = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
+			if (shm->frames[i] == PMM_INVALID_PHYS) {
+				UARTDebugOut("AuCreateSHM: PMM_INVALID_PHYS \r\n");
+				while (i > 0) {
+					AuPmmngrReleasePage(shm->frames[--i]);
+				}
+				kfree(shm->frames);
+				kfree(shm);
+				return -1;
+			}
+		}
 
 		list_add(shm_list, shm);
 	}
@@ -201,6 +220,10 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 		return NULL;
 
 	AuSHMMappings* mapping = (AuSHMMappings*)kmalloc(sizeof(AuSHMMappings));
+	if (!mapping) {
+		UARTDebugOut("AuSHMObtainMem : failed to allocate new mapping :%x \r\n", mapping);
+		return NULL;
+	}
 	mapping->length = mem->num_frames * PAGE_SIZE;
 	mapping->start_addr = AuSHMFindAddress(proc, mapping->length);
 	mapping->shm = mem;
@@ -209,9 +232,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 	/* The segment owns the frames; link_count controls their lifetime.
 	 * Every mapping uses Normal memory so unaligned user accesses work. */
 	for (size_t i = 0; i < mem->num_frames; i++) {
-		AuMapPage(mem->frames[i],
-				  mapping->start_addr + i * PAGE_SIZE,
-				  PTE_NORMAL_MEM | PTE_AP_RW_USER);
+		AuMapPage(
+			mem->frames[i], mapping->start_addr + i * PAGE_SIZE, PTE_NORMAL_MEM | PTE_AP_RW_USER);
 	}
 	list_add(proc->shmmaps, mapping);
 	AuSHMProcOrderList(proc);
@@ -219,6 +241,8 @@ void* AuSHMObtainMem(AuProcess* proc, uint16_t id, void* shmaddr, int shmflg) {
 }
 
 static void AuSHMDetachMapping(AuProcess* proc, AuSHMMappings* mapping) {
+	if (!mapping)
+		return;
 	AuFreePagesEx(proc->cr3, mapping->start_addr, false, mapping->length);
 	AuSHMRelease(mapping->shm);
 	UARTDebugOut("Unmapping shm -> %x \r\n", mapping->start_addr);

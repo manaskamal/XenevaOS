@@ -21,11 +21,21 @@
  * that surfaces later as a lost interrupt. If a second driver ever asks, that
  * is the moment to grow it.
  *
- * irqreturn_t and IRQ_NONE/IRQ_HANDLED/IRQ_WAKE_THREAD are already in
- * <linux/kernel.h>, as are the delay primitives -- see <linux/delay.h>.
+ * irqreturn_t and IRQ_NONE/IRQ_HANDLED/IRQ_WAKE_THREAD come from
+ * <linux/irqreturn.h> through <linux/kernel.h> now, as do the delay
+ * primitives -- see <linux/delay.h>.  IRQ_RETVAL is that header's too, so
+ * this file no longer restates it with a second spelling.
  */
 
 #include <linux/kernel.h>	/* irqreturn_t, IRQ_NONE/IRQ_HANDLED */
+
+/*
+ * mainline's <linux/interrupt.h> includes <linux/irqflags.h>, and the reason
+ * it does is <drm/drm_util.h>:64 -- drm_can_sleep() calls irqs_disabled()
+ * without naming the header it comes from, so the include has to be here for
+ * the vendored drm code to resolve.  DCL's irqflags.h is one honest DAIF read.
+ */
+#include <linux/irqflags.h>
 
 typedef irqreturn_t (*irq_handler_t)(int irq, void* dev_id);
 
@@ -39,8 +49,10 @@ typedef irqreturn_t (*irq_handler_t)(int irq, void* dev_id);
 							IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)
 #define IRQF_SHARED         0x00000080
 
-/* mainline: a nonzero handler result is "handled" unless it was IRQ_NONE */
-#define IRQ_RETVAL(x) ((x) != IRQ_NONE)
+/* IRQ_RETVAL(x) is <linux/irqreturn.h>'s -- `((x) ? IRQ_HANDLED : IRQ_NONE)`.
+ * It used to be restated here as `((x) != IRQ_NONE)`, which is the same value
+ * for every value the enum can take but not the same *text*, and a second
+ * definition of the macro is a -Wmacro-redefined. */
 
 int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags,
 				const char* name, void* dev_id);

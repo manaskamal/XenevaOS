@@ -1,7 +1,7 @@
 /**
 * BSD 2-Clause License
 *
-* Copyright (c) 2022, Manas Kamal Choudhury
+* Copyright (c) 2022-2026, Manas Kamal Choudhury
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,23 @@
 #include <widgets/window.h>
 #include <widgets/icon.h>
 #include <widgets/gridview.h>
-#include <string.h>
-#include <stdlib.h>
-#include "glimpse.h"
 #include <widgets/sidebar.h>
 #include <widgets/toolbar.h>
+#include <string.h>
+#include <stdlib.h>
 
-ChitralekhaApp* app;
-ChWindow* mainWin;
-static GlimpBox* glimp;
+#include "glimpse.h"
+#include "glimpse_image.h"
+#include "glimpse_fs.h"
+#include "glimpse_viewer.h"
+
+ChitralekhaApp* app = NULL;
+ChWindow* mainWin = NULL;
+static ChGridView* gv = NULL;
+static GlimpseViewer* viewer = NULL;
+
+static void OnThumbnailSelected(ChGridView* grid, ChWindow* win, int index, ChGridCell* cell);
+static void OnBackClicked(void* user_data);
 
 /*
  * WindowHandleMessage -- handles incoming deodhai messages
@@ -61,20 +69,89 @@ void WindowHandleMessage(PostEvent* e) {
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
-		/* handle key events from deodhai */
+	/* handle key events from deodhai */
 	case DEODHAI_REPLY_KEY_EVENT: {
-		int code = e->dword;
 		memset(e, 0, sizeof(PostEvent));
 		break;
 	}
 	}
 }
 
-int _baseline_y(int topy, int h) {
-	int ascent = (h * 4) / 5;
-	if (ascent > h)
-		ascent = h;
-	return topy + ascent;
+static void OnThumbnailSelected(ChGridView* grid, ChWindow* win, int index, ChGridCell* cell) {
+	(void)grid;
+	(void)index;
+	if (!cell || !cell->data) return;
+
+	const char* full_image_path = (const char*)cell->data;
+
+	if (GlimpseViewerLoad(viewer, full_image_path)) {
+		gv->wid.visible = false;
+		viewer->wid.visible = true;
+		GlimpseWindowPaint(win);
+	}
+}
+
+static void OnBackClicked(void* user_data) {
+	(void)user_data;
+	viewer->wid.visible = false;
+	GlimpseViewerUnload(viewer);
+
+	gv->wid.visible = true;
+	gv->force_full_redraw = true;
+	GlimpseWindowPaint(mainWin);
+}
+
+typedef struct {
+	ChGridView* gv;
+	int count;
+} ScanContext;
+
+static void ImageDiscoveredCallback(const char* full_path, const char* filename, void* user_data) {
+	ScanContext* ctx = (ScanContext*)user_data;
+	if (!ctx || !ctx->gv || !full_path) return;
+
+	// Check for duplicates
+	for (int i = 0; i < ctx->gv->cell_count; i++) {
+		if (ctx->gv->cells[i].data && strcmp((const char*)ctx->gv->cells[i].data, full_path) == 0) {
+			return;
+		}
+	}
+
+	char thumb_path[256];
+	GlimpseGetThumbnailPath(full_path, thumb_path, sizeof(thumb_path));
+
+	// Cache check: If thumbnail does not exist on disk, generate and cache it
+	if (!GlimpseFileExists(thumb_path)) {
+		GlimpseRawImage src_img;
+		if (GlimpseLoadImage(full_path, &src_img)) {
+			int tw = 0, th = 0;
+			GlimpseFitDimensions(src_img.width, src_img.height, 100, 100, &tw, &th);
+
+			GlimpseRawImage thumb_img;
+			if (GlimpseResizeImage(&src_img, tw, th, &thumb_img)) {
+				GlimpseSaveBmp(thumb_path, &thumb_img);
+				GlimpseFreeImage(&thumb_img);
+			}
+			GlimpseFreeImage(&src_img);
+		}
+	}
+
+	// Determine icon to display
+	const char* icon_to_use = NULL;
+	if (GlimpseFileExists(thumb_path)) {
+		icon_to_use = thumb_path;
+	} else if (strstr(full_path, ".bmp") || strstr(full_path, ".BMP")) {
+		icon_to_use = full_path;
+	} else {
+		icon_to_use = "/icons/img.bmp";
+	}
+
+	ChIcon* ico = ChCreateIcon();
+	ChIconOpen(ico, (char*)icon_to_use);
+	ChIconRead(ico);
+	char* stored_path = strdup(full_path);
+	ChGridAddThumbnail(ctx->gv, ico, filename, (void*)stored_path);
+	ctx->count++;
 }
 
 /*
@@ -82,125 +159,130 @@ int _baseline_y(int topy, int h) {
 */
 int main(int argc, char* argv[]) {
 	app = ChitralekhaStartApp(argc, argv);
-	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, "Glimpse", 100, 100, 780, 500);
+	mainWin = ChCreateWindow(app, WINDOW_FLAG_MOVABLE, (char*)"Glimpse", 100, 100, 780, 500);
 
 	mainWin->color = 0xFFB5B5B5;
 	mainWin->info->alpha = false;
 	mainWin->ChWinPaint = GlimpseWindowPaint;
-	for (int i = 0; i < mainWin->GlobalControls->pointer; i++) {
+
+	for (uint32_t i = 0; i < mainWin->GlobalControls->pointer; i++) {
 		ChWinGlobalControl* glbl = (ChWinGlobalControl*)list_get_at(mainWin->GlobalControls, i);
 		glbl->outlineColor = BLACK;
 	}
 
-	ChIcon* ico = ChCreateIcon();
-	ChIconOpen(ico, "/dthumb.bmp");
-	ChIconRead(ico);
+	// 1. Ensure /appdata/glimpse/icons/ exists
+	GlimpseEnsureCacheDir();
 
-	ChIcon* ico1 = ChCreateIcon();
-	ChIconOpen(ico1, "/thumb1.bmp");
-	ChIconRead(ico1);
-
-	ChIcon* ico2 = ChCreateIcon();
-	ChIconOpen(ico2, "/thumb2.bmp");
-	ChIconRead(ico2);
-
-	ChIcon* ico3 = ChCreateIcon();
-	ChIconOpen(ico3, "/thumb3.bmp");
-	ChIconRead(ico3);
-
+	// 2. Load sidebar icons
 	ChIcon* homeDir = ChCreateIcon();
-	ChIconOpen(homeDir, "/appdata/glimpse/icons/home.bmp");
+	ChIconOpen(homeDir, (char*)"/appdata/glimpse/icons/home.bmp");
 	ChIconRead(homeDir);
 
 	ChIcon* photoDir = ChCreateIcon();
-	ChIconOpen(photoDir, "/appdata/glimpse/icons/photo.bmp");
+	ChIconOpen(photoDir, (char*)"/appdata/glimpse/icons/photo.bmp");
 	ChIconRead(photoDir);
 
 	ChIcon* download = ChCreateIcon();
-	ChIconOpen(download, "/appdata/glimpse/icons/dwnld.bmp");
+	ChIconOpen(download, (char*)"/appdata/glimpse/icons/dwnld.bmp");
 	ChIconRead(download);
 
 	ChIcon* trsh = ChCreateIcon();
-	ChIconOpen(trsh, "/appdata/glimpse/icons/trsh_t.bmp");
+	ChIconOpen(trsh, (char*)"/appdata/glimpse/icons/trsh_t.bmp");
 	ChIconRead(trsh);
 
 	ChIcon* gallery = ChCreateIcon();
-	ChIconOpen(gallery, "/appdata/glimpse/icons/gllry.bmp");
+	ChIconOpen(gallery, (char*)"/appdata/glimpse/icons/gllry.bmp");
 	ChIconRead(gallery);
 
-	ChGridView* gv = ChGridViewCreate(170, 80, 600, 500 - 80, 4, 120, 140, 8);
+	// 3. Create GridView for image thumbnails
+	gv = ChGridViewCreate(170, 80, 600, 500 - 80, 4, 120, 140, 8);
+	gv->wid.visible = true;
 	gv->color_bg = mainWin->color;
 	gv->color_label_text = LIGHTBLACK;
 	gv->color_hover_bg = LIGHTSILVER;
 	gv->vscroll.color_track = mainWin->color;
 	gv->vscroll.color_arrow_fg = gv->vscroll.color_thumb;
 	gv->vscroll.color_arrow_bg = mainWin->color;
+	gv->OnSelect = OnThumbnailSelected;
 
-	ChGridAddThumbnail(gv, ico, "dawki", NULL);
+	// 4. Create Full-Image Viewer widget (hidden initially)
+	viewer = GlimpseViewerCreate(170, 80, 600, 500 - 80, OnBackClicked, NULL);
+	viewer->wid.visible = false;
 
-	ChGridAddThumbnail(gv, ico1, "founder", NULL);
-	ChGridAddThumbnail(gv, ico2, "assam-rhino", NULL);
-	ChGridAddThumbnail(gv, ico3, "mountain", NULL);
-	ChGridAddThumbnail(gv, ico, "dawki-copy", NULL);
-	ChGridAddThumbnail(gv, ico3, "mountain-cpy", NULL);
+	// 5. Scan directories and populate grid view dynamically
+	ScanContext scan_ctx;
+	scan_ctx.gv = gv;
+	scan_ctx.count = 0;
+	GlimpseScanImages(ImageDiscoveredCallback, &scan_ctx);
+
+	// If no images discovered, add a sample icon so the grid is not empty
+	if (scan_ctx.count == 0) {
+		ChIcon* def_ico = ChCreateIcon();
+		ChIconOpen(def_ico, (char*)"/icons/img.bmp");
+		ChIconRead(def_ico);
+		ChGridAddThumbnail(gv, def_ico, "No images found", NULL);
+	}
 
 	gv->force_full_redraw = 1;
 
+	// 6. Create Sidebar
 	ChSidebar* sb = ChSidebarCreate(0, 80, 170, 500 - 80);
+	sb->base.visible = true;
 	sb->bgColor = mainWin->color;
-	ChSidebarSection* sec1 = ChSidebarAddSection(sb, "Favourites");
-	ChSidebarAddItem(sec1, "Home", homeDir, 0, 0, NULL);
-	ChSidebarAddItem(sec1, "Photos", photoDir, 0, 0, NULL);
-	ChSidebarAddItem(sec1, "Downloads", download, 0, 0, NULL);
+	ChSidebarSection* sec1 = ChSidebarAddSection(sb, (char*)"Favourites");
+	ChSidebarAddItem(sec1, (char*)"Home", homeDir, 0, 0, NULL);
+	ChSidebarAddItem(sec1, (char*)"Photos", photoDir, 0, 0, NULL);
+	ChSidebarAddItem(sec1, (char*)"Downloads", download, 0, 0, NULL);
 
-	ChSidebarSection* sec2 = ChSidebarAddSection(sb, "Xeneva");
-	ChSidebarAddItem(sec2, "Trash", trsh, 0, 0, NULL);
-	ChSidebarAddItem(sec2, "Gallery", gallery, 0, 0, NULL);
+	ChSidebarSection* sec2 = ChSidebarAddSection(sb, (char*)"Xeneva");
+	ChSidebarAddItem(sec2, (char*)"Trash", trsh, 0, 0, NULL);
+	ChSidebarAddItem(sec2, (char*)"Gallery", gallery, 0, 0, NULL);
 
-	ChWindowAddWidget(mainWin, (ChWidget*)gv);
-	ChWindowAddWidget(mainWin, (ChWidget*)sb);
-
+	// 7. Create Toolbar
 	ChToolbar* tb = ChToolbarCreate(0, 26, mainWin->info->width, 42, TOOLBAR_HORIZONTAL);
+	tb->base.visible = true;
 	tb->color_bg = 0xFF949494;
 
 	ChIcon* doc = ChCreateIcon();
-	ChIconOpen(doc, "/appdata/glimpse/icons/fav_t.bmp");
+	ChIconOpen(doc, (char*)"/appdata/glimpse/icons/fav_t.bmp");
 	ChIconRead(doc);
 
 	ChIcon* dll = ChCreateIcon();
-	ChIconOpen(dll, "/appdata/glimpse/icons/albm_t.bmp");
+	ChIconOpen(dll, (char*)"/appdata/glimpse/icons/albm_t.bmp");
 	ChIconRead(dll);
 
 	ChIcon* exe = ChCreateIcon();
-	ChIconOpen(exe, "/appdata/glimpse/icons/view_t.bmp");
+	ChIconOpen(exe, (char*)"/appdata/glimpse/icons/view_t.bmp");
 	ChIconRead(exe);
 
 	ChIcon* info = ChCreateIcon();
-	ChIconOpen(info, "/appdata/glimpse/icons/info_t.bmp");
+	ChIconOpen(info, (char*)"/appdata/glimpse/icons/info_t.bmp");
 	ChIconRead(info);
 
 	ChIcon* arcv = ChCreateIcon();
-	ChIconOpen(arcv, "/appdata/glimpse/icons/arcv_t.bmp");
+	ChIconOpen(arcv, (char*)"/appdata/glimpse/icons/arcv_t.bmp");
 	ChIconRead(arcv);
 
-	ChToolbarAddButton(tb, doc, doc->image.width, doc->image.height, "doc", NULL);
-	ChToolbarAddButton(tb, dll, dll->image.width, dll->image.height, "dll", NULL);
-	ChToolbarAddButton(tb, exe, exe->image.width, exe->image.height, "exe", NULL);
+	ChToolbarAddButton(tb, doc, doc->image.width, doc->image.height, (char*)"doc", NULL);
+	ChToolbarAddButton(tb, dll, dll->image.width, dll->image.height, (char*)"dll", NULL);
+	ChToolbarAddButton(tb, exe, exe->image.width, exe->image.height, (char*)"exe", NULL);
 	ChToolbarAddSeparator(tb);
-	ChToolbarAddButton(tb, trsh, trsh->image.width, trsh->image.height, "trash", NULL);
-	ChToolbarAddButton(tb, arcv, arcv->image.width, arcv->image.height, "import", NULL);
+	ChToolbarAddButton(tb, trsh, trsh->image.width, trsh->image.height, (char*)"trash", NULL);
+	ChToolbarAddButton(tb, arcv, arcv->image.width, arcv->image.height, (char*)"import", NULL);
 	ChToolbarAddSeparator(tb);
-	ChToolbarAddButton(tb, info, info->image.width, info->image.height, "info", NULL);
+	ChToolbarAddButton(tb, info, info->image.width, info->image.height, (char*)"info", NULL);
 
+	// 8. Register widgets with window
+	ChWindowAddWidget(mainWin, (ChWidget*)gv);
+	ChWindowAddWidget(mainWin, (ChWidget*)viewer);
+	ChWindowAddWidget(mainWin, (ChWidget*)sb);
 	ChWindowAddWidget(mainWin, (ChWidget*)tb);
 
+	// 9. Initial Paint
 	ChWindowPaint(mainWin);
+	ChWindowBroadcastIcon(app, (char*)"/icons/glim.bmp");
 
-	/*ChFontSetSize(mainWin->app->baseFont, 23);
-	ChFontDrawText(mainWin->canv, mainWin->app->baseFont, "Photos", 20, _baseline_y(26 + 2, 24), 20, LIGHTBLACK);
-	ChWindowUpdate(mainWin, 10, 26, 100,25, 0, 1);*/
-
-	ChWindowBroadcastIcon(app, "/icons/glim.bmp");
+	// 10. Message Event Loop
 	PostEvent e;
 	memset(&e, 0, sizeof(PostEvent));
 
@@ -213,5 +295,5 @@ int main(int argc, char* argv[]) {
 }
 
 GlimpBox* _Glimpse_get_main_glimp() {
-	return glimp;
+	return NULL;
 }

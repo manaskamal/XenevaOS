@@ -37,7 +37,7 @@
 #define AU_IMPORT
 #define AU_ALIGN(x) __attribute__((aligned(x)))
 #else
-#define AU_EXPORT	__declspec(dllexport) __declspec(noinline)
+#define AU_EXPORT	__declspec(dllexport) __attribute__((__noinline__))
 #define AU_IMPORT	__declspec(dllimport)
 #define AU_ALIGN(x) __declspec(align(x))
 #endif
@@ -97,6 +97,7 @@ typedef uint32_t CapRights;
 #define XENEVA_KERNEL_BUILD_TAG "jajabor"
 /** Target architecture */
 #define XENEVA_KERNEL_ARCH "x86_64"
+#define XENEVA_KERNEL_MACHINE
 
 #elif ARCH_ARM64
 #define XENEVA_KERNEL_VERSION	"1.0.0"
@@ -106,6 +107,13 @@ typedef uint32_t CapRights;
 #define XENEVA_KERNEL_BUILD		"arm64"
 #define XENEVA_KERNEL_BUILD_TAG "jajabor"
 
+/** define more quirks here */
+#ifdef __TARGET_BOARD_QEMU_VIRT__
+#define XENEVA_KERNEL_MACHINE "aarch64-qemu-virt"
+#elif __TARGET_BOARD_RPI3__
+#define XENEVA_KERNEL_MACHINE "aarch64_rpi3"
+#endif
+
 #elif ARCH_RISCV64
 #define XENEVA_KERNEL_VERSION	"1.0.0"
 #define XENEVA_KERNEL_RELEASE	"1.0.0"
@@ -113,6 +121,7 @@ typedef uint32_t CapRights;
 #define XENEVA_KERNEL_ARCH		"riscv64"
 #define XENEVA_KERNEL_BUILD		"riscv64"
 #define XENEVA_KERNEL_BUILD_TAG "jajabor"
+#define XENEVA_KERNEL_MACHINE
 #endif
 
 /** kernel configuration  */

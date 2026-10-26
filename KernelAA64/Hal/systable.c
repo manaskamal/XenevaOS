@@ -53,7 +53,11 @@
 #include <proctoken.h>
 #include <Fs/pipe.h>
 #include <power.h>
+#include <Log/_print.h>
+#include <Log/klog.h>
 #include <timer.h>
+#include <bordoisila_ptr.h>
+#include <Sync/poll.h>
 
 AA64Registers* svcCurrentRegs;
 
@@ -96,13 +100,17 @@ struct utsname {
 int ExecUname(struct utsname* name) {
 	if (!name)
 		return 1;
+	if (!__BORDOISILA_UBUF_VALIDATE(name, sizeof(struct utsname))) {
+		UARTDebugOut("ExecUname system call, invalid user buffer : %x \r\n", name);
+		return 1;
+	}
 	//check for pointer validation of name
 	strcpy(name->sysname, XENEVA_OS_NAME);
 	strcpy(name->nodename, XENEVA_OS_NODENAME);
 	strcpy(name->release, XENEVA_KERNEL_RELEASE);
 	strcpy(name->version,
 		   XENEVA_KERNEL_VERSION " #" XENEVA_KERNEL_BUILD " " XENEVA_KERNEL_BUILD_TAG);
-	strcpy(name->machine, XENEVA_KERNEL_ARCH);
+	strcpy(name->machine, XENEVA_KERNEL_MACHINE);
 	strcpy(name->domainname, " ");
 	return 0;
 }
@@ -195,6 +203,7 @@ static void* syscalls[AURORA_MAX_SYSCALL] = {
 	[SYS_SEND_SIGNAL_TO_THREAD] = SendSignalToThread,
 	[SYS_THREAD_WAIT_FOR_TERMINATION] = AuThreadWaitForTermination,
 	[SYS_KERNEL_UNAME] = ExecUname,
+	[SYS_FILE_POLL] = AuPoll,
 };
 
 #ifdef __KERNEL_PROFILER_ON__
@@ -295,6 +304,9 @@ void AuAA64SyscallHandler(AA64Registers* regs) {
 	mask_irqs();
 	uint64_t vector = regs->x16;
 	uint64_t retcode = 0;
+	uint64_t syscall_elr;
+	uint64_t syscall_spsr = read_spsr_el1();
+	__asm__ volatile("mrs %0, elr_el1" : "=r"(syscall_elr));
 
 	/* Musl puts the Linux number in x8. PE programs still use x16. */
 	{
@@ -362,6 +374,12 @@ skip_1:
 	AuSrvfsSyscallEnter(currThr);
 	retcode = func(regs->x0, regs->x1, regs->x2, regs->x3, regs->x4, regs->x5);
 	AuSrvfsSyscallExit(currThr);
+	/* A syscall may synchronously invoke a component that enables interrupts.
+	 * If an IRQ schedules the current thread while that component is running,
+	 * ELR_EL1 can retain the component's kernel PC instead of the user SVC
+	 * return address. Restore the entry PC before the exception return path. */
+	__asm__ volatile("msr elr_el1, %0" : : "r"(syscall_elr));
+	__asm__ volatile("msr spsr_el1, %0" : : "r"(syscall_spsr));
 	regs->x0 = retcode;
 	regs->x6 = retcode;
 	currThr->returnFromSyscall = 0;

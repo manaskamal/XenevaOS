@@ -26,6 +26,7 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/sched.h>
+#include <Sync/spinlock.h>
 #include <Serv/sysserv.h>
 #include <sndsrv.h>
 #include <string.h>
@@ -50,10 +51,33 @@ static struct {
 	uint64_t carry_ms;           /* when it was taken; stale audio is not replayed */
 } px;
 
+static Spinlock px_lock;
+
 #define PX_CARRY_MAX_AGE_MS 1500
 
 static inline void px_barrier(void) {
 	__asm__ volatile("dmb ish" ::: "memory");
+}
+
+static void px_cache_invalidate(void* address, size_t size) {
+	uint64_t start = (uint64_t)address & ~63ULL;
+	uint64_t end = (uint64_t)address + size;
+	for (; start < end; start += 64)
+		dc_ivac(start);
+	dsb_sy_barrier();
+}
+
+static void px_cache_clean(void* address, size_t size) {
+	if (size)
+		aa64_data_cache_clean_range(address, size);
+}
+
+static void px_cache_clean_ring_bytes(uint8_t* data, uint32_t size,
+	uint32_t offset, uint32_t length) {
+	uint32_t first = length < size - offset ? length : size - offset;
+	px_cache_clean(data + offset, first);
+	if (first < length)
+		px_cache_clean(data, length - first);
 }
 
 /* The mixer's per-period write: copy into the ring and, once a few periods are
@@ -69,15 +93,23 @@ static inline void px_barrier(void) {
 #define PX_PACE_MAX_MS       80
 
 static int px_write(uint8_t* buf, size_t len) {
-	if (!px.attached || !buf || !len)
+	if (!buf || !len)
 		return 1;
+	AuAcquireSpinlock(&px_lock);
+	if (!px.attached || !px.hdr || !px.data) {
+		AuReleaseSpinlock(&px_lock);
+		return 1;
+	}
 	px.inflight++;
+	SndRingHdr* r = px.hdr;
+	uint8_t* data = px.data;
+	AuReleaseSpinlock(&px_lock);
 	px_barrier();
 	int rc = 1;
 	uint32_t pace_ms = 0;
-	if (px.attached) {
-		SndRingHdr* r = px.hdr;
-		uint32_t size = r->size;
+	px_cache_invalidate(r, sizeof(*r));
+	uint32_t size = r->size;
+	if (size >= 4096 && !(size & (size - 1))) {
 		if (len > size)
 			len = size;
 		px.calls++;
@@ -89,11 +121,13 @@ static int px_write(uint8_t* buf, size_t len) {
 			uint32_t head = r->head;
 			uint32_t off = head & (size - 1);
 			size_t first = len < (size - off) ? len : (size - off);
-			memcpy(px.data + off, buf, first);
+			memcpy(data + off, buf, first);
 			if (first < len)
-				memcpy(px.data, buf + first, len - first);
+				memcpy(data, buf + first, len - first);
+			px_cache_clean_ring_bytes(data, size, off, (uint32_t)len);
 			px_barrier();
 			r->head = head + (uint32_t)len;
+			px_cache_clean(r, sizeof(*r));
 			px.written += len;
 			rc = 0;
 			/* sleep in proportion to the backlog above the target, at the playback
@@ -111,7 +145,9 @@ static int px_write(uint8_t* buf, size_t len) {
 		}
 	}
 	px_barrier();
+	AuAcquireSpinlock(&px_lock);
 	px.inflight--;
+	AuReleaseSpinlock(&px_lock);
 	if (pace_ms) {
 		AA64Thread* thr = AuGetCurrentThread();
 		if (thr) {
@@ -128,14 +164,22 @@ static int px_read(uint8_t* buf, size_t len) {
 }
 
 static int px_start(void) {
-	if (px.attached)
+	AuAcquireSpinlock(&px_lock);
+	if (px.attached && px.hdr) {
 		px.hdr->running = 1;
+		px_cache_clean(px.hdr, sizeof(*px.hdr));
+	}
+	AuReleaseSpinlock(&px_lock);
 	return 0;
 }
 
 static int px_stop(void) {
-	if (px.attached)
+	AuAcquireSpinlock(&px_lock);
+	if (px.attached && px.hdr) {
 		px.hdr->running = 0;
+		px_cache_clean(px.hdr, sizeof(*px.hdr));
+	}
+	AuReleaseSpinlock(&px_lock);
 	return 0;
 }
 
@@ -145,19 +189,35 @@ static int px_vol(uint8_t vol) {
 }
 
 static void px_detach(void) {
-	if (!px.attached)
+	AuAcquireSpinlock(&px_lock);
+	if (!px.attached) {
+		AuReleaseSpinlock(&px_lock);
 		return;
+	}
 	px.attached = false;                 /* writers see this and bail out */
+	AuReleaseSpinlock(&px_lock);
 	px_barrier();
 	AuSoundUnregisterCard(&px.card);
 	/* drain writers that were mid-copy before the ring can be freed */
 	uint64_t t0 = AuGetCurrentMS();
-	while (px.inflight > 0 && AuGetCurrentMS() - t0 < PX_DETACH_WAIT_MS)
+	bool warned = false;
+	for (;;) {
+		AuAcquireSpinlock(&px_lock);
+		int inflight = px.inflight;
+		AuReleaseSpinlock(&px_lock);
+		if (inflight == 0)
+			break;
+		if (!warned && AuGetCurrentMS() - t0 >= PX_DETACH_WAIT_MS) {
+			UARTDebugOut("[sndproxy]: %d writer(s) still inside after %d ms; waiting safely\r\n",
+				inflight, PX_DETACH_WAIT_MS);
+			warned = true;
+		}
 		__asm__ volatile("yield");
-	if (px.inflight > 0)
-		UARTDebugOut("[sndproxy]: %d writer(s) still inside after %d ms\r\n", px.inflight, PX_DETACH_WAIT_MS);
+	}
 	/* the ring's memory is still valid here (it is freed after this returns):
 	 * copy out what the server had not yet consumed */
+	if (px.hdr)
+		px_cache_invalidate(px.hdr, sizeof(*px.hdr));
 	if (px.carry) {
 		kfree(px.carry);
 		px.carry = NULL;
@@ -182,14 +242,19 @@ static void px_detach(void) {
 			}
 		}
 	}
+	AuAcquireSpinlock(&px_lock);
 	px.hdr = NULL;
 	px.data = NULL;
 	px.owner = NULL;
+	AuReleaseSpinlock(&px_lock);
 	UARTDebugOut("[sndproxy]: detached (written %x bytes, dropped %x)\r\n", (uint32_t)px.written, (uint32_t)px.dropped);
 }
 
 void AuSndProxyOwnerGone(AuProcess* proc) {
-	if (px.attached && px.owner == proc)
+	AuAcquireSpinlock(&px_lock);
+	bool owned = px.attached && px.owner == proc;
+	AuReleaseSpinlock(&px_lock);
+	if (owned)
 		px_detach();
 }
 
@@ -205,7 +270,10 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		if (!a || a + sizeof(SndsrvAttach) >= 0x0000800000000000ULL)
 			return SNDSRV_E_INVAL;
 		SndsrvAttach* req = (SndsrvAttach*)arg;
-		if (px.attached)
+		AuAcquireSpinlock(&px_lock);
+		bool busy = px.attached;
+		AuReleaseSpinlock(&px_lock);
+		if (busy)
 			return SNDSRV_E_BUSY;
 		if (req->ring_len < SNDSRV_DATA_OFFSET + 4096 || (req->ring_phys & 0xFFF))
 			return SNDSRV_E_INVAL;
@@ -214,6 +282,7 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		if (!AuHwdevOwnsDma(proc, req->ring_phys, req->ring_len))
 			return SNDSRV_E_PERM;
 		SndRingHdr* hdr = (SndRingHdr*)P2V(req->ring_phys);
+		px_cache_invalidate(hdr, sizeof(*hdr));
 		uint32_t size = hdr->size;
 		if (hdr->magic != SNDSRV_RING_MAGIC || size < 4096 || (size & (size - 1)) ||
 			(uint64_t)size + SNDSRV_DATA_OFFSET > req->ring_len)
@@ -223,6 +292,7 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		hdr->tail = 0;
 		hdr->dropped = 0;
 		hdr->running = 0;
+		px_cache_clean(hdr, sizeof(*hdr));
 		/* replay audio left over from a server that died */
 		if (px.carry && AuGetCurrentMS() - px.carry_ms > PX_CARRY_MAX_AGE_MS) {
 			UARTDebugOut("[sndproxy]: discarded %d bytes of stale carried audio\r\n", (int)px.carry_len);
@@ -233,7 +303,9 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		if (px.carry) {
 			uint32_t n = px.carry_len < size ? px.carry_len : size;
 			memcpy((uint8_t*)hdr + SNDSRV_DATA_OFFSET, px.carry, n);
+			px_cache_clean((uint8_t*)hdr + SNDSRV_DATA_OFFSET, n);
 			hdr->head = n;
+			px_cache_clean(hdr, sizeof(*hdr));
 			UARTDebugOut("[sndproxy]: carried %d bytes over from the previous server\r\n", (int)n);
 			kfree(px.carry);
 			px.carry = NULL;
@@ -247,18 +319,26 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		px.card.stop_output = px_stop;
 		px.card.set_vol = px_vol;
 		px.card._force_write = 1;
+		AuAcquireSpinlock(&px_lock);
+		if (px.attached) {
+			AuReleaseSpinlock(&px_lock);
+			return SNDSRV_E_BUSY;
+		}
 		px.hdr = hdr;
 		px.data = (uint8_t*)hdr + SNDSRV_DATA_OFFSET;
 		px.owner = proc;
 		px.written = px.dropped = px.calls = 0;
 		px.inflight = 0;
-		px_barrier();
 		px.attached = true;
+		AuReleaseSpinlock(&px_lock);
+		px_barrier();
 		if (AuSoundRegisterCard(&px.card) != 0) {
+			AuAcquireSpinlock(&px_lock);
 			px.attached = false;
 			px.hdr = NULL;
 			px.data = NULL;
 			px.owner = NULL;
+			AuReleaseSpinlock(&px_lock);
 			return SNDSRV_E_INVAL;
 		}
 		UARTDebugOut("[sndproxy]: attached ring %x size %x for pid %d, card registered\r\n",
@@ -266,7 +346,10 @@ static int px_ioctl(AuVFSNode* file, int code, void* arg) {
 		return SNDSRV_OK;
 	}
 	case SNDSRV_IOC_DETACH:
-		if (px.attached && px.owner == proc) {
+		AuAcquireSpinlock(&px_lock);
+		bool owned = px.attached && px.owner == proc;
+		AuReleaseSpinlock(&px_lock);
+		if (owned) {
 			px_detach();
 			return SNDSRV_OK;
 		}

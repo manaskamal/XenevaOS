@@ -67,6 +67,13 @@ static const int16_t kGVMul = -52; /* -0.813 * 64 */
 static const int16_t kBUMul = 129; /* 2.018 * 64 */
 static HAACDecoder aac_dec = nullptr;
 
+static inline uint64_t now_us() {
+	uint64_t cnt, frq;
+	__asm__ volatile("isb\n mrs %0, cntvct_el0" : "=r"(cnt));
+	__asm__ volatile("mrs %0, cntfrq_el0" : "=r"(frq));
+	return (cnt / frq) * 1000000ULL + ((cnt % frq) * 1000000ULL) / frq;
+}
+
 static void init_audio_decoder(MP4D_track_t* at) {
 	aac_dec = AACInitDecoder();
 
@@ -79,10 +86,11 @@ static void init_audio_decoder(MP4D_track_t* at) {
 	AACSetRawBlockParams(aac_dec, 0, &frameinfo);
 }
 
-static void decode_audio_sample(const uint8_t* data, uint32_t size) {
+static uint32_t decode_audio_sample(const uint8_t* data, uint32_t size) {
 	static int16_t pcm[4096];
 	unsigned char* inbuf = (unsigned char*)data;
 	int bytes_left = (int)size;
+	uint32_t frames = 0;
 
 	while (bytes_left > 0) {
 		int err = AACDecode(aac_dec, &inbuf, &bytes_left, pcm);
@@ -95,7 +103,9 @@ static void decode_audio_sample(const uint8_t* data, uint32_t size) {
 		AACGetLastFrameInfo(aac_dec, &info);
 		size_t pcm_bytes = (size_t)info.outputSamps * sizeof(int16_t);
 		_KeWriteFile(sound, pcm, pcm_bytes);
+		frames += info.outputSamps / info.nChans;
 	}
+	return frames;
 }
 void yuv420_to_bgra_neon(const uint8_t* y_plane,
 						 int y_stride,
@@ -315,7 +325,7 @@ void test_demux(const char* path) {
 	fclose(mf.f);
 }
 
-static void feed_nal(storage_t* h264, const uint8_t* nal, uint32_t len, uint32_t pic_id) {
+static void feed_nal(storage_t* h264, const uint8_t* nal, uint32_t len, bool present) {
 	static uint8_t tmp[1024 * 1024];
 	static const uint8_t start_code[4] = {0, 0, 0, 1};
 	if (len + 4 > sizeof(tmp))
@@ -335,7 +345,7 @@ static void feed_nal(storage_t* h264, const uint8_t* nal, uint32_t len, uint32_t
 	if (status == H264BSD_PIC_RDY) {
 		u32 pic_id_out, is_idr, num_err_mbs;
 		u8* pic = h264bsdNextOutputPicture(h264, &pic_id_out, &is_idr, &num_err_mbs);
-		if (pic) {
+		if (pic && present) {
 			u32 w = h264bsdPicWidth(h264) * 16;
 			u32 h = h264bsdPicHeight(h264) * 16;
 			//printf("frame ready> %ux%u\n", w, h);
@@ -618,6 +628,10 @@ void* audio_thread(void* arg) {
 	uint8_t* audio_sample_buffer = (uint8_t*)malloc(64 * 1024);
 	memset(audio_sample_buffer, 0, 64 * 1024);
 
+	const uint64_t rate = at->SampleDescription.audio.samplerate_hz;
+	const uint64_t LEAD_US = 100000;
+	uint64_t frames_out = 0;
+
 	for (unsigned s = 0; s < at->sample_count; s++) {
 		unsigned frame_bytes = 0, ts = 0, dur = 0;
 		MP4D_file_offset_t off = MP4D_frame_offset(&mp4, audio_track, s, &frame_bytes, &ts, &dur);
@@ -627,8 +641,21 @@ void* audio_thread(void* arg) {
 			continue;
 		}
 
-		if (mp4_read_cb((int64_t)off, audio_sample_buffer, frame_bytes, &mf) == 0)
-			decode_audio_sample(audio_sample_buffer, frame_bytes);
+		if (mp4_read_cb((int64_t)off, audio_sample_buffer, frame_bytes, &mf) != 0)
+			continue;
+
+		frames_out += decode_audio_sample(audio_sample_buffer, frame_bytes);
+
+		if (!g_audio_start_us)
+			g_audio_start_us = now_us();
+
+		for (;;) {
+			uint64_t queued_us = frames_out * 1000000ULL / rate;
+			uint64_t played_us = now_us() - g_audio_start_us;
+			if (queues_us <= played_us + LEAD_US)
+				break;
+			_KeProcessSleep(10);
+		}
 		//_KeProcessSleep(1);
 	}
 

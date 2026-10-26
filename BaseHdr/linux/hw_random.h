@@ -74,9 +74,8 @@ struct hwrng {
 	 *
 	 * uintptr_t is the same "integer that holds a pointer" the field is
 	 * for, and it is pointer-sized here. This is one half of a two-part
-	 * fix -- the other is the matching cast in virtio-rng.c:171, recorded
-	 * as a delta in Vendored/MANIFEST.md, because that cast is in the
-	 * vendored source and cannot be fixed from a header.
+	 * fix -- the other is the matching cast in virtio-rng.c:171, in the
+	 * vendored source, which cannot be fixed from a header.
 	 *
 	 * Changing this does not move anything: the field is last-but-one in
 	 * the public part of struct hwrng (quality follows), and DCL's hwrng

@@ -67,6 +67,26 @@
 #define PCI_DEVICE_PER_BUS 32
 #define PCI_FUNCTION_PER_DEVICE 8
 
+/*
+ * Whether an ECAM window was located and mapped. The DCL PCI fabric
+ * (DCL/pci_shim.c) asks before it scans: on a board where no discovery
+ * mechanism was found, AuPCIEGetDevice() would fall through to the
+ * ACPI-MCFG path with nothing behind it, and the fabric's job is to find
+ * no devices there, not to fault looking for them.
+ */
+bool AuIsPCIeInitialized(void);
+
+
+/*
+ * How many bus numbers the located ECAM window actually covers, in the
+ * 1 MiB stride ECAM uses per bus; 0 when the window is unknown. The DCL
+ * PCI fabric bounds its scan by this: past the window, the addresses
+ * AuPCIEGetDevice() composes are not configuration space, and on a QEMU
+ * virt machine a scan that runs off the end enumerates RAM contents as
+ * if they were devices.
+ */
+extern int AuPCIEBusCount(void);
+
 
 /*
 * AuPCIEGetDevice -- gets a device address from its bus

@@ -12,6 +12,7 @@ static const size_t test_module_size = sizeof(test_module_o);
 
 extern void virtio_rng_detect(void);
 extern int virtio_console_detect(void);
+extern int virtio_gpu_detect(void);
 extern int dcl_vport_selftest(void);
 extern int hwrng_selftest(void);
 extern int hwrng_read_bytes(void* buf, unsigned int max);
@@ -315,6 +316,64 @@ static int modload_virtio_console_test(void) {
 	return rc < 0 ? 0 : 1;
 }
 
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+/*
+ * modload_virtio_input_test -- scan for every 1AF4:1052 function and let
+ * the vendored virtio-input driver probe each one.  The bridge handler was
+ * registered by DclRunInitcalls() before this runs, so input_register_device()
+ * attaches it as part of probe and the event queue starts filling.
+ */
+static int modload_virtio_input_test(void) {
+	int found;
+
+	UARTDebugOut("[modtest]: virtio_input built-in (Vendored/drivers/virtio)\r\n");
+	found = virtio_input_detect();
+	if (found) {
+		UARTDebugOut("[modtest]: virtio_input %d device(s) registered\r\n",
+					 found);
+		dcl_puts("  virtio_input registered\r\n");
+		return 1;
+	}
+
+	dcl_puts("  virtio_input: no device\r\n");
+	return 0;
+}
+#endif
+
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+/*
+ * modload_virtio_gpu_test -- the third virtio scan, and the only one whose
+ * driver exists on the kernel side for a reason other than self-test:
+ * --bypass-virtgpu makes the vendored DRM driver the owner of 1AF4:1050,
+ * and this scan is what hands it the device.
+ *
+ * The driver is already registered when modload_test_run() runs --
+ * DclRunInitcalls() called its initcall. detect() creates the virtio
+ * device, and the device's registration is what matches that driver and
+ * runs probe, which allocates the DRM device, registers the card and brings
+ * up the virtio queues, all before this returns. The scan belongs here
+ * rather than in the initcall for the same reason rng's and console's do:
+ * initcalls register drivers, and the modload pass brings devices up once
+ * the drivers are on the list.
+ *
+ * Compile-time gate, not a runtime "should I": a default image carries the
+ * internal virtgpu.dll, which owns 1AF4:1050, and a scan there would race
+ * it for the device. Only an image packed by build_and_run_qemu.sh
+ * --bypass-virtgpu is this function's to run.
+ */
+static int modload_virtio_gpu_test(void) {
+	UARTDebugOut("[modtest]: virtio_gpu built-in (Vendored/drivers/gpu/drm/virtio)\r\n");
+
+	if (virtio_gpu_detect()) {
+		dcl_puts("  virtio_gpu   registered\r\n");
+		return 1;
+	}
+
+	dcl_puts("  virtio_gpu: no device\r\n");
+	return 0;
+}
+#endif
+
 void modload_test_run(void) {
 	dcl_status_register();
 	hwrng_node_register();
@@ -327,5 +386,11 @@ void modload_test_run(void) {
 	/* After rng: both scan the same bus, and rng's scan returns on its
 	 * own device rather than walking past it. */
 	modload_virtio_console_test();
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+	modload_virtio_input_test();
+#endif
+#ifdef __XENEVA_BYPASS_VIRTGPU__
+	modload_virtio_gpu_test();
+#endif
 	UARTDebugOut("[modtest]: done\r\n");
 }

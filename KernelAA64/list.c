@@ -45,6 +45,8 @@ list_t* initialize_list() {
 }
 
 void list_add(list_t* list, void* data) {
+	if (!list)
+		return;
 	dataentry* current_data = (dataentry*)kmalloc(sizeof(dataentry));
 	if (!current_data)
 		return;
@@ -78,7 +80,7 @@ void list_add(list_t* list, void* data) {
 }
 
 void* list_get_at(list_t* list, unsigned int index) {
-	if (list->pointer == 0 || index >= list->pointer)
+	if (!list || list->pointer == 0 || index >= list->pointer)
 		return NULL;
 
 	/*dmb_sy();
@@ -98,7 +100,7 @@ void* list_get_at(list_t* list, unsigned int index) {
 void* list_remove(list_t* list, unsigned int index) {
 	void* payload;
 
-	if (list->pointer == 0 || index >= list->pointer)
+	if (!list || list->pointer == 0 || index >= list->pointer)
 		return NULL;
 
 	dataentry* current_node = list->entry_current;

@@ -201,16 +201,20 @@ void AA64NextThread() {
 	 * AuScheduleThread): resuming SLEEP/BLOCKED/KILLABLE threads here
 	 * breaks whatever parked them. The walk is bounded so a cyclic list
 	 * can never wedge the tick; with nothing runnable we park on idle. --axiss */
-	AA64Thread* cursor = current_thread ? current_thread->next : NULL;
-	for (int i = 0; i < SCHED_VALIDATE_STEPS; i++) {
-		if (!cursor)
-			cursor = _idle_thr;
-		if (cursor == _idle_thr || cursor->state == THREAD_STATE_READY ||
-			cursor->state == THREAD_STATE_LEFT_IN_KERNEL) {
+	AA64Thread* start =
+		(current_thread && current_thread->next) ? current_thread->next : thread_list_head;
+
+	AA64Thread* cursor = start; //current_thread ? current_thread->next : NULL;
+	for (int i = 0; i < SCHED_VALIDATE_STEPS && cursor; i++) {
+		if (cursor != _idle_thr &&
+			(cursor->state == THREAD_STATE_READY || cursor->state == THREAD_STATE_LEFT_IN_KERNEL)) {
 			current_thread = cursor;
 			return;
 		}
-		cursor = cursor->next;
+
+		cursor = cursor->next ? cursor->next : thread_list_head;
+		if (cursor == start)
+			break;
 	}
 	current_thread = _idle_thr;
 }
@@ -573,6 +577,7 @@ void AuScheduleNext() {
 	current_thread->state = THREAD_STATE_LEFT_IN_KERNEL;
 	AA64Thread* storeThr = current_thread;
 	aa64_store_fp(storeThr->fp_regs, &storeThr->fpcr, &storeThr->fpsr);
+	__asm__ volatile("msr cntv_tval_el0, %0\n isb" ::"r"(1ULL));
 	current_thread = _idle_thr;
 	aa64_schedule_init(storeThr, current_thread, V2P(current_thread->pml));
 }
@@ -700,6 +705,40 @@ void AuUnblockThread(AA64Thread* thread) {
 	}
 	if (found_) {
 		schedLink(&thread_list_head, &thread_list_last, thread);
+	}
+	AuSchedUnlock(d);
+}
+
+/**
+ * @brief AuThreadWakePoller -- wake up a thread that was left
+ * in sleep/block while polling
+ * @param t -- Pointer to thread
+ */
+void AuThreadWakePoller(AA64Thread* t) {
+	if (!t || !t->blocked_on_poll)
+		return;
+	uint64_t d = AuSchedLock();
+	bool moved = false;
+	for (AA64Thread* x = blocked_thr_head; x; x = x->next)
+		if (x == t) {
+			schedUnlink(&blocked_thr_head, &blocked_thr_last, t);
+			moved = true;
+			break;
+		}
+	if (!moved) {
+		for (AA64Thread* x = sleep_thr_head; x; x = x->next) {
+			if (x == t) {
+				t->sleepQuanta = 0;
+				schedUnlink(&sleep_thr_head, &sleep_thr_last, t);
+				moved = true;
+				break;
+			}
+		}
+	}
+	if (moved) {
+		if (t->state != THREAD_STATE_LEFT_IN_KERNEL)
+			t->state = THREAD_STATE_READY;
+		schedLink(&thread_list_head, &thread_list_last, t);
 	}
 	AuSchedUnlock(d);
 }
@@ -978,10 +1017,13 @@ void AuThreadAwakeWaiters(AA64Thread* thread) {
 	/** remove all waiters */
 	while (thread->waitlist->pointer > 0) {
 		AA64Thread* unblockable = (AA64Thread*)list_remove(thread->waitlist, 0);
+		if (!unblockable)
+			continue;
 		UARTDebugOut("unblocking thread : %s \r\n", unblockable->name);
 		unblockable->wait_ref_count -= 1;
 		AuProcess* proc = AuProcessFindThread(unblockable);
-
+		if (!proc)
+			return;
 		/* what if process if not found, kernel will get lot's of garbage 
 		 * thread vs process allocation be carefull, it should get
 		 * on thread's procSlot -- security concern */

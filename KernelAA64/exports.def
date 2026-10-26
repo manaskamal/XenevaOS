@@ -12,4 +12,7 @@ EXPORTS
      dc_ivac
      aa64_data_cache_clean_range
      data_cache_flush
+     AuConsoleSetConInfo
+     AuConsoleSetPresentHook
+     AuConsoleRestoreBootFb
      _wfi

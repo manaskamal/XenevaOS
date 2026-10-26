@@ -47,6 +47,10 @@
  */
 
 #include <linux/kernel.h>	/* size_t */
+/* mainline's chain is completion.h -> swait.h -> wait.h; DCL has no swait.h
+ * (completion is the one-field struct above), so the wait queue type
+ * drm_file.h:359 embeds comes in directly. */
+#include <linux/wait.h>
 
 struct completion {
 	/* Must stay first -- see the note above. */
@@ -89,6 +93,40 @@ static inline void reinit_completion(struct completion* x)
  */
 extern void complete(struct completion* x);
 extern int wait_for_completion_killable(struct completion* x);
+
+/*
+ * The rest of mainline's surface, which the drm atomic helpers and the event
+ * path use: complete_all(), try_wait_for_completion(), the timeout wait and
+ * the interruptible pair. Bodies in DCL/linux_kthread_shim.c.
+ *
+ * They all share one honest shape. The completion is the counter above and
+ * there is no scheduler to block in, so a wait answers for the two states it
+ * can actually observe: "already done" -- consume one and report success, as
+ * mainline does -- and "not done", where it reports the failure mainline's
+ * own callers are written against instead of pretending to sleep. A
+ * completion that is not done when the wait is entered cannot become done
+ * while control stays here, because whatever completes it (a flip handler,
+ * the commit path below) runs in this same context.
+ *
+ * The failure values therefore matter and are mainline's: 0 from the timeout
+ * variants and -ERESTARTSYS from the interruptible one. drm_crtc_commit_wait()
+ * turns a 0 from wait_for_completion_timeout() into -ETIMEDOUT with a
+ * drm_err(), and drm_atomic_helper_swap_state() unwinds on any nonzero from
+ * wait_for_completion_interruptible(); success-without-completion would walk
+ * those callers into hardware that was never programmed.
+ *
+ * complete_all() sets `done` to UINT_MAX (saturating, mainline's "permanently
+ * done"), and try_wait_for_completion() does not consume that value, so every
+ * later waiter keeps succeeding -- which is what DRM's fake commits and the
+ * flip_done waiters rely on.
+ */
+extern void complete_all(struct completion* x);
+extern bool try_wait_for_completion(struct completion* x);
+extern unsigned long wait_for_completion_timeout(struct completion* x,
+						unsigned long timeout);
+extern int wait_for_completion_interruptible(struct completion* x);
+extern long wait_for_completion_interruptible_timeout(struct completion* x,
+						unsigned long timeout);
 
 /**
  * DECLARE_COMPLETION - define a completion at file scope

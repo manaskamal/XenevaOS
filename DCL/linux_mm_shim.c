@@ -39,6 +39,7 @@
 #include <linux/io.h>
 #include <linux/shmem_fs.h>
 #include <linux/pagemap.h>	/* struct page and the page_* decls below */
+#include <linux/dma-mapping.h>	/* dma_map_sg()/dma_unmap_sg() below */
 #include <Mm/pmmngr.h>
 #include <Mm/kmalloc.h>	/* kmalloc/kfree -- alloc_page()'s block */
 #include <Drivers/uart.h>
@@ -60,6 +61,27 @@ unsigned long copy_from_user(void* to, const void __user* from, unsigned long n)
 		return n;
 	memcpy(to, from, n);
 	return 0;
+}
+
+/*
+ * strncpy_from_user(dst, src, count) -- mainline's NUL-terminated copy out
+ * of a user address, added with the virtio-gpu port (the debug-name ioctl
+ * bounds a name by its destination buffer). The copy is a plain one for
+ * the reason copy_from_user() above says; the loop stops one short of the
+ * bound so the terminator always fits, and the count is what comes back --
+ * "length copied, terminator not counted", which is what the one caller's
+ * success test reads.
+ */
+long strncpy_from_user(char* dst, const char __user* src, long count) {
+	long i;
+
+	if (count <= 0)
+		return -EINVAL;
+
+	for (i = 0; i < count - 1 && ((const char*)src)[i]; i++)
+		dst[i] = ((const char*)src)[i];
+	dst[i] = 0;
+	return i;
 }
 
 unsigned long clear_user(void __user* to, unsigned long n) {
@@ -386,6 +408,177 @@ void unlock_page(struct page* page) {
 	(void)page;
 }
 
+/* ── dma streaming mapping: identity, because there is nothing else ────── */
+
+/*
+ * dma_map_sg() / dma_unmap_sg() -- declared in <linux/dma-mapping.h>, which
+ * carries the reasoning for the answer in full.
+ *
+ * The short version: no IOMMU and no bounce buffer, so an sg entry is already
+ * contiguous and already addressable, and "map" here is the identity.
+ * Returning `nents` unchanged is what makes dma_map_sgtable()'s
+ * `sgt->nents = nents` a no-op, and what lets drm_prime_get_contiguous_size()
+ * (drm_prime.c:893) walk the list and terminate on the length it was handed.
+ *
+ * dma_unmap_sg() is empty for the mirror reason: with nothing mapped there is
+ * nothing to invalidate, and the CPU never stopped seeing these buffers. The
+ * parameters are all mainline's, including the direction, which describes a
+ * mapping this does not perform.
+ */
+int dma_map_sg(struct device* dev, struct scatterlist* sg, int nents,
+	       enum dma_data_direction dir)
+{
+	(void)dev;
+	(void)sg;
+	(void)dir;
+	return nents;
+}
+
+void dma_unmap_sg(struct device* dev, struct scatterlist* sg, int nents,
+		  enum dma_data_direction dir)
+{
+	(void)dev;
+	(void)sg;
+	(void)nents;
+	(void)dir;
+}
+
+/*
+ * dma_max_mapping_size() -- mainline's "largest length the device can map in
+ * one segment", declared in <linux/dma-mapping.h>.  drm_prime.c:862
+ * (drm_prime_pages_to_sg) uses the answer to cap the segment size it passes
+ * to sg_alloc_table_from_pages_segment(), and turns 0 into UINT_MAX itself
+ * (`if (max_segment == 0) max_segment = UINT_MAX`).  Zero is also mainline's
+ * answer when there are no DMA ops to ask (its !CONFIG_HAS_DMA arm of this
+ * function), and with no IOMMU and no bounce buffer there is no segment
+ * limit to report: any contiguous run is directly addressable.
+ */
+size_t dma_max_mapping_size(struct device* dev)
+{
+	(void)dev;
+	return 0;
+}
+
+/*
+ * dma_coerce_mask_and_coherent() -- mainline sets dev->dma_mask from
+ * dev->coherent_dma_mask and then asks the DMA layer to accept the mask
+ * (<linux/dma-mapping.h>).  Two things it needs are absent here: struct
+ * device (fs.h) is pinned to mainline's 800-byte layout with no named mask
+ * fields, and there is no DMA layer that would ever read one.  The only
+ * observable part of the call is its verdict -- vkms_create()
+ * (vkms_drv.c:187) takes a non-zero return as "DMA support could not be
+ * initialized" and unwinds -- so the answer is the success mainline would
+ * have produced for a device with no constraints.
+ */
+int dma_coerce_mask_and_coherent(struct device* dev, u64 mask)
+{
+	(void)dev;
+	(void)mask;
+	return 0;
+}
+
+/* ── scatterlists over pages: the one constructor drm_prime needs ─────── */
+
+/*
+ * sg_alloc_table_from_pages_segment() -- declared in <linux/scatterlist.h>,
+ * which carries the full why-comment.  One entry per page for the byte range
+ * [offset, offset + size) the caller names, from the native allocator; the
+ * matching release is sg_free_table() below.  max_segment and gfp_mask are
+ * accepted and dropped for the reasons the header note gives: nothing here
+ * squashes runs, and the native allocator takes no flags.
+ *
+ * The entry count is the pages the range touches, clamped to the caller's
+ * array length -- the same bound mainline ends up with after squashing, and
+ * the reason the caller's own `nr_pages` is still the authority.
+ */
+int sg_alloc_table_from_pages_segment(struct sg_table* sgt,
+				      struct page** pages,
+				      unsigned int n_pages, unsigned int offset,
+				      unsigned long size,
+				      unsigned int max_segment, gfp_t gfp_mask)
+{
+	unsigned int nents, i;
+	struct scatterlist* sgl;
+
+	(void)max_segment;
+	(void)gfp_mask;
+
+	if (!sgt || !pages || !n_pages || !size)
+		return -EINVAL;
+
+	nents = (unsigned int)((offset + size + PAGE_SIZE - 1) >> PAGE_SHIFT);
+	if (nents > n_pages)
+		nents = n_pages;
+
+	sgl = (struct scatterlist*)kcalloc(nents, sizeof(struct scatterlist));
+	if (!sgl)
+		return -ENOMEM;
+
+	for (i = 0; i < nents; i++) {
+		unsigned int pg_off = (i == 0) ? offset : 0;
+		unsigned long len = PAGE_SIZE - pg_off;
+
+		if (size < len)
+			len = size;
+
+		/* sg_set_page() lives in DCL/linux_kmod_shim.c beside
+		 * sg_init_one(); it is what fills ->page as well as ->buf,
+		 * which the page-walking writers in drm_prime.c read. */
+		sg_set_page(&sgl[i], pages[i], (unsigned int)len, pg_off);
+		size -= len;
+	}
+
+	sgt->sgl = sgl;
+	sgt->nents = nents;
+	sgt->orig_nents = nents;
+	return 0;
+}
+
+/*
+ * sg_alloc_table() -- declared in <linux/scatterlist.h>, added with the
+ * virtio-gpu port: the command path builds its per-page table with it
+ * before walking it, and the vram path a one-entry table. The table is
+ * nents zeroed entries off the same heap sg_alloc_table_from_pages_segment()
+ * above draws from, and the count is validated like the ones mainline
+ * rejects: zero entries is not a table, and a byte length that would not
+ * survive the allocator's word is refused before the multiply runs.
+ */
+int sg_alloc_table(struct sg_table* sgt, unsigned int nents, gfp_t gfp) {
+	struct scatterlist* sgl;
+
+	(void)gfp;
+	if (!sgt || !nents)
+		return -EINVAL;
+	if (nents > (unsigned int)(0xffffffffu / sizeof(*sgl)))
+		return -EINVAL;
+
+	sgl = kmalloc((unsigned int)(nents * sizeof(*sgl)));
+	if (!sgl)
+		return -ENOMEM;
+	memset(sgl, 0, (unsigned long)nents * sizeof(*sgl));
+
+	sgt->sgl = sgl;
+	sgt->nents = nents;
+	sgt->orig_nents = nents;
+	return 0;
+}
+
+/*
+ * sg_free_table() -- declared in <linux/scatterlist.h>, where the note over
+ * it explains why this stopped being an inline no-op: the constructor above
+ * is now a real allocation, and kfree() is the body it needs.  The reset
+ * afterwards keeps a freed table from being walked a second time.
+ */
+void sg_free_table(struct sg_table* sgt)
+{
+	if (!sgt)
+		return;
+	kfree(sgt->sgl);
+	sgt->sgl = NULL;
+	sgt->nents = 0;
+	sgt->orig_nents = 0;
+}
+
 /* ── initcall runner ───────────────────────────────────────────────────── */
 
 /*
@@ -396,6 +589,14 @@ void unlock_page(struct page* page) {
 extern int (*const __dcl_initcall_chr_dev_init)(void);
 extern int (*const __dcl_initcall_virtio_rng_driver_init)(void);
 extern int (*const __dcl_initcall_virtio_console_init)(void);
+extern int (*const __dcl_initcall_drm_core_init)(void);
+extern int (*const __dcl_initcall_vkms_init)(void);
+extern int (*const __dcl_initcall_bochs_pci_driver_init)(void);
+extern int (*const __dcl_initcall_virtio_gpu_driver_init)(void);
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+extern int (*const __dcl_initcall_virtio_input_driver_init)(void);
+void dcl_input_bridge_init(void);
+#endif
 
 /*
  * init_user_ns -- the object tty_ioctl.c:843 takes the address of
@@ -411,6 +612,27 @@ extern int (*const __dcl_initcall_virtio_console_init)(void);
  * on a symbol nobody would think to look for in a tty port.
  */
 struct user_namespace init_user_ns = { 0 };
+
+/*
+ * Run one DCL_INITCALL() pointer and report the outcome in the shape the
+ * DRM and virtio blocks below use: missing pointer, failed return, or the
+ * success line.
+ */
+static void dcl_run_initcall(int (*fn)(void), const char* name,
+			     const char* ok, const char* missing)
+{
+	int rc;
+
+	if (!fn) {
+		UARTDebugOut("[dcl]: %s initcall not linked\r\n", missing);
+		return;
+	}
+	rc = fn();
+	if (rc)
+		UARTDebugOut("[dcl]: %s failed: %d\r\n", name, rc);
+	else
+		UARTDebugOut("[dcl]: %s\r\n", ok);
+}
 
 void DclRunInitcalls(void) {
 	if (__dcl_initcall_chr_dev_init) {
@@ -472,4 +694,71 @@ void DclRunInitcalls(void) {
 	} else {
 		UARTDebugOut("[dcl]: virtio_console initcall not linked\r\n");
 	}
+
+	/*
+	 * drm core, then vkms -- module_init() in each vendored file stamps
+	 * the DCL_INITCALL() pointer, and this is where the two get named.
+	 * Order between them is not arbitrary: drm_core_init() registers
+	 * major 226 and the minor idrs that vkms_init() allocates into when
+	 * it creates the device, registers its connector, and calls
+	 * drm_dev_register() -- which is what publishes /dev/dri/card0.
+	 */
+	dcl_run_initcall(__dcl_initcall_drm_core_init, "drm_core_init",
+			 "drm core initialized", "drm core");
+
+	dcl_run_initcall(__dcl_initcall_vkms_init, "vkms_init",
+			 "vkms registered", "vkms");
+
+	/*
+	 * bochs -- the second scanout device, and the tree's first vendored
+	 * PCI driver.  module_driver() in <linux/module.h> plus
+	 * drm_module_pci_driver_if_modeset() in <drm/drm_module.h> expand to
+	 * an initcall that registers bochs_pci_driver with the DCL PCI
+	 * fabric (DCL/pci_shim.c), and the fabric is what walks ECAM,
+	 * matches the id_table against 1234:1111 and calls the driver's
+	 * probe.
+	 *
+	 * Last on purpose, and for a reason the driver itself cannot know:
+	 * a DRM device takes the next free minor when it registers, so vkms
+	 * has to bind first for it to stay card0 -- the order that existed
+	 * before bochs arrived, kept so every path that named card0 keeps
+	 * its meaning.  bochs then lands on card1, and the self-tests look
+	 * for it there.
+	 *
+	 * On a machine without the device (every board this kernel really
+	 * targets -- bochs-display exists in QEMU), the scan finds nothing,
+	 * no probe runs, and the initcall reports exactly what the others
+	 * report when their devices are absent.  The fabric logs how many
+	 * devices it saw either way.
+	 */
+	dcl_run_initcall(__dcl_initcall_bochs_pci_driver_init, "bochs register",
+			 "bochs pci driver registered", "bochs");
+
+	/*
+	 * virtio-gpu -- the third registration, and the first whose probe ends
+	 * in a DRM card rather than a character device. Nothing is claimed
+	 * here: the vendored virtio_gpu_driver_init()
+	 * (Vendored/drivers/gpu/drm/virtio/virtgpu_drv.c:182) only puts the
+	 * driver on the virtio list. A device appears when virtio_gpu_detect()
+	 * runs, and the only caller of that is modload_test_run() under
+	 * __XENEVA_BYPASS_VIRTGPU__ (see DCL/modload_test.c). A default build
+	 * thus registers this driver as a bystander, which is the point: the
+	 * internal virtgpu.dll owns 1AF4:1050 unless the image was packed
+	 * without it.
+	 */
+	dcl_run_initcall(__dcl_initcall_virtio_gpu_driver_init,
+			 "virtio_gpu register", "virtio_gpu driver registered",
+			 "virtio_gpu");
+
+#ifdef __XENEVA_BYPASS_VIRTIO_INPUT__
+	/*
+	 * The vendored input path.  Register the handler before the driver so
+	 * input_register_device() finds it on the list; the devices themselves
+	 * arrive later from modload_test_run()'s bus scan.
+	 */
+	dcl_input_bridge_init();
+	dcl_run_initcall(__dcl_initcall_virtio_input_driver_init,
+			 "virtio_input register", "virtio_input driver registered",
+			 "virtio_input");
+#endif
 }

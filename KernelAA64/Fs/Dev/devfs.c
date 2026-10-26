@@ -38,6 +38,7 @@
 #include <Drivers/uart.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Cred/group.h>
+#include <aucomponent.h>
 
 /*
  * AuDeviceFsInitialize -- initialise the device
@@ -169,6 +170,8 @@ void AuDevFSListDir(AuVFSNode* fs, AuVFSNode* dir) {
 	UARTDebugOut("Listing Directory -> %s \r\n", dir->filename);
 	for (int i = 0; i < entries->childs->pointer; i++) {
 		AuVFSNode* node_ = (AuVFSNode*)list_get_at(entries->childs, i);
+		if (!node_)
+			continue;
 		char* mode = "";
 		if (node_->flags & FS_FLAG_DEVICE)
 			mode = "Device";
@@ -261,6 +264,56 @@ AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path) {
 	return NULL;
 }
 
+/* A device node is shared by every fd opened through its devfs name. Keep
+ * one component reference for the shared node rather than one per fd; the
+ * existing fileCopyCount accounts for the individual fd/dup references. */
+static AuDriver* AuDevFSNodeDriver(AuVFSNode* node) {
+	if (!node)
+		return NULL;
+	AuDriver* driver = NULL;
+	if (node->open)
+		driver = AuDriverOwnerOf((uint64_t)(uintptr_t)node->open);
+	if (!driver && node->read)
+		driver = AuDriverOwnerOf((uint64_t)(uintptr_t)node->read);
+	if (!driver && node->write)
+		driver = AuDriverOwnerOf((uint64_t)(uintptr_t)node->write);
+	if (!driver && node->close)
+		driver = AuDriverOwnerOf((uint64_t)(uintptr_t)node->close);
+	if (!driver && node->iocontrol)
+		driver = AuDriverOwnerOf((uint64_t)(uintptr_t)node->iocontrol);
+	return driver;
+}
+
+bool AuDevFSNodeOpen(AuVFSNode* node) {
+	if (!node || !(node->flags & FS_FLAG_DEVICE) || node->fileCopyCount == UINT16_MAX)
+		return false;
+	if (node->fileCopyCount == 0) {
+		AuDriver* driver = AuDevFSNodeDriver(node);
+		if (driver && AuDriverRef(driver) < 0)
+			return false;
+	}
+	node->fileCopyCount++;
+	return true;
+}
+
+void AuDevFSNodeClose(AuVFSNode* node) {
+	if (!node || !(node->flags & FS_FLAG_DEVICE))
+		return;
+	/* Keep the driver image referenced until its close callback returns. */
+	if (node->close)
+		node->close(node, node);
+	if (!node->fileCopyCount)
+		return;
+	node->fileCopyCount--;
+	if (node->fileCopyCount)
+		return;
+	AuDriver* driver = AuDevFSNodeDriver(node);
+	if (driver)
+		AuDriverUnref(driver);
+	if (node->flags & FS_FLAG_DELETED)
+		kfree(node);
+}
+
 /*
  * AuDevFSRemoveFile -- remove a file from device
  * file system
@@ -310,11 +363,15 @@ int AuDevFSRemoveFile(AuVFSNode* fs, char* path) {
 
 	if (node_to_rem && (node_to_rem->flags & FS_FLAG_DEVICE)) {
 		list_remove(first_list->childs, index);
-		/* here, call node_to_rem->close(node_to_rem) in order
-		 * to inform the device to shutdown itself */
-		if (node_to_rem->close)
-			node_to_rem->close(node_to_rem, NULL);
-		kfree(node_to_rem);
+		node_to_rem->flags |= FS_FLAG_DELETED;
+		/* A removed node can still be the object stored in existing fds. Its
+		 * close callback and driver image must remain live until the final fd
+		 * release; AuDevFSNodeClose() performs that deferred destruction. */
+		if (!node_to_rem->fileCopyCount) {
+			if (node_to_rem->close)
+				node_to_rem->close(node_to_rem, NULL);
+			kfree(node_to_rem);
+		}
 		return 1;
 	}
 

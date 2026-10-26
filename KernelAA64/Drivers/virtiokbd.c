@@ -121,7 +121,9 @@ void AuVirtioKbdHandler(int spinum) {
 				static uint32_t dbg_keys;
 				if (dbg_keys < 8) {
 					dbg_keys++;
-					UARTDebugOut("[virtio-keyboard]: kernel driver got key code %d value %d\r\n", evt.code, evt.value);
+					UARTDebugOut("[virtio-keyboard]: kernel driver got key code %d value %d\r\n",
+								 evt.code,
+								 evt.value);
 				}
 			}
 			/* Linux KEY_ENTER=28, KEY_KPENTER=96 */
@@ -165,11 +167,14 @@ void AuVirtioKbdHandler(int spinum) {
 
 /* temporary input-freeze diagnostics: thread-context only, never call from IRQ */
 void AuVirtioKbdDebug() {
-	dc_ivac((uint64_t)&queue->used.index);
+	/**dc_ivac((uint64_t)&queue->used.index);
 	dsb_sy_barrier();
 	UARTDebugOut("[kbd-dbg]: idx=%d used=%d avail=%d qsz=%d irqs=%d \n",
-		(int)index, (int)queue->used.index,
-		(int)queue->available.index, (int)queueSize, (int)kbd_dbg_irqs);
+				 (int)index,
+				 (int)queue->used.index,
+				 (int)queue->available.index,
+				 (int)queueSize,
+				 (int)kbd_dbg_irqs);**/
 }
 
 void AuVirtioKbdDown() {
@@ -268,9 +273,9 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
-	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(
+		AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+
 	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 	/* zero through the kernel mapping: queuePhys is physical and is not

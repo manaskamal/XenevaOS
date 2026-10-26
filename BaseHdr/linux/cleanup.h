@@ -50,14 +50,81 @@
  * <linux/rwsem.h>, later serial_core.h -- because a guard is only meaningful
  * next to the lock it takes.
  *
- * Not ported: CLASS()/DEFINE_CLASS()/DEFINE_FREE()/ACQUIRE(). Nothing in the
- * nine tty/serial files uses them (only PCI_DEVICE_CLASS, an unrelated PCI
- * macro, resembles them). Add them when something does, rather than carrying
- * a speculative surface.
+ * DEFINE_FREE()/__free() were added once drm_bridge.h needed them: mainline
+ * spells the refcount drop of a chain-walked bridge as an automatic
+ * variable's destructor rather than an unmatched put at each return. Unlike
+ * the guard macros above, this one has no DCL-specific shape -- it is
+ * mainline's body verbatim -- so it lives here rather than beside a lock.
+ *
+ * DEFINE_CLASS()/ACQUIRE() are still not carried. The nine tty/serial files
+ * use none of them (only PCI_DEVICE_CLASS, an unrelated PCI macro, resembles
+ * them), so they are still not carried speculatively.
  */
 
-/* clang scope-exit attribute; mainline spells this __cleanup too. */
+/* clang scope-exit attribute; mainline spells this __cleanup too.
+ * Guarded because compiler_attributes.h:76 already defines it, and an
+ * unguarded second definition here produced a -Wmacro-redefined warning in
+ * every translation unit that reaches both -- which, now that <linux/file.h>
+ * includes this header, is most of them. The two definitions agree, so the
+ * guard costs nothing and keeps the noise count where it was. */
+#ifndef __cleanup
 #define __cleanup(fn) __attribute__((cleanup(fn)))
+#endif
+
+/*
+ * CLASS(name, var) -- the scoped-object declaration. Added after the other
+ * three because drm_syncobj.c:710 spells `CLASS(fd, f)(fd);`, and with
+ * nothing defined the line has neither a type nor an initialiser, so clang
+ * reports "use of undeclared identifier 'f'" at every later read of `f` --
+ * :710, :713 and :717, three sites for one missing macro.
+ *
+ * Note where the expansion stops. CLASS(fd, f) ends at the bare function
+ * designator `fd_constructor`, and the `(fd)` written at the *call site* is
+ * what supplies the argument. The macro cannot absorb it: the declaration
+ * and the call are written as two adjacent tokens by design, and that is
+ * also what lets the semicolon at :710 terminate an initialiser instead of
+ * leaving a declared-but-uninitialised variable.
+ *
+ * Only the fd class exists so far, and it lives in <linux/file.h> beside the
+ * struct it constructs and the two accessors that read it.
+ */
+#define CLASS(name, var) name##_t var __cleanup(name##_destructor) = name##_constructor
+
+/*
+ * DEFINE_FREE(name, type, free) / __free(name) -- the cleanup.h pair that
+ * mainline builds CLASS-free automatic storage on.  Mainline's shape:
+ *
+ *     DEFINE_FREE(drm_bridge_put, struct drm_bridge *,
+ *                 if (_T) drm_bridge_put(_T))
+ *
+ * declares __free_drm_bridge_put(void *p), and a declaration written
+ *
+ *     struct drm_bridge *b __free(drm_bridge_put) = ...;
+ *
+ * runs that destructor when b goes out of scope.  The destructor body is
+ * caller-written text that mentions a local `_T`, which the macro declares
+ * as the dereferenced pointee -- hence `_type _T = *(_type *)p` rather than
+ * a cast: for `_type = struct drm_bridge *` it evaluates to a
+ * `struct drm_bridge *` holding the pointer that was passed in, which is
+ * what makes `if (_T) drm_bridge_put(_T)` read correctly.
+ *
+ * The `if (_T)` is the caller's to write, not the macro's: mainline dropped
+ * the IS_ERR_OR_NULL() test that used to live here and moved the null check
+ * into each _free expression.  Ported verbatim so a v7.2 caller that omits
+ * the test gets mainline's behaviour, including its null deref.
+ *
+ * __free() is the spelling the attribute is written with and is simply
+ * __cleanup() with the name spliced; __cleanup() above is already clang's
+ * scope-exit attribute, so nothing here needs new compiler support.
+ */
+#define DEFINE_FREE(_name, _type, _free) \
+	static __always_inline void __free_##_name(void *p) { _type _T = *(_type *)p; _free; }
+
+#define __free(_name)	__cleanup(__free_##_name)
+
+#define no_free_ptr(p) \
+	({ __auto_type __ptr = (p); (p) = NULL; __ptr; })
+#define return_ptr(p) return no_free_ptr(p)
 
 #define DCL_CAT2(a, b) a##b
 #define DCL_CAT(a, b)  DCL_CAT2(a, b)
@@ -187,6 +254,7 @@
  */
 #define DEFINE_LOCK_GUARD_1(_name, _type, _lock, _unlock, ...)		\
 	typedef struct { _type* lock; __VA_ARGS__; } dclg_##_name;	\
+	typedef _type dcllt_##_name;					\
 	static inline void dclg_##_name##_release(dclg_##_name* _T)	\
 	{								\
 		if (_T->lock) { _unlock; }				\
@@ -198,6 +266,70 @@
 		(void)_T;						\
 		_lock;							\
 		return g;						\
+	}
+
+/*
+ * DECLARE_LOCK_GUARD_1_ATTRS(_name, _lock, _unlock) and
+ * WITH_LOCK_GUARD_1_ATTRS(_name, _T) -- the pairing mainline's
+ * cleanup.h:553/:557 spells, and the reason the typedef above exists:
+ * DECLARE_... has to re-state the constructor's prototype and mainline does
+ * that through `lock_##_name##_t`, which __DEFINE_UNLOCK_GUARD typedefs.
+ * DCL's DEFINE_LOCK_GUARD_1 did not keep such an alias, so `dcllt_##_name`
+ * is added beside it -- same idea, DCL spelling, and it has to agree with
+ * the definition's `_type*` or the re-declaration is a conflicting-types
+ * error at the call site rather than here.
+ *
+ * Only one call site exists today, seqlock.h:1363, declaring
+ * seqlock_init; nothing in the tree instantiates a guard from it, so what
+ * is needed is that the pair parses and matches.  `_lock`/`_unlock` land
+ * where mainline puts them -- after the parameter list on the declaration,
+ * before the body on the definition -- and expand to nothing while
+ * WARN_CONTEXT_ANALYSIS is off, which is the arm this build takes
+ * (compiler-context-analysis.h:166).
+ */
+#define DECLARE_LOCK_GUARD_1_ATTRS(_name, _lock, _unlock)		\
+	static inline dclg_##_name dclg_##_name##_ctor(dcllt_##_name *_T) _lock;\
+	static __always_inline void dclg_##_name##_unlock_ctx(dclg_##_name **_T)\
+		_unlock { }
+
+#define WITH_LOCK_GUARD_1_ATTRS(_name, _T)				\
+	dclg_##_name##_ctor(_T),					\
+	*DCL_UID(unlock) __cleanup(dclg_##_name##_unlock_ctx) =		\
+		(void *)(unsigned long)(_T)
+
+/*
+ * DEFINE_LOCK_GUARD_0(_name, _lock, _unlock, ...)
+ *     The no-object form: nothing to hold, so `lock` is not a pointer to a
+ *     resource but the "this guard is held" flag -- mainline initialises it
+ *     to (void*)1 in the constructor, which is what makes the release run
+ *     unconditionally while a held lock would have gone NULL.  That is the
+ *     whole difference from DEFINE_LOCK_GUARD_1 above, and it is why this one
+ *     takes no type: there is none.
+ *
+ *     Three call sites wanted it and all three are simple acquire/release
+ *     statements with no saved state: preempt.h:468/:469 (preempt_disable /
+ *     preempt_enable, and the _notrace pair) and jump_label.h:337.  DCL's
+ *     guard variables are only ever written by guard()/scoped_guard(), and
+ *     neither is spelled over a _0 guard yet -- what is needed today is that
+ *     the definitions parse where mainline puts them, not that they fire.
+ *
+ *     The `...` is mainline's and it is kept because clang accepts an empty
+ *     __VA_ARGS__ in a struct body (verified), so a fourth argument -- an
+ *     extra field beside `lock` -- costs nothing to leave room for.
+ */
+#define DEFINE_LOCK_GUARD_0(_name, _lock, _unlock, ...)			\
+	typedef struct { void *lock; __VA_ARGS__; } dclg_##_name;	\
+	static inline void dclg_##_name##_release(dclg_##_name* _T)	\
+	{								\
+		if (_T->lock) { _unlock; }				\
+	}								\
+	static inline dclg_##_name dclg_##_name##_ctor(void)		\
+	{								\
+		dclg_##_name _t = { .lock = (void*)1 };			\
+		dclg_##_name* _T = &_t;					\
+		(void)_T;						\
+		_lock;							\
+		return _t;						\
 	}
 
 /*

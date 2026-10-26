@@ -161,6 +161,7 @@ typedef struct _aa64_task_ {
 	uint8_t futex_waiting;
 	/** absolute wake-up time (system us) of a sleeping thread; see AuSleepThread */
 	uint64_t sleep_until_us;
+	uint8_t blocked_on_poll;
 } AA64Thread;
 
 //#pragma pack(pop)
@@ -196,6 +197,13 @@ AU_EXTERN AU_EXPORT void AuBlockThread(AA64Thread* thread);
 * @param t -- pointer to thread
 */
 AU_EXTERN AU_EXPORT void AuUnblockThread(AA64Thread* thread);
+
+/**
+ * @brief AuThreadWakePoller -- wake up a thread that was left
+ * in sleep/block while polling
+ * @param t -- Pointer to thread
+ */
+AU_EXTERN AU_EXPORT void AuThreadWakePoller(AA64Thread* t);
 /**
  * @brief AuForceScheduler -- force the scheduler
  * to switch next thread

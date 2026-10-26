@@ -22,6 +22,7 @@
 #include <string.h>
 #include <sys/_kefile.h>
 #include <hwdev.h>
+#include <drvctl.h>
 
 static int g_ok;
 static int g_bad;
@@ -57,10 +58,16 @@ static void note(const char* what, unsigned long long v) {
 static int drvctl(const char* cmd) {
 	int fd = _KeOpenFile((char*)"/dev/drvctl", FILE_OPEN_WRITE);
 	if (fd < 0)
-		return -1;
-	int n = (int)_KeWriteFile(fd, (void*)cmd, strlen(cmd));
+		return -100;
+	AuDriverCtlRequest req;
+	memset(&req, 0, sizeof req);
+	size_t n = strlen(cmd);
+	if (n >= sizeof(req.command))
+		n = sizeof(req.command) - 1;
+	memcpy(req.command, (void*)cmd, n);
+	int rc = _KeFileIoControl(fd, AU_DRVCTL_IOC_EXEC, &req);
 	_KeCloseFile(fd);
-	return n;
+	return rc;
 }
 
 static int pci_open(int ctl, unsigned vendor, unsigned device, int* handle) {
@@ -99,6 +106,7 @@ int main(int argc, char* argv[]) {
 		emit("[hwtest] SUMMARY aborted: no /dev/hwdev (is this process in the daemons group?)\n");
 		return 1;
 	}
+	report("drvctl unknown driver status", drvctl("unload no-such-driver"), AU_UNLOAD_NOT_FOUND);
 
 	/* 1. default deny: virtio-gpu is real hardware here but not on the allowlist */
 	report("non-allowlisted device refused", pci_open(ctl, VEN, 0x1050, NULL), HWDEV_E_PERM);
@@ -109,14 +117,14 @@ int main(int argc, char* argv[]) {
 	report("busy while kernel driver loaded", pci_open(ctl, VEN, SND, NULL), HWDEV_E_BUSY);
 
 	/* 3. hand the device over: unload the kernel driver, then claim it */
-	report("drvctl unload accepted", drvctl("unload virtsnd") > 0, 1);
+	report("drvctl unload succeeded", drvctl("unload virtsnd"), AU_UNLOAD_OK);
 	int h = -1;
 	int rc = pci_open(ctl, VEN, SND, &h);
 	if (rc != HWDEV_OK) {
 		/* unload is vetoed while an audio client is bound to the card */
 		note("pci_open after unload rc (negative = still owned)", (unsigned long long)(long long)rc);
 		emit("[hwtest] SKIP device tests: virtio-sound could not be handed over\n");
-		report("kernel driver reload", drvctl("load virtsnd") >= 0, 1);
+		report("kernel driver reload", drvctl("load virtsnd"), AU_UNLOAD_OK);
 		goto summary;
 	}
 	report("pci_open after unload", rc, HWDEV_OK);
@@ -231,7 +239,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* give the device back to the in-kernel driver */
-	report("kernel driver reload", drvctl("load virtsnd") > 0, 1);
+	report("kernel driver reload", drvctl("load virtsnd"), AU_UNLOAD_OK);
 
 summary:
 	{

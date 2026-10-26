@@ -37,6 +37,8 @@
 
 #define TERMINAL_HISTORY_MAX 100
 
+#define TERMINAL_SCROLLBACK_MAX 1000
+
 /* Cell flag bits. 0x1 marks a cell TerminalFlush should repaint, 0x2 is the
  * blinking cursor block, and 0x4 is a selected cell. Selection is a flag
  * rather than swapped colours because new output can land under a live
@@ -92,6 +94,10 @@ typedef struct {
 	volatile bool blink_visible;
 	bool scrolling;
 	bool cursor_hide;
+	TermCell* sb;
+	int sbHead;
+	int sbCount;
+	int viewOffset;
 } Terminal;
 
 #endif

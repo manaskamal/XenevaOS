@@ -12,6 +12,10 @@ endif
 TOOLCHAIN ?= gcc
 
 BLEED ?= 0
+GPUSRV ?= 0
+ifeq ($(GPUSRV),1)
+    GPUSRV_FLAGS = -D__XENEVA_GPUSRV__
+endif
 DRV_SELFTEST ?= 0
 ifeq ($(DRV_SELFTEST),1)
     DRV_SELFTEST_FLAGS = -D__XENEVA_DRV_SELFTEST__
@@ -32,6 +36,26 @@ endif
 DEBUG_ALLOC ?= 0
 ifeq ($(DEBUG_ALLOC),1)
     DEBUG_ALLOC_FLAGS = -D__XENEVA_DEBUG_ALLOC__
+endif
+
+# --bypass-virtgpu, kernel half: the image-side half
+# (Scripts/Linux/build_and_run_qemu.sh) drops the internal virtgpu.dll so
+# nothing claims 1AF4:1050; this define arms the DCL scan that creates the
+# virtio device (DCL/modload_test.c), which is what lets the vendored DRM
+# virtio-gpu driver probe. Off by default: with the internal driver in the
+# image the same scan would take the device out from under it.
+BYPASS_VIRTGPU ?= 0
+ifeq ($(BYPASS_VIRTGPU),1)
+    BYPASS_VIRTGPU_FLAGS = -D__XENEVA_BYPASS_VIRTGPU__
+endif
+
+# --bypass-virtio-input, kernel half: leaves 1AF4:1052 to the vendored Linux
+# input core + virtio_input driver instead of the native virtiokbd/tablet
+# pair.  The native board scan and /dev/inputsrv are compiled out under this
+# define; the DCL bus scan and timer-driven queue poll are compiled in.
+BYPASS_VIRTIO_INPUT ?= 0
+ifeq ($(BYPASS_VIRTIO_INPUT),1)
+    BYPASS_VIRTIO_INPUT_FLAGS = -D__XENEVA_BYPASS_VIRTIO_INPUT__
 endif
 
 # Triggered when you run "make llvm"
@@ -59,9 +83,14 @@ ifeq ($(TOOLCHAIN), llvm)
     
     LLVM_TARGET = -target aarch64-unknown-windows
     
+    # __KERNEL__: mainline's build always has it, and the headers gate on it
+    # -- compiler_types.h:85 opens on the attribute battery (__noreturn,
+    # __counted_by, __always_inline proper) that ports of kthread.h,
+    # dma-fence-array.h and the drm set assume, and uapi/linux/stddef.h:5
+    # pulls compiler_types in first so its fallbacks never shadow them.
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) $(BYPASS_VIRTIO_INPUT_FLAGS) \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 
@@ -92,7 +121,7 @@ else
 
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 \
-              -DARCH_ARM64 $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) $(BYPASS_VIRTIO_INPUT_FLAGS) \
               $(INCLUDES)
 endif
 

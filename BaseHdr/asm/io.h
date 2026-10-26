@@ -7,7 +7,12 @@
  * ARM64 has no x86 I/O port space, but 8250's probe and PIO paths carry
  * inb/outb/inl/outl calls that must still *compile* even though every port we
  * intend to bind is MMIO (QEMU's pci-serial BAR, iMX8MP's UART -- both
- * reach registers through readb/writeb, already in <linux/kernel.h>).
+ * reach registers through readb/writeb, already in <linux/kernel.h>). The
+ * 16-bit pair (inw/outw) is here for the same reason: bochs.c hands the
+ * VBE dispi registers that way when it has no MMIO BAR, and that whole arm
+ * is dead on this target because bochs_uses_mmio() folds to true (see
+ * <linux/kconfig.h>: CONFIG_HAS_IOPORT is undefined), but the call sites
+ * still have to name the functions.
  *
  * So these are honest failures, not silent ones: a read answers 0 and a write
  * drops, and the first of either logs once. 0 rather than 0xff on purpose --
@@ -26,6 +31,8 @@
 
 unsigned char inb(unsigned long addr);
 void outb(unsigned char v, unsigned long addr);
+unsigned short inw(unsigned long addr);
+void outw(unsigned short v, unsigned long addr);
 unsigned int inl(unsigned long addr);
 void outl(unsigned int v, unsigned long addr);
 

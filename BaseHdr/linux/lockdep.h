@@ -35,10 +35,32 @@
 #define lockdep_set_subclass(lock, sub)		do { (void)(lock); (void)(sub); } while (0)
 #define lockdep_set_novalidate_class(lock)	do { (void)(lock); } while (0)
 
-#define lockdep_init_map(lock, name, key, sub)	\
-	do { (void)(lock); (void)(name); (void)(key); (void)(sub); } while (0)
+/*
+ * The `lock` argument is dropped rather than evaluated, which is what
+ * mainline's own !CONFIG_LOCKDEP arm does (lockdep.h:349, `do { (void)(name);
+ * (void)(key); } while (0)`).  The difference matters because mainline's
+ * seqlock.h is a byte-port here and its __seqcount_init() (:48) and
+ * do_write_seqcount_begin_nested() (:478) both address `&s->dep_map` -- a
+ * member seqcount_t only has when CONFIG_DEBUG_LOCK_ALLOC is on, which it is
+ * not.  Evaluating the first parameter type-checked that member access and
+ * turned every dma-resv.c inclusion into "no member named 'dep_map' in
+ * 'struct seqcount'".  A macro parameter that never appears in its
+ * replacement list is not expanded at all, so the expression never reaches C.
+ *
+ * mainline evaluates name and key and so does this: both are live parameters
+ * of __seqcount_init(), so the (void) casts also keep them from warning.
+ *
+ * seqcount_acquire/seqcount_release are mainline's own two-step names
+ * (lockdep.h:528/:530), spelled the same way as the rwsem quartet below for
+ * the same reason -- the lockdep_map they would take does not exist here.
+ */
+#define lockdep_init_map(lock, name, key, sub)		\
+	do { (void)(name); (void)(key); } while (0)
 #define lockdep_init_map_type(lock, name, key, sub, ...)		\
-	do { (void)(lock); (void)(name); (void)(key); (void)(sub); } while (0)
+	do { (void)(name); (void)(key); } while (0)
+
+#define seqcount_acquire(l, s, t, i)		do {} while (0)
+#define seqcount_release(l, i)			do {} while (0)
 
 #define lockdep_match_class(lock, key)		(1)
 #define lockdep_match_name(lock, name)		(1)
@@ -52,6 +74,37 @@
 #define lockdep_assert_irqs_disabled()		do {} while (0)
 #define lockdep_assert_irqs_enabled()		do {} while (0)
 #define lockdep_assert_in_rcu()			do {} while (0)
+#define lockdep_assert_preemption_disabled()	do {} while (0)
+
+/*
+ * The three names the drm core adds to that family.  drm_auth.c:66 is the
+ * interesting one:
+ *
+ *     lockdep_assert_once(lockdep_is_held(&fpriv->master_lookup_lock) ||
+ *                         lockdep_is_held(&dev->master_mutex));
+ *
+ * and drm_syncobj.c:385/:1020 hand lockdep_is_held() to
+ * rcu_dereference_protected()'s condition slot.  mainline answers "does this
+ * task hold this lock" out of the held-lock graph it maintains while running
+ * (lockdep.h:252); DCL has no graph and its locks are no-ops, so nothing is
+ * ever held and no order can be violated -- `1` is the answer that makes
+ * every one of these assertions pass, which is what an assertion that can
+ * only fail with lockdep is supposed to do.  The RCU condition is a hint
+ * DCL's rcu_dereference_protected() drops anyway (rcupdate.h).
+ *
+ * lockdep_assert_once() *does* evaluate its argument, unlike its neighbours
+ * above that take no value and unlike mainline's !CONFIG_LOCKDEP form
+ * (`do { } while (0)`, lockdep.h:390): the argument is the expression under
+ * assertion, and evaluating it is what keeps the lock it names used -- the
+ * same reason lockdep_set_subclass() above evaluates its arguments.  The
+ * compiler then folds it away, since lockdep_is_held() is the constant 1.
+ * A macro rather than an extern declaration (which is what upstream's
+ * !CONFIG_LOCKDEP build uses) follows lockdep_match_class() above, and both
+ * files that reference it reach this header, so no definition is needed.
+ */
+#define lockdep_is_held(lock)			(1)
+#define lockdep_assert_once(cond)		do { (void)(cond); } while (0)
+#define lockdep_assert_none_held_once()		do {} while (0)
 
 /*
  * The rwsem acquire/release quartet -- tty_ldsem.c:300-310, which brackets
@@ -80,6 +133,29 @@
 #define rwsem_release(l, i)			do {} while (0)
 #define lock_contended(l, i)			do {} while (0)
 #define lock_acquired(l, i)			do {} while (0)
+
+/*
+ * lock_acquire_shared_recursive() / lock_release() -- the two lockdep calls
+ * drm_connector.c makes around the connector list iterator, at :1054 and
+ * :1135. Same spelling as the five above, same argument-dropping reason, but
+ * here it is load-bearing rather than tidy.
+ *
+ * The second argument of the first call and the first of the second is
+ * `&connector_list_iter_dep_map`, and mainline only *defines* that object
+ * inside `#ifdef CONFIG_LOCKDEP` (drm_connector.c:1032-1036). The two call
+ * sites are not under that ifdef. They still compile in mainline because
+ * mainline's no-op spelling of these macros discards its arguments before
+ * they reach C, so the address of an object that was never declared is
+ * parsed and then thrown away.
+ *
+ * That is exactly what dropping the parameter does here, and it is why the
+ * macros must not be written `(void)(l)`: evaluating the argument would
+ * require a declaration, the declaration lives behind an ifdef that is off,
+ * and the only ways out would be editing the vendored .c or unguarding a
+ * lockdep object this kernel does not run.
+ */
+#define lock_acquire_shared_recursive(l, s, r, n, i)	do {} while (0)
+#define lock_release(l, i)				do {} while (0)
 
 struct lock_class_key { };
 struct lockdep_map { };
