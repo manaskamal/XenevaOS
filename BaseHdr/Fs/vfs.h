@@ -51,6 +51,18 @@
 #define FS_FLAG_FILE_SYSTEM_GENERAL (1 << 10) //general file system
 #define FS_FLAG_CACHED				(1 << 11) //file is being cached
 
+/** file modes */
+#define S_ISUID	  04000
+#define S_ISGID	  02000
+#define S_ISVTX	  01000
+#define S_IRWXU	  00700
+#define S_IRUSR	  00400
+#define S_IWUSR	  00200
+#define S_IXUSR	  00100
+#define S_IRWXG	  00070
+#define S_IRWXO	  00007
+#define S_IALLUGO 07777
+
 #define FS_STATUS_FOUND 0x1
 #define FS_STATUS_NF	0x0
 
@@ -111,6 +123,7 @@ typedef size_t (*fs_getblockfor)(struct __VFS_NODE__* fs,
 typedef int (*poll_callback)(struct __VFS_NODE__* fs,
 							 struct __VFS_NODE__* file,
 							 AuPollTable* table);
+typedef int (*setattr_callback)(struct __VFS_NODE__* fs, struct __VFS_NODE__* file);
 
 //#pragma pack(push,1)
 typedef struct __VFS_NODE__ {
@@ -125,6 +138,7 @@ typedef struct __VFS_NODE__ {
 	uint8_t status;
 	UID_NUM uid;
 	GID_NUM gid;
+	uint16_t mode;
 	void* device;
 	void* private_data;
 	uint16_t fileCopyCount; //important for tty files
@@ -146,6 +160,7 @@ typedef struct __VFS_NODE__ {
 	fs_getblockfor get_blockfor;
 	iocontrol_callback iocontrol;
 	poll_callback poll;
+	setattr_callback setattr;
 } AuVFSNode;
 //#pragma pack(pop)
 

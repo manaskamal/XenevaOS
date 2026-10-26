@@ -352,7 +352,7 @@ size_t WriteFile(int fd, void* buffer, size_t length) {
 			uint64_t* buff = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 			memset(buff, 0, PAGE_SIZE);
 			//memcpy(buff, src, chunk);
-			if (!__bordoisila_copy_from_user(buff, aligned_buffer, chunk)) {
+			if (__bordoisila_copy_from_user(buff, aligned_buffer, chunk) != 0) {
 				AuPmmngrReleasePage((uint64_t)V2P((size_t)buff));
 				return remaining;
 			}

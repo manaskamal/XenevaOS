@@ -38,6 +38,7 @@
 #include <Drivers/uart.h>
 #include <_null.h>
 #include <Mm/kmalloc.h>
+#include <fixup.h>
 
 #define POLL_MAX_FD_MONITOR 1024
 
@@ -101,6 +102,15 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 
 	AA64Thread* curr_thr = AuGetCurrentThread();
 
+	_AuUser_PollFD* _kfds = (_AuUser_PollFD*)kmalloc(sizeof(_AuUser_PollFD) * num_fd);
+	memset(_kfds, 0, sizeof(_AuUser_PollFD) * num_fd);
+
+	/** copy it from user */
+	if (__bordoisila_copy_from_user(_kfds, fds, sizeof(_AuUser_PollFD) * num_fd) != 0) {
+		kfree(_kfds);
+		return -1;
+	}
+
 	AuPollTable pt;
 	pt.thread = curr_thr;
 	pt.error = 0;
@@ -118,11 +128,11 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 		/** check all file descriptors */
 		for (int i = 0; i < num_fd; i++) {
 			mask = 0;
-			fds[i].revents = 0;
+			_kfds[i].revents = 0;
 			if (fds[i].fd < 0)
 				continue;
-			UARTDebugOut("poll: getting file for fd: %d \r\n", fds[i].fd);
-			AuVFSNode* file = AuPollGetFile(curr_thr, fds[i].fd);
+			UARTDebugOut("poll: getting file for fd: %d \r\n", _kfds[i].fd);
+			AuVFSNode* file = AuPollGetFile(curr_thr, _kfds[i].fd);
 			if (!file)
 				mask = POLLNVAL;
 			else if (file->poll) {
@@ -136,7 +146,7 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
             *  POLLERR | POLLHUP | POLLNVAL present
             */
 			mask &= (uint16_t)fds[i].events | POLLERR | POLLHUP | POLLNVAL;
-			fds[i].revents = mask;
+			_kfds[i].revents = mask;
 			if (mask) {
 				UARTDebugOut("making ready +=1 : %x \r\n", mask);
 				ready++;
@@ -180,11 +190,14 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 		UARTDebugOut("POLL: After scheduleNext horrible??\r\n");
 	}
 
+	kfree(_kfds);
+
 	while (pt.chain) {
 		AuWaitQEntry* next = pt.chain->owner_next;
 		AuWaitQueueRemove(pt.chain);
 		kfree(pt.chain);
 		pt.chain = next;
 	}
+
 	return ready;
 }
