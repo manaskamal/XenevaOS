@@ -529,6 +529,57 @@ static int ns_attr_int(NsCssNode* n, const char* name) {
     return v;
 }
 
+/* Used size of a replaced box. A CSS length wins on that axis. An HTML
+ * width or height attribute is a used size only while that axis is
+ * still auto and the other axis did not come from CSS. One definite
+ * axis takes its ratio from both attributes when they exist, otherwise
+ * from the bitmap. Both CSS axes set are left as specified. */
+static void ns_replaced_used(int width_auto, int css_w, int height_auto, int css_h, int aw, int ah,
+                             int iw, int ih, int* ow, int* oh) {
+    int w = 0;
+    int h = 0;
+    int spec_w = 0;
+    int spec_h = 0;
+    if (!width_auto) {
+        w = css_w > 0 ? css_w : 0;
+        spec_w = 1;
+    }
+    if (!height_auto) {
+        h = css_h > 0 ? css_h : 0;
+        spec_h = 1;
+    }
+    if (spec_w && !spec_h) {
+        if (aw > 0 && ah > 0)
+            h = (int)(((int64_t)w * ah) / aw);
+        else if (iw > 0 && ih > 0)
+            h = (int)(((int64_t)w * ih) / iw);
+    } else if (spec_h && !spec_w) {
+        if (aw > 0 && ah > 0)
+            w = (int)(((int64_t)h * aw) / ah);
+        else if (iw > 0 && ih > 0)
+            w = (int)(((int64_t)h * iw) / ih);
+    } else if (!spec_w && !spec_h) {
+        if (aw > 0)
+            w = aw;
+        else if (iw > 0)
+            w = iw;
+        if (ah > 0)
+            h = ah;
+        else if (ih > 0)
+            h = ih;
+        if (w > 0 && h <= 0 && iw > 0 && ih > 0)
+            h = (int)(((int64_t)w * ih) / iw);
+        else if (h > 0 && w <= 0 && iw > 0 && ih > 0)
+            w = (int)(((int64_t)h * iw) / ih);
+    }
+    if (!spec_w && w <= 0 && iw > 0)
+        w = iw;
+    if (!spec_h && h <= 0 && ih > 0)
+        h = ih;
+    *ow = w;
+    *oh = h;
+}
+
 static int ns_skip_node(NsCssNode* n) {
     NsCssBoxStyle bs;
     if (!n || n->is_text)
@@ -663,7 +714,6 @@ static void ns_collect_inline(NsCssNode* n, NsCssNode* parent, NsInlineList* lis
         const uint32_t* pixels = NULL;
         int bw = 0, bh = 0, iw = 0, ih = 0;
         int aw, ah, w, h;
-        int have_w = 0, have_h = 0;
         if (s_svg_lookup)
             pixels = s_svg_lookup(n, &bw, &bh, &iw, &ih);
         if (!pixels || bw <= 0 || bh <= 0)
@@ -674,30 +724,11 @@ static void ns_collect_inline(NsCssNode* n, NsCssNode* parent, NsInlineList* lis
             ih = bh;
         aw = ns_attr_int(n, "width");
         ah = ns_attr_int(n, "height");
-        if (!bs.width_auto && bs.width > 0) {
-            w = bs.width;
-            have_w = 1;
-        } else if (aw > 0) {
-            w = aw;
-            have_w = 1;
-        } else {
-            w = iw > 0 ? iw : 24;
-        }
-        if (!bs.height_auto && bs.height > 0) {
-            h = bs.height;
-            have_h = 1;
-        } else if (ah > 0) {
-            h = ah;
-            have_h = 1;
-        } else {
-            h = ih > 0 ? ih : 24;
-        }
-        if (iw > 0 && ih > 0) {
-            if (have_w && !have_h)
-                h = (int)(((int64_t)w * ih) / iw);
-            else if (have_h && !have_w)
-                w = (int)(((int64_t)h * iw) / ih);
-        }
+        ns_replaced_used(bs.width_auto, bs.width, bs.height_auto, bs.height, aw, ah, iw, ih, &w, &h);
+        if (w < 1)
+            w = 24;
+        if (h < 1)
+            h = 24;
         if (bs.max_width > 0 && w > bs.max_width) {
             int64_t nh = (int64_t)h * bs.max_width / w;
             w = bs.max_width;
@@ -738,8 +769,6 @@ static void ns_collect_inline(NsCssNode* n, NsCssNode* parent, NsInlineList* lis
         int iw = 0, ih = 0;   /* intrinsic (CSS natural) size */
         int bw = 0, bh = 0;   /* decoded bitmap size */
         int w = 0, h = 0;
-        int have_w = 0, have_h = 0;
-        int w_spec = 0, h_spec = 0;
         const uint32_t* pixels = NULL;
         char* label = NULL;
         char* clean = NULL;
@@ -765,56 +794,16 @@ static void ns_collect_inline(NsCssNode* n, NsCssNode* parent, NsInlineList* lis
             bw = iw;
         if (bh <= 0)
             bh = ih;
-        if (!bs.width_auto) {
-            w = bs.width;
-            have_w = 1;
-            w_spec = 1;
-        } else {
-            int aw = ns_attr_int(n, "width");
-            if (aw > 0) {
-                w = aw;
-                have_w = 1;
-                w_spec = 1;
-            }
-        }
-        if (!bs.height_auto) {
-            h = bs.height;
-            have_h = 1;
-            h_spec = 1;
-        } else {
-            int ah = ns_attr_int(n, "height");
-            if (ah > 0) {
-                h = ah;
-                have_h = 1;
-                h_spec = 1;
-            }
-        }
-        if (!have_w && iw > 0) {
-            w = iw;
-            have_w = 1;
-        }
-        if (!have_h && ih > 0) {
-            h = ih;
-            have_h = 1;
-        }
-        /* height:auto must follow the width's aspect ratio (and vice
-         * versa); otherwise a width-constrained image (Zerodha's logo
-         * inside .relative-section gets width:150px) keeps its intrinsic
-         * height and is drawn squashed. */
-        if (iw > 0 && ih > 0) {
-            if (w_spec && !h_spec)
-                h = (int)(((int64_t)w * ih) / iw);
-            else if (h_spec && !w_spec)
-                w = (int)(((int64_t)h * iw) / ih);
-        }
-        if (!have_w)
-            w = 28;
-        if (!have_h)
-            h = 22;
+        /* height:auto must follow the width. An HTML height attribute
+         * used to count as a specified height, so a width:100% image
+         * kept that attribute's pixel height and the bitmap was drawn
+         * squashed. The type inside the product screenshots lost its tops. */
+        ns_replaced_used(bs.width_auto, bs.width, bs.height_auto, bs.height, ns_attr_int(n, "width"),
+                         ns_attr_int(n, "height"), iw, ih, &w, &h);
         if (w < 1)
-            w = 1;
+            w = 28;
         if (h < 1)
-            h = 1;
+            h = 22;
         /* Replaced elements honour max-width/max-height while preserving
          * the intrinsic aspect ratio.  Zerodha's landing image is sized
          * entirely by img{max-width:100%} + max-height:45vh. */
@@ -832,10 +821,19 @@ static void ns_collect_inline(NsCssNode* n, NsCssNode* parent, NsInlineList* lis
                 w = nw > 0 ? (int)nw : 1;
             }
         }
-        if (w > 1600)
+        /* Cap both axes together. Clamping one side used to break the ratio. */
+        if (w > 1600 && w > 0) {
+            int64_t nh = ((int64_t)h * 1600) / w;
             w = 1600;
-        if (h > 1200)
+            if (nh > 0)
+                h = (int)nh;
+        }
+        if (h > 1200 && h > 0) {
+            int64_t nw = ((int64_t)w * 1200) / h;
             h = 1200;
+            if (nw > 0)
+                w = (int)nw;
+        }
         if (pixels) {
             label = NULL;
         } else if (alt && alt[0]) {
@@ -2369,9 +2367,32 @@ static void ns_draw_text(ChCanvas* canv, int x, int baseline, const char* text, 
                          int font_px, uint32_t color, uint8_t decor, const NsClip* clip,
                          ChRect* crect) {
     ChFont* f = ns_font_for_px(font_px);
+    ChRect ink;
     size_t i;
-    if (!f || !text)
+    if (!f || !text || !clip || !crect)
         return;
+    ink = *crect;
+    /* The baked glyph hangs above the baseline. A box only about one
+     * line tall clips that ink, so the caps look cut off. Four pixels
+     * covers the overshoot. A full em would paint the previous line.
+     * A page run's clip is the viewport, which already holds the ink,
+     * so the top stays put except on the first pixel rows. */
+    {
+        int top = baseline - ns_font_ascent(font_px) - 1;
+        int bot = baseline + ns_font_descent(font_px) + 2;
+        if (top < ink.y - 4)
+            top = ink.y - 4;
+        if (top < 0)
+            top = 0;
+        if (bot > ink.y + ink.h + 4)
+            bot = ink.y + ink.h + 4;
+        if (top < ink.y) {
+            ink.h += ink.y - top;
+            ink.y = top;
+        }
+        if (bot > ink.y + ink.h)
+            ink.h = bot - ink.y;
+    }
     for (i = 0; i < len; i++) {
         char c = text[i];
         int cw = ns_char_width(font_px, c);
@@ -2384,10 +2405,10 @@ static void ns_draw_text(ChCanvas* canv, int x, int baseline, const char* text, 
         if (baseline < clip->y - 32 || baseline > clip->y + clip->h + 10)
             continue;
         if (decor & NS_CSS_ITALIC)
-            ChFontDrawCharClipped(canv, f, c, cx + 1, baseline, color, crect);
-        ChFontDrawCharClipped(canv, f, c, cx, baseline, color, crect);
+            ChFontDrawCharClipped(canv, f, c, cx + 1, baseline, color, &ink);
+        ChFontDrawCharClipped(canv, f, c, cx, baseline, color, &ink);
         if (decor & NS_CSS_BOLD)
-            ChFontDrawCharClipped(canv, f, c, cx + 1, baseline, color, crect);
+            ChFontDrawCharClipped(canv, f, c, cx + 1, baseline, color, &ink);
     }
     if (decor & NS_CSS_UNDER)
         ns_fill(canv, x - ns_text_width(font_px, text, len), baseline + 2,
@@ -2688,11 +2709,37 @@ static void ns_paint_box(NsLayoutBox* b, ChCanvas* canv, int ox, int oy, int scr
         int bh = b->img_h > 0 ? b->img_h : b->h - b->margin[0] - b->margin[2];
         NsClip bc = *clip;
         if (b->pixels) {
+            int dw = bw;
+            int dh = bh;
+            int ox = 0;
+            int oy = 0;
+            /* Fit the bitmap inside the box. A box whose ratio is not the
+             * bitmap's used to scale the product screenshots, and the type
+             * inside them lost the top of every glyph. A one-pixel rounding
+             * gap is left as a fill so a matching box is not letterboxed. */
+            if (b->src_w > 1 && b->src_h > 1 && bw > 1 && bh > 1) {
+                int64_t fw = bw;
+                int64_t fh = ((int64_t)bw * b->src_h + b->src_w / 2) / b->src_w;
+                if (fh > bh) {
+                    fh = bh;
+                    fw = ((int64_t)bh * b->src_w + b->src_h / 2) / b->src_h;
+                }
+                if (fw < 1)
+                    fw = 1;
+                if (fh < 1)
+                    fh = 1;
+                if (fw <= bw && fh <= bh && (bw - (int)fw > 1 || bh - (int)fh > 1)) {
+                    ox = (int)((bw - fw) / 2);
+                    oy = (int)((bh - fh) / 2);
+                    dw = (int)fw;
+                    dh = (int)fh;
+                }
+            }
             /* Pass the unclipped image rectangle: ns_blit_image crops the
              * source to the visible part.  Passing a pre-clipped
              * destination while keeping the whole source made images
              * squash and stretch while scrolling. */
-            ns_blit_image(canv, bx, by, bw, bh, b->pixels, b->src_w, b->src_h, &bc);
+            ns_blit_image(canv, bx + ox, by + oy, dw, dh, b->pixels, b->src_w, b->src_h, &bc);
         } else {
             ChRect cr;
             ns_fill(canv, bx, by, bw, bh, b->bg ? b->bg : 0xfff3f3f3u, &bc);
