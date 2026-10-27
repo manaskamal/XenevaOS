@@ -2,7 +2,7 @@
  * math.h shim for the QuickJS port on XenevaOS.
  *
  * XEClib's real math.h declares only a subset of double libm calls; the
- * rest live in port/libm.o (filling the double-precision gap on top of
+ * rest live in port/libm.c (filling the double-precision gap on top of
  * XEClib's float primitives). quickjs.c needs correct prototypes for all
  * of them plus INFINITY/NAN/signbit -- so the QuickJS port build resolves
  * <math.h> to this header instead (include order puts Ports/quickjs/port
@@ -47,7 +47,7 @@ float fmaxf(float, float);
 float fminf(float, float);
 int fpclassify(double);
 
-/* ---- double-precision gap, implemented in port/libm.o ---- */
+/* ---- double-precision gap, implemented in port/libm.c ---- */
 double acos(double);
 double acosh(double);
 double asin(double);
