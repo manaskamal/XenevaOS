@@ -147,6 +147,16 @@ void AuVirtioTabletHandler(int spiNum) {
 			} else if (evt.code == 0x151) {
 				buttonScrollUp = 1;
 			}
+		} else if (evt.type == 2) {
+			/* QEMU's default tablet sends the wheel as EV_REL
+			 * REL_WHEEL (code 8): positive is up, negative is down.
+			 * The gear-button codes above are the other QEMU mode. */
+			if (evt.code == 8 && evt.value) {
+				if (evt.value < 0x80000000u)
+					buttonScrollUp = 1;
+				else
+					buttonScrollDown = 1;
+			}
 		} else if (evt.type == 0) {
 			AuInputMessage newmsg;
 			memset(&newmsg, 0, sizeof(AuInputMessage));

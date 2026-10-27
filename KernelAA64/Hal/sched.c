@@ -566,6 +566,21 @@ void AuScheduleThread(AA64Registers* regs) {
 	__builtin_unreachable();
 }
 
+int AuSchedYieldMs(uint64_t ms) {
+	AA64Thread* thr;
+
+	if (_scheduler_initialized == 0)
+		return -1;
+	thr = current_thread;
+	if (!thr || thr == _idle_thr)
+		return -1;
+	if (ms == 0)
+		ms = 1;
+	AuSleepThread(thr, ms);
+	AuScheduleNext();
+	return 0;
+}
+
 /**
  * @brief AuScheduleNext -- forcefully schedule
  * to idle thread

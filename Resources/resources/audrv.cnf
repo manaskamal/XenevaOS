@@ -1,5 +1,4 @@
-(1)[03,128]/virtgpu.dll |
-(2)[02,00]/virtnet.dll |
-(3)[6900,4185]/virtsnd.dll |
-(4)[6900,4162]/virtblk.dll |
+(1)[02,00]/virtnet.dll |
+(2)[6900,4185]/virtsnd.dll |
+(3)[6900,4162]/virtblk.dll |
 (0)

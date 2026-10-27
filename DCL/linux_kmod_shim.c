@@ -113,8 +113,9 @@ int hwrng_read_bytes(void* buf, unsigned int max) {
 	return (int)rng->read(rng, buf, max, 1);
 }
 
-#define ERESTARTSYS_			512
-#define DCL_COMPLETION_SPIN_MAX 2000000u
+#define ERESTARTSYS_ 512
+
+extern int AuSchedYieldMs(uint64_t ms);
 
 void complete(struct completion* x) {
 	if (!x)
@@ -123,12 +124,23 @@ void complete(struct completion* x) {
 }
 
 int wait_for_completion_killable(struct completion* x) {
+	unsigned int spins = 0;
 	if (!x)
 		return -ERESTARTSYS_;
-	unsigned int spins = 0;
 	while (!*(unsigned int*)x) {
 		virtio_poll_vqs();
-		if (++spins > DCL_COMPLETION_SPIN_MAX)
+		if (*(unsigned int*)x)
+			break;
+		/* This wait runs from a read syscall, which entered with IRQs
+		 * masked. Spinning here stops the timer, so the desktop does not
+		 * move until the spin gives up. Sleep and let the compositor run.
+		 * A few polls above still catch a reply already in the ring. */
+		if (AuSchedYieldMs(1) != 0) {
+			if (++spins > 64)
+				return -ERESTARTSYS_;
+			continue;
+		}
+		if (++spins > 100)
 			return -ERESTARTSYS_;
 	}
 	*(unsigned int*)x = 0;

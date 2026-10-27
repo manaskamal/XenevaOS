@@ -104,6 +104,10 @@ typedef struct _tcp_pcb_ {
 	void* rxbuf;
 	uint8_t* rxmem;
 	list_t* acceptq;
+	/* Deadline for the next SYN retry while a non-blocking connect waits. */
+	uint64_t syn_sec;
+	uint64_t syn_sub;
+	uint8_t syn_tries;
 } TCPControlBlock;
 
 /*

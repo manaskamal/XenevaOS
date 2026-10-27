@@ -135,6 +135,7 @@ int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 #define SO_KEEPALIVE	1
 #define SO_REUSEADDR	2
 #define SO_BINDTODEVICE 3
+#define SO_NONBLOCK	4
 
 int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t optlen) {
 	switch (optname) {
@@ -147,6 +148,14 @@ int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t 
 			return -1;
 		sock->binedDev = nic;
 		UARTDebugOut("Device binded \r\n");
+		return 0;
+	}
+	case SO_NONBLOCK: {
+		int on;
+		if (!optval || optlen < (socklen_t)sizeof(int))
+			return -1;
+		on = *(const int*)optval;
+		sock->nonblock = on ? 1 : 0;
 		return 0;
 	}
 	}
