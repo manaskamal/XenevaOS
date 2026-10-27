@@ -203,6 +203,8 @@ void AuLoaderMapExecFromCache(AuProcess* proc,
 							v_page,
 							PTE_USER_EXECUTABLE | PTE_AP_RW_USER | PTE_NORMAL_MEM);
 			}
+			if (((v_page >> 12) & 15) == 0)
+				AuSchedYieldMs(1);
 		}
 
 		/* Section bytes live in the file page cache. Scratch is only 1 MiB,
@@ -247,6 +249,8 @@ void AuLoaderMapExecFromCache(AuProcess* proc,
 			current_vaddr += bytes_in_this_page;
 			current_file_offset += bytes_in_this_page;
 			bytes_to_copy -= bytes_in_this_page;
+			if (((current_vaddr >> 12) & 15) == 0)
+				AuSchedYieldMs(1);
 		}
 	}
 }
@@ -309,6 +313,7 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 
 	if (fb->readComplete == false) {
 		size_t file_offset = 0;
+		size_t yield_mark = 0;
 		int elf_file = 0;
 		const size_t scratch_limit = 1024 * 1024;
 		while (file->eof != 1) {
@@ -330,6 +335,13 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 				if (mag[0] == 0x7f && mag[1] == 'E' && mag[2] == 'L' && mag[3] == 'F')
 					elf_file = 1;
 			}
+			/* The whole load is one syscall, and syscall entry masks IRQs.
+			 * Reading netsurf.exe straight through froze the desktop until
+			 * the last block. Hand the compositor a tick every 64KB. */
+			if (file_offset - yield_mark >= (64 * 1024)) {
+				yield_mark = file_offset;
+				AuSchedYieldMs(1);
+			}
 		}
 
 		size_t scratch_filled = file_offset;
@@ -339,6 +351,8 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 		size_t total_pages =
 			scratch_filled / PAGE_SIZE + ((scratch_filled % PAGE_SIZE) ? 1 : 0);
 		for (size_t i = 0; i < total_pages; i++) {
+			if ((i & 15) == 0)
+				AuSchedYieldMs(1);
 			uint64_t physcache = (uint64_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL);
 			AuMMPageCache* cache = AuMmngrPageCacheCreate();
 			cache->physicalPage = physcache;
@@ -388,6 +402,10 @@ int AuLoadExecToProcess(AuProcess* proc, char* filename, int argc, char** argv) 
 					copied += chunk;
 				}
 				file_offset += bytes_read;
+				if (file_offset - yield_mark >= (64 * 1024)) {
+					yield_mark = file_offset;
+					AuSchedYieldMs(1);
+				}
 			}
 		}
 

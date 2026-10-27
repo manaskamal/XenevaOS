@@ -122,6 +122,8 @@ typedef struct _socket_ {
 	int(*listen)(struct _socket_* sock, int backlog);
 	int(*accept)(struct _socket_* sock, sockaddr* addr, socklen_t* addrlen);
 	void* proto;
+	/* 1: AuTCPConnect returns before the handshake finishes. */
+	uint8_t nonblock;
 }AuSocket;
 #ifdef ARCH_X64
 #pragma pack(pop)
