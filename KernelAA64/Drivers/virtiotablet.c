@@ -214,6 +214,7 @@ void AuVirtioTabletDown() {
  * @brief AuVirtioTabletInitialize -- initialize the virtio tablet
  */
 void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
+#if 0
 	if (device == 0 || device == 0xFFFFFFFF)
 		return;
 
@@ -336,4 +337,5 @@ void AuVirtioTabletInitialize(uint64_t device, int bus, int dev, int func) {
 	buttonLeft = buttonMiddle = buttonRight = buttonScrollDown = buttonScrollUp = 0;
 	mouseX = mouseY = 0;
 	AuBuiltinRegister("virtio-tablet", bus, dev, func, AuVirtioTabletRelease, AuVirtioTabletReinit);
+#endif
 }

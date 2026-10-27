@@ -1409,7 +1409,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef __DEODHAI_COMPOSE3D__
 	Deodhai3DInitialise(canv);
-	//Deodhai3DLoadPanorama("/pano.jpg");
+	Deodhai3DLoadPanorama("/pano.jpg");
 	Deodhai3DSetEnabled(true);
 #endif
 
