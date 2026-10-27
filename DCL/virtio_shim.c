@@ -18,6 +18,10 @@ static int _num_drivers = 0;
 
 static struct virtio_device _virtio_devices[MAX_VIRTIO_DEVICES];
 static int _num_devices = 0;
+/* The virtio_device probe actually runs on. Queues point here, not at
+ * the snapshot copy stored in _virtio_devices[]. */
+static struct virtio_device* _probed_vdevs[MAX_VIRTIO_DEVICES];
+static int _num_probed_vdevs = 0;
 
 /*
  * Every queue any vendored driver sets up lands here, and the poll that
@@ -35,6 +39,63 @@ static int _num_devices = 0;
 static struct virtqueue* _live_vqs[MAX_LIVE_VQS];
 static int _num_live_vqs = 0;
 
+/* cookies[] is a fixed 256. A used-ring id past that walks off the object. */
+#define VQ_COOKIE_MAX 256
+
+/*
+ * The timer walks this list from IRQ context. A smashed slot's vdev is
+ * not one of the devices we registered: following it is a kernel data
+ * abort (FAR = vdev + 0x380, the device-id load) and fixup has nothing
+ * to retry. The pointer queues store is the device probe ran on. The
+ * _virtio_devices[] entry is a snapshot copy taken before any queue
+ * exists, so requiring vdev to land inside that array dropped every
+ * live queue, the control ring was never reaped, and
+ * virtio_gpu_queue_ctrl_sgs waited out its budget forever.
+ */
+static int vdev_is_ours(struct virtio_device* vdev) {
+	int i;
+
+	if (!vdev)
+		return 0;
+	for (i = 0; i < _num_probed_vdevs; i++) {
+		if (vdev == _probed_vdevs[i])
+			return 1;
+	}
+	for (i = 0; i < _num_devices; i++) {
+		if (vdev == &_virtio_devices[i])
+			return 1;
+	}
+	return 0;
+}
+
+static int vq_slot_ok(struct virtqueue* vq) {
+	uint64_t p;
+
+	p = (uint64_t)vq;
+	if ((p & 7) != 0 || p < 0xFFFF000000000000ULL)
+		return 0;
+	return vdev_is_ours(vq->vdev);
+}
+
+static void virtio_drop_bad_vqs(void) {
+	int w = 0;
+	int i;
+	static int logged;
+
+	for (i = 0; i < _num_live_vqs; i++) {
+		struct virtqueue* vq = _live_vqs[i];
+		if (!vq_slot_ok(vq)) {
+			if (!logged) {
+				UARTDebugOut("[dcl-virtio]: dropping queue with a bad device pointer\r\n");
+				logged = 1;
+			}
+			continue;
+		}
+		_live_vqs[w++] = vq;
+	}
+	_num_live_vqs = w;
+}
+
 static void virtio_poll_vq(struct virtqueue* vq) {
 	if (!vq->used)
 		return;
@@ -47,7 +108,9 @@ static void virtio_poll_vq(struct virtqueue* vq) {
 }
 
 void virtio_poll_vqs(void) {
-	for (int i = 0; i < _num_live_vqs; i++)
+	int i;
+	virtio_drop_bad_vqs();
+	for (i = 0; i < _num_live_vqs; i++)
 		virtio_poll_vq(_live_vqs[i]);
 }
 
@@ -60,9 +123,11 @@ void virtio_poll_vqs(void) {
  * being re-entered from interrupt context.
  */
 void virtio_poll_input_vqs(void) {
-	for (int i = 0; i < _num_live_vqs; i++) {
+	int i;
+	virtio_drop_bad_vqs();
+	for (i = 0; i < _num_live_vqs; i++) {
 		struct virtqueue* vq = _live_vqs[i];
-		if (!vq->vdev || vq->vdev->id.device != VIRTIO_ID_INPUT)
+		if (vq->vdev->id.device != VIRTIO_ID_INPUT)
 			continue;
 		virtio_poll_vq(vq);
 	}
@@ -239,6 +304,17 @@ static int shim_find_vqs(struct virtio_device* vdev,
 		vq->index = i;
 		vq->callback = vqs_info ? vqs_info[i].callback : NULL;
 
+		/* cookies[] cannot name a descriptor past VQ_COOKIE_MAX. Ask the
+		 * device for a shorter ring before the queue is programmed. */
+		if (vdev->au_dev && vdev->au_dev->common) {
+			struct VirtioCommonCfg* cfg = vdev->au_dev->common;
+			cfg->QueueSelect = (uint16_t)i;
+			isb_flush();
+			dsb_ish();
+			if (cfg->QueueSize > VQ_COOKIE_MAX)
+				cfg->QueueSize = VQ_COOKIE_MAX;
+		}
+
 		uint16_t qsize = AuVirtioPCISetupQueue(
 			vdev->au_dev, i, &vq->desc, &vq->avail, &vq->used, VIRTIO_MSI_NO_VECTOR);
 
@@ -390,6 +466,8 @@ static uint64_t buf_phys(void* va) {
  * the barriers that make the order hold for the device.
  */
 static void vq_publish(struct virtqueue* vq, uint16_t head, void* data) {
+	if (head >= vq->qsize || head >= VQ_COOKIE_MAX)
+		return;
 	vq->cookies[head] = data;
 
 	uint16_t avail_idx = vq->avail->idx;
@@ -586,6 +664,13 @@ void* virtqueue_get_buf(struct virtqueue* vq, unsigned int* len) {
 	if (len)
 		*len = elem->len;
 
+	/* A device-reported id past the ring is not a descriptor. Indexing
+	 * cookies[] with it writes off the end of this virtqueue. */
+	if (desc_idx >= vq->qsize || desc_idx >= VQ_COOKIE_MAX) {
+		vq->event_idx_write = last_used + 1;
+		return NULL;
+	}
+
 	bool device_written = (vq->desc[desc_idx].flags & VRING_DESC_F_WRITE) != 0;
 	void* cookie = vq->cookies[desc_idx];
 
@@ -708,6 +793,11 @@ void virtio_device_register(struct virtio_device* vdev,
 	vdev->config = &shim_ops;
 
 	vdev->config->device_config_base = vdev->au_dev->deviceCfg;
+
+	/* Queues created in probe() store this address. The array below is
+	 * a copy, and a later driver may be probed on the copy instead. */
+	if (_num_probed_vdevs < MAX_VIRTIO_DEVICES)
+		_probed_vdevs[_num_probed_vdevs++] = vdev;
 
 	if (_num_devices < MAX_VIRTIO_DEVICES) {
 		_virtio_devices[_num_devices++] = *vdev;

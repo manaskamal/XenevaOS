@@ -5,9 +5,9 @@
 #  - port/port.c (built here) replaces the original hand-built os.o with
 #    compiled equivalents: _msize via dlmalloc, clock_gettime, a full UTC
 #    gmtime/localtime and no-op pthread_cond_* (single JS thread).
-#  - port/libm.o, port/int128.o are kept from the original hand-built port:
-#    the double-precision math gap (acos..trunc) and 128-bit division
-#    helpers XEClib does not ship.
+#  - port/libm.c is the double-precision gap (acos..trunc). The makefile
+#    compiles it, so deleting the object does not lose the functions.
+#  - port/int128.o is still the checked-in 128-bit division helper.
 # Port shims for libc headers quickjs.c needs (fenv, math, time, pthread)
 # live in port/*.h and shadow the XEClib ones for this library only.
 
@@ -40,9 +40,9 @@ endif
 AR = llvm-ar
 RANLIB = llvm-ranlib
 
-SRCS = src/quickjs.c src/cutils.c src/dtoa.c src/libregexp.c src/libunicode.c port/port.c
-OBJS = obj/quickjs.o obj/cutils.o obj/dtoa.o obj/libregexp.o obj/libunicode.o obj/port.o
-PORT_OBJS = port/libm.o port/int128.o
+SRCS = src/quickjs.c src/cutils.c src/dtoa.c src/libregexp.c src/libunicode.c port/port.c port/libm.c
+OBJS = obj/quickjs.o obj/cutils.o obj/dtoa.o obj/libregexp.o obj/libunicode.o obj/port.o obj/libm.o
+PORT_OBJS = port/int128.o
 
 TARGET = libquickjs.a
 
@@ -57,6 +57,10 @@ obj/%.o: src/%.c
 	clang $(CFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 
 obj/port.o: port/port.c
+	@mkdir -p $(dir $@)
+	clang $(CFLAGS) -Wno-unused-command-line-argument -c $< -o $@
+
+obj/libm.o: port/libm.c
 	@mkdir -p $(dir $@)
 	clang $(CFLAGS) -Wno-unused-command-line-argument -c $< -o $@
 

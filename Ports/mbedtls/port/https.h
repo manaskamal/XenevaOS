@@ -58,8 +58,10 @@ int xe_http_get(const char* url,
 				xe_http_response* out,
 				size_t max_body);
 
-/* How many independent GETs xe_http_get_many keeps open at once. */
-#define XE_HTTP_MANY_MAX 4
+/* How many GETs xe_http_get_many has in flight at once. Same-host
+ * requests share a TLS connection. A host gets at most two new
+ * handshakes; further GETs are keep-alive on those sockets. */
+#define XE_HTTP_MANY_MAX 8
 
 /* Fetch n independent GETs on this thread, XE_HTTP_MANY_MAX at a time.
  * outs[i] matches urls[i]. max_body is one cap per URL, or NULL for

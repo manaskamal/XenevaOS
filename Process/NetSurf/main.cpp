@@ -2385,6 +2385,461 @@ static void NsJsSink(const char* s, size_t n, int kind) {
 	NsSinkRaw(s_fragOut[fidx], strlen(s_fragOut[fidx]), NS_JS_KIND_WRITE);
 }
 
+/* bing.com/search HTML is a script page or a human-check. format=rss is the
+ * same query as a short item list, which this layout can paint. */
+static int ns_ci_eq(const char* a, const char* b, size_t n) {
+	size_t i;
+	for (i = 0; i < n; i++) {
+		unsigned char ca = (unsigned char)a[i];
+		unsigned char cb = (unsigned char)b[i];
+		if (ca >= 'A' && ca <= 'Z')
+			ca = (unsigned char)(ca - 'A' + 'a');
+		if (cb >= 'A' && cb <= 'Z')
+			cb = (unsigned char)(cb - 'A' + 'a');
+		if (ca != cb)
+			return 0;
+	}
+	return 1;
+}
+
+static const char* ns_find_ci(const char* s, const char* end, const char* lit) {
+	size_t n = strlen(lit);
+	if (n == 0)
+		return s <= end ? s : NULL;
+	while (s + n <= end) {
+		if (ns_ci_eq(s, lit, n))
+			return s;
+		s++;
+	}
+	return NULL;
+}
+
+static int ns_hex_digit(int c) {
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	return -1;
+}
+
+static int ns_utf8_put(unsigned cp, char* d, size_t cap) {
+	if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+		return 0;
+	if (cp < 0x80) {
+		if (cap < 1)
+			return 0;
+		d[0] = (char)cp;
+		return 1;
+	}
+	if (cp < 0x800) {
+		if (cap < 2)
+			return 0;
+		d[0] = (char)(0xC0 | (cp >> 6));
+		d[1] = (char)(0x80 | (cp & 0x3F));
+		return 2;
+	}
+	if (cp < 0x10000) {
+		if (cap < 3)
+			return 0;
+		d[0] = (char)(0xE0 | (cp >> 12));
+		d[1] = (char)(0x80 | ((cp >> 6) & 0x3F));
+		d[2] = (char)(0x80 | (cp & 0x3F));
+		return 3;
+	}
+	if (cap < 4)
+		return 0;
+	d[0] = (char)(0xF0 | (cp >> 18));
+	d[1] = (char)(0x80 | ((cp >> 12) & 0x3F));
+	d[2] = (char)(0x80 | ((cp >> 6) & 0x3F));
+	d[3] = (char)(0x80 | (cp & 0x3F));
+	return 4;
+}
+
+static size_t ns_xml_decode(const char* s, const char* end, char* out, size_t cap) {
+	size_t o = 0;
+	if (cap == 0)
+		return 0;
+	while (s < end && o + 1 < cap) {
+		unsigned cp = 0;
+		int ok = 0;
+		const char* semi;
+		const char* ent;
+		char tmp[4];
+		int nb;
+		if (*s != '&') {
+			out[o++] = *s++;
+			continue;
+		}
+		ent = s + 1;
+		semi = ent;
+		while (semi < end && *semi != ';' && (size_t)(semi - ent) < 12)
+			semi++;
+		if (semi >= end || *semi != ';') {
+			out[o++] = *s++;
+			continue;
+		}
+		if ((size_t)(semi - ent) == 3 && ns_ci_eq(ent, "amp", 3)) {
+			cp = '&';
+			ok = 1;
+		} else if ((size_t)(semi - ent) == 2 && ns_ci_eq(ent, "lt", 2)) {
+			cp = '<';
+			ok = 1;
+		} else if ((size_t)(semi - ent) == 2 && ns_ci_eq(ent, "gt", 2)) {
+			cp = '>';
+			ok = 1;
+		} else if ((size_t)(semi - ent) == 4 && ns_ci_eq(ent, "quot", 4)) {
+			cp = '"';
+			ok = 1;
+		} else if ((size_t)(semi - ent) == 4 && ns_ci_eq(ent, "apos", 4)) {
+			cp = '\'';
+			ok = 1;
+		} else if (ent < semi && *ent == '#') {
+			const char* n = ent + 1;
+			int hex = 0;
+			if (n < semi && (*n == 'x' || *n == 'X')) {
+				hex = 1;
+				n++;
+			}
+			ok = n < semi;
+			while (ok && n < semi) {
+				int d = hex ? ns_hex_digit((unsigned char)*n)
+							: (*n >= '0' && *n <= '9' ? *n - '0' : -1);
+				if (d < 0 || (hex ? (cp > (0x10FFFFu >> 4)) : (cp > 0x10FFFFu / 10u))) {
+					ok = 0;
+					break;
+				}
+				cp = hex ? (cp << 4) + (unsigned)d : cp * 10u + (unsigned)d;
+				n++;
+			}
+			if (cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+				ok = 0;
+		}
+		if (!ok) {
+			out[o++] = *s++;
+			continue;
+		}
+		nb = ns_utf8_put(cp, tmp, sizeof(tmp));
+		if (nb <= 0 || o + (size_t)nb >= cap)
+			break;
+		memcpy(out + o, tmp, (size_t)nb);
+		o += (size_t)nb;
+		s = semi + 1;
+	}
+	out[o] = 0;
+	return o;
+}
+
+static void ns_trim(char* s) {
+	char* start = s;
+	size_t n;
+	while (*start == ' ' || *start == '\t' || *start == '\n' || *start == '\r')
+		start++;
+	if (start != s)
+		memmove(s, start, strlen(start) + 1);
+	n = strlen(s);
+	while (n > 0) {
+		char c = s[n - 1];
+		if (c != ' ' && c != '\t' && c != '\n' && c != '\r')
+			break;
+		s[--n] = 0;
+	}
+}
+
+static int ns_xml_field(const char* s, const char* end, const char* tag, char* out, size_t cap) {
+	char open[24];
+	char close[24];
+	size_t tlen = strlen(tag);
+	const char* p;
+	const char* gt;
+	const char* stop;
+	if (cap == 0 || tlen + 3 >= sizeof(open))
+		return -1;
+	out[0] = 0;
+	open[0] = '<';
+	memcpy(open + 1, (void*)tag, tlen);
+	open[tlen + 1] = 0;
+	close[0] = '<';
+	close[1] = '/';
+	memcpy(close + 2, (void*)tag, tlen);
+	close[tlen + 2] = '>';
+	close[tlen + 3] = 0;
+	p = ns_find_ci(s, end, open);
+	if (!p)
+		return -1;
+	p += tlen + 1;
+	gt = p;
+	while (gt < end && *gt != '>')
+		gt++;
+	if (gt >= end)
+		return -1;
+	if (gt > s && *(gt - 1) == '/') {
+		out[0] = 0;
+		return 0;
+	}
+	p = gt + 1;
+	stop = ns_find_ci(p, end, close);
+	if (!stop)
+		return -1;
+	if ((size_t)(stop - p) >= 9 && ns_ci_eq(p, "<![CDATA[", 9)) {
+		const char* c0 = p + 9;
+		const char* c1 = ns_find_ci(c0, stop, "]]>");
+		size_t n;
+		if (!c1)
+			c1 = stop;
+		n = (size_t)(c1 - c0);
+		if (n >= cap)
+			n = cap - 1;
+		memcpy(out, (void*)c0, n);
+		out[n] = 0;
+	} else {
+		ns_xml_decode(p, stop, out, cap);
+	}
+	ns_trim(out);
+	return 0;
+}
+
+static int ns_query_has(const char* q, const char* end, const char* key) {
+	size_t klen = strlen(key);
+	const char* p = q;
+	if (p < end && *p == '?')
+		p++;
+	while (p < end) {
+		if ((size_t)(end - p) > klen && ns_ci_eq(p, key, klen) && p[klen] == '=')
+			return 1;
+		while (p < end && *p != '&')
+			p++;
+		if (p < end && *p == '&')
+			p++;
+	}
+	return 0;
+}
+
+static int NsBingIsSearch(const char* url) {
+	const char* p;
+	const char* host;
+	const char* hend;
+	const char* path;
+	const char* colon;
+	size_t hlen;
+	char tail;
+	if (!url)
+		return 0;
+	if (!strncmp(url, "https://", 8))
+		p = url + 8;
+	else if (!strncmp(url, "http://", 7))
+		p = url + 7;
+	else
+		return 0;
+	host = p;
+	while (*p && *p != '/' && *p != '?' && *p != '#')
+		p++;
+	hend = p;
+	for (colon = host; colon < hend; colon++) {
+		if (*colon == ':') {
+			hend = colon;
+			break;
+		}
+	}
+	hlen = (size_t)(hend - host);
+	if (hlen == 8 && ns_ci_eq(host, "bing.com", 8)) {
+		/* host itself */
+	} else if (hlen > 9 && host[hlen - 9] == '.' && ns_ci_eq(host + (hlen - 8), "bing.com", 8)) {
+		/* subdomain */
+	} else {
+		return 0;
+	}
+	path = (*p == '/') ? p : "/";
+	if (!ns_ci_eq(path, "/search", 7))
+		return 0;
+	tail = path[7];
+	return tail == 0 || tail == '?' || tail == '#' || tail == '/';
+}
+
+/* Drop the fragment and ask Bing for the RSS result list. */
+static int NsBingFeedUrl(const char* url, char* out, size_t outsz) {
+	const char* hash = strchr(url, '#');
+	const char* q = strchr(url, '?');
+	size_t n = hash ? (size_t)(hash - url) : strlen(url);
+	const char* end = url + n;
+	const char* add;
+	const char* lang;
+	size_t extra;
+	int has_fmt;
+	int has_lang;
+	if (q && q < end) {
+		has_fmt = ns_query_has(q, end, "format");
+		has_lang = ns_query_has(q, end, "setlang");
+	} else {
+		has_fmt = 0;
+		has_lang = 0;
+	}
+	if (has_fmt) {
+		if (n + 1 > outsz)
+			return -1;
+		memcpy(out, (void*)url, n);
+		out[n] = 0;
+		return 0;
+	}
+	add = q ? "&format=rss" : "?format=rss";
+	lang = has_lang ? "" : "&setlang=en";
+	extra = strlen(add) + strlen(lang);
+	if (n + extra + 1 > outsz)
+		return -1;
+	memcpy(out, (void*)url, n);
+	memcpy(out + n, (void*)add, strlen(add));
+	memcpy(out + n + strlen(add), (void*)lang, strlen(lang) + 1);
+	return 0;
+}
+
+struct ns_out {
+	char* p;
+	size_t n;
+	size_t cap;
+};
+
+static int ns_out_add(struct ns_out* b, const void* s, size_t n) {
+	if (!b || b->n + n >= b->cap)
+		return -1;
+	memcpy(b->p + b->n, (void*)s, n);
+	b->n += n;
+	b->p[b->n] = 0;
+	return 0;
+}
+
+static int ns_out_str(struct ns_out* b, const char* s) {
+	return ns_out_add(b, s, strlen(s));
+}
+
+static int ns_out_esc(struct ns_out* b, const char* s) {
+	for (; *s; s++) {
+		const char* rep = NULL;
+		char one[2];
+		unsigned char c = (unsigned char)*s;
+		if (c == '&')
+			rep = "&amp;";
+		else if (c == '<')
+			rep = "&lt;";
+		else if (c == '>')
+			rep = "&gt;";
+		else if (c == '"')
+			rep = "&quot;";
+		else if (c < 32)
+			rep = " ";
+		if (rep) {
+			if (ns_out_str(b, rep) < 0)
+				return -1;
+			continue;
+		}
+		one[0] = (char)c;
+		one[1] = 0;
+		if (ns_out_add(b, one, 1) < 0)
+			return -1;
+	}
+	return 0;
+}
+
+static int ns_http_href(const char* s) {
+	size_t i;
+	if (ns_ci_eq(s, "https://", 8))
+		s += 8;
+	else if (ns_ci_eq(s, "http://", 7))
+		s += 7;
+	else
+		return 0;
+	if (!*s)
+		return 0;
+	for (i = 0; s[i]; i++) {
+		unsigned char c = (unsigned char)s[i];
+		if (c <= 32 || c == '"' || c == '<' || c == '>' || c == '\\')
+			return 0;
+	}
+	return 1;
+}
+
+/* Up to 10 hits: h1 plus div.hit (title link, url, snippet). Returns the count. */
+static int NsBingRssToHtml(const char* xml, size_t len, char* out, size_t outsz) {
+	const char* end;
+	const char* item;
+	struct ns_out b;
+	char heading[240];
+	int hits = 0;
+	if (!xml || !out || outsz < 64)
+		return 0;
+	end = xml + len;
+	if (!ns_find_ci(xml, end, "<rss") && !ns_find_ci(xml, end, "<item"))
+		return 0;
+	b.p = out;
+	b.n = 0;
+	b.cap = outsz;
+	out[0] = 0;
+	heading[0] = 0;
+	{
+		const char* first = ns_find_ci(xml, end, "<item");
+		const char* head_end = first ? first : end;
+		if (ns_xml_field(xml, head_end, "title", heading, sizeof(heading)) != 0 || !heading[0])
+			snprintf(heading, sizeof(heading), "Search");
+	}
+	if (ns_out_str(&b, "<!DOCTYPE html><html><body><h1>") < 0)
+		return 0;
+	if (ns_out_esc(&b, heading) < 0)
+		return 0;
+	if (ns_out_str(&b, "</h1>") < 0)
+		return 0;
+	item = xml;
+	while (hits < 10) {
+		char title[240];
+		char link[700];
+		char snip[400];
+		const char* open;
+		const char* close;
+		const char* inner;
+		open = ns_find_ci(item, end, "<item");
+		if (!open)
+			break;
+		inner = open;
+		while (inner < end && *inner != '>')
+			inner++;
+		if (inner >= end)
+			break;
+		inner++;
+		close = ns_find_ci(inner, end, "</item>");
+		if (!close)
+			break;
+		title[0] = 0;
+		link[0] = 0;
+		snip[0] = 0;
+		ns_xml_field(inner, close, "title", title, sizeof(title));
+		ns_xml_field(inner, close, "link", link, sizeof(link));
+		ns_xml_field(inner, close, "description", snip, sizeof(snip));
+		item = close + 7;
+		if (!title[0] || !ns_http_href(link))
+			continue;
+		if (ns_out_str(&b, "<div class=\"hit\"><a href=\"") < 0)
+			break;
+		if (ns_out_esc(&b, link) < 0)
+			break;
+		if (ns_out_str(&b, "\">") < 0)
+			break;
+		if (ns_out_esc(&b, title) < 0)
+			break;
+		if (ns_out_str(&b, "</a><div class=\"url\">") < 0)
+			break;
+		if (ns_out_esc(&b, link) < 0)
+			break;
+		if (ns_out_str(&b, "</div><div class=\"snip\">") < 0)
+			break;
+		if (ns_out_esc(&b, snip) < 0)
+			break;
+		if (ns_out_str(&b, "</div></div>") < 0)
+			break;
+		hits++;
+	}
+	ns_out_str(&b, "</body></html>");
+	return hits;
+}
+
 /* A host with no scheme is fetched as https://. http:// stays plain HTTP. */
 static void NsEnsureHttps(char* url, size_t n) {
 	char tmp[NS_URL_MAX];
@@ -2432,12 +2887,14 @@ static int NsFetch(char* url) {
 	char came_from[NS_URL_MAX];
 	char navraw[NS_URL_MAX];
 	char navabs[NS_URL_MAX];
+	char fetch_url[NS_URL_MAX];
 	xe_http_response resp;
 	const char* body;
 	size_t blen;
 	int left_tls = 0;
 	int used_tls = 0;
 	int nav_hops = 0;
+	int bing_feed = 0;
 
 	snprintf(came_from, sizeof(came_from), "%s", s_docUrl);
 again:
@@ -2456,8 +2913,15 @@ again:
 		snprintf(status, sizeof(status), "Fetching %s ...", url);
 	NsShowStatus(status);
 
+	bing_feed = 0;
+	snprintf(fetch_url, sizeof(fetch_url), "%s", url);
+	if (NsBingIsSearch(url) && NsBingFeedUrl(url, fetch_url, sizeof(fetch_url)) == 0) {
+		bing_feed = 1;
+		_KePrint("[search] bing feed\n");
+	}
+
 	memset(&resp, 0, sizeof(resp));
-	int rc = xe_http_get(url, "GET", kNsUa, &resp, NS_BODY_MAX);
+	int rc = xe_http_get(fetch_url, "GET", kNsUa, &resp, NS_BODY_MAX);
 	if (rc != 0 && (!resp.body || !resp.body_len)) {
 		NsShowStatus(resp.error[0] ? resp.error : "Fetch failed.");
 		xe_http_response_free(&resp);
@@ -2483,9 +2947,27 @@ again:
 
 	/* Fresh JS context per page; drops the previous page's timers.
 	 * Point it at the URL after redirects so a cookie set here matches
-	 * the host that will be requested next. */
+	 * the host that will be requested next. A Bing search keeps the
+	 * typed URL: the body is the RSS list, not the address that was fetched. */
 	s_postPage = false;
-	NsAdoptLanded(url);
+	if (bing_feed) {
+		int hits = NsBingRssToHtml(s_body, blen, s_text, sizeof(s_text));
+		if (hits > 0) {
+			size_t hl = strlen(s_text);
+			if (hl > NS_RAW_MAX)
+				hl = NS_RAW_MAX;
+			memcpy(s_body, s_text, hl);
+			s_body[hl] = 0;
+			blen = hl;
+			body = s_body;
+			_KePrint("[search] bing %d\n", hits);
+		} else {
+			_KePrint("[search] bing rss 0\n");
+			bing_feed = 0;
+		}
+	}
+	if (!bing_feed)
+		NsAdoptLanded(url);
 	snprintf(s_docUrl, sizeof(s_docUrl), "%s", url);
 	NsJsBegin(url);
 	NsJsScanTitle(body, blen);
@@ -3999,9 +4481,13 @@ static void WindowHandleMessage(PostEvent* e) {
 		int my = e->dword2;
 		int button = e->dword3;
 		ChWindow* mouseWin = ChGetWindowByHandle(s_mainWin, handle);
-		/* Wheel is button value 5 (up) or 6 (down), not a click bit. */
-		if (button == 0x05 || button == 0x06) {
-			NsPageScroll(button == 0x06 ? 3 : -3);
+		/* Kernel tablet wheel is the value 5 (up) or 6 (down). The
+		 * vendored input path (--bypass-virtio-input) reports the
+		 * same wheel as bit 0x10 (up) or 0x20 (down). 5 overlaps
+		 * left and middle, so those two stay equality tests. */
+		if (button == 0x05 || button == 0x06 || (button & 0x10) || (button & 0x20)) {
+			int down = (button == 0x06) || (button & 0x20);
+			NsPageScroll(down ? 3 : -3);
 			memset(e, 0, sizeof(PostEvent));
 			break;
 		}

@@ -34,12 +34,12 @@
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/sched.h>
 
-struct AuWaitQueue;
+struct _au_wait_queue;
 
 typedef struct _au_waitq_entry_ {
 	AA64Thread* thread;
 	void* data;
-	struct AuWaitQueue* queue;
+	struct _au_wait_queue* queue;
 	struct _au_waitq_entry_* next;
 	struct _au_waitq_entry_* prev;
 	struct _au_waitq_entry_* owner_next;

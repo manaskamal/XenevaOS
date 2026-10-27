@@ -311,6 +311,13 @@ static void handle_tablet(Dev* d, const InEvent* e) {
 		else if (e->code == 0x112) d->middle = (int)e->value;
 		else if (e->code == 0x150) d->scroll_down = 1;
 		else if (e->code == 0x151) d->scroll_up = 1;
+	} else if (e->type == 2) {                            /* EV_REL: QEMU wheel-axis */
+		if (e->code == 8 && e->value) {
+			if (e->value < 0x80000000u)
+				d->scroll_up = 1;
+			else
+				d->scroll_down = 1;
+		}
 	} else if (e->type == 0) {                            /* EV_SYN: one complete pointer update */
 		InputsrvEvent ev;
 		memset(&ev, 0, sizeof ev);

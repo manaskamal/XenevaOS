@@ -98,6 +98,10 @@ struct xe_reader {
 	 * socket on this thread can run. The blocking path leaves it clear. */
 	int yield;
 	int progressed;
+	/* Set when this step actually read bytes. A write alone must not
+	 * refresh the idle deadline: a socket that only retransmits would
+	 * otherwise stay open forever and hold the rest of the batch. */
+	int got_read;
 	mbedtls_ssl_context* ssl;
 	struct xe_tls_slot* slot;
 	unsigned char buf[2048];
@@ -333,8 +337,9 @@ static int tls_send(void* ctx, const unsigned char* buf, size_t len) {
 		int n = (int)sendto(r->fd, buf, len, 0, NULL, 0);
 		if (n > 0)
 			return n;
-		if (n == 0)
-			return MBEDTLS_ERR_SSL_CONN_EOF;
+		/* 0 is "nothing queued" (send window or a neighbor lookup), not
+		 * a peer close. Treating it as EOF aborted the first handshake
+		 * of a boot before the SYN retry had a cached route. */
 		_KeProcessSleep(100);
 		idle++;
 	}
@@ -348,6 +353,7 @@ static int tls_recv(void* ctx, unsigned char* buf, size_t len) {
 		int n = xe_recv(r->fd, buf, len);
 		if (n > 0) {
 			r->progressed = 1;
+			r->got_read = 1;
 			return n;
 		}
 		if (n == 0)
@@ -464,6 +470,27 @@ static const char* hdr_value(const char* hdr, const char* key) {
 		p += 2;
 	}
 	return NULL;
+}
+
+/* Connection: close, or "Keep-Alive, close". A bare substring would match
+ * inside another token. */
+static int hdr_has_token(const char* v, const char* tok) {
+	size_t n;
+	if (!v || !tok)
+		return 0;
+	n = strlen(tok);
+	while (*v) {
+		while (*v == ' ' || *v == '\t' || *v == ',')
+			v++;
+		if (!*v)
+			break;
+		if (strncasecmp(v, tok, n) == 0 &&
+			(v[n] == 0 || v[n] == ',' || v[n] == ' ' || v[n] == '\t' || v[n] == '\r'))
+			return 1;
+		while (*v && *v != ',')
+			v++;
+	}
+	return 0;
 }
 
 static void copy_token(const char* src, char* dst, size_t n) {
@@ -623,6 +650,57 @@ static int connect_host(const struct xe_url* u, xe_http_response* out) {
 		return -1;
 	}
 	return sock;
+}
+
+/* XEClib EINPROGRESS. The kernel returns this from a non-blocking connect. */
+#define XE_CONNECT_PENDING 119
+
+/* Start a TCP connection for the overlapped pump. pending is 1 when the
+ * SYN is in flight and the caller must connect() again. An older kernel
+ * ignores SO_NONBLOCK, connect() blocks, and pending stays 0. */
+static int connect_begin(const struct xe_url* u, xe_http_response* out,
+						 uint32_t* ip_out, int* pending) {
+	hostent* ent;
+	int sock;
+	sockaddr_in dest;
+	uint32_t ip;
+	int on = 1;
+	int rc;
+	*pending = 0;
+	*ip_out = 0;
+	while (__atomic_exchange_n(&g_dns_lock, 1, __ATOMIC_ACQUIRE))
+		;
+	ent = gethostbyname(u->host);
+	if (ent && ent->h_addr_list && ent->h_addr_list[0] && ent->h_length == 4)
+		ip = *(uint32_t*)ent->h_addr_list[0];
+	else
+		ip = 0;
+	__atomic_store_n(&g_dns_lock, 0, __ATOMIC_RELEASE);
+	if (!ip) {
+		snprintf(out->error, sizeof(out->error), "No IPv4 address for %s", u->host);
+		return -1;
+	}
+	*ip_out = ip;
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock < 0) {
+		set_err(out, "socket() failed");
+		return -1;
+	}
+	socket_setopt(sock, SOL_SOCKET, SO_NONBLOCK, &on, sizeof(on));
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_family = AF_INET;
+	dest.sin_port = htons(u->port);
+	memcpy(&dest.sin_addr, &ip, sizeof(ip));
+	rc = connect(sock, (sockaddr_*)&dest, sizeof(dest));
+	if (rc == 0)
+		return sock;
+	if (rc == -XE_CONNECT_PENDING) {
+		*pending = 1;
+		return sock;
+	}
+	snprintf(out->error, sizeof(out->error), "Connect to %s:%u failed", u->host, u->port);
+	_KeCloseFile(sock);
+	return -1;
 }
 
 static int read_headers(struct xe_reader* r, char* hdr, size_t hdrsz) {
@@ -1451,19 +1529,22 @@ fail:
 	return -1;
 }
 
-/* Several GETs, one thread. Connect still blocks in the kernel, and that
- * wait polls the NIC, so records for sockets already open keep landing.
- * The yield flag makes the TLS bio return instead of sleeping, and the
- * loop below steps each open socket before it sleeps once. A second
- * thread is not used: the allocator is not safe across threads. */
+/* Several GETs, one thread. Connect is non-blocking so the SYNs overlap,
+ * but the certificate check is CPU work and does not. Opening eight TLS
+ * sessions to one host therefore costs eight full handshakes in a row.
+ * Two sockets per host stay up and the rest of that host's GETs are
+ * keep-alive on them. A second thread is not used: the allocator is not
+ * safe across threads. */
 enum {
 	XJ_FREE = 0,
+	XJ_CONNECT,
 	XJ_TLS,
 	XJ_SEND,
 	XJ_HDR,
 	XJ_BODY,
 	XJ_DONE,
-	XJ_FAIL
+	XJ_FAIL,
+	XJ_WARM
 };
 
 enum {
@@ -1476,6 +1557,9 @@ enum {
 #define XE_MANY_IDLE_MS 20000
 #define XE_MANY_WAITS 750
 #define XE_STEP_BUDGET 16384
+/* New handshakes per host. The rest of that host's URLs reuse a socket. */
+#define XE_COLD_PER_HOST 2
+#define XE_WARM_MAX 2
 
 struct xe_many {
 	int state;
@@ -1487,6 +1571,9 @@ struct xe_many {
 	int body_mode;
 	int tls_ready;
 	int waits;
+	int keepalive;
+	/* A keep-alive socket that dies before the response may be opened once more. */
+	int may_retry;
 	long content_len;
 	size_t body_got;
 	size_t chunk_left;
@@ -1497,6 +1584,7 @@ struct xe_many {
 	uint64_t idle_ms;
 	struct xe_url u;
 	struct xe_reader r;
+	uint32_t ip;
 	char url[3072];
 	char loc[3072];
 	char* req;
@@ -1543,6 +1631,30 @@ static void job_fail(struct xe_many* j, const char* msg) {
 	j->state = XJ_FAIL;
 }
 
+static int job_open(struct xe_many* j);
+
+/* A reused socket can already be closed by the server. Open that same
+ * URL once on a new connection. A cold failure is not tried again. */
+static int job_broken(struct xe_many* j, const char* msg) {
+	if (j->may_retry && j->hdr_n == 0 && j->body_got == 0 && j->out && !j->out->body) {
+		j->may_retry = 0;
+		job_close(j);
+		j->out->error[0] = 0;
+		j->rc = -1;
+		j->content_len = -1;
+		j->hdr_n = 0;
+		j->pend_len = 0;
+		j->pend_pos = 0;
+		j->state = XJ_FREE;
+		if (job_open(j) == 0) {
+			_KePrint("[http] reuse failed, new connection\n");
+			return 1;
+		}
+	}
+	job_fail(j, msg);
+	return 1;
+}
+
 static void job_touch(struct xe_many* j) {
 	j->idle_ms = _KeGetCurrentMS();
 	j->waits = 0;
@@ -1552,6 +1664,7 @@ static int job_stale(struct xe_many* j) {
 	uint64_t now = _KeGetCurrentMS();
 	if (j->waits > XE_MANY_WAITS ||
 		(now > j->idle_ms && now - j->idle_ms > (uint64_t)XE_MANY_IDLE_MS)) {
+		_KePrint("[http] stall\n");
 		job_fail(j, "Timed out");
 		return 1;
 	}
@@ -1636,10 +1749,11 @@ static int job_build_req(struct xe_many* j) {
 			goto toolong;
 		at += (size_t)n;
 	}
-	n = snprintf(req + at, reqcap - at, "Connection: close\r\n\r\n");
+	n = snprintf(req + at, reqcap - at, "Connection: keep-alive\r\n\r\n");
 	if (n < 0 || (size_t)n >= reqcap - at)
 		goto toolong;
 	at += (size_t)n;
+	j->keepalive = 1;
 	j->req = req;
 	j->req_len = at;
 	j->req_off = 0;
@@ -1654,28 +1768,7 @@ toolong:
 	return -1;
 }
 
-static int job_open(struct xe_many* j) {
-	int fd;
-	int pu = parse_url(j->url, &j->u);
-	if (pu == -2) {
-		set_err(j->out, "IPv6-only hosts are not reachable yet");
-		return -1;
-	}
-	if (pu < 0) {
-		set_err(j->out, "Bad URL");
-		return -1;
-	}
-	fd = connect_host(&j->u, j->out);
-	if (fd < 0)
-		return -1;
-	memset(&j->r, 0, sizeof(j->r));
-	j->r.fd = fd;
-	j->r.yield = 1;
-	j->fd = fd;
-	j->tls_ready = 0;
-	j->out->tls = j->u.https;
-	j->idle_ms = _KeGetCurrentMS();
-	j->waits = 0;
+static int job_start_transfer(struct xe_many* j) {
 	if (j->u.https) {
 		if (tls_prepare(&j->r, j->u.host, j->out) < 0) {
 			job_close(j);
@@ -1691,6 +1784,61 @@ static int job_open(struct xe_many* j) {
 	j->tls_ready = 1;
 	j->state = XJ_SEND;
 	return 0;
+}
+
+static int job_open(struct xe_many* j) {
+	int fd;
+	int pending = 0;
+	int pu = parse_url(j->url, &j->u);
+	if (pu == -2) {
+		set_err(j->out, "IPv6-only hosts are not reachable yet");
+		return -1;
+	}
+	if (pu < 0) {
+		set_err(j->out, "Bad URL");
+		return -1;
+	}
+	fd = connect_begin(&j->u, j->out, &j->ip, &pending);
+	if (fd < 0)
+		return -1;
+	memset(&j->r, 0, sizeof(j->r));
+	j->r.fd = fd;
+	j->r.yield = 1;
+	j->fd = fd;
+	j->tls_ready = 0;
+	j->out->tls = j->u.https;
+	j->idle_ms = _KeGetCurrentMS();
+	j->waits = 0;
+	j->keepalive = 1;
+	j->may_retry = 0;
+	if (pending) {
+		j->state = XJ_CONNECT;
+		return 0;
+	}
+	return job_start_transfer(j);
+}
+
+static int job_step_connect(struct xe_many* j) {
+	sockaddr_in dest;
+	int rc;
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_family = AF_INET;
+	dest.sin_port = htons(j->u.port);
+	memcpy(&dest.sin_addr, &j->ip, sizeof(j->ip));
+	rc = connect(j->fd, (sockaddr_*)&dest, sizeof(dest));
+	if (rc == -XE_CONNECT_PENDING)
+		return 0;
+	if (rc < 0) {
+		job_fail(j, "Connect failed");
+		return 1;
+	}
+	if (job_start_transfer(j) < 0) {
+		if (j->state != XJ_FAIL)
+			job_fail(j, "Connect failed");
+		return 1;
+	}
+	job_touch(j);
+	return 1;
 }
 
 static int job_follow(struct xe_many* j) {
@@ -1741,8 +1889,34 @@ static int job_follow(struct xe_many* j) {
 	return 1;
 }
 
-static int job_deliver(struct xe_many* j) {
+/* Leave the socket up for another GET on this host. The response already
+ * recorded stays with the caller. */
+static void job_park(struct xe_many* j) {
+	free(j->req);
+	j->req = NULL;
+	j->req_off = 0;
+	j->req_len = 0;
+	j->hdr_n = 0;
+	j->hdr[0] = 0;
+	j->pend_len = 0;
+	j->pend_pos = 0;
+	j->chunk_left = 0;
+	j->chunk_line_n = 0;
+	j->body_got = 0;
+	j->content_len = -1;
+	j->chunked = 0;
+	j->body_mode = XB_RAW;
+	j->loc[0] = 0;
+	j->hops = 0;
+	j->keepalive = 1;
+	j->may_retry = 1;
+	j->state = XJ_WARM;
+	job_touch(j);
+}
+
+static int job_deliver(struct xe_many* j, int reuse_ok) {
 	int st = j->out ? j->out->status : 0;
+	int park;
 	if (j->out && j->out->body) {
 		j->out->body[j->body_got] = 0;
 		j->out->body_len = j->body_got;
@@ -1754,6 +1928,13 @@ static int job_deliver(struct xe_many* j) {
 		if (j->out)
 			j->out->error[0] = 0;
 		j->rc = 0;
+	}
+	park = reuse_ok && j->keepalive && j->fd >= 0 && (j->rc == 0 || j->rc == 22);
+	if (j->content_len >= 0 && j->body_got < (size_t)j->content_len)
+		park = 0;
+	if (park) {
+		job_park(j);
+		return 1;
 	}
 	job_close(j);
 	j->state = XJ_DONE;
@@ -1792,6 +1973,8 @@ static int job_headers_done(struct xe_many* j) {
 	if (loc)
 		copy_token(loc, j->loc, sizeof(j->loc));
 	ck_from_headers(&j->u, j->hdr);
+	if (hdr_has_token(hdr_value(j->hdr, "Connection"), "close"))
+		j->keepalive = 0;
 	if ((st == 301 || st == 302 || st == 303 || st == 307 || st == 308) && j->loc[0])
 		return job_follow(j);
 	cap = j->max_body ? j->max_body : 1;
@@ -1859,25 +2042,22 @@ static int job_body_raw(struct xe_many* j) {
 		size_t got = 0;
 		int tr;
 		if (j->content_len >= 0 && j->body_got >= (size_t)j->content_len) {
-			job_deliver(j);
+			job_deliver(j, 1);
 			return 1;
 		}
 		room = (j->body_got < cap) ? (cap - j->body_got) : 0;
 		if (!room) {
-			job_deliver(j);
+			job_deliver(j, 0);
 			return 1;
 		}
 		ask = room > 2048 ? 2048 : room;
 		if (ask > budget)
 			ask = budget;
 		tr = job_take(j, body + j->body_got, ask, &got);
-		if (tr == 0) {
-			if (j->r.progressed)
-				job_touch(j);
+		if (tr == 0)
 			return any;
-		}
 		if (tr < 0) {
-			job_deliver(j);
+			job_deliver(j, 0);
 			return 1;
 		}
 		j->body_got += got;
@@ -1906,13 +2086,10 @@ static int job_body_chunked(struct xe_many* j) {
 			size_t got = 0;
 			size_t sz = 0;
 			int tr = job_take(j, &c, 1, &got);
-			if (tr == 0) {
-				if (j->r.progressed)
-					job_touch(j);
+			if (tr == 0)
 				return any;
-			}
 			if (tr < 0) {
-				job_deliver(j);
+				job_deliver(j, 0);
 				return 1;
 			}
 			any = 1;
@@ -1926,7 +2103,7 @@ static int job_body_chunked(struct xe_many* j) {
 				}
 				j->chunk_line_n = 0;
 				if (sz == 0) {
-					job_deliver(j);
+					job_deliver(j, 1);
 					return 1;
 				}
 				j->chunk_left = sz;
@@ -1946,7 +2123,7 @@ static int job_body_chunked(struct xe_many* j) {
 			size_t got = 0;
 			int tr;
 			if (!room) {
-				job_deliver(j);
+				job_deliver(j, 0);
 				return 1;
 			}
 			ask = j->chunk_left;
@@ -1961,13 +2138,10 @@ static int job_body_chunked(struct xe_many* j) {
 				continue;
 			}
 			tr = job_take(j, body + j->body_got, ask, &got);
-			if (tr == 0) {
-				if (j->r.progressed)
-					job_touch(j);
+			if (tr == 0)
 				return any;
-			}
 			if (tr < 0) {
-				job_deliver(j);
+				job_deliver(j, 0);
 				return 1;
 			}
 			j->body_got += got;
@@ -1989,13 +2163,10 @@ static int job_body_chunked(struct xe_many* j) {
 			unsigned char c;
 			size_t got = 0;
 			int tr = job_take(j, &c, 1, &got);
-			if (tr == 0) {
-				if (j->r.progressed)
-					job_touch(j);
+			if (tr == 0)
 				return any;
-			}
 			if (tr < 0) {
-				job_deliver(j);
+				job_deliver(j, 0);
 				return 1;
 			}
 			any = 1;
@@ -2018,11 +2189,12 @@ static int job_step_tls(struct xe_many* j) {
 	int tries = 0;
 	uint32_t flags = 0;
 	if (!j->r.ssl) {
-		job_fail(j, "TLS handshake failed");
+		job_broken(j, "TLS handshake failed");
 		return 1;
 	}
 	do {
 		j->r.progressed = 0;
+		j->r.got_read = 0;
 		ret = mbedtls_ssl_handshake(j->r.ssl);
 		tries++;
 	} while (ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET && tries < 4);
@@ -2044,13 +2216,15 @@ static int job_step_tls(struct xe_many* j) {
 	}
 	if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
 		ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
-		if (j->r.progressed || ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET)
+		/* A flight that was read counts. A write with no read does not,
+		 * or a socket that only retransmits never goes idle. */
+		if (j->r.got_read || ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET)
 			job_touch(j);
-		return (j->r.progressed || ret == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) ? 1 : 0;
+		return 0;
 	}
 	flags = mbedtls_ssl_get_verify_result(j->r.ssl);
 	tls_error(ret, flags, j->out);
-	job_fail(j, "TLS handshake failed");
+	job_broken(j, "TLS handshake failed");
 	return 1;
 }
 
@@ -2063,12 +2237,9 @@ static int job_step_send(struct xe_many* j) {
 			job_touch(j);
 			continue;
 		}
-		if (n == 0) {
-			if (j->r.progressed)
-				job_touch(j);
-			return j->r.progressed ? 1 : 0;
-		}
-		job_fail(j, "Send failed");
+		if (n == 0)
+			return 0;
+		job_broken(j, "Send failed");
 		return 1;
 	}
 	j->hdr_n = 0;
@@ -2088,20 +2259,17 @@ static int job_step_hdr(struct xe_many* j) {
 		size_t hdrbytes;
 		size_t extra;
 		if (j->hdr_n + 1 >= sizeof(j->hdr)) {
-			job_fail(j, "No HTTP response");
+			job_broken(j, "No HTTP response");
 			return 1;
 		}
 		room = sizeof(j->hdr) - 1 - j->hdr_n;
 		if (room > sizeof(tmp))
 			room = sizeof(tmp);
 		tr = job_take(j, tmp, room, &got);
-		if (tr == 0) {
-			if (j->r.progressed)
-				job_touch(j);
+		if (tr == 0)
 			return any;
-		}
 		if (tr < 0) {
-			job_fail(j, "No HTTP response");
+			job_broken(j, "No HTTP response");
 			return 1;
 		}
 		memcpy(j->hdr + j->hdr_n, tmp, got);
@@ -2115,7 +2283,7 @@ static int job_step_hdr(struct xe_many* j) {
 		hdrbytes = (size_t)(mark - j->hdr) + 4;
 		extra = j->hdr_n - hdrbytes;
 		if (extra > sizeof(j->pend)) {
-			job_fail(j, "No HTTP response");
+			job_broken(j, "No HTTP response");
 			return 1;
 		}
 		if (extra) {
@@ -2141,14 +2309,17 @@ static int job_step_body(struct xe_many* j) {
 static int job_step(struct xe_many* j) {
 	int prog = 0;
 	int guard = 0;
-	if (!j || j->state == XJ_FREE || j->state == XJ_DONE || j->state == XJ_FAIL)
+	if (!j || j->state == XJ_FREE || j->state == XJ_DONE || j->state == XJ_FAIL ||
+		j->state == XJ_WARM)
 		return 0;
 	while (guard++ < 16) {
 		int prev = j->state;
 		int p = 0;
 		if (job_stale(j))
 			return 1;
-		if (prev == XJ_TLS)
+		if (prev == XJ_CONNECT)
+			p = job_step_connect(j);
+		else if (prev == XJ_TLS)
 			p = job_step_tls(j);
 		else if (prev == XJ_SEND)
 			p = job_step_send(j);
@@ -2210,6 +2381,197 @@ static int job_slot(struct xe_many* jobs) {
 	return -1;
 }
 
+static int origin_eq(const struct xe_url* a, const struct xe_url* b) {
+	return a && b && a->https == b->https && a->port == b->port && ck_ieq(a->host, b->host);
+}
+
+struct xe_warm_conn {
+	int used;
+	int fd;
+	uint32_t ip;
+	struct xe_url u;
+	struct xe_reader r;
+};
+
+/* Kept across xe_http_get_many calls so the stylesheet connection is
+ * still there for the images on that host. */
+static struct xe_warm_conn g_warm[XE_WARM_MAX];
+
+static void warm_drop(int k) {
+	struct xe_warm_conn* w;
+	if (k < 0 || k >= XE_WARM_MAX)
+		return;
+	w = &g_warm[k];
+	if (!w->used)
+		return;
+	if (w->r.ssl)
+		mbedtls_ssl_close_notify(w->r.ssl);
+	tls_free(&w->r);
+	if (w->fd >= 0)
+		_KeCloseFile(w->fd);
+	memset(w, 0, sizeof(*w));
+	w->fd = -1;
+}
+
+static void job_note(struct xe_many* j, int* rcs) {
+	if (!j)
+		return;
+	if (rcs && j->idx >= 0)
+		rcs[j->idx] = j->rc;
+	j->idx = -1;
+	j->out = NULL;
+}
+
+/* Move a finished socket off this job. The bio context has to follow the
+ * reader, because mbedtls calls back into that pointer. */
+static void warm_park(struct xe_many* j) {
+	int k;
+	int slot = -1;
+	int same = -1;
+	if (!j)
+		return;
+	if (j->state != XJ_WARM || j->fd < 0) {
+		if (j->fd >= 0)
+			job_close(j);
+		j->state = XJ_DONE;
+		return;
+	}
+	for (k = 0; k < XE_WARM_MAX; k++) {
+		if (!g_warm[k].used) {
+			if (slot < 0)
+				slot = k;
+			continue;
+		}
+		if (origin_eq(&g_warm[k].u, &j->u))
+			same = k;
+	}
+	/* Two live sockets to one host both stay. A third host drops the
+	 * oldest only when the table is already full. */
+	if (slot < 0 && same >= 0) {
+		warm_drop(same);
+		slot = same;
+	}
+	if (slot < 0) {
+		warm_drop(0);
+		slot = 0;
+	}
+	g_warm[slot].used = 1;
+	g_warm[slot].fd = j->fd;
+	g_warm[slot].ip = j->ip;
+	g_warm[slot].u = j->u;
+	g_warm[slot].r = j->r;
+	g_warm[slot].r.fd = j->fd;
+	if (g_warm[slot].r.ssl)
+		mbedtls_ssl_set_bio(g_warm[slot].r.ssl, &g_warm[slot].r, tls_send, tls_recv, NULL);
+	j->fd = -1;
+	j->r.fd = -1;
+	j->r.ssl = NULL;
+	j->r.slot = NULL;
+	j->tls_ready = 0;
+	j->state = XJ_DONE;
+}
+
+static int job_send_next(struct xe_many* j, int idx, const char* url,
+						 xe_http_response* out, size_t cap, const char* ua) {
+	j->idx = idx;
+	j->out = out;
+	j->max_body = cap ? cap : 1;
+	j->ua = ua;
+	j->content_len = -1;
+	j->rc = -1;
+	j->keepalive = 1;
+	j->may_retry = 1;
+	j->tls_ready = j->r.ssl ? 1 : 0;
+	j->hops = 0;
+	j->hdr_n = 0;
+	j->hdr[0] = 0;
+	j->req_off = 0;
+	j->req_len = 0;
+	j->pend_len = 0;
+	j->pend_pos = 0;
+	j->body_got = 0;
+	j->chunk_left = 0;
+	j->chunk_line_n = 0;
+	j->chunked = 0;
+	j->body_mode = XB_RAW;
+	j->loc[0] = 0;
+	j->idle_ms = _KeGetCurrentMS();
+	j->waits = 0;
+	if (!url)
+		url = "";
+	snprintf(j->url, sizeof(j->url), "%s", url);
+	if (parse_url(j->url, &j->u) != 0) {
+		job_fail(j, "Bad URL");
+		return -1;
+	}
+	if (job_build_req(j) < 0) {
+		job_fail(j, "Out of memory");
+		return -1;
+	}
+	j->state = XJ_SEND;
+	if (j->out)
+		j->out->tls = j->u.https;
+	_KePrint("[http] reuse %s\n", j->u.host);
+	return 0;
+}
+
+static int job_rearm(struct xe_many* j, int idx, const char* url,
+					 xe_http_response* out, size_t cap, const char* ua) {
+	int fd = j->fd;
+	uint32_t ip = j->ip;
+	struct xe_reader r = j->r;
+	memset(j, 0, sizeof(*j));
+	j->r = r;
+	j->fd = fd;
+	j->r.fd = fd;
+	j->ip = ip;
+	return job_send_next(j, idx, url, out, cap, ua);
+}
+
+static int warm_take(struct xe_many* j, const struct xe_url* u, int idx, const char* url,
+					 xe_http_response* out, size_t cap, const char* ua) {
+	int k;
+	for (k = 0; k < XE_WARM_MAX; k++) {
+		if (!g_warm[k].used || !origin_eq(&g_warm[k].u, u))
+			continue;
+		memset(j, 0, sizeof(*j));
+		j->r = g_warm[k].r;
+		j->fd = g_warm[k].fd;
+		j->r.fd = j->fd;
+		j->ip = g_warm[k].ip;
+		if (j->r.ssl)
+			mbedtls_ssl_set_bio(j->r.ssl, &j->r, tls_send, tls_recv, NULL);
+		g_warm[k].used = 0;
+		g_warm[k].fd = -1;
+		g_warm[k].r.ssl = NULL;
+		g_warm[k].r.slot = NULL;
+		return job_send_next(j, idx, url, out, cap, ua);
+	}
+	return -1;
+}
+
+static int host_busy(struct xe_many* jobs, const struct xe_url* u) {
+	int i;
+	int n = 0;
+	for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+		int st = jobs[i].state;
+		if (st == XJ_FREE || st == XJ_DONE || st == XJ_FAIL)
+			continue;
+		if (origin_eq(&jobs[i].u, u))
+			n++;
+	}
+	return n;
+}
+
+static int job_warm_slot(struct xe_many* jobs, const struct xe_url* u) {
+	int i;
+	for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+		if (jobs[i].state == XJ_WARM && origin_eq(&jobs[i].u, u))
+			return i;
+	}
+	return -1;
+}
+
 int xe_http_get_many(const char** urls, int n, const char* user_agent,
 					 xe_http_response* outs, const size_t* max_body, int* rcs) {
 	struct xe_many* jobs;
@@ -2242,48 +2604,117 @@ int xe_http_get_many(const char** urls, int n, const char* user_agent,
 	while (next < n || active > 0) {
 		int progressed = 0;
 		int started = 0;
+		int blocked = 0;
+		/* Nothing left to send. Park finished sockets for the next call
+		 * (the images that follow a stylesheet on the same host). */
+		if (next >= n) {
+			for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+				if (jobs[i].state != XJ_WARM)
+					continue;
+				job_note(&jobs[i], rcs);
+				warm_park(&jobs[i]);
+			}
+		}
 		for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
 			struct xe_many* j = &jobs[i];
 			if (j->state == XJ_FREE)
 				continue;
+			if (j->state == XJ_WARM) {
+				if (j->idx >= 0)
+					job_note(j, rcs);
+				continue;
+			}
 			if (j->state == XJ_DONE || j->state == XJ_FAIL) {
 				job_retire(j, rcs, &active);
 				continue;
 			}
 			if (job_step(j))
 				progressed = 1;
+			if (j->state == XJ_WARM && j->idx >= 0)
+				job_note(j, rcs);
 			if (j->state == XJ_DONE || j->state == XJ_FAIL)
 				job_retire(j, rcs, &active);
 		}
-		if (active < XE_HTTP_MANY_MAX && next < n) {
-			int slot = job_slot(jobs);
+		/* Reuse a live socket before opening another. A host already at
+		 * the cold cap waits, so twenty images do not mean twenty
+		 * handshakes. A blocking connect (old kernel) still starts only
+		 * one of those per pass. */
+		while (!blocked && next < n) {
+			struct xe_url probe;
 			size_t cap = 512 * 1024;
+			int slot;
+			int w;
+			int pp;
 			if (max_body)
 				cap = max_body[next] ? max_body[next] : 1;
-			if (slot >= 0) {
-				if (job_arm(&jobs[slot], next, urls[next], &outs[next], cap, user_agent) == 0)
-					active++;
-				else
-					job_retire(&jobs[slot], rcs, NULL);
+			pp = parse_url(urls[next] ? urls[next] : "", &probe);
+			if (pp == 0) {
+				w = job_warm_slot(jobs, &probe);
+				if (w >= 0) {
+					if (jobs[w].idx >= 0)
+						job_note(&jobs[w], rcs);
+					if (job_rearm(&jobs[w], next, urls[next], &outs[next], cap,
+								  user_agent) != 0)
+						job_retire(&jobs[w], rcs, NULL);
+					next++;
+					started = 1;
+					continue;
+				}
+				if (host_busy(jobs, &probe) >= XE_COLD_PER_HOST)
+					break;
+			}
+			if (active >= XE_HTTP_MANY_MAX)
+				break;
+			slot = job_slot(jobs);
+			if (slot < 0) {
+				for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+					if (jobs[i].state != XJ_WARM)
+						continue;
+					job_note(&jobs[i], rcs);
+					warm_park(&jobs[i]);
+					job_retire(&jobs[i], rcs, &active);
+					break;
+				}
+				slot = job_slot(jobs);
+				if (slot < 0)
+					break;
+			}
+			if (pp == 0 &&
+				warm_take(&jobs[slot], &probe, next, urls[next], &outs[next], cap,
+						  user_agent) == 0) {
+				active++;
 				next++;
 				started = 1;
+				continue;
 			}
+			if (job_arm(&jobs[slot], next, urls[next], &outs[next], cap, user_agent) == 0) {
+				active++;
+				if (jobs[slot].state != XJ_CONNECT)
+					blocked = 1;
+			} else {
+				job_retire(&jobs[slot], rcs, NULL);
+			}
+			next++;
+			started = 1;
 		}
 		if (!progressed && !started && active > 0) {
 			_KeProcessSleep(20);
 			spins = 0;
 			for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
 				if (jobs[i].state == XJ_FREE || jobs[i].state == XJ_DONE ||
-					jobs[i].state == XJ_FAIL)
+					jobs[i].state == XJ_FAIL || jobs[i].state == XJ_WARM)
 					continue;
 				jobs[i].waits++;
-				if (jobs[i].waits > XE_MANY_WAITS)
+				if (jobs[i].waits > XE_MANY_WAITS) {
+					_KePrint("[http] stall\n");
 					job_fail(&jobs[i], "Timed out");
+				}
 			}
 		} else if (++spins > 100000) {
 			for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
-				if (jobs[i].state == XJ_FREE)
+				if (jobs[i].state == XJ_FREE || jobs[i].state == XJ_WARM)
 					continue;
+				_KePrint("[http] stall\n");
 				job_fail(&jobs[i], "Timed out");
 				job_retire(&jobs[i], rcs, &active);
 			}
@@ -2293,6 +2724,14 @@ int xe_http_get_many(const char** urls, int n, const char* user_agent,
 		for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
 			if (jobs[i].state != XJ_FREE)
 				active++;
+		}
+	}
+	for (i = 0; i < XE_HTTP_MANY_MAX; i++) {
+		if (jobs[i].state == XJ_WARM) {
+			job_note(&jobs[i], rcs);
+			warm_park(&jobs[i]);
+		} else if (jobs[i].fd >= 0) {
+			job_close(&jobs[i]);
 		}
 	}
 	free(jobs);
