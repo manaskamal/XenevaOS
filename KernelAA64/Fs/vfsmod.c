@@ -31,8 +31,21 @@
 
 #include <Fs/vfs.h>
 #include <Fs/vfsmod.h>
+#include <Cred/cred.h>
 
-bool AuVFSCheckAccess(AuProcess* p, AuVFSNode* n, int want) {
-	//if (p->creds.)
+bool AuVFSCheckAccess(AuProcCredentials* c, AuVFSNode* n, int want) {
+	if (AuCredIsRoot(c))
+		return !(want & 1) || (n->mode & 0111);
+	int bits;
+	if (c->uid == n->uid)
+		bits = (n->mode >> 6) & 7;
+	else if (AuCredInGroup(c, n->gid))
+		bits = (n->mode >> 3) & 7;
+	else
+		bits = n->mode & 7;
 	return true;
+}
+
+int AuVFSChmodNode(AuVFSNode* fs, AuVFSNode* file, uint16_t mode) {
+	return 0;
 }

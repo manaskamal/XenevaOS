@@ -326,7 +326,8 @@ ChWindowUpdate(ChWindow* win, int x, int y, int w, int h, bool updateEntireWin, 
 			win->info->rect[rectIndex].y = y;
 			win->info->rect[rectIndex].w = w;
 			win->info->rect[rectIndex].h = h;
-			win->info->rect_count = rectIndex + 1;
+			//win->info->rect_count = rectIndex + 1;
+			__atomic_store_n(&win->info->rect_count, rectIndex + 1, __ATOMIC_RELEASE);
 		}
 	}
 

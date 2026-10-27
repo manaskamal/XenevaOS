@@ -146,6 +146,38 @@ extern uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId);
 * @param key -- location where to store the buffer key
 */
 extern void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t* key);
+
+#define WINDOW_TITLEBAR_HEIGHT 26
+#define WINDOW_GRAB_LEFT	   10
+#define WINDOW_GRAB_RIGHT	   74
+#define WINDOW_GRAB_KEEP	   32
+#define WINDOW_TITLEBAR_KEEP   8
+#define WINDOW_CURSOR_SIZE	   24
+#define WINDOW_DOCK_RESERVE	   70
+
+static inline void WindowClampToScreen(int* x, int* y, int w, int h, int screen_w, int screen_h) {
+	(void)h;
+	int min_x = WINDOW_GRAB_RIGHT + WINDOW_GRAB_KEEP - w;
+	if (min_x > 0)
+		min_x = 0;
+	int max_x = screen_w - WINDOW_CURSOR_SIZE - WINDOW_GRAB_LEFT - WINDOW_GRAB_KEEP;
+	int min_y = WINDOW_TITLEBAR_KEEP - WINDOW_TITLEBAR_HEIGHT;
+	int max_y = screen_h - WINDOW_DOCK_RESERVE - WINDOW_TITLEBAR_KEEP;
+
+	if (max_x < min_x)
+		max_x = min_x;
+	if (max_y < min_y)
+		max_y = min_y;
+	if (*x < min_x)
+		*x = min_x;
+	else if (*x > max_x)
+		*x = max_x;
+	if (*y < min_y)
+		*y = min_y;
+	else if (*y > max_y)
+		*y = max_y;
+}
+
 extern bool ResizeWindowBackBuffer(Window* win, int width, int height);
 extern void ReleaseWindowEffects(Window* win);
 /**

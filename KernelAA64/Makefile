@@ -90,7 +90,7 @@ ifeq ($(TOOLCHAIN), llvm)
     # pulls compiler_types in first so its fallbacks never shadow them.
     CFLAGS  = -Wall -Wextra -ffreestanding -fno-stack-protector -fno-stack-check -fno-strict-aliasing \
               -O2 -g -gdwarf-4 $(LLVM_TARGET) -fno-builtin \
-              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) $(BYPASS_VIRTIO_INPUT_FLAGS) \
+              -DARCH_ARM64 -D__KERNEL__ $(BOARD_FLAG) -D__STDC_LIMIT_MACROS $(BLEED_FLAGS) $(GPUSRV_FLAGS) $(DRV_SELFTEST_FLAGS) $(SOAK_FLAGS) $(DEBUG_ALLOC_FLAGS) $(BYPASS_VIRTGPU_FLAGS) -D__XENEVA_BYPASS_VIRTIO_INPUT__ \
               -Wno-error=incompatible-pointer-types -Wno-error=int-conversion \
               -Wno-implicit-function-declaration -Wno-error=conflicting-types $(INCLUDES)
 

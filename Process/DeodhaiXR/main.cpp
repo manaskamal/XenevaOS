@@ -59,6 +59,12 @@
 #include "xr_present.h"
 #include <draw.h>
 
+#define __DEODHAI_COMPOSE3D__ 1
+
+#ifdef __DEODHAI_COMPOSE3D__
+#include "compose3d.h"
+#endif
+
 #include "keybind.h"
 #include <sys/_ketime.h>
 #include <gpusrv.h>
@@ -582,7 +588,7 @@ _move_win:
 	_window_moving_ = true;
 
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-	int wx = info->x - SHADOW_SIZE;
+	/*int wx = info->x - SHADOW_SIZE;
 	int wy = info->y - SHADOW_SIZE;
 	int ww = info->width + SHADOW_SIZE * 2;
 	int wh = info->height + SHADOW_SIZE * 2;
@@ -603,18 +609,24 @@ _move_win:
 		ww = canvas->screenWidth - info->x + SHADOW_SIZE;
 
 	if ((wy + wh) >= canvas->screenHeight)
-		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
-	BackDirtyAdd(wx, wy, ww, wh);
+		wh = canvas->screenHeight - info->y + SHADOW_SIZE;*/
+	//BackDirtyAdd(wx, wy, ww, wh);
+	BackDirtyAdd(info->x - SHADOW_SIZE,
+				 info->y - SHADOW_SIZE,
+				 info->width + SHADOW_SIZE * 2,
+				 info->height + SHADOW_SIZE * 2);
+
 _skip:
-	if (x <= 0)
+	/**if (x <= 0)
 		x = 0;
 	if (y < 0)
 		y = 0;
 	if (x >= canvas->screenWidth)
 		x = canvas->screenWidth - ww;
 	if (y >= canvas->screenHeight)
-		y = canvas->screenHeight - wh;
-
+		y = canvas->screenHeight - wh;**/
+	WindowClampToScreen(
+		&x, &y, info->width, info->height, (int)canvas->screenWidth, (int)canvas->screenHeight);
 	info->x = x;
 	info->y = y;
 	glass_invalidate(win);
@@ -640,6 +652,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
 		if (check == win)
 			continue;
+		if (info->hide)
+			continue;
 		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
 			y < (info->y + info->height)) {
 			occluded = true;
@@ -651,7 +665,7 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
 		if (check == win)
 			continue;
-		if (info->hide)
+		if (info->hide || info->zoomed)
 			continue;
 		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
 			y < (info->y + info->height)) {
@@ -1072,9 +1086,14 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	currentCursor->xpos = input->xpos;
 	currentCursor->ypos = input->ypos;
 	int button = input->button_state;
-	DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
-	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
-	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+#ifdef __DEODHAI_COMPOSE3D__
+	if (!Deodhai3DHandleMouse(canv, currentCursor->xpos, currentCursor->ypos, button))
+#endif
+	{
+		DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
+		DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+		DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+	}
 
 	if (currentCursor->xpos <= 0)
 		currentCursor->xpos = 0;
@@ -1388,6 +1407,12 @@ int main(int argc, char* argv[]) {
 	XrPresentInit(canv);
 #endif
 
+#ifdef __DEODHAI_COMPOSE3D__
+	Deodhai3DInitialise(canv);
+	//Deodhai3DLoadPanorama("/pano.jpg");
+	Deodhai3DSetEnabled(true);
+#endif
+
 	//ChRect limit;
 	//limit.x = 0;
 	//limit.y = 0;
@@ -1492,6 +1517,11 @@ int main(int argc, char* argv[]) {
 					char key = ChitralekhaGetKeyPress(queued.code);
 					bool _key_brodcast_to_focus_win = true;
 					if (ChitralekhaKeyGetCTRL()) {
+#ifdef __DEODHAI_COMPOSE3D__
+						if (Deodhai3DHandleKey(key, true)) {
+							_key_brodcast_to_focus_win = false;
+						}
+#endif
 						int spcode = _DeodhaiGetSpecialCode(key, 1);
 						/** Special codes are beyond 400, so do check */
 						if (spcode >= 400) {
@@ -1541,7 +1571,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		uint64_t composeStart = _KeGetCurrentMS();
+#ifdef __DEODHAI_COMPOSE3D__
+		XRComposeFrame3D(canv);
+#else
 		XRComposeFrame(canv);
+#endif
 		fpsComposeMsAccum += (_KeGetCurrentMS() - composeStart);
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
@@ -1828,4 +1862,28 @@ int _get_gpu_fd() {
 
 Window* _get_always_on_top() {
 	return alwaysOnTop;
+}
+
+Window* _get_root_window() {
+	return rootWin;
+}
+Window* _get_focused_window() {
+	return focusedWin;
+}
+
+Cursor* _get_current_cursor() {
+	return currentCursor;
+}
+
+void _take_update_bits(bool* window_update_all_, bool* always_on_top_update) {
+	*window_update_all_ = _window_update_all_;
+	*always_on_top_update = _always_on_top_update;
+	_window_update_all_ = false;
+	_always_on_top_update = false;
+	_window_moving_ = false;
+	_skip_disable_ = false;
+}
+
+void _set_always_on_top_update(bool update) {
+	_always_on_top_update = update;
 }

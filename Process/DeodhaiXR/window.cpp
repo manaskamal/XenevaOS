@@ -39,14 +39,28 @@
 uint16_t shared_win_key_prefix = 1000;
 uint16_t back_buffer_key_prefix = 400;
 
+#define DEODHAI_SHM_KEY_FIRST 1000
+#define DEODHAI_SHM_KEY_LAST  4600
+static uint16_t next_shm_key = DEODHAI_SHM_KEY_FIRST;
+
+static uint16_t DeodhaiNextShmKey() {
+	uint16_t key = next_shm_key++;
+	if (next_shm_key > DEODHAI_SHM_KEY_LAST)
+		next_shm_key = DEODHAI_SHM_KEY_FIRST;
+	return key;
+}
+
 /*
  * CreateSharedWinSpace -- Create a shared window space
  * @param shkey -- location where to store the window key
  * @param ownerId -- owning process id
  */
 uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId) {
-	uint32_t key = shared_win_key_prefix + ownerId;
+	(void)ownerId;
+	uint16_t key = DeodhaiNextShmKey(); //shared_win_key_prefix + ownerId;
 	int id = _KeCreateSharedMem(key, sizeof(WinSharedInfo), 0);
+	if (id < 0)
+		return NULL;
 	void* addr = _KeObtainSharedMem(id, NULL, 0);
 	*shkey = key;
 	shared_win_key_prefix += 10;
@@ -60,7 +74,7 @@ uint32_t* CreateSharedWinSpace(uint16_t* shkey, uint16_t ownerId) {
  * @param key -- location where to store the buffer key
  */
 void* CreateNewBackBuffer(uint16_t ownerId, uint32_t sz, uint16_t* key) {
-	uint32_t key_prefix = back_buffer_key_prefix + ownerId;
+	uint16_t key_prefix = DeodhaiNextShmKey(); //back_buffer_key_prefix + ownerId;
 	int id = _KeCreateSharedMem(key_prefix, sz, 0);
 	void* ptr = _KeObtainSharedMem(id, NULL, 0);
 	*key = key_prefix;
@@ -169,6 +183,10 @@ Window* CreateWindow(int x, int y, int w, int h, uint16_t flags, uint16_t ownerI
 	uint16_t shKey = 0;
 	uint16_t backBufferKey = 0;
 	int64_t w_ = w, h_ = h, x_ = x, y_ = y;
+
+	if (w <= 0 || h <= 0 || (uint64_t)w * (uint64_t)h > UINT32_MAX / 4)
+		return NULL;
+
 	Window* win = (Window*)malloc(sizeof(Window));
 	memset(win, 0, sizeof(Window));
 	win->flags = flags;

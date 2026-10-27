@@ -33,11 +33,31 @@
 #include "_fastcpy.h"
 #include "backdirty.h"
 #include <color.h>
+#include <string.h>
 #if defined(ARCH_ARM64)
 #include <arm_neon.h>
 #endif
 
 extern Window* _get_always_on_top();
+
+#define WIN_MAX_DAMAGE 256
+
+static uint32_t take_damage(WinSharedInfo* info, Rect* out) {
+	uint32_t raw = __atomic_load_n(&info->rect_count, __ATOMIC_ACQUIRE);
+	for (;;) {
+		uint32_t n = raw > WIN_MAX_DAMAGE ? WIN_MAX_DAMAGE : raw;
+		memcpy(out, info->rect, n * sizeof(Rect));
+		if (__atomic_compare_exchange_n(
+				&info->rect_count, &raw, 0, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE))
+			return n;
+	}
+}
+
+static void ack_damage(WinSharedInfo* info) {
+	__atomic_store_n(&info->dirty, false, __ATOMIC_SEQ_CST);
+	if (__atomic_load_n(&info->rect_count, __ATOMIC_SEQ_CST))
+		__atomic_store_n(&info->dirty, true, __ATOMIC_RELEASE);
+}
 
 bool is_window_fully_overlapped(WinSharedInfo* curInfo, Window* alwaysOnTop) {
 	for (Window* check = alwaysOnTop; check != NULL; check = check->next) {
@@ -167,12 +187,14 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 			return;
 		}
 
+		Rect damage[WIN_MAX_DAMAGE];
+		uint32_t damage_count = take_damage(info, damage);
 		int clip_bottom = window_clip_bottom(canvas, win);
-		for (int k = 0; k < info->rect_count; k++) {
-			int r_x = info->rect[k].x;
-			int r_y = info->rect[k].y;
-			int r_w = info->rect[k].w;
-			int r_h = info->rect[k].h;
+		for (int k = 0; k < damage_count; k++) {
+			int r_x = damage[k].x;
+			int r_y = damage[k].y;
+			int r_w = damage[k].w;
+			int r_h = damage[k].h;
 			if (r_w <= 0 || r_h <= 0)
 				continue;
 
@@ -245,6 +267,7 @@ void _compose_dirty_area_(ChCanvas* canvas, Window* win, Window* focusedWin, Win
 		}
 		info->rect_count = 0;
 		WinSharedFlagStore(&info->dirty, false);
+		ack_damage(info);
 	}
 }
 
@@ -632,15 +655,15 @@ void _compose_entire_window(ChCanvas* canvas,
 			 * some later hover happens to repaint it. */
 			return;
 		}
-		int winx = info->x;
-		int winy = info->y;
+		//int winx = info->x;
+		//int winy = info->y;
 		int width = info->width;
 		int height = info->height;
 		int shad_w = width + SHADOW_SIZE * 2;
 		int shad_h = height + SHADOW_SIZE * 2;
 		int clip_bottom = window_clip_bottom(canvas, win);
 
-		if ((info->x - SHADOW_SIZE) <= 0) {
+		/**if ((info->x - SHADOW_SIZE) <= 0) {
 			info->x = 5 + SHADOW_SIZE;
 			winx = info->x;
 			glass_invalidate(win);
@@ -650,13 +673,23 @@ void _compose_entire_window(ChCanvas* canvas,
 			info->y = 5 + SHADOW_SIZE;
 			winy = info->y;
 			glass_invalidate(win);
+		}**/
+		int clampX = info->x, clampY = info->y;
+		WindowClampToScreen(
+			&clampX, &clampY, width, height, (int)canvas->screenWidth, (int)canvas->screenHeight);
+		if (clampX != info->x || clampY != info->y) {
+			info->x = clampX;
+			info->y = clampY;
+			glass_invalidate(win);
 		}
 
-		if ((info->x + 24) >= canvas->screenWidth)
+		/**if ((info->x + 24) >= (int)canvas->screenWidth)
 			info->x = canvas->screenWidth - 24;
 
-		if ((info->y + 24) >= canvas->screenHeight)
-			info->y = canvas->screenHeight - 24;
+		if ((info->y + 24) >= (int)canvas->screenHeight)
+			info->y = canvas->screenHeight - 24;**/
+		int winx = info->x;
+		int winy = info->y;
 
 #ifdef SHADOW_ENABLED
 		if (((info->x - SHADOW_SIZE) + shad_w) >= canvas->screenWidth)
@@ -883,8 +916,7 @@ void _compose_always_on_top_entire(ChCanvas* canvas,
 			 * the old dock/clock pixels remain erased or fragmented. Normal
 			 * windows cannot occlude this layer, and the compositor must not
 			 * append damage into the client's shared rectangle queue. */
-			compose_window_rect(
-				canvas, win, info, winx, winy, width, height, 0, 0, clip_bottom);
+			compose_window_rect(canvas, win, info, winx, winy, width, height, 0, 0, clip_bottom);
 		}
 
 		if (win->animFrameCount == 0)
