@@ -26,7 +26,8 @@
  * ALL capabilities from every service right after creating it.
  *
  * Test hooks exist only when built with SVCTEST (-D__XENEVA_SVC_TEST__), read
- * from /svctest.cnf: restart | fallback | recover | selfcrash.
+ * from /svctest.cnf: restart | fallback | recover | selfcrash | gpurestart |
+ * gpufallback.
  *
  * Results go to stdout and /dev/kmsg:  grep '\[svcmgr\]' run.log
  */
@@ -37,9 +38,10 @@
 #include <sys/_keproc.h>
 #include <sys/_kecred.h>
 #include <sys/_ketime.h>
+#include <drvctl.h>
 
 #define UAC_NORMAL_USER   1000
-#define MAX_SERVICES      4
+#define MAX_SERVICES      8
 #define MAX_COOLDOWN_MS   300000ULL
 #define BACKOFF_BASE_MS   200
 
@@ -89,10 +91,16 @@ static void emit(const char* line) {
 static int drvctl(const char* cmd) {
 	int fd = _KeOpenFile((char*)"/dev/drvctl", FILE_OPEN_WRITE);
 	if (fd < 0)
-		return -1;
-	int n = (int)_KeWriteFile(fd, (void*)cmd, strlen(cmd));
+		return -100;
+	AuDriverCtlRequest req;
+	memset(&req, 0, sizeof req);
+	size_t n = strlen(cmd);
+	if (n >= sizeof(req.command))
+		n = sizeof(req.command) - 1;
+	memcpy(req.command, (void*)cmd, n);
+	int rc = _KeFileIoControl(fd, AU_DRVCTL_IOC_EXEC, &req);
 	_KeCloseFile(fd);
-	return n;
+	return rc;
 }
 
 /* ---------------------------------------------------------------- config -- */
@@ -235,6 +243,12 @@ static int start_service(Service* s) {
 		else if (!strcmp(g_mode, "netfallback"))
 			strcpy(arg, "crash-after=2");              /* dies on every start, fast */
 	}
+	if (!strcmp(s->name, "gpusrv")) {
+		if (!strcmp(g_mode, "gpurestart") && s->starts == 0)
+			strcpy(arg, "crash-after=8");              /* crash after a real frame, once */
+		else if (!strcmp(g_mode, "gpufallback"))
+			strcpy(arg, "crash-after=2");              /* crash on every start */
+	}
 #endif
 	if (arg[0])
 		argv[argc++] = arg;
@@ -312,6 +326,7 @@ static void service_loop(Service* s) {
 				char cmds[72];
 				strncpy(cmds, s->handback, sizeof cmds - 1);
 				cmds[sizeof cmds - 1] = 0;
+				bool handback_ok = true;
 				for (char* c = cmds; *c;) {
 					char* end = c;
 					while (*end && *end != ';')
@@ -319,11 +334,20 @@ static void service_loop(Service* s) {
 					char saved = *end;
 					*end = 0;
 					int rc = drvctl(c);
-					sprintf(line, "[svcmgr] %s: handed back to the kernel (drvctl '%s' -> %d)\n", s->name, c, rc);
+					if (rc != AU_UNLOAD_OK)
+						handback_ok = false;
+					sprintf(line, "[svcmgr] %s: drvctl '%s' -> %d\n", s->name, c, rc);
 					emit(line);
 					if (!saved)
 						break;
 					c = end + 1;
+				}
+				if (handback_ok) {
+					sprintf(line, "[svcmgr] %s: handed back to the kernel\n", s->name);
+					emit(line);
+				} else {
+					sprintf(line, "[svcmgr] %s: kernel handback FAILED; retrying service recovery\n", s->name);
+					emit(line);
 				}
 			}
 			sprintf(line, "[svcmgr] %s: probation in %u ms\n", s->name, (unsigned)s->cooldown_cur_ms);
@@ -360,7 +384,14 @@ static void svc_thread_0() { sleep_ms(1);   service_loop(&g_svc[0]); }
 static void svc_thread_1() { sleep_ms(300); service_loop(&g_svc[1]); }
 static void svc_thread_2() { sleep_ms(600); service_loop(&g_svc[2]); }
 static void svc_thread_3() { sleep_ms(900); service_loop(&g_svc[3]); }
-static void (*const g_entry[MAX_SERVICES])() = {svc_thread_0, svc_thread_1, svc_thread_2, svc_thread_3};
+static void svc_thread_4() { sleep_ms(1200); service_loop(&g_svc[4]); }
+static void svc_thread_5() { sleep_ms(1500); service_loop(&g_svc[5]); }
+static void svc_thread_6() { sleep_ms(1800); service_loop(&g_svc[6]); }
+static void svc_thread_7() { sleep_ms(2100); service_loop(&g_svc[7]); }
+static void (*const g_entry[MAX_SERVICES])() = {
+	svc_thread_0, svc_thread_1, svc_thread_2, svc_thread_3,
+	svc_thread_4, svc_thread_5, svc_thread_6, svc_thread_7
+};
 
 int main(int argc, char* argv[]) {
 	(void)argc;

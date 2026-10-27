@@ -36,6 +36,9 @@
 #include <Net/tcp.h>
 #include <Net/ipv4.h>
 #include <Net/ipv6.h>
+#include <Net/arp.h>
+#include <Net/route.h>
+#include <Net/aunet.h>
 #include <Hal/AA64/aa64lowlevel.h>
 #include <Hal/AA64/aa64cpu.h>
 #include <Hal/AA64/sched.h>
@@ -190,6 +193,32 @@ static void AuTCPObtainPort(AuSocket* sock) {
 	TCPRegisterSocket(sock);
 }
 
+/* Ethernet sends are dropped when the neighbor entry is missing, and
+ * IPV4SendPacket does not say so. Advance snd_nxt only after this
+ * returns true, or the first ClientHello is consumed and never
+ * retransmitted and the TLS handshake fails once. */
+static int TCPLinkReady(TCPControlBlock* pcb) {
+	AuNetworkDevice* ndev;
+	AuRouteResult rr;
+	uint32_t hop;
+
+	if (!pcb || !pcb->nic)
+		return 0;
+	ndev = (AuNetworkDevice*)pcb->nic->device;
+	if (!ndev)
+		return 0;
+	if (pcb->is_ipv6)
+		return 1;
+	if (ndev->type == NETDEV_TYPE_LOOPBACK)
+		return 1;
+	if (ndev->type != NETDEV_TYPE_ETHERNET && ndev->type != NETDEV_TYPE_802_11)
+		return 1;
+	hop = pcb->remote_ip;
+	if (AuRouteLookup4(hop, &rr) == 0 && (rr.flags & RTF_GATEWAY) && rr.nexthop)
+		hop = rr.nexthop;
+	return AuARPResolve(pcb->nic, hop) != NULL;
+}
+
 static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, size_t payloadLen) {
 	TCPControlBlock* pcb = TCPGetPCB(sock);
 	AuNetworkDevice* ndev;
@@ -201,6 +230,8 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 		return -1;
 	ndev = (AuNetworkDevice*)pcb->nic->device;
 	if (!ndev)
+		return -1;
+	if (!TCPLinkReady(pcb))
 		return -1;
 
 	seq = pcb->snd_nxt;
@@ -555,7 +586,19 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 		return -1;
 	}
 
-	got = AuCircBufRead(buf, dest, want);
+	{
+		uint16_t before = TCPWindowOf(sock);
+		got = AuCircBufRead(buf, dest, want);
+		/* Filling the 64KB buffer advertises window 0. Nothing in the read
+		 * path sends a segment, so the peer waits on its persist timer
+		 * before the rest of a large body is sent. */
+		if (got > 0 &&
+			(pcb->state == TCP_STATE_ESTABLISHED || pcb->state == TCP_STATE_CLOSE_WAIT)) {
+			uint16_t after = TCPWindowOf(sock);
+			if (before < (uint16_t)(TCP_MSS * 2) && after > before)
+				TCPSendAck(sock);
+		}
+	}
 
 	if (msg->msg_name) {
 		if (pcb->is_ipv6 && msg->msg_namelen >= sizeof(sockaddr_in6)) {
@@ -639,6 +682,47 @@ void AuTCPClose(AuSocket* sock) {
 	}
 }
 
+/* Userspace compares connect() against this. XEClib's EINPROGRESS is 119. */
+#define AU_TCP_EINPROGRESS 119
+
+/* One poll of a handshake that was started with sock->nonblock. */
+static int AuTCPConnectPoll(AuSocket* sock, TCPControlBlock* pcb) {
+	uint64_t ns, nss;
+
+	AuNetRxPoll();
+	if (sock->sockState == SOCK_STATE_CONNECTION_RST || pcb->state == TCP_STATE_CLOSED) {
+		UARTDebugOut("[aurora]: TCP connection reset\r\n");
+		return -1;
+	}
+	if (pcb->state == TCP_STATE_ESTABLISHED) {
+		sock->sockState = SOCK_STATE_CONNECTED;
+		UARTDebugOut("[aurora]: TCP connection succeeded\r\n");
+		return 0;
+	}
+	if (pcb->state != TCP_STATE_SYN_SENT) {
+		UARTDebugOut("[aurora]: TCP connect failed, state %d\r\n", pcb->state);
+		return -1;
+	}
+	aa64_calculate_ticks(0, 0, &ns, &nss);
+	if (ns > pcb->syn_sec || (ns == pcb->syn_sec && nss > pcb->syn_sub)) {
+		if (pcb->syn_tries >= 3) {
+			UARTDebugOut("[aurora]: TCP connect timeout\r\n");
+			pcb->state = TCP_STATE_CLOSED;
+			return -1;
+		}
+		UARTDebugOut("[aurora]: TCP retrying connection\r\n");
+		pcb->snd_nxt = pcb->iss;
+		if (TCPSendSegment(sock, TCP_FLAGS_SYN, NULL, 0) != 0) {
+			pcb->syn_tries++;
+			aa64_calculate_ticks(1, 0, &pcb->syn_sec, &pcb->syn_sub);
+			return -AU_TCP_EINPROGRESS;
+		}
+		pcb->syn_tries++;
+		aa64_calculate_ticks(1, 0, &pcb->syn_sec, &pcb->syn_sub);
+	}
+	return -AU_TCP_EINPROGRESS;
+}
+
 int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	TCPControlBlock* pcb = TCPGetPCB(sock);
 	AuVFSNode* nic;
@@ -649,6 +733,15 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 
 	if (!pcb || !addr)
 		return -1;
+
+	if (pcb->state == TCP_STATE_ESTABLISHED) {
+		sock->sockState = SOCK_STATE_CONNECTED;
+		return 0;
+	}
+	/* A second connect() on a non-blocking socket only checks the handshake.
+	 * Falling through would mint a new sequence number and send another SYN. */
+	if (pcb->state == TCP_STATE_SYN_SENT && sock->nonblock)
+		return AuTCPConnectPoll(sock, pcb);
 
 	UARTDebugOut("[aurora]: TCP connect \r\n");
 	if (sock->sessionPort == 0)
@@ -697,8 +790,17 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
 	pcb->state = TCP_STATE_SYN_SENT;
 
-	if (TCPSendSegment(sock, TCP_FLAGS_SYN, NULL, 0) != 0)
-		return -1;
+	/* A miss here means the gateway ARP is not in yet. Stay in SYN_SENT
+	 * and let the wait below send the SYN again instead of failing the
+	 * first connect of the boot. */
+	TCPSendSegment(sock, TCP_FLAGS_SYN, NULL, 0);
+
+	aa64_calculate_ticks(1, 0, &pcb->syn_sec, &pcb->syn_sub);
+	pcb->syn_tries = 0;
+	/* The overlapped GET path sets this so eight handshakes share one thread.
+	 * A plain connect() leaves it clear and still waits here. */
+	if (sock->nonblock)
+		return -AU_TCP_EINPROGRESS;
 
 	aa64_calculate_ticks(1, 0, &s, &ss);
 	while (pcb->state == TCP_STATE_SYN_SENT) {
@@ -941,10 +1043,16 @@ static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tc
 			TCPSendAck(sock);
 			return;
 		}
-		wrote = TCPWriteRx(pcb, payload, payloadLen);
-		if (wrote > 0) {
-			pcb->rcv_nxt += (uint32_t)wrote;
+		/* A short accept would ACK bytes the buffer did not keep. Refuse
+		 * the segment and advertise the space that is actually free. */
+		if ((size_t)TCPWindowOf(sock) < payloadLen) {
 			needAck = 1;
+		} else {
+			wrote = TCPWriteRx(pcb, payload, payloadLen);
+			if (wrote > 0) {
+				pcb->rcv_nxt += (uint32_t)wrote;
+				needAck = 1;
+			}
 		}
 	}
 

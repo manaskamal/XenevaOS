@@ -172,12 +172,12 @@ uint32_t FatReadFAT(AuVFSNode* node, uint64_t cluster_index) {
 	uint64_t fat_sector = fs->__FatBeginLBA + (fat_offset / fs->__BytesPerSector);
 
 	size_t ent_offset = fat_offset % fs->__BytesPerSector;
-	uint64_t* BuffArea =
-		(uint64_t*)fs->_scratchBuffer; //P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
+	//uint64_t* BuffArea = (uint64_t*)P2V((size_t)AuPmmngrAllocPage(AURORA_PAGE_NORMAL));
 	//memset(BuffArea, 0, 512);
-	AuVDiskRead(vdisk, fat_sector, 1, BuffArea);
-	unsigned char* buf = (unsigned char*)BuffArea;
-	uint32_t value = *(uint32_t*)&buf[ent_offset];
+	uint8_t BuffArea[512];
+	AuVDiskRead(vdisk, fat_sector, 1, (uint64_t*)BuffArea);
+	//unsigned char* buf = (unsigned char*)BuffArea;
+	uint32_t value = *(uint32_t*)&BuffArea[ent_offset];
 	//AuPmmngrReleasePage((uint64_t)V2P((size_t)BuffArea));
 	return (value & 0x0FFFFFFF);
 }

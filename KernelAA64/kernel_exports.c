@@ -75,6 +75,14 @@ extern void AuWifiPortalSetRx(void);
 extern void AuWifiPortalRx(void);
 extern void AuRouteSetFlag4(void);
 extern void AuGetNetworkAdapter(void);
+extern void AuVFSFind(void);
+extern void AuDevFSAddFile(void);
+extern void AuDevFSRemoveFile(void);
+extern void AuGetBootInfoStruc(void);
+extern void AuMapPage(void);
+extern void AuConsoleSetConInfo(void);
+extern void AuConsoleSetPresentHook(void);
+extern void AuConsoleRestoreBootFb(void);
 extern void strcmp(void);
 extern void strlen(void);
 extern void memcmp(void);
@@ -146,6 +154,14 @@ struct kernel_export k_exports[] = {
 	{"AuWifiPortalRx", (void*)AuWifiPortalRx},
 	{"AuRouteSetFlag4", (void*)AuRouteSetFlag4},
 	{"AuGetNetworkAdapter", (void*)AuGetNetworkAdapter},
+	{"AuVFSFind", (void*)AuVFSFind},
+	{"AuDevFSAddFile", (void*)AuDevFSAddFile},
+	{"AuDevFSRemoveFile", (void*)AuDevFSRemoveFile},
+	{"AuGetBootInfoStruc", (void*)AuGetBootInfoStruc},
+	{"AuMapPage", (void*)AuMapPage},
+	{"AuConsoleSetConInfo", (void*)AuConsoleSetConInfo},
+	{"AuConsoleSetPresentHook", (void*)AuConsoleSetPresentHook},
+	{"AuConsoleRestoreBootFb", (void*)AuConsoleRestoreBootFb},
 	{"strcmp", (void*)strcmp},
 	{"strlen", (void*)strlen},
 	{"memcmp", (void*)memcmp},

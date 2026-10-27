@@ -32,10 +32,35 @@
  *   upstream  include/linux/property.h  (mainline v7.2)
  */
 #include <linux/errno.h>	/* -ENODATA */
-#include <linux/types.h>	/* u32 */
+#include <linux/types.h>	/* u32, u8 */
+#include <linux/list.h>	/* struct list_head -- fwnode_handle's supplier and consumers */
 
 struct device;
-struct fwnode_handle;
+
+/*
+ * struct fwnode_handle -- mainline's definition, at property.h:66-73 of the
+ * same header. It was a forward declaration here until drm_connector.c:3492
+ * needed it: that line reads `connector->fwnode->secondary`, and a member
+ * access needs the definition, not the promise.
+ *
+ * All seven members are carried, not only the one that is read. A struct
+ * with three of them is indistinguishable from one with seven until somebody
+ * writes the fourth, and the write would compile and land at whatever offset
+ * the compiler had computed for it -- the failure an ABI pin exists to
+ * prevent, arriving in a file that is not pinned.
+ *
+ * This layout is never persisted and never crosses a boundary: there are no
+ * fwnodes in this kernel, so dev_fwnode() below returns NULL for every
+ * device and drm_connector.c:3492's comparison is always false.
+ */
+struct fwnode_handle {
+	struct fwnode_handle *secondary;
+	const struct fwnode_operations *ops;
+	struct device *dev;
+	struct list_head supplier;
+	struct list_head consumers;
+	u8 flags;
+};
 
 static inline struct fwnode_handle* dev_fwnode(const struct device* dev)
 {

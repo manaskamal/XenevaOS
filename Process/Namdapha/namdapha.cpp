@@ -285,9 +285,11 @@ void NamdaphaHandleMessage(PostEvent* e) {
 			}
 			if (!_already_icon_was_there_) {
 				ButtonInfo* info = NmCreateButtonInfo(e->charValue3);
-				NmButtonInfoRead(info);
-				nbutton->nmbuttoninfo = info;
-				info->usageCount += 1;
+				if (info) {
+					NmButtonInfoRead(info);
+					nbutton->nmbuttoninfo = info;
+					info->usageCount += 1;
+				}
 			}
 			NamdaphaPaint(win);
 

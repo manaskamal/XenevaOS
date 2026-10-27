@@ -34,6 +34,7 @@
 #include <Cred/group.h>
 #include <aubuiltin.h>
 #include <Fs/Dev/devhw.h>
+#include <Fs/Dev/devgpu.h>
 #include <Sound/sndproxy.h>
 #include <Net/netproxy.h>
 #include <austatic.h>
@@ -73,6 +74,8 @@ static int _dev_count_;
 static uint32_t driver_class_unique_id = 0;
 static uint32_t driver_boot_unique_id = 0;
 static uint64_t driver_load_base = 0;
+
+static void AuDriverInstallConsoleHook(AuDriver* driver);
 
 /* Free list of unloaded driver regions (virtual extents above AU_DRIVER_BASE_START).
  * New drivers take the first free extent that fits; otherwise the bump pointer. */
@@ -193,10 +196,12 @@ search:
 		p++;
 
 	fbuf = p;
-	char num[4];
-	memset(num, 0, 4);
+	/* PCI IDs in audrv.cnf are decimal and may use all four digits.
+	 * Keep room for the terminator before passing the field to atoi(). */
+	char num[16];
+	memset(num, 0, sizeof(num));
 	int i;
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < (int)sizeof(num) - 1; i++) {
 		if (p[i] == ',' || p[i] == ']')
 			break;
 		num[i] = p[i];
@@ -205,12 +210,12 @@ search:
 
 	venid = atoi(num);
 
-	memset(num, 0, 4);
+	memset(num, 0, sizeof(num));
 	/* Now search for device id / product id */
 	p = strchr(fbuf, ',');
 	if (p)
 		p++;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < (int)sizeof(num) - 1; i++) {
 		if (p[i] == ',' || p[i] == ']')
 			break;
 		num[i] = p[i];
@@ -353,6 +358,21 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	uint64_t load_base = 0;
 	AuTextOut("[aurora]: Loading driver -> %s\r\n", filename);
 
+	/* A user-space hwdev capability is the exclusive owner of its PCI
+	 * function. Reject the load before mapping either a static or DLL image;
+	 * otherwise a reload can race the capability handoff and create two
+	 * independent command paths to the same hardware. Non-PCI board drivers
+	 * have no device address and are not subject to this check. */
+	if (driver && driver->device &&
+		AuHwdevClaimsPci(driver->bus, driver->dev, driver->func)) {
+		UARTDebugOut("[audrv]: %s blocked by live user PCI capability at %x:%x.%x\r\n",
+			filename, driver->bus, driver->dev, driver->func);
+		driver->entry = NULL;
+		driver->unload = NULL;
+		driver->present = false;
+		return;
+	}
+
 	/* unikernel profile: the driver is part of this image, there is nothing to load */
 	const AuStaticComponent* sc = AuStaticComponentFind(filename);
 	if (sc) {
@@ -450,18 +470,6 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	void* unload_addr = AuGetProcAddress((void*)load_base, "AuDriverUnload");
 	uint32_t* flags_addr = (uint32_t*)AuGetProcAddress((void*)load_base, "AuDriverFlags");
 	AuKernelLinkDLL((void*)virtual_base);
-	/* Console mirror: resolve the driver's present function through its
-	 * own export table and hand it to aucon. Done kernel-side because
-	 * driver->kernel imports resolve only through the k_exports
-	 * allowlist -- calling the setter from the driver faults. Only a hit
-	 * touches the hook: drivers loaded later (xhci, ...) must not disarm
-	 * an armed mirror with their inevitable lookup miss. --axiss */
-	AuConsolePresentFn present =
-		(AuConsolePresentFn)AuGetProcAddress((void*)virtual_base, "VirtGpuConsolePresent");
-	if (present) {
-		AuConsoleSetPresentHook(present);
-		UARTDebugOut("[audrv]: console mirror hooked\r\n");
-	}
 	driver->entry = (au_drv_entry)entry_addr;
 	driver->unload = (au_drv_unload)unload_addr;
 	driver->flags = flags_addr ? *flags_addr : 0;
@@ -472,6 +480,22 @@ void AuDriverLoad(char* filename, AuDriver* driver) {
 	driver->present = true;
 	(void)next_base_offset; /* mapping count is now bounded by region_pages */
 	kfree(file);
+}
+
+/* Install callbacks only after the driver's entry point has completed. A
+ * driver may emit kernel output while it is still allocating its queues and
+ * framebuffer; exposing its presenter earlier lets that output call into a
+ * partially initialized image. */
+static void AuDriverInstallConsoleHook(AuDriver* driver) {
+	if (!driver || !driver->new_load_base)
+		return;
+	AuConsolePresentFn present =
+		(AuConsolePresentFn)AuGetProcAddress((void*)driver->new_load_base,
+			"VirtGpuConsolePresent");
+	if (present) {
+		AuConsoleSetPresentHook(present);
+		UARTDebugOut("[audrv]: console mirror hooked\r\n");
+	}
 }
 
 extern bool AuIsPCIeInitialized();
@@ -597,9 +621,19 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 		/* Serially call each startup entries of each driver */
 		for (int i = 0; i < driver_class_unique_id; i++) {
 			AuDriver* driver = drivers[i];
+		#ifdef __XENEVA_GPUSRV__
+			/* Keep the fallback component registered for drvctl hand-back, but
+			 * never probe it in the user-space GPU profile. The first owner of
+			 * the virtio-GPU PCI function is gpusrv, not a kernel DLL. */
+			if (driver && strstr(driver->name, "virtgpu")) {
+				UARTDebugOut("[audrv]: virtgpu reserved for user-space gpusrv\r\n");
+				continue;
+			}
+		#endif
 			AuDriverLoad(driver->name, driver);
 			if (driver->entry) {
-				driver->entry(driver);
+				if (driver->entry(driver) == 0)
+					AuDriverInstallConsoleHook(driver);
 			}
 		}
 		/* Station driver is not a PCI function. virtio-net stays class 02,00. */
@@ -607,19 +641,26 @@ void AuDrvMngrInitialize(KERNEL_BOOT_INFO* info) {
 			AuDriver* wifi = AuCreateDriverInstance("/wifi.dll");
 			if (wifi) {
 				AuDriverLoad(wifi->name, wifi);
-				if (wifi->entry)
-					wifi->entry(wifi);
+				if (wifi->entry && wifi->entry(wifi) == 0)
+					AuDriverInstallConsoleHook(wifi);
 			}
 		}
 	}
 
 	AuDriverCtlInitialize();
 	AuHwdevInitialize();
+	#ifdef __XENEVA_GPUSRV__
+	AuGpuProxyInitialize();
+	#endif
 	AuSndProxyInitialize();
 	AuNetProxyInitialize();
 	AuIpcInitialize();
 	AuSrvfsInitialize();
+#ifndef __XENEVA_BYPASS_VIRTIO_INPUT__
+	/* The vendored input path writes /dev/kybrd and /dev/mice directly;
+	 * a user-space input server would compete for the same functions. */
 	AuInputSrvInitialize();
+#endif
 #ifdef __XENEVA_DRV_SELFTEST__
 	{
 		extern void AuDriverSelfTest(void);
@@ -973,6 +1014,14 @@ int AuDriverUnload(AuDriver* drv) {
 		UARTDebugOut("[audrv]: %s busy (refcount %d)\r\n", drv->name, drv->refcount);
 		return AU_UNLOAD_BUSY;
 	}
+	/* The GPU presenter is the only component called from the console writer.
+	 * Cut that callback before entering the component's unload routine, then
+	 * restore the boot framebuffer after the image is gone. Keeping this in the
+	 * kernel manager avoids adding a console-repointing dependency to the
+	 * handoff DLL's import library. */
+	bool restoring_gpu = strstr(drv->name, "virtgpu") != 0;
+	if (restoring_gpu)
+		AuConsoleSetPresentHook(0);
 	if (drv->unload(drv) != 0) {
 		UARTDebugOut("[audrv]: %s vetoed unload\r\n", drv->name);
 		return AU_UNLOAD_VETOED;
@@ -1013,6 +1062,8 @@ int AuDriverUnload(AuDriver* drv) {
 	AuDrvRegionFree(base, pages);
 	drv->new_load_base = 0;
 	drv->region_pages = 0;
+	if (restoring_gpu)
+		AuConsoleRestoreBootFb();
 	UARTDebugOut("[audrv]: unloaded %s: image %x (%d pages) freed, %d irq cleared, %d mmio unmapped, %d page(s) leaked\r\n",
 				 drv->name, base, (int)pages, irqs, mmio, leaked_pages);
 	return AU_UNLOAD_OK;
@@ -1035,7 +1086,20 @@ int AuDriverLoadByName(const char* name) {
 	AuDriverLoad(drv->name, drv);
 	if (!drv->present || !drv->entry)
 		return -3;
-	return drv->entry(drv);
+	int rc = drv->entry(drv);
+	if (rc == 0)
+		AuDriverInstallConsoleHook(drv);
+	if (rc != 0) {
+		/* AuDriverLoad marks the image present before calling its entry point.
+		 * Do not leave a failed initialization looking like a live driver: the
+		 * next handoff would otherwise report "already loaded" and strand any
+		 * resources acquired before the failure. Unloadable components own the
+		 * partial-init cleanup contract. */
+		int cleanup = AuDriverUnload(drv);
+		UARTDebugOut("[audrv]: %s initialization failed rc=%d cleanup=%d\r\n",
+			drv->name, rc, cleanup);
+	}
+	return rc;
 }
 
 bool AuDriverClaimsPci(int bus, int dev, int func) {
@@ -1052,29 +1116,19 @@ static void AuDriverCtlListBuiltin(const char* name, bool bound, int bus, int de
 }
 
 /* ---- /dev/drvctl: write "unload NAME", "load NAME" or "list" ---- */
-static size_t AuDriverCtlWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
-	(void)fsys; (void)file;
-	if (!AuHwdevCallerAllowed(AuHwdevCurrentProcess())) {
-		UARTDebugOut("[drvctl]: denied (caller not in the daemons group)\r\n");
-		return 0;
-	}
-	char cmd[96];
-	size_t n = length < sizeof(cmd) - 1 ? length : sizeof(cmd) - 1;
-	memcpy(cmd, buffer, n);
-	cmd[n] = 0;
-	while (n && (cmd[n - 1] == '\n' || cmd[n - 1] == '\r' || cmd[n - 1] == ' '))
-		cmd[--n] = 0;
-
+static int AuDriverCtlExecute(char* cmd) {
 	if (strncmp(cmd, "unload ", 7) == 0) {
 		int rc = AuDriverUnloadByName(cmd + 7);
 		if (rc == AU_UNLOAD_NOT_FOUND)               /* not a loadable driver: try the built-ins */
 			rc = AuBuiltinUnload(cmd + 7);
 		UARTDebugOut("[drvctl]: unload %s -> %d\r\n", cmd + 7, rc);
+		return rc;
 	} else if (strncmp(cmd, "load ", 5) == 0) {
 		int rc = AuDriverLoadByName(cmd + 5);
 		if (rc == -1)
 			rc = AuBuiltinLoad(cmd + 5);
 		UARTDebugOut("[drvctl]: load %s -> %d\r\n", cmd + 5, rc);
+		return rc;
 	} else if (strcmp(cmd, "list") == 0) {
 		for (uint32_t i = 0; i < driver_class_unique_id && i < 246; i++) {
 			AuDriver* d = drivers[i];
@@ -1086,8 +1140,49 @@ static size_t AuDriverCtlWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffe
 		AuBuiltinList(AuDriverCtlListBuiltin);
 	} else {
 		UARTDebugOut("[drvctl]: unknown command '%s'\r\n", cmd);
+		return AU_DRVCTL_E_UNKNOWN;
 	}
+	return AU_UNLOAD_OK;
+}
+
+static size_t AuDriverCtlNormalize(char* cmd, size_t n) {
+	cmd[n] = 0;
+	while (n && (cmd[n - 1] == '\n' || cmd[n - 1] == '\r' || cmd[n - 1] == ' ' || cmd[n - 1] == '\t'))
+		cmd[--n] = 0;
+	return n;
+}
+
+static size_t AuDriverCtlWrite(AuVFSNode* fsys, AuVFSNode* file, uint64_t* buffer, uint32_t length) {
+	(void)fsys; (void)file;
+	if (!AuHwdevCallerAllowed(AuHwdevCurrentProcess())) {
+		UARTDebugOut("[drvctl]: denied (caller not in the daemons group)\r\n");
+		return 0;
+	}
+	char cmd[AU_DRVCTL_CMD_MAX];
+	size_t n = length < sizeof(cmd) - 1 ? length : sizeof(cmd) - 1;
+	memcpy(cmd, buffer, n);
+	AuDriverCtlNormalize(cmd, n);
+	(void)AuDriverCtlExecute(cmd);
 	return length;
+}
+
+static int AuDriverCtlIoControl(AuVFSNode* file, int code, void* arg) {
+	(void)file;
+	if (code != AU_DRVCTL_IOC_EXEC || !arg)
+		return AU_DRVCTL_E_UNKNOWN;
+	if (!AuHwdevCallerAllowed(AuHwdevCurrentProcess())) {
+		UARTDebugOut("[drvctl]: denied (caller not in the daemons group)\r\n");
+		return AU_UNLOAD_VETOED;
+	}
+	AuDriverCtlRequest* req = (AuDriverCtlRequest*)arg;
+	char cmd[AU_DRVCTL_CMD_MAX];
+	memcpy(cmd, req->command, sizeof(cmd));
+	cmd[sizeof(cmd) - 1] = 0;
+	size_t n = 0;
+	while (n < sizeof(cmd) && cmd[n])
+		n++;
+	AuDriverCtlNormalize(cmd, n);
+	return AuDriverCtlExecute(cmd);
 }
 
 void AuDriverCtlInitialize(void) {
@@ -1104,6 +1199,7 @@ void AuDriverCtlInitialize(void) {
 	node->gid = AuCredGetGroupID(AURORA_GID_MISC_DAEMONS);
 	node->device = fsys;
 	node->write = AuDriverCtlWrite;
+	node->iocontrol = AuDriverCtlIoControl;
 	AuDevFSAddFile(fsys, "/", node);
 }
 

@@ -127,11 +127,17 @@ sync_el1_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0
    stp x30, x0, [sp, #-16]!
+   mrs x0, ELR_EL1
+   mrs x1, SPSR_EL1
+   stp x0, x1, [sp, #-16]!
    save_fp_exception_frame
-   add x0, sp, #528
+   add x0, sp, #528 //528
 
    bl sync_el1_handler
    restore_fp_exception_frame
+   ldp x0, x1, [sp], #16
+   msr ELR_EL1, x0
+   msr SPSR_EL1, x1
    ldp x30, x0,  [sp],  #16
    msr SP_EL0, x0
    ldp x28, x29, [sp] ,#16
@@ -173,10 +179,16 @@ irq_el1_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0    //Using SP_EL0 because SPSR_EL1 is set to use this 
    stp x30, x0, [sp, #-16]!
+   mrs x0, ELR_EL1
+   mrs x1, SPSR_EL1
+   stp x0, x1, [sp, #-16]!
    save_fp_exception_frame
-   add x0, sp, #528
+   add x0, sp, #528 //528
    bl irq_el1_handler
    restore_fp_exception_frame
+   ldp x0, x1, [sp], #16
+   msr ELR_EL1, x0
+   msr SPSR_EL1, x1
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    ldp x28, x29, [sp], #16
@@ -218,8 +230,11 @@ sync_el0_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0
    stp x30, x0, [sp, #-16]!
+   mrs x0, ELR_EL1
+   mrs x1, SPSR_EL1
+   stp x0, x1, [sp, #-16]!
    save_fp_exception_frame
-   add x0, sp, #528
+   add x0, sp, #528  //528
    bl sync_el1_handler
 
    mrs x0, SPSR_EL1
@@ -231,6 +246,9 @@ sync_el0_wrapper:
    _sync_cont: 
 
    restore_fp_exception_frame
+   ldp x0, x1, [sp], #16
+   msr ELR_EL1, x0
+   msr SPSR_EL1, x1
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    //mov x0, 0x2c0
@@ -274,8 +292,11 @@ irq_el0_wrapper:
    stp x28, x29, [sp, #-16]!
    mrs x0, SP_EL0    //Using SP_EL0 because SPSR_EL1 is set to use this 
    stp x30, x0, [sp, #-16]!
+   mrs x0, ELR_EL1
+   mrs x1, SPSR_EL1
+   stp x0, x1, [sp, #-16]!
    save_fp_exception_frame
-   add x0, sp, #528
+   add x0, sp, #528  //528
    bl irq_el1_handler
     mrs x0, SPSR_EL1
    and w0, w0, #0x200000
@@ -286,6 +307,9 @@ irq_el0_wrapper:
    _irq_cont: 
 
    restore_fp_exception_frame
+   ldp x0, x1, [sp], #16
+   msr ELR_EL1, x0
+   msr SPSR_EL1, x1
    ldp x30, x0, [sp], #16
    msr SP_EL0, x0
    //mov x0, 0x2c0

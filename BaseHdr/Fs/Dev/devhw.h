@@ -20,12 +20,26 @@ extern void AuInputSrvInitialize(void);
  */
 extern bool AuHwdevCallerAllowed(AuProcess* proc);
 
+/** @brief True when a live user-space hwdev capability owns this PCI function. */
+extern bool AuHwdevClaimsPci(int bus, int dev, int func);
+
 /**
  * @brief AuHwdevOwnsDma -- true when [phys, phys+len) lies inside a DMA buffer
  * that proc allocated through one of its own hw handles. Lets other kernel
  * code accept a user-supplied physical address without trusting it.
  */
 extern bool AuHwdevOwnsDma(AuProcess* proc, uint64_t phys, uint64_t len);
+
+/** @brief Validate that fd is the caller's PCI function with the requested ID. */
+extern bool AuHwdevHandleIsDevice(AuProcess* proc, int fd, uint16_t vendor,
+	uint16_t device);
+
+/** @brief Return the opaque kernel object for one exact caller handle. */
+extern void* AuHwdevHandleObject(AuProcess* proc, int fd);
+
+/** @brief Validate a DMA range against one exact hwdev capability. */
+extern bool AuHwdevHandleOwnsDma(AuProcess* proc, int fd, uint64_t phys,
+	uint64_t len);
 
 /** @brief AuHwdevCurrentProcess -- the process running the current thread */
 extern AuProcess* AuHwdevCurrentProcess(void);

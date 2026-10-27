@@ -78,6 +78,8 @@ static void AuVirtioKbdReinit(void) {
 volatile uint32_t kbd_dbg_irqs;
 
 static const uint8_t ext_key_map[256] = {
+	[0x60] = 0x1c, //kpenter
+	[0x62] = 0x35, //kpslash
 	[0x63] = 0x37, //print screen
 	[0x66] = 0x47, //home
 	[0x67] = 0x48, //up
@@ -87,6 +89,8 @@ static const uint8_t ext_key_map[256] = {
 	[0x6a] = 0x4D, //right
 	[0x6b] = 0x4F, //end
 	[0x6d] = 0x51, //page down
+	[0x6e] = 0x52, //insert
+	[0x6f] = 0x53, //delete
 	[0x7d] = 0x5b, //left super
 };
 
@@ -117,7 +121,9 @@ void AuVirtioKbdHandler(int spinum) {
 				static uint32_t dbg_keys;
 				if (dbg_keys < 8) {
 					dbg_keys++;
-					UARTDebugOut("[virtio-keyboard]: kernel driver got key code %d value %d\r\n", evt.code, evt.value);
+					UARTDebugOut("[virtio-keyboard]: kernel driver got key code %d value %d\r\n",
+								 evt.code,
+								 evt.value);
 				}
 			}
 			/* Linux KEY_ENTER=28, KEY_KPENTER=96 */
@@ -130,7 +136,7 @@ void AuVirtioKbdHandler(int spinum) {
 				msg.type = AU_INPUT_KEYBOARD;
 				msg.code = scancode;
 				AuDevWriteKybrd(&msg);
-			} else if (evt.code < 0x49) {
+			} else if (evt.code < 0x59) {
 				uint8_t scancode = (uint8_t)evt.code;
 				if (evt.value == 0)
 					scancode |= 0x80;
@@ -161,11 +167,14 @@ void AuVirtioKbdHandler(int spinum) {
 
 /* temporary input-freeze diagnostics: thread-context only, never call from IRQ */
 void AuVirtioKbdDebug() {
-	dc_ivac((uint64_t)&queue->used.index);
+	/**dc_ivac((uint64_t)&queue->used.index);
 	dsb_sy_barrier();
 	UARTDebugOut("[kbd-dbg]: idx=%d used=%d avail=%d qsz=%d irqs=%d \n",
-		(int)index, (int)queue->used.index,
-		(int)queue->available.index, (int)queueSize, (int)kbd_dbg_irqs);
+				 (int)index,
+				 (int)queue->used.index,
+				 (int)queue->available.index,
+				 (int)queueSize,
+				 (int)kbd_dbg_irqs);**/
 }
 
 void AuVirtioKbdDown() {
@@ -192,6 +201,7 @@ void AuVirtioKbdDown() {
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
+#if 0
 	index = 0;
 	if (device == 0 || device == 0xFFFFFFFF)
 		return;
@@ -264,9 +274,9 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	queueSize = queueSz;
 	UARTDebugOut("virtio: queue sz : %d \n", queueSz);
 
-	uint64_t queuePhys = (uint64_t)
-		AuPmmngrAllocPage(AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
-	
+	uint64_t queuePhys = (uint64_t)AuPmmngrAllocPage(
+		AURORA_PAGE_NORMAL); //AuPmmngrAllocBlocks(((sizeof(struct VirtioQueue) * queueSz))/0x1000);
+
 	queue = (struct VirtioQueue*)AuMapMMIO(queuePhys,
 										   1 /*((sizeof(struct VirtioQueue)*queueSz))/0x1000*/);
 	/* zero through the kernel mapping: queuePhys is physical and is not
@@ -308,4 +318,5 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	isb_flush();
 	dsb_ish();
 	AuBuiltinRegister("virtio-kbd", bus, dev, func, AuVirtioKbdRelease, AuVirtioKbdReinit);
+#endif
 }

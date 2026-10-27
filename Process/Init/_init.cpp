@@ -55,7 +55,6 @@
 #define GROUP_AUDIO	  21
 #define GROUP_NETWORK 23
 
-
 /** hardcoded untill we get proper
  * login manager
  */
@@ -321,7 +320,6 @@ void _init_handle_request(InitRequestMsg* msg) {
 	}
 }
 
-
 /*
  * _main -- main entry point
  */
@@ -343,8 +341,8 @@ static int launch_svcmgr() {
 	_KeSetUID(p, UAC_NORMAL_USER);
 	_KeSetGID(p, UAC_NORMAL_USER);
 	_KeCredAddSGroup(p, daemons);
-	_KeCredAddSGroup(p, world);                  /* to read /services.cnf and /svctest.cnf */
-	_KeCredSetCap(p, 0x23);                      /* CRED_CAP_SETUID | SETGID | SETCAP */
+	_KeCredAddSGroup(p, world); /* to read /services.cnf and /svctest.cnf */
+	_KeCredSetCap(p, 0x23);		/* CRED_CAP_SETUID | SETGID | SETCAP */
 	if (_KeProcessLoadExec(p, "/svcmgr.exe", 0, NULL) == -1)
 		return -1;
 	return p;
@@ -357,7 +355,7 @@ static bool init_pid_present(int pid) {
 		n = 96;
 	memset(list, 0, sizeof list);
 	if (_KeProcessFetch(list, n) != 0)
-		return true;                             /* cannot tell: assume it is there */
+		return true; /* cannot tell: assume it is there */
 	for (int i = 0; i < n; i++)
 		if (list[i].proc_id == pid)
 			return true;

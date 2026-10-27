@@ -78,6 +78,8 @@ void AuCircBufReset(CircBuffer* cbuf) {
  */
 CircBuffer* AuCircBufInitialise(uint8_t* buffer, size_t sz) {
 	CircBuffer* cbuf = (CircBuffer*)kmalloc(sizeof(CircBuffer));
+	if (!cbuf)
+		return NULL;
 	cbuf->buffer = buffer;
 	cbuf->max = sz;
 	AuCircBufReset(cbuf);
@@ -150,8 +152,10 @@ size_t AuCircBufWrite(CircBuffer* cbuf, const uint8_t* src, size_t len) {
 	while (written < len && !CircBufFull(cbuf)) {
 		size_t avail = cbuf->max - AuCircBufSize(cbuf);
 		size_t chunk = len - written;
-		if (chunk > avail) chunk = avail;
-		if (chunk == 0) break;
+		if (chunk > avail)
+			chunk = avail;
+		if (chunk == 0)
+			break;
 		size_t run = cbuf->max - cbuf->head;
 		if (chunk > run) {
 			memcpy(cbuf->buffer + cbuf->head, src + written, run);
@@ -189,8 +193,10 @@ size_t AuCircBufRead(CircBuffer* cbuf, uint8_t* dst, size_t len) {
 	while (got < len && !CircBufEmpty(cbuf)) {
 		size_t avail = AuCircBufSize(cbuf);
 		size_t chunk = len - got;
-		if (chunk > avail) chunk = avail;
-		if (chunk == 0) break;
+		if (chunk > avail)
+			chunk = avail;
+		if (chunk == 0)
+			break;
 		size_t run = cbuf->max - cbuf->tail;
 		if (chunk > run) {
 			memcpy(dst + got, cbuf->buffer + cbuf->tail, run);

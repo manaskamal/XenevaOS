@@ -55,6 +55,7 @@ Terminal term;
 bool dirty = false;
 bool _escape_seq = false;
 bool _seq_csi = false;
+static bool g_appCursorKeys = false;
 bool _seq_osc = false;
 bool _cursor_blink = 0;
 bool _update_terminal_ = false;
@@ -105,6 +106,9 @@ static void _terminal_redraw_cursor(Terminal* t) {
 		return;
 	if (t->scrolling)
 		return;
+	if (t->viewOffset)
+		return;
+
 	TermCell* c = &t->cells[t->cursorY][t->cursorX];
 	int px = _terminal_cell_to_pixelX(t, t->cursorX);
 	int py = _terminal_cell_to_pixelY(t, t->cursorY);
@@ -125,7 +129,8 @@ static void _terminal_redraw_cursor(Terminal* t) {
 		clip.y = py;
 		clip.w = t->cellW;
 		clip.h = t->cellH;
-		ChFontDrawTextClipped(win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
+		ChFontDrawTextClipped(
+			win->canv, consolas, buf, px, py + t->baseine, TERMINAL_BLACK_SOLID, &clip);
 	}
 	// draw the character here
 	ChWindowUpdate(win, px, py, t->cellW, t->cellH, 0, 1);
@@ -134,6 +139,9 @@ static void _terminal_redraw_cursor(Terminal* t) {
 static void _terminal_erase_cursor(Terminal* t) {
 	if (t->scrolling)
 		return;
+	if (t->viewOffset)
+		return;
+
 	TermCell* cell = &term.cells[t->cursorY][t->cursorX];
 	cell->flags |= (1 << 1);
 	if (!cell->bg)
@@ -156,6 +164,9 @@ static void _terminal_erase_cursor(Terminal* t) {
 static void TerminalBlinkTick(Terminal* t) {
 	if (t->cursor_hide || t->scrolling)
 		return;
+	if (t->viewOffset)
+		return;
+
 	if (t->blink_visible) {
 		_terminal_erase_cursor(t);
 		t->blink_visible = false;
@@ -342,6 +353,61 @@ static bool TerminalSelectionCorners(Terminal* t, int* x0, int* y0, int* x1, int
 	return *y1 >= *y0 && *x1 >= *x0;
 }
 
+static TermCell* TerminalSbLine(Terminal* t, int idx) {
+	int phys = (t->sbHead + TERMINAL_SCROLLBACK_MAX - t->sbCount + idx) % TERMINAL_SCROLLBACK_MAX;
+	return t->sb + phys * t->cols;
+}
+
+static void TerminalSbPush(Terminal* t, TermCell* line) {
+	if (!t->sb)
+		return;
+	memcpy(t->sb + t->sbHead * t->cols, line, t->cols * sizeof(TermCell));
+	t->sbHead = (t->sbHead + 1) % TERMINAL_SCROLLBACK_MAX;
+	if (t->sbCount < TERMINAL_SCROLLBACK_MAX)
+		t->sbCount++;
+}
+
+static void TerminalRepainView(Terminal* t) {
+	int drawableH = t->rows * t->cellH;
+	ChDrawRect(win->canv, 0, t->originY, t->cols * t->cellW, drawableH, t->defaultBG);
+	for (int r = 0; r < t->rows; r++) {
+		int idx = t->sbCount - t->viewOffset + r;
+		TermCell* line = (idx < t->sbCount) ? TerminalSbLine(t, idx) : t->cells[idx - t->sbCount];
+		for (int c = 0; c < t->cols; c++) {
+			TermCell* cell = &line[c];
+			int px = _terminal_cell_to_pixelX(t, c);
+			int py = _terminal_cell_to_pixelY(t, r);
+			if (cell->bg && cell->bg != t->defaultBG)
+				ChDrawRect(win->canv, px, py, t->cellW, t->cellH, cell->bg);
+			if (cell->c && cell->c != ' ') {
+				char buf[2] = {(char)cell->c, '\0'};
+				ChRect clip = {px, py, t->cellW, t->cellH};
+				ChFontDrawTextClipped(
+					win->canv, consolas, buf, px, py + t->baseine, cell->fg, &clip);
+			}
+		}
+	}
+	ChWindowUpdate(win, 0, t->originY, t->cols * t->cellW, drawableH, 0, 1);
+}
+
+void TerminalViewScroll(Terminal* t, int delta) {
+	int off = t->viewOffset + delta;
+	if (off > t->sbCount)
+		off = t->sbCount;
+	if (off < 0)
+		off = 0;
+	if (off == t->viewOffset)
+		return;
+	TerminalSelectionClear(t);
+	t->viewOffset = off;
+	TerminalRepainView(t);
+}
+
+static inline void TerminalViewSnapLive(Terminal* t) {
+	if (t->viewOffset)
+		TerminalViewScroll(t, -t->viewOffset);
+}
+
 /* TerminalSelectionRefresh -- light the range for the current selection */
 static void TerminalSelectionRefresh(Terminal* t) {
 	if (!t->selActive)
@@ -383,6 +449,9 @@ void TerminalScroll(Terminal* t, int lines) {
 	if (lines > regionRows)
 		lines = regionRows;
 
+	if (t->scrollTop == 0)
+		for (int i = 0; i < lines; i++)
+			TerminalSbPush(t, t->cells[i]);
 	//	_terminal_erase_cursor(t);
 
 	for (int r = t->scrollTop; r <= t->scrollBot - lines; r++)
@@ -710,6 +779,85 @@ void TerminalHistoryDown(Terminal* t) {
 		TerminalReplaceInput(t, t->inputSaved);
 	}
 }
+
+void TerminalApplySGR(int code) {
+	if (code == 0) {
+		//reset
+		fgColor = WHITE;
+		backColor = TERMINAL_BLACK;
+		return;
+	}
+	if (code == 7) {
+		uint32_t t = fgColor;
+		fgColor = backColor;
+		backColor = t;
+		return;
+	}
+	if (code == 27) {
+		fgColor = WHITE;
+		backColor = TERMINAL_BLACK;
+		return;
+	}
+	if (code == 1 || code == 22)
+		return;
+	switch (code) {
+	case CSI_SET_BG_BLACK:
+		backColor = TERMINAL_BLACK; // BLACK;
+		break;
+	case CSI_SET_BG_BLUE:
+		backColor = BLUE;
+		break;
+	case CSI_SET_BG_BROWN:
+		backColor = BROWN;
+		break;
+	case CSI_SET_BG_CYAN:
+		backColor = CYAN;
+		break;
+	case CSI_SET_BG_DEFAULT:
+		backColor = TERMINAL_BLACK; // BLACK;
+		break;
+	case CSI_SET_BG_GREEN:
+		backColor = GREEN;
+		break;
+	case CSI_SET_BG_MAGENTA:
+		backColor = MAGENTA;
+		break;
+	case CSI_SET_BG_RED:
+		backColor = RED;
+		break;
+	case CSI_SET_BG_WHITE:
+		backColor = WHITE;
+		break;
+	case CSI_SET_FG_BLUE:
+		fgColor = BLUE;
+		break;
+	case CSI_SET_FG_BROWN:
+		fgColor = BROWN;
+		break;
+	case CSI_SET_FG_CYAN:
+		fgColor = CYAN;
+		break;
+	case CSI_SET_FG_BLACK:
+		fgColor = BLACK;
+		break;
+	case CSI_SET_FG_GREEN:
+		fgColor = GREEN;
+		break;
+	case CSI_SET_FG_MAGENTA:
+		fgColor = MAGENTA;
+		break;
+	case CSI_SET_FG_RED:
+		fgColor = RED;
+		break;
+	case CSI_SET_FG_WHITE:
+		fgColor = WHITE;
+		break;
+	case CSI_SET_FG_DEFAULT:
+		fgColor = WHITE;
+		break;
+	}
+}
+
 /* ProcessControlSequence -- the main emulation function 
  * of ANSI Terminal
  * @param ch -- Character to emulate
@@ -723,63 +871,16 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 				break;
 			}
 		}
-		int colorCode = atoi(escBuf);
-		switch (colorCode) {
-		case CSI_SET_BG_BLACK:
-			backColor = TERMINAL_BLACK; // BLACK;
-			break;
-		case CSI_SET_BG_BLUE:
-			backColor = BLUE;
-			break;
-		case CSI_SET_BG_BROWN:
-			backColor = BROWN;
-			break;
-		case CSI_SET_BG_CYAN:
-			backColor = CYAN;
-			break;
-		case CSI_SET_BG_DEFAULT:
-			backColor = TERMINAL_BLACK; // BLACK;
-			break;
-		case CSI_SET_BG_GREEN:
-			backColor = GREEN;
-			break;
-		case CSI_SET_BG_MAGENTA:
-			backColor = MAGENTA;
-			break;
-		case CSI_SET_BG_RED:
-			backColor = RED;
-			break;
-		case CSI_SET_BG_WHITE:
-			backColor = WHITE;
-			break;
-		case CSI_SET_FG_BLUE:
-			fgColor = BLUE;
-			break;
-		case CSI_SET_FG_BROWN:
-			fgColor = BROWN;
-			break;
-		case CSI_SET_FG_CYAN:
-			fgColor = CYAN;
-			break;
-		case CSI_SET_FG_BLACK:
-			fgColor = BLACK;
-			break;
-		case CSI_SET_FG_GREEN:
-			fgColor = GREEN;
-			break;
-		case CSI_SET_FG_MAGENTA:
-			fgColor = MAGENTA;
-			break;
-		case CSI_SET_FG_RED:
-			fgColor = RED;
-			break;
-		case CSI_SET_FG_WHITE:
-			fgColor = WHITE;
-			break;
-		case CSI_SET_FG_DEFAULT:
-			fgColor = WHITE;
-			break;
+		char* p = escBuf;
+		for (;;) {
+			TerminalApplySGR(atoi(p));
+			char* semi = strchr(p, ';');
+			if (!semi)
+				break;
+			p = semi + 1;
 		}
+		//int colorCode = atoi(escBuf);
+
 		_escape_seq = false;
 		_seq_csi = false;
 		memset(escBuf, 0, 256);
@@ -897,8 +998,10 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 		if (col >= term.cols)
 			col = term.cols - 1;
 
-		term.cursorX = row;
-		term.cursorY = col;
+		//term.cursorX = row;
+		//term.cursorY = col;
+		term.cursorY = row;
+		term.cursorX = col;
 
 		_escape_seq = false;
 		_seq_csi = false;
@@ -997,6 +1100,9 @@ void ProcessControlSequence(Terminal* term_, char ch) {
 		case 1049:
 			break;
 		case 1000:
+			break;
+		case 1:
+			g_appCursorKeys = (ch == CSI_SET_MODE);
 			break;
 		default:
 			break;
@@ -1281,10 +1387,12 @@ static void TerminalClipboardPaste(Terminal* t) {
  * yields '3'/'.') , so rawkey matching hijacked '8', '3' and '.' while
  * typing addresses and commands. --axiss */
 #define TERMINAL_SCANCODE_RELEASE 0x80
-#define TERMINAL_SCANCODE_MASK	   0x7f
-#define TERMINAL_SCANCODE_UP	   0x48
-#define TERMINAL_SCANCODE_LEFT	   0x4b
-#define TERMINAL_SCANCODE_RIGHT	   0x4d
+#define TERMINAL_SCANCODE_MASK	  0x7f
+#define TERMINAL_SCANCODE_UP	  0x48
+#define TERMINAL_SCANCODE_LEFT	  0x4b
+#define TERMINAL_SCANCODE_RIGHT	  0x4d
+#define TERMINAL_SCANCODE_PGUP	  0x49
+#define TERMINAL_SCANCODE_PGDN	  0x51
 /*
  * TerminalHandleMessage -- handle incoming 'Deodhai' messages
  * @param e -- Pointer to PostEvent memory location where 
@@ -1338,6 +1446,29 @@ void TerminalHandleMessage(PostEvent* e) {
 			return;
 		}**/
 
+		if (g_appCursorKeys && !ChitralekhaKeyGetShift() && !(code & TERMINAL_SCANCODE_RELEASE)) {
+			const char* seq = NULL;
+			switch (code & TERMINAL_SCANCODE_MASK) {
+			case 0x48:
+				seq = "\033[A";
+				break;
+			case 0x50:
+				seq = "\033[B";
+				break;
+			case 0x4D:
+				seq = "\033[C";
+				break;
+			case 0x4B:
+				seq = "\033[D";
+				break;
+			}
+			if (seq) {
+				_KeWriteFile(master_fd, (void*)seq, 3);
+				memset(e, 0, sizeof(PostEvent));
+				return;
+			}
+		}
+
 		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
 			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_LEFT) {
 			if (term.cursorX > term.inputStartX) {
@@ -1346,6 +1477,7 @@ void TerminalHandleMessage(PostEvent* e) {
 				_terminal_redraw_cursor(&term);
 			}
 			memset(e, 0, sizeof(PostEvent));
+			return;
 		}
 
 		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
@@ -1356,7 +1488,23 @@ void TerminalHandleMessage(PostEvent* e) {
 				_terminal_redraw_cursor(&term);
 			}
 			memset(e, 0, sizeof(PostEvent));
+			return;
 		}
+
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_PGUP) {
+			TerminalViewScroll(&term, 3); //term.rows / 2);
+			memset(e, 0, sizeof(PostEvent));
+			return;
+		}
+
+		if (!(code & TERMINAL_SCANCODE_RELEASE) &&
+			(code & TERMINAL_SCANCODE_MASK) == TERMINAL_SCANCODE_PGDN) {
+			TerminalViewScroll(&term, -3); //(term.rows / 2));
+			memset(e, 0, sizeof(PostEvent));
+			return;
+		}
+
 		/**
 		 * CTRL + SHIFT + C/V -- the host<->VM clipboard, on the same
 		 * /dev/clipboard node the tty shell uses, so a copy here reaches
@@ -1411,6 +1559,10 @@ void TerminalHandleMessage(PostEvent* e) {
 			term.inputBuffer[term.intputLen++] = c;
 			term.inputBuffer[term.intputLen] = '\0';
 		}
+
+		if (c == '\n' || c == '\b' || (c >= 0x20 && c < 0x7F))
+			TerminalViewSnapLive(&term);
+
 		_KeWriteFile(master_fd, &c, 1);
 		/* else its a key release event */
 		memset(e, 0, sizeof(PostEvent));
@@ -1446,6 +1598,7 @@ void TerminalThread() {
 		}
 
 		if (bytes_read > 0 || _update_terminal_) {
+			TerminalViewSnapLive(&term);
 			/* Park the block cursor for the whole burst: output below
 			 * moves it, and repainting it per byte both throttled us to
 			 * one compositor round-trip per character and stranded blocks
@@ -1474,8 +1627,7 @@ void TerminalThread() {
 			 * so an empty pty doesn't hot-spin. Master reads return 0
 			 * when empty, so this branch is the only sleeper. --axiss */
 			uint64_t now = _KeGetCurrentMS();
-			if (now - last_blink_ms >= 500)
-			{
+			if (now - last_blink_ms >= 500) {
 				TerminalBlinkTick(&term);
 				last_blink_ms = now;
 			}
@@ -1547,6 +1699,10 @@ int main(int argc, char* arv[]) {
 
 	term.cols = term_w / term.cellW;
 	term.rows = term_h / term.cellH;
+	term.sb = (TermCell*)malloc(TERMINAL_SCROLLBACK_MAX * term.cols * sizeof(TermCell));
+	if (term.sb)
+		memset(term.sb, 0, TERMINAL_SCROLLBACK_MAX * term.cols * sizeof(TermCell));
+	term.sbHead = term.sbCount = term.viewOffset = 0;
 	term.cursorX = 0;
 	term.cursorY = 0;
 	term.lastCursorX = term.cursorX;

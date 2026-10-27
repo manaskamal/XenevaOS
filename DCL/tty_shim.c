@@ -28,6 +28,21 @@
  * no driver-specific flip queue (`flip_wq ?: system_dfl_wq`). DCL has one
  * workqueue and it runs work inline (see <linux/workqueue.h>), so this object
  * exists for the choice to be well-formed, not to be scheduled on.
+ *
+ * system_percpu_wq is the same object one line down, for two drm call sites
+ * that name a queue explicitly (drm_probe_helper.c:629,
+ * drm_self_refresh_helper.c:221). Both hand it to mod_delayed_work(), which
+ * ignores it for the reason queue_delayed_work() ignores it.
+ *
+ * system_long_wq is a third name for it, asked for by drm_writeback.c:570's
+ * cleanup_work. mainline's split between the three is about CPU affinity and
+ * how long a worker may be held; on a runner that executes work inline there
+ * is one queue and naming it three ways must not imply three.
+ *
+ * All three live here rather than in a workqueue shim of their own because
+ * the three pointers are that one fact -- DCL has a single queue, everything
+ * system_*wq names is it -- and splitting them across files would suggest a
+ * distinction that does not exist.
  */
 
 #include <linux/types.h>
@@ -64,6 +79,15 @@
  */
 static struct workqueue_struct dcl_system_dfl_wq = { "system_dfl" };
 struct workqueue_struct* system_dfl_wq = &dcl_system_dfl_wq;
+
+/*
+ * Same object, deliberately. Pointing all three at dcl_system_dfl_wq keeps
+ * `queue_work(a) then queue_work(b)` ordered the same way whichever name a
+ * caller used, which is the only ordering this inline runner has to get
+ * right.
+ */
+struct workqueue_struct* system_percpu_wq = &dcl_system_dfl_wq;
+struct workqueue_struct* system_long_wq = &dcl_system_dfl_wq;
 
 /* ---------------------------------------------------------------------- */
 /* the self-test                                                          */

@@ -51,6 +51,9 @@ extern int virt_gpu_screen_init(VirtioCommonCfg* cfg, uint32_t width, uint32_t h
  */
 extern void virt_gpu_alloc_fb(VirtioCommonCfg* cfg, int resource_id);
 
+/** Release the fallback driver's scanout backing after the device is reset. */
+extern void virt_gpu_release_fb(void);
+
 
 /**
  * @brief virt_gpu_set_scanout -- initialize the scanout to the given

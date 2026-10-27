@@ -161,6 +161,7 @@ typedef struct _aa64_task_ {
 	uint8_t futex_waiting;
 	/** absolute wake-up time (system us) of a sleeping thread; see AuSleepThread */
 	uint64_t sleep_until_us;
+	uint8_t blocked_on_poll;
 } AA64Thread;
 
 //#pragma pack(pop)
@@ -180,6 +181,9 @@ AuCreateSubKthread(void (*entry)(uint64_t), uint64_t stack, uint64_t* pml, char*
 
 extern void AuScheduleThread(AA64Registers* regs);
 extern void AuScheduleNext();
+/* Park the caller for about ms and run another thread. Returns 0, or
+ * -1 when the scheduler is not running yet. */
+extern int AuSchedYieldMs(uint64_t ms);
 extern void AuSchedulerStart();
 extern AA64Thread* AuGetIdleThread();
 extern AA64Thread* AuGetCurrentThread();
@@ -196,6 +200,13 @@ AU_EXTERN AU_EXPORT void AuBlockThread(AA64Thread* thread);
 * @param t -- pointer to thread
 */
 AU_EXTERN AU_EXPORT void AuUnblockThread(AA64Thread* thread);
+
+/**
+ * @brief AuThreadWakePoller -- wake up a thread that was left
+ * in sleep/block while polling
+ * @param t -- Pointer to thread
+ */
+AU_EXTERN AU_EXPORT void AuThreadWakePoller(AA64Thread* t);
 /**
  * @brief AuForceScheduler -- force the scheduler
  * to switch next thread

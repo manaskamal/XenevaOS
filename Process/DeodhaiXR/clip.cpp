@@ -39,6 +39,18 @@ bool ClipValueInRange(int value, int min, int max) {
 	return (value >= min) && (value <= max);
 }
 
+#define CLIP_MAX_RECTS 100
+
+void clip_emit(Rect* list, int* n, int cap, int l, int t, int r, int b) {
+	if (r <= l || b <= t || *n >= cap)
+		return;
+	list[*n].x = l;
+	list[*n].y = t;
+	list[*n].w = r - l;
+	list[*n].h = b - t;
+	(*n)++;
+}
+
 /**
 * @brief Check if two rectangle intersects
 * @param r1 -- rectangle one
@@ -63,7 +75,24 @@ bool ClipCheckIntersect(Rect* r1, Rect* r2) {
 * @param count -- number of rectangles stored in the list
 */
 void ClipCalculateRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* count) {
-	int r_count = *count;
+	int sl = sub_rect->x, st = sub_rect->y;
+	int sr = sl + sub_rect->w, sb = st + sub_rect->h;
+	int cl = cut_rect->x > sl ? cut_rect->x : sl;
+	int ct = cut_rect->y > st ? cut_rect->y : st;
+	int cr = cut_rect->x + cut_rect->w < sr ? cut_rect->x + cut_rect->w : sr;
+	int cb = cut_rect->y + cut_rect->h < sb ? cut_rect->y + cut_rect->h : sb;
+
+	if (cl >= cr || ct >= cb) {
+		clip_emit(list, count, CLIP_MAX_RECTS, sl, st, sr, sb);
+		return;
+	}
+
+	clip_emit(list, count, CLIP_MAX_RECTS, sl, st, cl, sb); //left
+	clip_emit(list, count, CLIP_MAX_RECTS, cr, st, sr, sb); //right
+	clip_emit(list, count, CLIP_MAX_RECTS, cl, st, cr, ct); //top
+	clip_emit(list, count, CLIP_MAX_RECTS, cl, cb, cr, sb); //bottom
+
+	/**int r_count = *count;
 
 	Rect subcopy;
 	subcopy.x = sub_rect->x;
@@ -143,7 +172,7 @@ void ClipCalculateRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* count) {
 		RectSetBottom(&subcopy, RectGetBottom(cut_rect));
 	}
 
-	*count = r_count;
+	*count = r_count;**/
 }
 
 /**
@@ -248,18 +277,18 @@ void ClipGetBehindRect(Rect* sub_rect, Rect* cut_rect, Rect* list, int* r_count)
 void ClipSubtractRectList(Rect* inputList, int* inputCount, Rect* cut_rect) {
 	Rect outputList[100];
 	int outputCount = 0;
-	
+
 	for (int i = 0; i < *inputCount; i++) {
-		if (ClipCheckIntersect(&inputList[i], cut_rect)) {
+		if (ClipCheckIntersect(&inputList[i], cut_rect) && outputCount + 4 <= CLIP_MAX_RECTS) {
 			Rect sub = inputList[i];
 			ClipCalculateRect(&sub, cut_rect, outputList, &outputCount);
 		} else {
-			if (outputCount < 100) {
+			if (outputCount < CLIP_MAX_RECTS) {
 				outputList[outputCount++] = inputList[i];
 			}
 		}
 	}
-	
+
 	memcpy(inputList, outputList, outputCount * sizeof(Rect));
 	*inputCount = outputCount;
 }

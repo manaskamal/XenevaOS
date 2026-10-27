@@ -69,6 +69,11 @@ AU_EXTERN AU_EXPORT int AuDevFSAddFile(AuVFSNode* fs, char* path, AuVFSNode* fil
 */
 extern AuVFSNode* AuDevFSOpen(AuVFSNode* fs, char* path);
 
+/* Hold/release a user-visible device node reference. Loadable-driver-backed
+ * nodes also hold one driver reference while at least one fd is open. */
+extern bool AuDevFSNodeOpen(AuVFSNode* node);
+extern void AuDevFSNodeClose(AuVFSNode* node);
+
 /* For debug purpose */
 extern void AuDevFSList(AuVFSNode* fs);
 

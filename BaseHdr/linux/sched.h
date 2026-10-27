@@ -47,6 +47,39 @@
 
 #include <linux/kernel.h>
 #include <linux/cleanup.h>
+/*
+ * linux/kthread.h (drm_vblank_work.c) includes this header and nothing
+ * else, and mainline's sched.h is wide enough to already carry all of
+ * this: the lock types and class key its worker API names, NUMA_NO_NODE
+ * for kthread_create_worker, and forward declarations so `const struct
+ * cpumask *` parameters do not get prototype-scope tags.  timer/list/
+ * memset come through kernel.h above.
+ */
+#include <linux/spinlock.h>	/* raw_spinlock_t in struct kthread_worker */
+#include <linux/lockdep.h>	/* lock_class_key in kthread_init_worker */
+#include <linux/nodemask_types.h>	/* NUMA_NO_NODE -- the type header, not
+					 * nodemask.h: the bitmap API it carries is
+					 * nothing this header uses */
+
+/*
+ * <linux/pid.h> -- task_tgid() and task_pid_nr(), the two task-identity
+ * accessors drm_auth.c:236 and drm_ioctl.c:883/:922/:930 call on `current`.
+ * mainline's fs.h carries pid.h and DCL's file.h does the same (file.h:68),
+ * but neither drm file includes file.h, so without it here those calls were
+ * implicit declarations -- permitted by the build's
+ * -Wno-implicit-function-declaration -- and surfaced at link time as
+ * undefined task_tgid (drm_auth.o) and task_pid_nr (drm_ioctl.o).
+ *
+ * Riding on sched.h is safe in either include order, which is what the two
+ * headers have to agree on: pid.h includes nothing, so no cycle back to this
+ * file is possible, and its own guard makes the include a no-op in the drm
+ * files that get it from file.h.  The accessors are static inlines over
+ * forward-declared types (pid.h:25-26), so no struct is needed before this
+ * point either.
+ */
+#include <linux/pid.h>
+
+struct cpumask;
 
 #define TASK_RUNNING		0
 #define TASK_INTERRUPTIBLE	1
@@ -59,6 +92,15 @@
 /* Nothing ever waits this long, because nothing ever really waits at all. */
 #define MAX_SCHEDULE_TIMEOUT ((long)(~0UL >> 1))
 
+/*
+ * PF_KTHREAD / ->worker_private: tsk_is_kthread() in <linux/kthread.h>
+ * tests both, and kthread_create_worker() publishes the worker on the
+ * creating (kernel) task.  DCL's task is the one shared task (see below),
+ * so the flag starts set -- every DCL thread is a kernel thread -- and
+ * worker_private is the slot kthread.h expects it to live in.
+ */
+#define PF_KTHREAD	0x00200000U
+
 struct tty_struct;
 struct task_struct;
 
@@ -66,10 +108,22 @@ struct signal_struct {
 	struct tty_struct* tty;
 };
 
+/*
+ * mainline spells this as an enum (sched.h:325) so BPF can see it; DCL has
+ * no BPF, but the spelling is what drm_device.h:48 reaches for when it sizes
+ * the wedge task's `comm`, and sizing task_struct's own below with the same
+ * name keeps the two from drifting apart.
+ */
+enum {
+	TASK_COMM_LEN = 16,
+};
+
 struct task_struct {
-	char comm[16];
+	char comm[TASK_COMM_LEN];
 	int pid;
 	struct signal_struct* signal;
+	unsigned int flags;		/* PF_* -- PF_KTHREAD is set (see above) */
+	void* worker_private;		/* kthread.h: struct kthread * owner */
 };
 
 /*
@@ -91,6 +145,49 @@ struct task_struct* dcl_current(void);
  */
 #undef current
 #define current (dcl_current())
+
+/*
+ * task_pid_vnr() -- drm_ioctl.c:199's drm_getclient() stores it into
+ * struct drm_client and hands that back to userspace.
+ *
+ * mainline answers "the task's pid as current's namespace sees it"; DCL has
+ * no pid table, and <linux/pid.h> records what follows from that for the
+ * accessors it owns (task_tgid() is NULL, task_pid_nr() is 0 for a debug line
+ * whose text is compiled away).  A value userspace reads back is the other
+ * case, and the task is not anonymous: dcl_current() refreshes ->pid from the
+ * running Xeneva thread on every call (DCL/current_ident.c), so that real
+ * thread id is what this reports.  The NULL arm cannot come from any caller
+ * (they all pass `current`); 0 is the one answer that touches nothing.
+ *
+ * A static inline in the shape of pid.h's accessors rather than a shim
+ * symbol, for the same reason those are: the body is one field read, and a
+ * link symbol for it would be a call to a function a header could have
+ * compiled away.
+ */
+static inline int task_pid_vnr(struct task_struct* tsk)
+{
+	return tsk ? tsk->pid : 0;
+}
+
+/*
+ * get_task_comm(buf, tsk) -- mainline's accessor for a task's comm, which
+ * mainline also declares in <linux/sched.h> (there as a macro over
+ * __get_task_comm()). One caller, the virtio-gpu debug-name ioctl, and the
+ * copy is bounded by the struct's own `comm` array so the terminator
+ * always fits. `comm` is exactly what dcl_current() refreshes from the
+ * running thread on every call, so a live task's name is real text; the
+ * shape is this header's static-inline style rather than a shim symbol,
+ * for the task_pid_vnr() reason above.
+ */
+static inline char* get_task_comm(char* buf, struct task_struct* tsk)
+{
+	unsigned int i;
+
+	for (i = 0; i + 1 < sizeof(tsk->comm) && tsk->comm[i]; i++)
+		buf[i] = tsk->comm[i];
+	buf[i] = 0;
+	return buf;
+}
 
 void schedule(void);
 
@@ -115,6 +212,26 @@ void schedule(void);
 static inline int wake_up_process(struct task_struct* tsk)
 {
 	(void)tsk;
+	return 1;
+}
+
+/*
+ * wake_up_state() -- dma-fence.c:796's dma_fence_default_wait_cb(), the
+ * callback a signaled fence runs to wake the task mainline parked in
+ * dma_fence_wait_timeout().  mainline's `state` names the sleep states the
+ * wake is allowed to clear; DCL's one task is never asleep, so there is no
+ * state to test against and the mask selects nothing.
+ *
+ * The 1 is wake_up_process()'s answer above and is chosen the same way: a
+ * caller that does read it gets "the wake was carried out" instead of a state
+ * test this kernel cannot make.  dma_fence_default_wait_cb() discards it, and
+ * the wait the callback serves is the bounded one dma_fence_wait_timeout()
+ * runs, not a sleep this could end early.
+ */
+static inline int wake_up_state(struct task_struct* tsk, unsigned int state)
+{
+	(void)tsk;
+	(void)state;
 	return 1;
 }
 

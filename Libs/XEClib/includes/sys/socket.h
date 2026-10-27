@@ -57,6 +57,8 @@ XE_EXTERN {
 #define SO_KEEPALIVE	1
 #define SO_REUSEADDR	2
 #define SO_BINDTODEVICE 3
+/* connect() returns -119 until the handshake finishes. */
+#define SO_NONBLOCK	4
 
 	typedef size_t socklen_t;
 

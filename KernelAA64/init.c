@@ -72,6 +72,7 @@
 #include <Fs/Fat/FatDir.h>
 #include <Log/klog.h>
 #include <linux/module_loader.h>
+#include <fixup.h>
 
 extern void AuBtInitialize(void);
 
@@ -232,6 +233,11 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuAA64BoardInitialize();
 	AuVFSInitialise();
 	AuInitrdInitialize(info);
+	/* Device nodes published by AuConsolePostInitialise (notably /dev/graph)
+	 * use the global group table.  Initialize it before those nodes are
+	 * created so user-space compositor and GPU services receive the same
+	 * world-group ID as their credentials. */
+	AuCredGroupInitialize();
 	AuConsolePostInitialise(info);
 	//AuConsoleBypassAuTextOut();
 
@@ -244,16 +250,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	AuInitialiseSHMMan();
 	AuMmngrFileCacheInit();
 
-	/* initialize kernel credentials
-	 * note: untill here ensure no file gets opened
-	 * because file system may use credentials 
-	 */
-	AuCredGroupInitialize();
-
 	/* /dev/clipboard registers here rather than from devfs: its group comes
-	 * from the table above, which is empty until this line. Registering with
-	 * devfs gave the node group 0, and AuCredCheckPermissions admits only
-	 * root or a matching group, so no ordinary process could open it. */
+	 * from the initialized table. Registering with devfs before the group
+	 * table was ready gave the node group 0, and AuCredCheckPermissions admits
+	 * only root or a matching group, so no ordinary process could open it. */
 	AuDevClipInitialise();
 
 	/* initialize the network layer */
@@ -270,9 +270,10 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 #endif
 
 	/* initialize our basic requirement */
-#ifdef __TARGET_BOARD_QEMU_VIRT__
-	/* for qemu virt board, virtIO inputs are used */
-	AuVirtIOInputInitialize();
+#if defined(__TARGET_BOARD_QEMU_VIRT__) && !defined(__XENEVA_BYPASS_VIRTIO_INPUT__)
+	/* for qemu virt board, virtIO inputs are used.  On the vendored-input
+	 * build these PCI functions belong to DCL's virtio scan instead. */
+//	AuVirtIOInputInitialize();
 #endif
 	/* required virtio-mouse and keyboard */
 	//Here goes board pre driver initialize
@@ -329,6 +330,9 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	/* initialize the deodhai's communication protocol */
 	AuIPCPostBoxInitialise();
 
+	/* check the fixup table */
+	__bordoisila_fixup_table_check();
+
 #ifdef __TARGET_BOARD_IMX8MP_VERDIN_DAHLIA__
 	AuTextOut("[aurora]: Board model : Toradex imx8M Plus Verdin Dahlia (Xeneva Build %s - %s)\r\n",
 			  __DATE__,
@@ -350,7 +354,7 @@ void _AuMain(KERNEL_BOOT_INFO* info) {
 	UARTDebugOut("[aurora]: boot freed up \r\n");
 
 	AuSchedulerInitialize();
-	AuBtInitialize();
+	//AuBtInitialize();
 	//AuEDFSelfTestStart();
 #ifdef __XENEVA_SOAK__
 	AuSoakStart();

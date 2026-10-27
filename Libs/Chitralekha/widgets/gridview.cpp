@@ -316,7 +316,7 @@ static void _grid_draw_range(ChGridView* gv, ChWindow* win, int clip_y, int clip
 }
 
 static void _draw_single_cell(ChGridView* gv, ChWindow* win, int index, ChRect* out_rect) {
-	if (index < 0 || index >= gv->cell_count)
+	if (!gv || !gv->wid.visible || index < 0 || index >= gv->cell_count)
 		return;
 
 	int row = index / gv->columns;
@@ -385,6 +385,8 @@ static void _draw_single_cell(ChGridView* gv, ChWindow* win, int index, ChRect* 
 
 void ChGridViewDraw(ChWidget* wid, ChWindow* win) {
 	ChGridView* gv = (ChGridView*)wid;
+	if (!gv || !gv->wid.visible)
+		return;
 	int delta_y = gv->scroll_y - gv->prev_scroll_y;
 
 	int full_redraw =
@@ -466,6 +468,8 @@ static int is_over_vscrollbar(ChGridView* gv, ChWindow* win, int mx, int my) {
 
 void ChGridViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int button) {
 	ChGridView* gv = (ChGridView*)wid;
+	if (!gv || !gv->wid.visible)
+		return;
 	uint8_t was_down = gv->prev_button;
 	uint8_t is_down = (button != 0);
 
@@ -485,14 +489,18 @@ void ChGridViewMouseEvent(ChWidget* wid, ChWindow* win, int mx, int my, int butt
 	}
 
 	if (!was_down && is_down) {
-		if (index != -1 && index != gv->selected_index) {
+		if (index != -1) {
 			int old_selected = gv->selected_index;
 			gv->selected_index = index;
-			//call gv->onselect event
+			if (gv->OnSelect)
+				gv->OnSelect(gv, win, index, &gv->cells[index]);
+			if (!gv->wid.visible) {
+				gv->prev_button = is_down;
+				return;
+			}
 			gv->force_full_redraw = true;
-			//	ChGridViewDraw(wid, win);
 			ChRect dirty;
-			if (old_selected != 1) {
+			if (old_selected != -1 && old_selected != index) {
 				_draw_single_cell(gv, win, old_selected, &dirty);
 				ChWindowUpdate(win, dirty.x, dirty.y, dirty.w, dirty.h, 0, 1);
 			}

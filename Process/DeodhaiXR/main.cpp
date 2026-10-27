@@ -59,8 +59,15 @@
 #include "xr_present.h"
 #include <draw.h>
 
+#define __DEODHAI_COMPOSE3D__ 1
+
+#ifdef __DEODHAI_COMPOSE3D__
+#include "compose3d.h"
+#endif
+
 #include "keybind.h"
 #include <sys/_ketime.h>
+#include <gpusrv.h>
 
 static uint32_t screen_w;
 static uint32_t screen_h;
@@ -96,6 +103,7 @@ static uint32_t* snapshotBuff;
 static int lastMouseButton;
 static int gpu_fd;
 static bool _gpu_enabled;
+static bool _gpu_userspace;
 static int gpu_display_id;
 
 #define DEODHAI_TARGET_FPS 60
@@ -580,7 +588,7 @@ _move_win:
 	_window_moving_ = true;
 
 	WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-	int wx = info->x - SHADOW_SIZE;
+	/*int wx = info->x - SHADOW_SIZE;
 	int wy = info->y - SHADOW_SIZE;
 	int ww = info->width + SHADOW_SIZE * 2;
 	int wh = info->height + SHADOW_SIZE * 2;
@@ -601,18 +609,24 @@ _move_win:
 		ww = canvas->screenWidth - info->x + SHADOW_SIZE;
 
 	if ((wy + wh) >= canvas->screenHeight)
-		wh = canvas->screenHeight - info->y + SHADOW_SIZE;
-	BackDirtyAdd(wx, wy, ww, wh);
+		wh = canvas->screenHeight - info->y + SHADOW_SIZE;*/
+	//BackDirtyAdd(wx, wy, ww, wh);
+	BackDirtyAdd(info->x - SHADOW_SIZE,
+				 info->y - SHADOW_SIZE,
+				 info->width + SHADOW_SIZE * 2,
+				 info->height + SHADOW_SIZE * 2);
+
 _skip:
-	if (x <= 0)
+	/**if (x <= 0)
 		x = 0;
 	if (y < 0)
 		y = 0;
 	if (x >= canvas->screenWidth)
 		x = canvas->screenWidth - ww;
 	if (y >= canvas->screenHeight)
-		y = canvas->screenHeight - wh;
-
+		y = canvas->screenHeight - wh;**/
+	WindowClampToScreen(
+		&x, &y, info->width, info->height, (int)canvas->screenWidth, (int)canvas->screenHeight);
 	info->x = x;
 	info->y = y;
 	glass_invalidate(win);
@@ -638,6 +652,8 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
 		if (check == win)
 			continue;
+		if (info->hide)
+			continue;
 		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
 			y < (info->y + info->height)) {
 			occluded = true;
@@ -649,7 +665,7 @@ bool DeodhaiCheckWindowPointOcclusion(Window* win, int x, int y) {
 		WinSharedInfo* info = (WinSharedInfo*)check->sharedInfo;
 		if (check == win)
 			continue;
-		if (info->hide)
+		if (info->hide || info->zoomed)
 			continue;
 		if (x >= info->x && x < (info->x + info->width) && y >= info->y &&
 			y < (info->y + info->height)) {
@@ -809,20 +825,12 @@ static void DeodhaiComposeResizePreview(ChCanvas* canv) {
 	_always_on_top_update = true;
 	int rx = reszNewX < reszOLDX ? reszNewX : reszOLDX;
 	int ry = reszNewY < reszOLDY ? reszNewY : reszOLDY;
-	int right = reszNewX + reszNewW > reszOLDX + reszOLDW ? reszNewX + reszNewW
-																 : reszOLDX + reszOLDW;
-	int bottom = reszNewY + reszNewH > reszOLDY + reszOLDH ? reszNewY + reszNewH
-																  : reszOLDY + reszOLDH;
-	_deodhai_repaint_region(canv,
-						   rx,
-						   ry,
-						   right - rx,
-						   bottom - ry,
-						   reszWin,
-						   reszNewX,
-						   reszNewY,
-						   reszNewW,
-						   reszNewH);
+	int right =
+		reszNewX + reszNewW > reszOLDX + reszOLDW ? reszNewX + reszNewW : reszOLDX + reszOLDW;
+	int bottom =
+		reszNewY + reszNewH > reszOLDY + reszOLDH ? reszNewY + reszNewH : reszOLDY + reszOLDH;
+	_deodhai_repaint_region(
+		canv, rx, ry, right - rx, bottom - ry, reszWin, reszNewX, reszNewY, reszNewW, reszNewH);
 }
 /**
  * @brief DeodhaiWindowCheckResizable -- checks and resize
@@ -835,12 +843,12 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 	if (!reszWin) {
 		Window* win = focusedWin;
 		if (!win || dragWin || win->resizePending ||
-			(win->flags & (WINDOW_FLAG_MESSAGEBOX | WINDOW_FLAG_BLOCKED |
-						   WINDOW_FLAG_NON_RESIZABLE)))
+			(win->flags &
+			 (WINDOW_FLAG_MESSAGEBOX | WINDOW_FLAG_BLOCKED | WINDOW_FLAG_NON_RESIZABLE)))
 			return;
 		WinSharedInfo* info = (WinSharedInfo*)win->sharedInfo;
-		if (info->hide || info->zoomed || x < info->x || y < info->y || x >= info->x + info->width ||
-			y >= info->y + info->height)
+		if (info->hide || info->zoomed || x < info->x || y < info->y ||
+			x >= info->x + info->width || y >= info->y + info->height)
 			return;
 		int hitEdge = RESIZE_EDGE_NONE;
 		if (x < info->x + RESIZE_BORDER_LR)
@@ -856,9 +864,8 @@ void DeodhaiWindowCheckResizable(int x, int y, int button) {
 				ChangeCursor(arrow);
 			return;
 		}
-		ChangeCursor((hitEdge & (RESIZE_EDGE_LEFT | RESIZE_EDGE_RIGHT))
-					 ? resizeLeftRight
-					 : resizeUpDown);
+		ChangeCursor((hitEdge & (RESIZE_EDGE_LEFT | RESIZE_EDGE_RIGHT)) ? resizeLeftRight
+																		: resizeUpDown);
 		if (!button || lastMouseButton)
 			return;
 		edge = hitEdge;
@@ -1079,9 +1086,14 @@ static void DeodhaiHandleMouseInput(ChCanvas* canv, const AuInputMessage* input)
 	currentCursor->xpos = input->xpos;
 	currentCursor->ypos = input->ypos;
 	int button = input->button_state;
-	DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
-	DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
-	DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+#ifdef __DEODHAI_COMPOSE3D__
+	if (!Deodhai3DHandleMouse(canv, currentCursor->xpos, currentCursor->ypos, button))
+#endif
+	{
+		DeodhaiWindowCheckResizable(currentCursor->xpos, currentCursor->ypos, button);
+		DeodhaiWindowCheckDraggable(currentCursor->xpos, currentCursor->ypos, button);
+		DeodhaiBroadcastMouse(currentCursor->xpos, currentCursor->ypos, button);
+	}
 
 	if (currentCursor->xpos <= 0)
 		currentCursor->xpos = 0;
@@ -1324,41 +1336,81 @@ int main(int argc, char* argv[]) {
 	ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
 	ChCanvasScreenCommit();
 
+	/* The copy above only lands in the console framebuffer; a scanout
+	 * mirror (the vendored virtio-gpu console bridge) only learns about
+	 * pixels through SCREEN_UPDATE. Without this first full-frame present
+	 * the scanout keeps the boot console's stale edges next to the
+	 * wallpaper. Zero width/height ask for the whole screen. --axiss */
+	{
+		XEFileIOControl startup_present;
+		memset(&startup_present, 0, sizeof(startup_present));
+		startup_present.syscall_magic = AURORA_SYSCALL_MAGIC;
+		_KeFileIoControl(canv->graphics_fd, SCREEN_UPDATE, &startup_present);
+	}
+
 	/** intialize key data structure */
 	ChitralekhaKeyInitialise();
 
 	_KePrint("Canvas updated \r\n");
 
-	char gpu_path[] = "/dev/virtiogpu";
+	/* Prefer the user-space GPU proxy when GPUSRV=1. Keep the old kernel
+	 * device as a deliberate fallback for normal builds and supervisor
+	 * hand-back. Both paths present the same stable /dev/graph framebuffer. */
+	char gpu_path[] = "/dev/gpusrv";
 	gpu_fd = _KeOpenFile(gpu_path, FILE_OPEN_READ_ONLY);
-
 	if (gpu_fd != -1) {
 		_gpu_enabled = 1;
-		gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+		_gpu_userspace = 1;
+		gpu_display_id = GPUSRV_RESOURCE;
+	} else {
+		char kernel_gpu_path[] = "/dev/virtiogpu";
+		gpu_fd = _KeOpenFile(kernel_gpu_path, FILE_OPEN_READ_ONLY);
+		if (gpu_fd != -1) {
+			_gpu_enabled = 1;
+			gpu_display_id = _KeFileIoControl(gpu_fd, 0x204, NULL);
+		}
 	}
 
 	if (_gpu_enabled) {
-		/* GPU backing is tightly packed at the mode width. GOP pitch can
-		 * differ; force the compositor row layout to the GPU resource. --axiss */
-		canv->pitch = (uint32_t)screen_w * 4;
-		canv->scanline = (uint16_t)screen_w;
+		if (!_gpu_userspace) {
+			/* The kernel GPU backing is tightly packed at the mode width. GOP
+			 * pitch can differ; force the compositor row layout to the GPU
+			 * resource. The user-space path keeps the real graph/GOP pitch and
+			 * publishes through ChCanvasScreenUpdate instead. --axiss */
+			canv->pitch = (uint32_t)screen_w * 4;
+			canv->scanline = (uint16_t)screen_w;
+		}
 #ifdef __XENEVA_OPENXR__
 		/* Compose stays in RAM; OpenXR EndFrame SBS-blits into framebuff. --axiss */
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
 #else
-		canv->buffer = canv->framebuff;
+		if (!_gpu_userspace)
+			canv->buffer = canv->framebuff;
 		DeodhaiBackSurfaceUpdate(canv, 0, 0, screen_w, screen_h);
-		XEFileIOControl ctl;
-		ctl.uint_1 = gpu_display_id;
-		ctl.ushort_1 = 0;
-		ctl.ushort_2 = 0;
-		ctl.ulong_1 = canv->canvasWidth;
-		ctl.ulong_2 = canv->canvasHeight;
-		_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		if (_gpu_userspace) {
+			ChCanvasScreenUpdate(canv, 0, 0, screen_w, screen_h);
+			ChCanvasScreenCommit();
+			GpuSrvDamage damage = {0, 0, canv->canvasWidth, canv->canvasHeight};
+			_KeFileIoControl(gpu_fd, GPUSRV_IOC_DAMAGE, &damage);
+		} else {
+			XEFileIOControl ctl;
+			ctl.uint_1 = gpu_display_id;
+			ctl.ushort_1 = 0;
+			ctl.ushort_2 = 0;
+			ctl.ulong_1 = canv->canvasWidth;
+			ctl.ulong_2 = canv->canvasHeight;
+			_KeFileIoControl(gpu_fd, 0x202, &ctl);
+		}
 #endif
 	}
 #ifdef __XENEVA_OPENXR__
 	XrPresentInit(canv);
+#endif
+
+#ifdef __DEODHAI_COMPOSE3D__
+	Deodhai3DInitialise(canv);
+	Deodhai3DLoadPanorama("/pano.jpg");
+	Deodhai3DSetEnabled(true);
 #endif
 
 	//ChRect limit;
@@ -1465,6 +1517,11 @@ int main(int argc, char* argv[]) {
 					char key = ChitralekhaGetKeyPress(queued.code);
 					bool _key_brodcast_to_focus_win = true;
 					if (ChitralekhaKeyGetCTRL()) {
+#ifdef __DEODHAI_COMPOSE3D__
+						if (Deodhai3DHandleKey(key, true)) {
+							_key_brodcast_to_focus_win = false;
+						}
+#endif
 						int spcode = _DeodhaiGetSpecialCode(key, 1);
 						/** Special codes are beyond 400, so do check */
 						if (spcode >= 400) {
@@ -1514,7 +1571,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		uint64_t composeStart = _KeGetCurrentMS();
+#ifdef __DEODHAI_COMPOSE3D__
+		XRComposeFrame3D(canv);
+#else
 		XRComposeFrame(canv);
+#endif
 		fpsComposeMsAccum += (_KeGetCurrentMS() - composeStart);
 
 		if (kybrd_input.type == AU_INPUT_KEYBOARD) {
@@ -1727,6 +1788,7 @@ int main(int argc, char* argv[]) {
 				uint64_t avgC = fpsFrameCount ? (profAccumCompose / fpsFrameCount) : 0;
 				uint64_t avgP = fpsFrameCount ? (profAccumPresent / fpsFrameCount) : 0;
 				uint64_t avgT = fpsFrameCount ? (profAccumTransfer / fpsFrameCount) : 0;
+#if DEBUG
 				_KePrint(
 					"[deodhaiXR]: fps=%d avg_compose_ms=%d frames=%d window_ms=%d frame_ms=%d\r\n",
 					(int)fps,
@@ -1734,7 +1796,9 @@ int main(int argc, char* argv[]) {
 					(int)fpsFrameCount,
 					(int)windowMs,
 					(int)frameTime);
+#endif
 				if (input_ring_fd >= 0) {
+#if DEBUG
 					AuInputRingStats stats;
 					memset(&stats, 0, sizeof(stats));
 					if (_KeFileIoControl(input_ring_fd, INPUT_RING_IOCODE_GET_STATS, &stats) != 0)
@@ -1744,11 +1808,15 @@ int main(int argc, char* argv[]) {
 								 (int)stats.keyboard_dropped,
 								 (int)stats.mouse_pending,
 								 (int)stats.keyboard_pending);
+#endif
 				}
+
+#if DEBUG
 				_KePrint("[deodhaiXR]: stages compose=%d present=%d transfer=%d\r\n",
 						 (int)avgC,
 						 (int)avgP,
 						 (int)avgT);
+#endif
 				fpsFrameCount = 0;
 				fpsComposeMsAccum = 0;
 				profAccumCompose = 0;
@@ -1784,10 +1852,38 @@ bool _is_gpu_enabled() {
 	return _gpu_enabled;
 }
 
+bool _is_gpu_userspace() {
+	return _gpu_userspace;
+}
+
 int _get_gpu_fd() {
 	return gpu_fd;
 }
 
 Window* _get_always_on_top() {
 	return alwaysOnTop;
+}
+
+Window* _get_root_window() {
+	return rootWin;
+}
+Window* _get_focused_window() {
+	return focusedWin;
+}
+
+Cursor* _get_current_cursor() {
+	return currentCursor;
+}
+
+void _take_update_bits(bool* window_update_all_, bool* always_on_top_update) {
+	*window_update_all_ = _window_update_all_;
+	*always_on_top_update = _always_on_top_update;
+	_window_update_all_ = false;
+	_always_on_top_update = false;
+	_window_moving_ = false;
+	_skip_disable_ = false;
+}
+
+void _set_always_on_top_update(bool update) {
+	_always_on_top_update = update;
 }

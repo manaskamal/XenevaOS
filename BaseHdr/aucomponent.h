@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <audrv.h>
+#include <drvctl.h>
 
 enum AuResKind {
 	AU_RES_IRQ_SPI   = 1,  /* value = SPI number registered via GICRegisterSPIHandler */
@@ -28,12 +29,6 @@ typedef struct _au_resource_ {
 	uint64_t extra;
 	uint64_t extra2;
 } AuResource;
-
-#define AU_UNLOAD_OK         0
-#define AU_UNLOAD_NOT_FOUND -1
-#define AU_UNLOAD_NOT_OPTED -2   /* driver did not export AU_DRV_FLAG_UNLOADABLE */
-#define AU_UNLOAD_BUSY      -3   /* refcount > 0 */
-#define AU_UNLOAD_VETOED    -4   /* AuDriverUnload() returned non-zero */
 
 /* find the loaded driver whose image contains `addr` (NULL if none) */
 extern AuDriver* AuDriverOwnerOf(uint64_t addr);

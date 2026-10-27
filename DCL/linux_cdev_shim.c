@@ -5,17 +5,26 @@
 #include <Mm/kmalloc.h>
 #include <Mm/vmmngr.h>
 #include <Mm/pmmngr.h>
-#include <linux/fs.h>
-#include <linux/file.h>	/* nonseekable_open(): mainline's home for it is
-				 * <linux/fs.h>, which this tree may not edit. */
-#include <linux/poll.h>		/* fasync_helper()/kill_fasync() and POLL_IN/POLL_OUT;
-				 * poll.h includes nothing, so this cannot pull
-				 * <linux/kobject.h> and turn kobject_uevent() below
-				 * into the no-op macro it is everywhere else. */
+/* Native headers first, and that is load-bearing rather than tidy:
+ * <Fs/vfs.h> has a field named `current`, while <linux/sched.h> -- which the
+ * <linux/errno.h> line below reaches through kernel.h -- defines `current` as
+ * a macro. Parsed after it, `uint64_t current;` becomes a declaration of the
+ * function dcl_current(). None of these four needs anything from <linux/*>. */
 #include <Fs/vfs.h>
 #include <Fs/Dev/devfs.h>
 #include <Cred/group.h>
 #include <Drivers/uart.h>
+#include <linux/fs.h>
+#include <linux/errno.h>	/* EINVAL, for d_path()'s empty-buffer arm */
+#include <linux/path.h>	/* struct path -- d_path()'s first parameter */
+#include <linux/file.h>	/* nonseekable_open(): mainline's home for it is
+				 * <linux/fs.h>, which this tree may not edit. */
+#include <linux/anon_inodes.h>	/* anon_inode_getfile(): declared there because
+				 * mainline declares it there; defined below. */
+#include <linux/poll.h>		/* fasync_helper()/kill_fasync() and POLL_IN/POLL_OUT;
+				 * poll.h includes nothing, so this cannot pull
+				 * <linux/kobject.h> and turn kobject_uevent() below
+				 * into the no-op macro it is everywhere else. */
 
 /* O_NONBLOCK as the fops see it -- asm-generic fcntl.h: 00004000. Defined
  * up here rather than next to the boot probe that first needed it, because
@@ -31,6 +40,11 @@
  * it in a loop. Declared here because those two come well above the probe
  * that first needed it. */
 extern void virtio_poll_vqs(void);
+
+/* DRM ioctls whose answer DCL finishes after mainline's handler returned --
+ * dcl_drm_ioctl_post() in drm_stubs.c, where the MAP_DUMB address is the one
+ * case.  A no-op for every other ioctl, and for every other DCL node. */
+extern long dcl_drm_ioctl_post(struct file* file, unsigned int cmd, void* arg);
 
 /*
  * DCL char-device layer: register_chrdev/cdev/class/device for mainline
@@ -108,6 +122,41 @@ void __unregister_chrdev(unsigned int major, unsigned int baseminor,
 	UARTDebugOut("[dcl]: chrdev '%s' major %d removed\r\n", name ? name : "?", (int)major);
 }
 
+/*
+ * The public pair drm_drv.c links against: register at drm_core_init(),
+ * unregister at drm_core_exit(). mainline's register_chrdev() is a real
+ * exported function (fs/char_dev.c), not the fs.h inline <linux/mm.h>'s
+ * twin describes; it reserves 256 minors and cdev_add()s a fresh cdev on
+ * top of __register_chrdev()'s region.
+ *
+ * What a registration actually creates here is exactly one row of
+ * _dcl_majors[] above: the major -> file_operations binding a later device
+ * node resolves against -- DclVportOpen() for a major-style driver,
+ * dcl_cdev_by_devt() first for a cdev_add() one. It creates no /dev node
+ * and no struct cdev; nodes are device_create()'s job (the pivot below),
+ * which is why mem.c registers at boot and nothing appears in /dev until
+ * its devices are created. The major is the caller's when it names one
+ * (DRM's 226, mem.c's MEM_MAJOR 1); 0 draws one from the table, and the
+ * answer is 0 either way -- see the note on __register_chrdev() above for
+ * why the boolean read every caller here makes still works.
+ *
+ * mem.c reaches the same pair through <linux/mm.h>'s static inline, which
+ * lands in __register_chrdev() directly. drm_drv.c includes no header that
+ * can carry a prototype for these: a declaration in fs.h would appear with
+ * external linkage in every TU that later includes mm.h's static inline of
+ * the same name, and C leaves that mixed linkage undefined (6.2.2p7), so
+ * its calls are implicit declarations and it is these definitions the link
+ * binds.
+ */
+int register_chrdev(unsigned int major, const char* name,
+					const struct file_operations* fops) {
+	return __register_chrdev(major, 0, 256, name, fops);
+}
+
+void unregister_chrdev(unsigned int major, const char* name) {
+	__unregister_chrdev(major, 0, 256, name);
+}
+
 /* ── cdev registry: devt -> cdev ───────────────────────────────────────── */
 
 #define DCL_MAX_CDEV 16
@@ -182,6 +231,28 @@ void* get_device(const void* dev) {
 void put_device(const void* dev) {
 	(void)dev;
 	/* devices are freed by device_destroy; no refcount tracking DCL-side */
+}
+
+/*
+ * device_initialize() -- mainline's pre-add half of the device lifecycle.
+ * The input core sets dev.type and dev.class before calling this and then
+ * dev_set_name() afterwards, so the only fields this may touch are the ones
+ * the allocator's zeroing already owns.  A device with no devt never reaches
+ * devfs, and with no release callback it is never freed: same bounded leak
+ * the rest of DCL's device model documents.
+ */
+void device_initialize(struct device* dev) {
+	if (!dev)
+		return;
+	dev->driver_data = NULL;
+}
+
+/* kobject_get_path() -- no sysfs tree, so there is no path to name. The
+ * input core prints "N/A" when this is NULL and kfree(NULL) is defined. */
+char* kobject_get_path(const void* kobj, gfp_t flag) {
+	(void)kobj;
+	(void)flag;
+	return NULL;
 }
 
 /* ── sysfs / debugfs / seq_file: unreachable surfaces, honest stubs ─────── */
@@ -430,21 +501,122 @@ static int DclVportClose(AuVFSNode* node, AuVFSNode* file) {
 	return 0;
 }
 
+/*
+ * DclVportIoctl -- the iocontrol half of the file_operations bridge.
+ *
+ * devfs hands ->iocontrol(node, code, arg) where mainline's VFS would hand
+ * file->f_op->unlocked_ioctl(file, cmd, arg), so the module side of the
+ * contract is s->file -- the same object open() above swapped, including
+ * the rebind drm_stub_open() performs (its replace_fops puts the driver's
+ * fops, whose unlocked_ioctl is drm_ioctl).  The return crosses back as
+ * int: DRM_IOCTL_* answers are 0 or a negative errno, and the byte counts
+ * the *DRM_IOWR paths report fit an int.
+ *
+ * The arg crosses as uintptr_t, not mainline's unsigned long: it is the
+ * user's pointer (the struct drm_version a DRM_IOCTL_VERSION caller passes
+ * by address), userland here links at 0x600000000, and this target is
+ * aarch64-unknown-windows, which is LLP64 -- `unsigned long` is 32 bits and
+ * would slice the address down to the low 4 GB.  The vendored drm_ioctl()
+ * is widened the same way, and the typedef below has to spell the callee's
+ * width, or the argument register would be narrowed at the ABI boundary
+ * even though both sides meant 64.
+ *
+ * A successful ioctl then passes through dcl_drm_ioctl_post() before the
+ * result crosses back: DCL owns the tail of a few DRM answers (the MAP_DUMB
+ * address today), and drm_stubs.c's comment on that hook says why.
+ */
+static int DclVportIoctl(AuVFSNode* node, int code, void* arg) {
+	typedef long (*ioctl_fn)(struct file*, unsigned int, uintptr_t);
+	struct dcl_dev_slot* s = dcl_slot_by_node(node);
+	ioctl_fn fn;
+	int ret;
+
+	if (!s)
+		return -19; /* -ENODEV */
+	if (!s->file.f_op) {
+		/* ioctl without a prior open(): resolve the way open does,
+		 * so drm_ioctl() sees the unopened file and answers its own
+		 * "no drm_file" error rather than a NULL f_op crash. */
+		struct cdev* cdev = dcl_cdev_by_devt(s->devt);
+		s->file.f_op = cdev ? cdev->ops : dcl_fops_by_major(MAJOR(s->devt));
+		s->inode.i_rdev = s->devt;
+	}
+	fn = s->file.f_op ? (ioctl_fn)s->file.f_op->unlocked_ioctl : 0;
+	if (!fn)
+		return -25; /* -ENOTTY */
+	ret = (int)fn(&s->file, (unsigned int)code, (uintptr_t)arg);
+	if (ret == 0)
+		ret = (int)dcl_drm_ioctl_post(&s->file, (unsigned int)code, arg);
+	return ret;
+}
+
+/*
+ * Subdirectory device nodes: drm names its node "dri/card0", the name
+ * mainline's class devnode() would hand devtmpfs.  Xeneva's devfs keeps
+ * every node in a flat container unless a directory was created for it,
+ * so a name carrying a '/' is split: the dirname is created (once --
+ * AuDevFSOpen() only ever answers for device nodes, so there is no "does
+ * this directory exist?" probe to reuse, and a second create would leave
+ * a duplicate entry at the root) and the node links into it by the same
+ * path AuDevFSOpen() walks later.
+ */
+#define DCL_MAX_DIRS 8
+static char _dcl_dirs[DCL_MAX_DIRS][16];
+static int _dcl_dir_count = 0;
+
+static void dcl_ensure_dir(AuVFSNode* fs, const char* dir) {
+	char path[20];
+	int i;
+
+	for (i = 0; i < _dcl_dir_count; i++)
+		if (strncmp(_dcl_dirs[i], dir, sizeof(_dcl_dirs[0])) == 0)
+			return;
+	if (_dcl_dir_count >= DCL_MAX_DIRS || dir[0] == '\0' ||
+		strlen(dir) > sizeof(_dcl_dirs[0]) - 1)
+		return;
+
+	path[0] = '/';
+	strncpy(path + 1, dir, sizeof(path) - 2);
+	path[1 + strlen(dir)] = '\0';
+	AuDevFSCreateFile(fs, path, FS_FLAG_DIRECTORY);
+	strcpy(_dcl_dirs[_dcl_dir_count], dir);
+	_dcl_dir_count++;
+}
+
 static AuVFSNode* dcl_devnode_create(AuVFSNode* fs, const char* name,
-									 unsigned int devt, struct dcl_dev_slot* s) {
-	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+								 unsigned int devt, struct dcl_dev_slot* s) {
+	char path[48];
+	const char* base = name;
+	const char* slash = strchr(name, '/');
+	AuVFSNode* node;
+
+	if (slash) {
+		size_t dlen = (size_t)(slash - name);
+		if (dlen == 0 || dlen + 2 > sizeof(path))
+			return 0;
+		path[0] = '/';
+		memcpy(path + 1, name, dlen);
+		path[dlen + 1] = '\0';
+		dcl_ensure_dir(fs, path + 1);
+		base = slash + 1;
+	}
+	if (strlen(base) >= 32) /* AuVFSNode.filename is 32 bytes */
+		return 0;
+
+	node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
 	if (!node)
 		return 0;
 	memset(node, 0, sizeof(AuVFSNode));
-	strcpy(node->filename, name);
+	strcpy(node->filename, base);
 	node->flags |= FS_FLAG_DEVICE;
 	node->gid = AuCredGetGroupID(AURORA_GID_MISC_WORLD);
 	node->open = DclVportOpen;
 	node->read = DclVportRead;
 	node->write = DclVportWrite;
 	node->close = DclVportClose;
+	node->iocontrol = DclVportIoctl;
 	/* AuDevFSAddFile: 1 = linked, -1 = no entries; only -1 is failure. */
-	if (AuDevFSAddFile(fs, "/", node) < 0) {
+	if (AuDevFSAddFile(fs, slash ? path : "/", node) < 0) {
 		kfree(node);
 		return 0;
 	}
@@ -501,6 +673,34 @@ struct device* device_create_Call(const void* class, const void* parent, unsigne
 	return dev;
 }
 
+/*
+ * Remove the /dev node dcl_devnode_create() made.  The device's kobj_name is
+ * the full path minus the leading '/', the same string the create side was
+ * given ("dri/card0"); RemoveFile() walks path segments, so the node's
+ * filename alone ("card0") would be searched at the root and match nothing.
+ */
+static void dcl_devnode_remove(AuVFSNode* fs, const char* name) {
+	char upath[48];
+	size_t len = strlen(name);
+
+	if (len > sizeof(upath) - 2)
+		len = sizeof(upath) - 2;
+	upath[0] = '/';
+	memcpy(upath + 1, name, len);
+	upath[len + 1] = '\0';
+	AuDevFSRemoveFile(fs, upath);
+}
+
+/* Unlink the node and free the slot's copy of it. Both teardown paths --
+ * device_destroy() and device_del() -- end this way; only the name they
+ * resolve differs. */
+static void dcl_devnode_destroy(struct dcl_dev_slot* s, const char* name) {
+	AuVFSNode* fs = AuVFSFind("/dev");
+	if (fs && name)
+		dcl_devnode_remove(fs, name);
+	kfree(s->node);
+}
+
 void device_destroy(const void* class, unsigned int devt) {
 	(void)class;
 	for (int i = 0; i < DCL_MAX_DEVICES; i++) {
@@ -508,10 +708,9 @@ void device_destroy(const void* class, unsigned int devt) {
 		if (!s->used || s->devt != devt)
 			continue;
 		if (s->node) {
-			AuVFSNode* fs = AuVFSFind("/dev");
-			if (fs)
-				AuDevFSRemoveFile(fs, s->node->filename);
-			kfree(s->node);
+			struct device* d = (struct device*)s->dev;
+			dcl_devnode_destroy(s, (d && d->kobj_name)
+				? d->kobj_name : s->node->filename);
 		}
 		struct device* dev = (struct device*)s->dev;
 		if (dev) {
@@ -524,6 +723,95 @@ void device_destroy(const void* class, unsigned int devt) {
 					 (int)MAJOR(devt), (int)MINOR(devt));
 		return;
 	}
+}
+
+/*
+ * device_add()/device_del() -- the driver-core pair drm_drv.c drives
+ * directly (drm_drv.c:195, :226) once drm_sysfs_minor_alloc() has built
+ * the struct device (DCL/drm_sysfs_shim.c).  Same node as device_create()
+ * above, read from the device's own name and devt instead of a format
+ * string.  A device with no devt (a connector's class device, on mainline
+ * a sysfs directory) has nowhere to go in devfs: acknowledged, no node.
+ */
+int device_add(struct device* dev) {
+	struct dcl_dev_slot* s = 0;
+	AuVFSNode* fs;
+
+	if (!dev)
+		return -22; /* -EINVAL */
+	for (int i = 0; i < DCL_MAX_DEVICES; i++) {
+		if (_dcl_devs[i].used && _dcl_devs[i].dev == dev) {
+			s = &_dcl_devs[i];
+			break;
+		}
+	}
+	if (!s) {
+		for (int i = 0; i < DCL_MAX_DEVICES; i++) {
+			if (!_dcl_devs[i].used) {
+				s = &_dcl_devs[i];
+				break;
+			}
+		}
+	}
+	if (!s)
+		return -12; /* -ENOMEM */
+	if (!dev->devt || !dev->kobj_name)
+		return 0; /* sysfs-only device: nothing to publish */
+
+	fs = AuVFSFind("/dev");
+	if (!fs)
+		return -19; /* -ENODEV */
+	if (!s->used)
+		memset(s, 0, sizeof(*s));
+	s->used = 1;
+	s->dev = dev;
+	if (!dcl_devnode_create(fs, dev->kobj_name, dev->devt, s)) {
+		memset(s, 0, sizeof(*s));
+		return -6; /* -ENXIO */
+	}
+	UARTDebugOut("[dcl]: device_add '%s' (%d:%d)\r\n", dev->kobj_name,
+				 (int)MAJOR(dev->devt), (int)MINOR(dev->devt));
+	return 0;
+}
+
+void device_del(struct device* dev) {
+	for (int i = 0; i < DCL_MAX_DEVICES; i++) {
+		struct dcl_dev_slot* s = &_dcl_devs[i];
+		if (!s->used || s->dev != dev)
+			continue;
+		if (s->node)
+			dcl_devnode_destroy(s, dev->kobj_name);
+		/*
+		 * The slot goes, the device does not: freeing it is
+		 * put_device()'s job, which is a no-op on this build (the
+		 * drm minors leak one struct device each on unregister,
+		 * bounded by the device count over the boot lifetime).
+		 */
+		memset(s, 0, sizeof(*s));
+		UARTDebugOut("[dcl]: device_del '%s'\r\n",
+					 dev->kobj_name ? dev->kobj_name : "?");
+		return;
+	}
+}
+
+int dev_set_name(struct device* dev, const char* fmt, ...) {
+	char name[64];
+	char* copy;
+	va_list ap;
+
+	if (!dev)
+		return -22;
+	va_start(ap, fmt);
+	dcl_dev_name(name, sizeof(name), fmt, ap);
+	va_end(ap);
+	copy = (char*)kmalloc(strlen(name) + 1);
+	if (!copy)
+		return -12;
+	strcpy(copy, name);
+	if (dev->kobj_name)
+		kfree((void*)dev->kobj_name);
+	dev->kobj_name = copy;
+	return 0;
 }
 
 /* ── boot-time round-trip probe: the /dev/vport* node ──────────────────── *
@@ -806,4 +1094,168 @@ void kill_fasync(struct fasync_struct** fp, int sig, int band)
 	(void)fp;
 	(void)sig;
 	(void)band;
+}
+
+/* ── anonymous files and the fd table: nothing here to name ────────────── */
+
+/*
+ * anon_inode_getfile() -- mainline's fs/anon_inodes.c: put a struct file on
+ * the shared anonymous inode with priv attached, for something that has no
+ * path (syncobj exports, mock_drm_getfile). There is no anon inode here, no
+ * alloc_file_clone() and no file refcount to start from, so the honest
+ * answer is the one shmem_file_setup() gives (drm_stubs.c): ERR_PTR(-ENOSYS),
+ * which every caller tests with IS_ERR before touching the file (drm_file.c
+ * :1068, drm_syncobj.c:676). The fd-first callers never even arrive here:
+ * their get_unused_fd_flags() fails first.
+ */
+struct file* anon_inode_getfile(const char* name,
+								const struct file_operations* fops,
+								void* priv, int flags)
+{
+	(void)name;
+	(void)fops;
+	(void)priv;
+	(void)flags;
+	return ERR_PTR(-ENOSYS);
+}
+
+/*
+ * file_clone_open() -- mainline's <linux/fs.h> inline (:2527), a
+ * dentry_open() over the source file's path/flags/cred. There is no dentry
+ * tree here, and a DCL struct file is embedded state in the table that
+ * opened it rather than an object a path can name, so there is nothing to
+ * clone. Caller: drm_lease.c:551, reached only after the lease's
+ * get_unused_fd_flags() at :532 has already refused a descriptor; it tests
+ * IS_ERR and unwinds.
+ */
+struct file* file_clone_open(struct file* file)
+{
+	(void)file;
+	return ERR_PTR(-ENOSYS);
+}
+
+/*
+ * get_unused_fd_flags() and its two void companions -- mainline's fd-table
+ * surface (fs/file.c). An fd is an index into current->files; DCL has no
+ * files_struct and no fget() that could resolve one back (see <linux/file.h>),
+ * so there is no slot to allocate, return, or fill. -ENOSYS because the
+ * facility is absent rather than full (`fd < 0` is what every caller tests
+ * and unwinds on -- drm_lease.c:532, drm_syncobj.c:669, drm_atomic_uapi.c
+ * :1400, drm_prime.c:516), which is also why the install/put arms that
+ * follow those tests are unreachable by construction and are no-ops rather
+ * than failures they could not report.
+ */
+int get_unused_fd_flags(unsigned flags)
+{
+	(void)flags;
+	return -ENOSYS;
+}
+
+void put_unused_fd(unsigned int fd)
+{
+	(void)fd;
+}
+
+void fd_install(unsigned int fd, struct file* file)
+{
+	(void)fd;
+	(void)file;
+}
+
+/*
+ * fput() -- mainline drops one reference to a struct file and frees it at
+ * zero (fs/file_table.c). DCL files carry no reference count: <linux/file.h>
+ * makes get_file() a no-op for the same reason, and the one producer of a
+ * file that could reach a real drop, shmem_file_setup(), answers ERR_PTR()
+ * (drm_stubs.c), so drm_gem_object_release()'s `if (obj->filp) fput(...)`
+ * never fires. The whole of the drop is the (void)file.
+ */
+void fput(struct file* file)
+{
+	(void)file;
+}
+
+/* ── tty: the one tty_io.c symbol the vendored set still calls ─────────── */
+
+/*
+ * do_SAK() -- mainline's Secure Attention Key handler (tty_io.c): schedule
+ * the tty's SAK work item, whose handler walks every file open on that tty
+ * and hangs it up. tty_io.c is not vendored in this tree -- DCL/tty_io_shim.c
+ * stands in for it, and its header says the two must never meet in the same
+ * link -- and an SAK has nothing to act on here: no file table, no sessions,
+ * no signals. The declaration is in <linux/tty.h>; the reference is
+ * 8250_port.c's uart_handle_break() (serial_core.h:1594), which only calls
+ * it when the port carries UPF_SAK.
+ */
+struct tty_struct;
+
+void do_SAK(struct tty_struct* tty)
+{
+	(void)tty;
+}
+
+/* ── path resolution: with nothing to resolve against ──────────────────── */
+
+/*
+ * d_path(path, buf, buflen) -- write the pathname behind `path` into `buf`
+ * and return where it starts, or an ERR_PTR if it would not fit.
+ *
+ * There is no dentry tree in this kernel to walk. devfs hands a driver a
+ * struct file and never a chain of dentries back to a root, so there are no
+ * names to prepend and no traversal to do -- which is what makes this an
+ * empty answer rather than an unimplemented one.
+ *
+ * The empty string is written at the *end* of the buffer, and that is
+ * mainline's position rather than a detail: d_path() builds backwards so a
+ * caller can tell truncation from a short path, and both consumers here
+ * depend on the shape more than on the text. lib/seq_buf.c:322 hands the
+ * result straight back into mangle_path() over the same buffer, and that
+ * loop's `s <= p` bound only holds when the answer points inside the buffer
+ * it was given -- an empty string at the end makes mangle_path() read a NUL
+ * on its first step and report 0 bytes, which is what an unresolvable path
+ * should cost.
+ *
+ * -EINVAL rather than mainline's -ENAMETOOLONG, because this tree's errno.h
+ * carries no ENAMETOOLONG and the distinction cannot be observed: both call
+ * sites test only IS_ERR(), and the second of them maps any error to the
+ * literal "<too_long>". The buflen <= 0 arm is unreachable from either, and
+ * is kept so a later caller with a real buffer cannot get a pointer past the
+ * end of it.
+ */
+char* d_path(const struct path* path, char* buf, int buflen);
+
+/*
+ * file_path(file, buf, buflen) -- d_path() over file->f_path.
+ *
+ * mainline's is one line, and this is that line with the same reasoning
+ * behind the empty answer: DCL's struct file carries no f_path, so there is
+ * no path to hand down.
+ *
+ * The consumer is lib/string_helpers.c:725-729, which quotable-escapes the
+ * result, so an empty pathname comes back as an empty string -- where the
+ * sibling arms of that same function return the literals "<unknown>" (no
+ * file) and "<too_long>" (truncation). This one says "a file, with no name
+ * this kernel can report", which is neither of those.
+ *
+ * `struct file*` rather than the const void* the seq_* stubs nearby use:
+ * those take const void* to match bodies that already existed, and these two
+ * are new, so they take mainline's own parameter types.
+ */
+char* file_path(struct file* file, char* buf, int buflen);
+
+char* d_path(const struct path* path, char* buf, int buflen)
+{
+	(void)path;
+
+	if (buflen <= 0)
+		return ERR_PTR(-EINVAL);
+
+	buf[buflen - 1] = '\0';
+	return buf + buflen - 1;
+}
+
+char* file_path(struct file* file, char* buf, int buflen)
+{
+	(void)file;
+	return d_path(NULL, buf, buflen);
 }

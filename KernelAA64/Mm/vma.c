@@ -47,10 +47,17 @@ void AuInsertVMArea(AuProcess* proc, AuVMArea* area) {
  * @param area -- pointer to the vm area
  */
 void AuRemoveVMArea(AuProcess* proc, AuVMArea* area) {
-	for (int i = 0; i < proc->vmareas->pointer; i++) {
-		AuVMArea* area_ = (AuVMArea*)list_get_at(proc->vmareas, i);
-		if (area_ == area)
-			list_remove(proc->vmareas, i);
+	if (!area)
+		return;
+	if (proc && proc->vmareas) {
+		for (int i = 0; i < proc->vmareas->pointer; i++) {
+			AuVMArea* area_ = (AuVMArea*)list_get_at(proc->vmareas, i);
+			if (area_ == area) {
+				/** list indices changed, so break the loop */
+				list_remove(proc->vmareas, i);
+				break;
+			}
+		}
 	}
 	kfree(area);
 }
@@ -66,6 +73,8 @@ void AuRemoveVMArea(AuProcess* proc, AuVMArea* area) {
  */
 AuVMArea* AuVMAreaCreate(size_t start, size_t end, uint8_t prot, size_t len, uint8_t type) {
 	AuVMArea* area = (AuVMArea*)kmalloc(sizeof(AuVMArea));
+	if (!area)
+		return NULL;
 	memset(area, 0, sizeof(AuVMArea));
 	area->start = start;
 	area->end = end;
@@ -83,8 +92,12 @@ AuVMArea* AuVMAreaCreate(size_t start, size_t end, uint8_t prot, size_t len, uin
  * @param address -- address to search
  */
 AuVMArea* AuVMAreaGet(AuProcess* proc, size_t address) {
-	for (int i = 0; i < proc->vmareas->pointer; i++) {
+	if (!proc || !proc->vmareas)
+		return NULL;
+	for (unsigned int i = 0; i < proc->vmareas->pointer; i++) {
 		AuVMArea* area_ = (AuVMArea*)list_get_at(proc->vmareas, i);
+		if (!area_)
+			continue;
 		if (address > area_->start && address < area_->end)
 			return area_;
 	}

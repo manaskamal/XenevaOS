@@ -692,3 +692,17 @@ _KeThreadWaitForTermination:
 	svc #0
 	mov x0, x6
 	ret
+
+.global uname
+uname:
+    mov x16, 82
+	svc #0
+	mov x0, x6
+	ret
+
+.global poll
+poll:
+    mov x16, 83
+	svc #0
+	mov x0, x6
+	ret

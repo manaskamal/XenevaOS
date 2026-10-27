@@ -40,4 +40,18 @@
 #define late_initcall(fn) DCL_INITCALL(fn)
 #define module_init(fn) DCL_INITCALL(fn)
 
+/*
+ * subsys_initcall -- one more level of mainline's 0..6 ordering, used by
+ * Vendored/drivers/dma-buf/dma-fence.c:131 to install its stub fence provider.
+ * DCL has no ordering between initcalls: DclRunInitcalls() (DCL/
+ * linux_mm_shim.c) names each one explicitly in the order it wants, so this
+ * lands in the same bucket as every other level here.  What matters is that
+ * it exists at all -- without the macro the call site parses as an implicit
+ * int function call and the whole file fails from there.
+ *
+ * dma_fence_init_stub has to be added to that runner's list before it will
+ * actually run; see the ordering comment there.
+ */
+#define subsys_initcall(fn) DCL_INITCALL(fn)
+
 #endif /* __LINUX_INIT_H__ */

@@ -58,6 +58,15 @@
 [Param]Null|
 [App]/xenotes.exe}
 
+{[Title]XEPaints|
+[Icon]/icons/paintl.bmp|
+[Param]Null|
+[App]/xepaints.exe}
+
+{[Title]XESheets|
+[Icon]/icons/sheetl.bmp|
+[Param]Null|
+[App]/xesheets.exe}
 
 {[Title]NetSurf|
 [Icon]/icons/netsrfl.bmp|

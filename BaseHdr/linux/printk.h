@@ -3,6 +3,40 @@
 
 #include <Drivers/uart.h>
 #include <aucon.h>
+#include <stdarg.h>		/* va_list -- struct va_format below */
+
+/*
+ * <linux/stringify.h> is not a mainline printk.h include -- mainline reaches
+ * __stringify() from <linux/device.h>, which drm_print.h also includes. DCL's
+ * device.h is a stub that stops at kobject/sysfs/property and carries no such
+ * chain, so drm_WARN_ON() (drm_print.h:789) expands to
+ *
+ *     "drm_WARN_ON(" __stringify(x) ")"
+ *
+ * with __stringify() undefined: it reads as an implicit function call sitting
+ * between two string literals, and the diagnostic is "expected ')'" at the
+ * *caller's* if-statement -- no mention of __stringify() anywhere in it.
+ *
+ * printk.h is where the include lands because it is the one header every
+ * print-macro user in this tree already pulls, and __stringify()'s only users
+ * are print and sysfs macros (serial_core.h, sysfs.h, linkage.h,
+ * tty_ldisc.h), each of which currently survives only by the accident of
+ * which TU includes them.
+ */
+#include <linux/stringify.h>
+
+/*
+ * struct va_format -- mainline's at printk.h:84, and <drm/drm_print.h> needs
+ * it in two ways: :176 declares a printer callback taking `struct va_format *`
+ * and :216 *builds* one, `struct va_format vaf = { .fmt = fmt, .va = va };`,
+ * so an incomplete type there is "variable has incomplete type" rather than
+ * an unknown name -- the struct is named but never defined anywhere in this
+ * tree.  Both fields are required by that initializer.
+ */
+struct va_format {
+	const char *fmt;
+	va_list *va;
+};
 
 #define KERN_EMERG    ""
 #define KERN_ALERT    ""
@@ -57,6 +91,26 @@ extern int oops_in_progress;
 #define panic(fmt, ...) do { oops_in_progress = 1; \
 	printk("PANIC: " fmt, ##__VA_ARGS__); while(1); } while(0)
 
+
+/*
+ * DUMP_PREFIX_* and hex_dump_to_buffer -- mainline spells these just above
+ * its print_hex_dump() in <linux/printk.h>, and lib/seq_buf.c's
+ * seq_buf_hex_dump() reaches them through <linux/printk.h> alone.  Two
+ * consumers: the switch at seq_buf.c:423/:427 selects the per-row prefix, and
+ * :419 calls hex_dump_to_buffer, whose body is Vendored/lib/hexdump.c.
+ *
+ * DCL has no print_hex_dump() and does not need one -- nothing in this tree
+ * calls it, and adding a declaration with no definition is how a link error
+ * gets found late rather than early.
+ */
+enum {
+	DUMP_PREFIX_NONE,
+	DUMP_PREFIX_ADDRESS,
+	DUMP_PREFIX_OFFSET
+};
+extern int hex_dump_to_buffer(const void *buf, size_t len, int rowsize,
+			      int groupsize, char *linebuf, size_t linebuflen,
+			      bool ascii);
 
 #define dev_notice_ratelimited(dev, fmt, ...)  dev_notice((dev), fmt, ##__VA_ARGS__)
 

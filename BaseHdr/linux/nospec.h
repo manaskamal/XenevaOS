@@ -36,26 +36,22 @@
  *
  * ### BITS_PER_LONG is 32 here, and that is load-bearing
  *
- * the mask is a sign-bit trick: it must shift the sign bit of a
- * `unsigned long` into place, so the shift count has to be
- * sizeof(unsigned long)*8 - 1. kernel.h defines BITS_PER_LONG exactly that
- * way (it was a hardcoded 64 until bringing this file in, which would have
- * shifted a 32-bit value by 63 and produced mask 0 -- silently reading
- * element 0 of every array, forever).
+ * the mask is a sign-bit trick: it must shift the sign bit of the OR'ed
+ * value across the word, so that value is cast to signed `long` -- only then
+ * is the shift arithmetic and extends the sign -- and the shift count has to
+ * be sizeof(long)*8 - 1, i.e. BITS_PER_LONG - 1. kernel.h defines
+ * BITS_PER_LONG exactly that way (it was a hardcoded 64 until bringing this
+ * file in, which would have shifted a 32-bit value by 63 and produced mask
+ * 0 -- silently reading element 0 of every array, forever).
+ *
+ * The cast was `unsigned long` for a while, and a logical shift extends
+ * nothing: in bounds it left mask 1, so `index & mask` clamped every
+ * in-bounds index to its low bit. drm_ioctl()'s core dispatch read nr=0x0C
+ * (GET_CAP), masked it to 0 and called the VERSION handler. The signed cast
+ * is the whole mechanism, not a detail.
  */
 
-#include <linux/kernel.h>	/* size_t, BUILD_BUG_ON, typeof */
-
-/*
- * Tell the compiler the value of `var` is not available, so it cannot fold
- * a load out of the clamp on the strength of an earlier bounds check. This
- * is mainline's spelling: an empty asm with an output operand, which keeps
- * the value in a register and discards the compiler's knowledge of it. It is
- * a compiler barrier only -- no instruction is emitted.
- */
-#ifndef OPTIMIZER_HIDE_VAR
-#define OPTIMIZER_HIDE_VAR(var) __asm__ __volatile__("" : "=r"(var))
-#endif
+#include <linux/kernel.h>	/* size_t, BUILD_BUG_ON, typeof, OPTIMIZER_HIDE_VAR */
 
 /**
  * array_index_mask_nospec() - ~0 when index < size, 0 otherwise
@@ -79,7 +75,7 @@ static inline unsigned long array_index_mask_nospec(unsigned long index,
 	 * the answer away anyway.
 	 */
 	OPTIMIZER_HIDE_VAR(index);
-	return ~(unsigned long)(index | (size - 1UL - index)) >>
+	return ~(long)(index | (size - 1UL - index)) >>
 	       (BITS_PER_LONG - 1);
 }
 
