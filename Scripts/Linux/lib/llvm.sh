@@ -33,6 +33,8 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     ( cd ../../Libs/XEClib && make clean && make BLEED="${BLEED:-0}" llvm )
     ( cd ../../Libs/Chitralekha && make clean && make BLEED="${BLEED:-0}" UNIKERNEL="${UNIKERNEL:-0}" llvm )
     if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        ( cd ../../Ports/zlib && make clean && make llvm )
+        ( cd ../../Ports/brotli && make clean && make llvm )
         ( cd ../../Ports/mbedtls && make clean && make llvm )
     fi
 
@@ -73,6 +75,8 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     fi
     # generic IPC test: a daemons-group echo service and an ordinary-app client
     if [ "${IPCTEST:-0}" -eq 1 ]; then APPS+=(ipcsrv ipctest); fi
+    # native socket syscall conformance suite:  NETSYSTEST=1 ./Scripts/...
+    if [ "${NETSYSTEST:-0}" -eq 1 ]; then APPS+=(netsystest); fi
     # user-space file system on /srv plus its two-user test:  SRVTEST=1
     if [ "${SRVTEST:-0}" -eq 1 ]; then
         APPS+=(fssrv srvtest)
@@ -150,6 +154,12 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     # SVCTEST=restart|fallback|recover|selfcrash additionally builds the test hooks
     # into sndsrv/svcmgr, packs a short-lived dummy service and writes /svctest.cnf.
     RES=../../Resources/resources
+    if [ "${NO_NETWORK:-0}" -eq 0 ]; then
+        mkdir -p "$RES/etc/ssl/certs"
+        cp -f ../../Ports/mbedtls/certs/cacert.pem "$RES/etc/ssl/certs/cacert.pem"
+    else
+        rm -rf "$RES/etc/ssl"
+    fi
     if [ "${SNDSRV:-0}" -eq 1 ] || [ "${INPUTSRV:-0}" -eq 1 ] || [ "${NETSRV:-0}" -eq 1 ] || [ "${SRVTEST:-0}" -eq 1 ] || [ "${GPUSRV:-0}" -eq 1 ]; then
         cp -f ../../Process/svcmgr/svcmgr.exe "$RES/"
         {
@@ -192,6 +202,11 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
         cp -f ../../Process/ipctest/ipctest.exe "$RES/"
     else
         rm -f "$RES/ipcsrv.exe" "$RES/ipctest.exe"
+    fi
+    if [ "${NETSYSTEST:-0}" -eq 1 ]; then
+        cp -f ../../Process/netsystest/netsock.exe "$RES/"
+    else
+        rm -f "$RES/netsock.exe"
     fi
     if [ "${NETSRV:-0}" -eq 1 ] || [ "${NETTEST:-0}" -eq 1 ]; then
         cp -f ../../Process/nettest/nettest.exe "$RES/"
