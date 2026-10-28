@@ -37,6 +37,7 @@
 #include <string.h>
 #include <_null.h>
 #include <Net/aunet.h>
+#include <Net/unix.h>
 #include <list.h>
 #include <Drivers/uart.h>
 #include <aucon.h>
@@ -132,58 +133,358 @@ int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
 
 #define SOL_SOCKET 0
 
-#define SO_KEEPALIVE	1
-#define SO_REUSEADDR	2
-#define SO_BINDTODEVICE 3
-#define SO_NONBLOCK	4
+AuSocket* AuSocketFromFd(int sockfd) {
+	AA64Thread* thr;
+	AuProcess* proc;
+	AuVFSNode* node;
+
+	if (sockfd < 0 || sockfd >= FILE_DESC_PER_PROCESS)
+		return NULL;
+	thr = AuGetCurrentThread();
+	if (!thr)
+		return NULL;
+	proc = AuProcessFindThread(thr);
+	if (!proc)
+		proc = AuProcessFindSubThread(thr);
+	if (!proc)
+		return NULL;
+	node = proc->fds[sockfd];
+	if (!node)
+		return NULL;
+	if (!(node->flags & FS_FLAG_SOCKET))
+		return NULL;
+	return (AuSocket*)node->device;
+}
+
+/**
+ * @brief AuSocketCopyAddr -- copy a native sockaddr with truncation
+ * @param dst -- user destination buffer
+ * @param addrlen -- in: room, out: full address length
+ * @param src -- protocol address
+ * @param srclen -- full protocol address length
+ */
+int AuSocketCopyAddr(sockaddr* dst, socklen_t* addrlen, const void* src,
+	socklen_t srclen) {
+	socklen_t room;
+
+	if (!dst || !addrlen || !src)
+		return -AU_ERR_EFAULT;
+	room = *addrlen;
+	if (room > srclen)
+		room = srclen;
+	if (room)
+		memcpy(dst, src, room);
+	*addrlen = srclen;
+	return 0;
+}
+
+int AuSocketCopyMsgName(msghdr* msg, const void* src, socklen_t srclen) {
+	socklen_t room;
+
+	if (!msg)
+		return -AU_ERR_EINVAL;
+	if (!msg->msg_name) {
+		msg->msg_namelen = 0;
+		return 0;
+	}
+	room = msg->msg_namelen;
+	if (room > srclen)
+		room = srclen;
+	if (room)
+		memcpy(msg->msg_name, src, room);
+	msg->msg_namelen = srclen;
+	return 0;
+}
+
+int AuSocketInstallFd(AuSocket* sock, const char* name,
+	int (*closefn)(AuVFSNode*, AuVFSNode*)) {	AA64Thread* thr;
+	AuProcess* proc;
+	AuVFSNode* node;
+	int fd;
+
+	if (!sock)
+		return -AU_ERR_EINVAL;
+	thr = AuGetCurrentThread();
+	if (!thr)
+		return -AU_ERR_EBADF;
+	proc = AuProcessFindThread(thr);
+	if (!proc)
+		proc = AuProcessFindSubThread(thr);
+	if (!proc)
+		return -AU_ERR_EBADF;
+
+	fd = AuProcessGetFileDesc(proc);
+	if (fd < 0)
+		return -AU_ERR_EMFILE;
+	node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
+	if (!node)
+		return -AU_ERR_EMFILE;
+	memset(node, 0, sizeof(AuVFSNode));
+	strncpy(node->filename, name ? name : "socket", sizeof(node->filename) - 1);
+	node->flags = FS_FLAG_SOCKET;
+	node->device = sock;
+	node->close = closefn;
+	node->iocontrol = SocketIOControl;
+	node->poll = AuSocketProtocolPoll;
+	proc->fds[fd] = node;
+	return fd;
+}
 
 int AuSocketSOSocket(AuSocket* sock, int optname, const void* optval, socklen_t optlen) {
+	if (!sock)
+		return -AU_ERR_EBADF;
 	switch (optname) {
 	case SO_BINDTODEVICE: {
-		UARTDebugOut("Device binding ->%s \r\n", ((char*)optval));
-		//if (optlen < 1 || optlen > 32 || ((const char*)optval)[optlen - 1] != 0) return -1;
-		AuVFSNode* nic = AuGetNetworkAdapter((char*)optval);
-		UARTDebugOut("NIC : %x \r\n", nic);
+		AuVFSNode* nic;
+		char ifname[32];
+		size_t n;
+		if (!optval || optlen == 0) {
+			sock->binedDev = NULL;
+			return 0;
+		}
+		n = optlen;
+		if (n >= sizeof(ifname))
+			n = sizeof(ifname) - 1;
+		memcpy(ifname, optval, n);
+		ifname[n] = '\0';
+		if (!ifname[0])
+			return -AU_ERR_EINVAL;
+		nic = AuGetNetworkAdapter(ifname);
 		if (!nic)
-			return -1;
+			return -AU_ERR_EINVAL;
 		sock->binedDev = nic;
-		UARTDebugOut("Device binded \r\n");
 		return 0;
 	}
 	case SO_NONBLOCK: {
 		int on;
-		if (!optval || optlen < (socklen_t)sizeof(int))
-			return -1;
-		on = *(const int*)optval;
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&on, optval, sizeof(int));
 		sock->nonblock = on ? 1 : 0;
 		return 0;
 	}
+	case SO_REUSEADDR: {
+		int on;
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&on, optval, sizeof(int));
+		sock->reuseaddr = on ? 1 : 0;
+		return 0;
 	}
-	return 1;
+	case SO_KEEPALIVE: {
+		int on;
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&on, optval, sizeof(int));
+		sock->keepalive = on ? 1 : 0;
+		return 0;
+	}
+	case SO_RCVBUF: {
+		int sz;
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&sz, optval, sizeof(int));
+		if (sz < 2048)
+			return -AU_ERR_EINVAL;
+		if (sz > (1024 * 1024))
+			sz = 1024 * 1024;
+		sock->rcvbuf = sz;
+		return 0;
+	}
+	case SO_SNDBUF: {
+		int sz;
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&sz, optval, sizeof(int));
+		if (sz < 2048)
+			return -AU_ERR_EINVAL;
+		if (sz > (1024 * 1024))
+			sz = 1024 * 1024;
+		sock->sndbuf = sz;
+		return 0;
+	}
+	case SO_ERROR:
+	case SO_TYPE:
+	case SO_ACCEPTCONN:
+		/* Read-only. */
+		return -AU_ERR_ENOPROTOOPT;
+	default:
+		return -AU_ERR_ENOPROTOOPT;
+	}
+}
+
+static int AuSocketTCPOption(AuSocket* sock, int optname, const void* optval, socklen_t optlen) {
+	int on;
+	if (!sock || sock->so_type != SOCK_STREAM)
+		return -AU_ERR_ENOPROTOOPT;
+	switch (optname) {
+	case TCP_NODELAY:
+		if (!optval || optlen < sizeof(int))
+			return -AU_ERR_EINVAL;
+		memcpy(&on, optval, sizeof(int));
+		sock->nodelay = on ? 1 : 0;
+		return 0;
+	default:
+		return -AU_ERR_ENOPROTOOPT;
+	}
 }
 
 int AuSocketSetOpt(int sockfd, int level, int optname, const void* optval, socklen_t optlen) {
-	AA64Thread* curr = AuGetCurrentThread();
-	AuProcess* proc = AuProcessFindThread(curr);
-	if (!proc) {
-		proc = AuProcessFindSubThread(curr);
-		if (!proc)
-			return -1;
-	}
-	AuVFSNode* node = proc->fds[sockfd];
-	AuSocket* sock = (AuSocket*)node->device;
+	AuSocket* sock = AuSocketFromFd(sockfd);
+	if (!sock)
+		return -AU_ERR_ENOTSOCK;
 	switch (level) {
 	case SOL_SOCKET:
 		return AuSocketSOSocket(sock, optname, optval, optlen);
+	case IPPROTOCOL_TCP:
+		return AuSocketTCPOption(sock, optname, optval, optlen);
 	default:
-		return -1;
+		return -AU_ERR_ENOPROTOOPT;
 	}
-	return -1;
+}
+
+static int AuSocketPutOpt(void* optval, socklen_t* optlen, const void* src, socklen_t len) {
+	if (!optlen || !optval)
+		return -AU_ERR_EFAULT;
+	if (*optlen < len) {
+		*optlen = len;
+		return -AU_ERR_EINVAL;
+	}
+	memcpy(optval, src, len);
+	*optlen = len;
+	return 0;
+}
+
+int AuSocketGetOpt(int sockfd, int level, int optname, void* optval, socklen_t* optlen) {
+	AuSocket* sock = AuSocketFromFd(sockfd);
+	int val;
+	int rc;
+	char ifname[32];
+
+	if (!sock)
+		return -AU_ERR_ENOTSOCK;
+	if (!optlen)
+		return -AU_ERR_EFAULT;
+
+	if (level == IPPROTOCOL_TCP) {
+		if (sock->so_type != SOCK_STREAM)
+			return -AU_ERR_ENOPROTOOPT;
+		if (optname == TCP_NODELAY) {
+			val = sock->nodelay;
+			return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+		}
+		return -AU_ERR_ENOPROTOOPT;
+	}
+	if (level != SOL_SOCKET)
+		return -AU_ERR_ENOPROTOOPT;
+
+	switch (optname) {
+	case SO_ERROR:
+		val = sock->so_error;
+		rc = AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+		/* SO_ERROR is consumed only when the caller actually received
+		 * the value.  A short buffer reports EINVAL and keeps the error
+		 * pending for the next getsockopt(). */
+		if (rc == 0)
+			sock->so_error = 0;
+		return rc;
+	case SO_TYPE:
+		val = sock->so_type;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_ACCEPTCONN:
+		val = sock->listening;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_NONBLOCK:
+		val = sock->nonblock;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_KEEPALIVE:
+		val = sock->keepalive;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_REUSEADDR:
+		val = sock->reuseaddr;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_RCVBUF:
+		val = sock->rcvbuf;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_SNDBUF:
+		val = sock->sndbuf;
+		return AuSocketPutOpt(optval, optlen, &val, sizeof(val));
+	case SO_BINDTODEVICE: {
+		AuVFSNode* nic = (AuVFSNode*)sock->binedDev;
+		if (!nic)
+			return AuSocketPutOpt(optval, optlen, "", 1);
+		memset(ifname, 0, sizeof(ifname));
+		strncpy(ifname, nic->filename, sizeof(ifname) - 1);
+		return AuSocketPutOpt(optval, optlen, ifname, (socklen_t)(strlen(ifname) + 1));
+	}
+	default:
+		return -AU_ERR_ENOPROTOOPT;
+	}
+}
+
+void AuSocketWakeRx(AuSocket* sock) {
+	if (sock)
+		AuWaitQueue_Wake(&sock->rx_wait);
+}
+
+void AuSocketWakeTx(AuSocket* sock) {
+	if (sock)
+		AuWaitQueue_Wake(&sock->tx_wait);
+}
+
+void AuSocketWakeAccept(AuSocket* sock) {
+	if (sock)
+		AuWaitQueue_Wake(&sock->accept_wait);
+}
+
+void AuSocketWaitSlice(AuWaitQueue* q, uint64_t ms) {
+	AuWaitQEntry e;
+	AA64Thread* thr = AuGetCurrentThread();
+
+	if (!q || !thr)
+		return;
+	memset(&e, 0, sizeof(e));
+	e.thread = thr;
+	AuWaitQueueAdd(q, &e);
+	AuSleepThread(thr, ms ? ms : 1);
+	AuScheduleNext();
+	AuWaitQueueRemove(&e);
+}
+
+int AuSocketProtocolPoll(AuVFSNode* fs, AuVFSNode* file, AuPollTable* table) {
+	AuSocket* sock;
+
+	(void)fs;
+	if (!file)
+		return POLLNVAL;
+	sock = (AuSocket*)file->device;
+	if (!sock)
+		return POLLNVAL;
+	if (table && table->thread) {
+		AuPollWait(&sock->rx_wait, table);
+		AuPollWait(&sock->tx_wait, table);
+		AuPollWait(&sock->accept_wait, table);
+	}
+	if (sock->poll)
+		return sock->poll(sock, 0);
+	/* Unknown protocol: keep legacy behaviour rather than claiming a hang. */
+	return POLLIN | POLLOUT;
 }
 AuSocket* AuNetCreateSocket() {
 	AuSocket* sock = (AuSocket*)kmalloc(sizeof(AuSocket));
+	if (!sock)
+		return NULL;
 	memset(sock, 0, sizeof(AuSocket));
 	sock->rxstack = AuStackCreate();
+	if (!sock->rxstack) {
+		kfree(sock);
+		return NULL;
+	}
+	AuWaitQueueInitialize(&sock->rx_wait);
+	AuWaitQueueInitialize(&sock->tx_wait);
+	AuWaitQueueInitialize(&sock->accept_wait);
+	sock->rcvbuf = 65536;
+	sock->sndbuf = 65536;
 	return sock;
 }
 
@@ -388,6 +689,17 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 	}
 	return 1;
 }
+static int AuRawSocketPoll(AuSocket* sock, int events) {
+	int mask = POLLOUT;
+
+	(void)events;
+	if (!sock)
+		return POLLNVAL;
+	if (sock->rxstack && sock->rxstack->itemCount)
+		mask |= POLLIN;
+	return mask;
+}
+
 /**
  * @brief AuCreateRawSocket -- creates a very basic raw socket
  * interface
@@ -395,50 +707,77 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
  * @param protocol -- unused
  */
 int AuCreateRawSocket(int type, int protocol) {
-	if (type != SOCK_RAW)
-		return -1;
-	AA64Thread* curr_thr = AuGetCurrentThread();
-	AuProcess* proc = AuProcessFindThread(curr_thr);
-	if (!proc) {
-		proc = AuProcessFindSubThread(curr_thr);
-		if (!proc)
-			return 1;
-	}
-	AuSocket* sock = AuNetCreateSocket();
+	int fd;
+	AuSocket* sock;
+
+	(void)protocol;
+	if ((type & SOCK_TYPE_MASK) != SOCK_RAW)
+		return -AU_ERR_EINVAL;
+	sock = AuNetCreateSocket();
+	if (!sock)
+		return -AU_ERR_EMFILE;
 	sock->receive = AuRawSocketReceive;
 	sock->send = AuRawSocketSend;
-	UARTDebugOut("*****///Raw Socket created %x\r\n", sock);
-	int fd = AuProcessGetFileDesc(proc);
+	sock->poll = AuRawSocketPoll;
+	sock->so_type = SOCK_RAW;
+	sock->family = AF_RAW;
+
+	fd = AuSocketInstallFd(sock, "XERawSocket", AuRawSocketClose);
+	if (fd < 0) {
+		if (sock->rxstack)
+			kfree(sock->rxstack);
+		kfree(sock);
+		return fd;
+	}
 	list_add(raw_socket_list, sock);
-	AuVFSNode* node = (AuVFSNode*)kmalloc(sizeof(AuVFSNode));
-	memset(node, 0, sizeof(AuVFSNode));
-	strcpy(node->filename, "XERawSocket");
-	node->flags = FS_FLAG_SOCKET;
-	node->device = sock;
-	node->close = AuRawSocketClose;
-	node->iocontrol = SocketIOControl;
-	proc->fds[fd] = node;
+	UARTDebugOut("*****///Raw Socket created %x\r\n", sock);
 	return fd;
 }
 
 /**
  * @brief AuCreateSocket -- create a new socket for specific
  * domain
- * @param domain -- domain type -- IPV4_INET, RAW or IPV6_INET
- * @param type -- type
+ * @param domain -- domain type -- IPV4_INET, RAW, IPV6_INET or UNIX
+ * @param type -- type, optionally ORed with SOCK_NONBLOCK/SOCK_CLOEXEC
  * @param protocol -- protocol version
  */
 int AuCreateSocket(int domain, int type, int protocol) {
+	int stype = type & SOCK_TYPE_MASK;
+	int flags = type & ~SOCK_TYPE_MASK;
+	int fd;
+	AuSocket* sock;
+
+	if (flags & ~(SOCK_NONBLOCK | SOCK_CLOEXEC))
+		return -AU_ERR_EINVAL;
+	if (stype != SOCK_STREAM && stype != SOCK_DGRAM && stype != SOCK_RAW)
+		return -AU_ERR_EINVAL;
+
 	switch (domain) {
 	case AF_INET:
-		return CreateIPv4Socket(type, protocol);
+		fd = CreateIPv4Socket(stype, protocol);
+		break;
 	case AF_INET6:
-		return CreateIPv6Socket(type, protocol);
+		fd = CreateIPv6Socket(stype, protocol);
+		break;
 	case AF_RAW:
-		return AuCreateRawSocket(type, protocol);
+		fd = AuCreateRawSocket(stype, protocol);
+		break;
+	case AF_UNIX:
+		fd = AuUnixCreateSocket(stype, protocol);
+		break;
 	default:
-		return -1;
+		return -AU_ERR_EAFNOSUPPORT;
 	}
+	if (fd < 0)
+		return fd;
+
+	sock = AuSocketFromFd(fd);
+	if (sock) {
+		sock->nonblock = (flags & SOCK_NONBLOCK) ? 1 : 0;
+		sock->cloexec = (flags & SOCK_CLOEXEC) ? 1 : 0;
+		sock->family = (uint8_t)domain;
+	}
+	return fd;
 }
 
 /**

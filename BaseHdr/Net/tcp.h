@@ -48,11 +48,21 @@
 #define TCP_DATA_OFFSET_5 (0x5 << 12)
 
 #define TCP_DEFAULT_WIN_SZ 65535
-#define TCP_MSS 1460
+#define TCP_MSS_IPV4 1460
+#define TCP_MSS_IPV6 1440       /* 1500-byte MTU - 40-byte IPv6 - 20-byte TCP */
+#define TCP_MSS_LOOPBACK 32768  /* one test chunk; fits the 64 KiB rx buffer */
+#define TCP_MSS_MIN 536         /* RFC 1122 default when no MSS option */
+#define TCP_MSS TCP_MSS_IPV4
 /* One TLS record is at most 16384 bytes plus a 5-byte header (RFC 8446).
  * The buffer has to hold that while the reader is still pulling the
  * previous record. The advertised window itself stays 16 bits (RFC 9293). */
 #define TCP_RX_BUF_SZ 65536
+
+/* TCP option kinds used by the SYN/SYN-ACK path. */
+#define TCP_OPTION_END 0
+#define TCP_OPTION_NOP 1
+#define TCP_OPTION_MSS 2
+#define TCP_OPTION_MSS_LEN 4
 
 #define TCP_STATE_CLOSED       0
 #define TCP_STATE_LISTEN       1
@@ -97,7 +107,8 @@ typedef struct _tcp_pcb_ {
 	uint16_t remote_port;
 	uint16_t snd_wnd;
 	uint16_t rcv_wnd;
-	uint16_t mss;
+	uint16_t mss;      /* send MSS: peer's advertised value, clamped to path */
+	uint16_t rcv_mss;  /* receive MSS: value advertised in our SYN */
 	int backlog;
 	AuVFSNode* nic;
 	struct _socket_* parent;

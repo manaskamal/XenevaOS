@@ -54,6 +54,16 @@ char* currentDirectory;
 char* lastDirectory;
 int g_console_fd = -1;
 
+/* True when name already carries suffix.  Keeps "netsock.exe" from
+ * turning into "/netsock.exe.exe" while still expanding bare "netsock". */
+static bool xe_name_has_suffix(const char* name, const char* suffix) {
+	size_t name_len = strlen(name);
+	size_t suffix_len = strlen(suffix);
+
+	return name_len >= suffix_len &&
+		   strcmp(name + name_len - suffix_len, suffix) == 0;
+}
+
 void XEShellSigInterrupt(int signo) {
 	g_interrupted = 1;
 	/* Handle SIGINT (CTRL+C) properly */
@@ -175,8 +185,10 @@ void XEShellSpawn(char* string) {
 			strcat(filename, "/");
 
 		strcat(filename, execname);
-		/* A musl guest is named *.elf. Everything else is still a PE .exe. */
-		if (strlen(execname) < 4 || strcmp(execname + strlen(execname) - 4, ".elf") != 0)
+		/* A musl guest is named *.elf. Everything else is still a PE .exe,
+		 * unless the caller already typed the suffix. */
+		if (!xe_name_has_suffix(execname, ".exe") &&
+			!xe_name_has_suffix(execname, ".elf"))
 			strcat(filename, ".exe");
 
 		/* before spawning the process, make an entry to
@@ -1069,7 +1081,7 @@ int XsHostRun(int argc, char** argv, int fdIn, int fdOut, int fdErr) {
 		return 126;
 	}
 	strcat(filename, exec);
-	if (el < 4 || strcmp(exec + el - 4, ".elf") != 0)
+	if (!xe_name_has_suffix(exec, ".exe") && !xe_name_has_suffix(exec, ".elf"))
 		strcat(filename, ".exe");
 
 	int probe = _KeOpenFile(filename, FILE_OPEN_READ_ONLY);

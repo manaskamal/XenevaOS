@@ -45,6 +45,14 @@
 #include <aucon.h>
 #include <Mm/kmalloc.h>
 #include <Drivers/uart.h>
+
+/* Per-socket creation messages sit on the socket() hot path and flood the
+ * UART during benchmarks. Define NET_DEBUG to re-enable them. */
+#ifdef NET_DEBUG
+#define NET_SOCKET_DEBUG(...) UARTDebugOut(__VA_ARGS__)
+#else
+#define NET_SOCKET_DEBUG(...) do { } while (0)
+#endif
 #include <string.h>
 #include <Hal/AA64/sched.h>
 
@@ -138,17 +146,17 @@ int CreateIPv4Socket(int type, int protocol) {
 	switch (type) {
 	case SOCK_DGRAM:
 		if (protocol == 0 || protocol == IPPROTOCOL_UDP) {
-			UARTDebugOut("[aurora]: ipv4 udp protocol created \r\n");
+			NET_SOCKET_DEBUG("[aurora]: ipv4 udp protocol created \r\n");
 			return CreateUDPSocket();
 		}
 		if (protocol == IPPROTOCOL_ICMP) {
-			UARTDebugOut("[aurora]: ipv4 icmp protocol created \r\n");
+			NET_SOCKET_DEBUG("[aurora]: ipv4 icmp protocol created \r\n");
 			return CreateICMPSocket();
 		}
 		return -1;
 	case SOCK_STREAM:
 		if (protocol == 0 || protocol == IPPROTOCOL_TCP) {
-			UARTDebugOut("[aurora]: tcp protocol created \r\n");
+			NET_SOCKET_DEBUG("[aurora]: tcp protocol created \r\n");
 			return CreateTCPSocket();
 		}
 		return -1;

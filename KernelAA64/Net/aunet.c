@@ -349,6 +349,94 @@ AuVFSNode* AuGetNetworkAdapter(char* name) {
 	return node;
 }
 
+static uint16_t AuNetAdapterFlags(AuNetworkDevice* ndev) {
+	uint16_t flags = 0;
+
+	if (!ndev)
+		return 0;
+	if (ndev->linkStatus)
+		flags |= AU_IFF_UP | AU_IFF_RUNNING;
+	if (ndev->type == NETDEV_TYPE_LOOPBACK)
+		flags |= AU_IFF_LOOPBACK;
+	if (ndev->type == NETDEV_TYPE_ETHERNET ||
+		ndev->type == NETDEV_TYPE_802_11)
+		flags |= AU_IFF_BROADCAST | AU_IFF_MULTICAST;
+	return flags;
+}
+
+/**
+ * @brief AuNetSnapshotIfAddrs -- copy the adapter table into fixed records
+ * @param out -- destination array, may be NULL when only the count is needed
+ * @param max -- number of records the caller can hold
+ * @return number of records written, or a negative AU_ERR_* value
+ */
+int AuNetSnapshotIfAddrs(AuIfAddrInfo* out, int max) {
+	unsigned int bucket;
+	int index = 0;
+	int written = 0;
+
+	if (max < 0)
+		return -AU_ERR_EINVAL;
+	if (!netadapters)
+		return 0;
+	for (bucket = 0; bucket < netadapters->size; bucket++) {
+		hashmap_entry_t* entry;
+		for (entry = netadapters->entries[bucket]; entry; entry = entry->next) {
+			AuVFSNode* node = (AuVFSNode*)entry->value;
+			AuNetworkDevice* ndev;
+			AuIfAddrInfo info;
+
+			index++;
+			if (written >= max)
+				continue;
+			ndev = node ? (AuNetworkDevice*)node->device : NULL;
+			memset(&info, 0, sizeof(info));
+			strncpy(info.ifa_name, entry->key, sizeof(info.ifa_name) - 1);
+			info.ifa_index = (uint32_t)index;
+			info.ifa_flags = AuNetAdapterFlags(ndev);
+			if (ndev) {
+				info.ifa_addr4 = ndev->ipv4addr;
+				info.ifa_netmask4 = ndev->ipv4subnet;
+				info.ifa_broadcast4 = ndev->ipv4subnet ?
+					(ndev->ipv4addr | ~ndev->ipv4subnet) : 0;
+				memcpy(info.ifa_mac, ndev->mac, sizeof(info.ifa_mac));
+				info.ifa_link = ndev->linkStatus ? 1 : 0;
+				info.ifa_prefix6 = ndev->ipv6prefixLen;
+				memcpy(info.ifa_ipv6, ndev->ipv6addr.s6_addr,
+					sizeof(info.ifa_ipv6));
+				if (ndev->ipv4addr)
+					info.ifa_family = AF_INET;
+				else if (ndev->ipv6prefixLen)
+					info.ifa_family = AF_INET6;
+			}
+			if (out)
+				out[written] = info;
+			written++;
+		}
+	}
+	return written;
+}
+
+/**
+ * @brief AuNetIfNameToIndex -- map an interface name to its 1-based index
+ */
+int AuNetIfNameToIndex(const char* name) {
+	unsigned int bucket;
+	int index = 0;
+
+	if (!netadapters || !name || !name[0])
+		return 0;
+	for (bucket = 0; bucket < netadapters->size; bucket++) {
+		hashmap_entry_t* entry;
+		for (entry = netadapters->entries[bucket]; entry; entry = entry->next) {
+			index++;
+			if (!strcmp(entry->key, name))
+				return index;
+		}
+	}
+	return 0;
+}
+
 static int AuNicAddrEquals4(uint32_t address, uint32_t nicaddr) {
 	if (!nicaddr)
 		return 0;
