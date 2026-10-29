@@ -236,7 +236,7 @@ int AuICMPReceive(AuSocket* sock, msghdr* msg, int flags) {
 			return -AU_ERR_EAGAIN;
 		if (AuGetCurrentUS() >= deadline)
 			return -AU_ERR_ETIMEDOUT;
-		AuSocketWaitSlice(&sock->rx_wait, 20);
+		AuSocketWaitSlice(&sock->rx_wait, AU_SOCKET_WAIT_SLICE_MS);
 	}
 }
 

@@ -831,7 +831,9 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 			return -AU_ERR_ETIMEDOUT;
 		}
 		AuNetRxPoll();
-		AuSocketWaitSlice(&sock->rx_wait, 20);
+		if (TCPRxUsed(pcb))
+			continue;
+		AuSocketWaitSlice(&sock->rx_wait, AU_SOCKET_WAIT_SLICE_MS);
 	}
 }
 
@@ -882,7 +884,12 @@ int AuTCPSend(AuSocket* sock, msghdr* msg, int flags) {
 					break;
 				}
 				AuNetRxPoll();
-				AuSocketWaitSlice(&sock->tx_wait, 20);
+				{
+					uint32_t unacked = pcb->snd_nxt - pcb->snd_una;
+					if (pcb->snd_wnd > unacked)
+						continue;
+				}
+				AuSocketWaitSlice(&sock->tx_wait, AU_SOCKET_WAIT_SLICE_MS);
 				continue;
 			}
 			chunk = len - off;
@@ -1143,7 +1150,9 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 		uint64_t s, ss;
 
 		AuNetRxPoll();
-		AuSocketWaitSlice(&sock->tx_wait, 20);
+		if (pcb->state != TCP_STATE_SYN_SENT)
+			continue;
+		AuSocketWaitSlice(&sock->tx_wait, AU_SOCKET_WAIT_SLICE_MS);
 
 		if (sock->sockState == SOCK_STATE_CONNECTION_RST ||
 			pcb->state == TCP_STATE_CLOSED) {
@@ -1284,7 +1293,9 @@ int AuTCPAccept(AuSocket* sock, sockaddr* addr, socklen_t* addrlen) {
 			if (AuGetCurrentUS() >= deadline)
 				return -AU_ERR_ETIMEDOUT;
 			AuNetRxPoll();
-			AuSocketWaitSlice(&sock->accept_wait, 20);
+			if (pcb->acceptq->pointer)
+				continue;
+			AuSocketWaitSlice(&sock->accept_wait, AU_SOCKET_WAIT_SLICE_MS);
 		}
 	}
 

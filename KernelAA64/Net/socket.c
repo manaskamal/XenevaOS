@@ -61,14 +61,15 @@ typedef struct _dns_entry_ {
  * @param sz -- Size of the data
  */
 void AuSocketAdd(AuSocket* sock, void* data, size_t sz) {
-	char* data_ = (char*)kmalloc(sizeof(size_t) + sz);
-	memset(data_, 0, sz + sizeof(size_t));
+	char* data_;
+
+	if (!sock || !sock->rxstack || !data || !sz)
+		return;
+	data_ = (char*)kmalloc(sizeof(size_t) + sz);
+	if (!data_)
+		return;
 	*(size_t*)data_ = sz;
-	char* dest = data_ + sizeof(size_t);
-	const char* src = (const char*)data;
-	for (size_t i = 0; i < sz; i++) {
-		dest[i] = src[i];
-	}
+	memcpy(data_ + sizeof(size_t), data, sz);
 	AuStackPush(sock->rxstack, data_);
 }
 
@@ -465,6 +466,10 @@ int AuSocketProtocolPoll(AuVFSNode* fs, AuVFSNode* file, AuPollTable* table) {
 		AuPollWait(&sock->tx_wait, table);
 		AuPollWait(&sock->accept_wait, table);
 	}
+	/* poll(2) is the wake-up path for most applications; drain the NIC
+	 * here so a poll-only driver still makes progress without relying on
+	 * the 1 ms sleep fallback. */
+	AuNetRxPoll();
 	if (sock->poll)
 		return sock->poll(sock, 0);
 	/* Unknown protocol: keep legacy behaviour rather than claiming a hang. */

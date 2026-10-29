@@ -52,6 +52,10 @@ ALIGNED(2) typedef struct _ethernet_ {
 } Ethernet;
 #pragma pack(pop)
 
+/* Raw sockets are observability taps, not a reliable transport. Without a
+ * bound, a busy link grows every tap's queue until the heap is exhausted. */
+#define AU_RAW_SOCKET_MAX_FRAMES 64
+
 AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) {
 	Ethernet* frame = (Ethernet*)data;
 	AuNetworkDevice* ndev = (AuNetworkDevice*)nic->device;
@@ -61,7 +65,9 @@ AU_EXTERN AU_EXPORT void AuEthernetHandle(void* data, int size, AuVFSNode* nic) 
 	//UARTDebugOut("Adding to raw_sockets \r\n");
 	for (int i = 0; i < raw_sockets->pointer; i++) {
 		AuSocket* sock = (AuSocket*)list_get_at(raw_sockets, i);
-		AuSocketAdd(sock, frame, size);
+		if (sock && sock->rxstack &&
+			sock->rxstack->itemCount < AU_RAW_SOCKET_MAX_FRAMES)
+			AuSocketAdd(sock, frame, size);
 	}
 
 	char broadcast_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};

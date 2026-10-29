@@ -133,7 +133,6 @@ int AuPoll(_AuUser_PollFD fds[], nfds_t num_fd, int timeout) {
 			_kfds[i].revents = 0;
 			if (fds[i].fd < 0)
 				continue;
-			UARTDebugOut("poll: getting file for fd: %d \r\n", _kfds[i].fd);
 			AuVFSNode* file = AuPollGetFile(curr_thr, _kfds[i].fd);
 			if (!file)
 				mask = POLLNVAL;

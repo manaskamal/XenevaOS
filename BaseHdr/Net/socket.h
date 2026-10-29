@@ -91,6 +91,11 @@
 /* Turn off blocking after the first message of recvmmsg(2). */
 #define MSG_WAITFORONE 0x10000
 
+/* Blocking socket calls park for this long before re-checking the NIC.
+ * An RX interrupt wakes them immediately; this is only the safety net for
+ * a missed edge, so keep it short enough not to cap throughput. */
+#define AU_SOCKET_WAIT_SLICE_MS 1
+
 /* Native errno values, matching Libs/XEClib/includes/errno.h. */
 #define AU_ERR_EBADF        9
 #define AU_ERR_EAGAIN       11

@@ -75,6 +75,10 @@ static uint16_t rx_index;
 static uint16_t tx_done;
 static AuVFSNode* nic;
 static AuNetworkDevice* ndev;
+/* MSI-X vector 0 is bound to both queues when allocation succeeds.
+ * VIRTIO_MSI_NO_VECTOR keeps the old poll-only path as a fallback. */
+static uint16_t net_msix_vector = VIRTIO_MSI_NO_VECTOR;
+static int net_spi = -1;
 
 /**
  * VirtioNetCfg -- virtio net configuration
@@ -112,14 +116,18 @@ static void virt_cache_clean(void* addr, size_t sz) {
 
 static void AuVirtioNetRxPoll(void) {
 	static int in_poll;
-	uint16_t them;
+	uint16_t budget;
+
 	if (in_poll)
 		return;
 	if (!rx_used || !rx_avail || !rx_desc || !rx_qsize || !rx_nbuf || !rx_buf_virt)
 		return;
 	in_poll = 1;
-	them = rx_used->idx;
-	for (; rx_index != them; rx_index++) {
+	/* Bound one drain pass so an interrupt storm cannot monopolise the
+	 * CPU. Every processed buffer is returned to the device, so the next
+	 * completion raises another interrupt. */
+	budget = rx_qsize;
+	while (budget-- && rx_index != rx_used->idx) {
 		uint16_t used_slot = rx_index % rx_qsize;
 		uint32_t buf_id = rx_used->ring[used_slot].id % rx_nbuf;
 		uint32_t totlen = rx_used->ring[used_slot].len;
@@ -127,16 +135,20 @@ static void AuVirtioNetRxPoll(void) {
 		void* eth = buffer + sizeof(virtio_net_hdr_t);
 		uint32_t ethlen =
 			totlen > sizeof(virtio_net_hdr_t) ? totlen - (uint32_t)sizeof(virtio_net_hdr_t) : 0;
-		rx_avail->ring[rx_avail->idx % rx_qsize] = (uint16_t)buf_id;
-		rx_avail->idx++;
-		dsb_ish();
-		isb_flush();
+
+		/* The device owns this buffer until it is placed back on the
+		 * available ring below, so invalidate before reading it. */
 		if (ethlen)
 			virt_cache_inv(buffer, totlen);
 		if (nic && ethlen) {
 			if (!AuWifiPortalRx(eth, (int)ethlen))
 				AuEthernetHandle(eth, (int)ethlen, nic);
 		}
+		rx_avail->ring[rx_avail->idx % rx_qsize] = (uint16_t)buf_id;
+		rx_avail->idx++;
+		dsb_ish();
+		isb_flush();
+		rx_index++;
 	}
 	in_poll = 0;
 }
@@ -151,7 +163,7 @@ static void AuVirtioNetRxinitialize(void) {
 	uint32_t pages;
 
 	rx_qsize =
-		AuVirtioPCISetupQueue(&netDev, 0, &rx_desc, &rx_avail, &rx_used, VIRTIO_MSI_NO_VECTOR);
+		AuVirtioPCISetupQueue(&netDev, 0, &rx_desc, &rx_avail, &rx_used, net_msix_vector);
 	if (!rx_qsize || !rx_desc || !rx_avail || !rx_used) {
 		UARTDebugOut("[aurora]: virtio-net RX queue setup failed\r\n");
 		return;
@@ -181,7 +193,7 @@ static void AuVirtioNetTxinitialize(void) {
 	int i;
 
 	tx_qsize =
-		AuVirtioPCISetupQueue(&netDev, 1, &tx_desc, &tx_avail, &tx_used, VIRTIO_MSI_NO_VECTOR);
+		AuVirtioPCISetupQueue(&netDev, 1, &tx_desc, &tx_avail, &tx_used, net_msix_vector);
 	if (!tx_qsize || !tx_desc || !tx_avail || !tx_used) {
 		UARTDebugOut("[aurora]: virtio-net TX queue setup failed\r\n");
 		return;
@@ -366,6 +378,21 @@ void AuVirtioNetInitialize(uint64_t device, int bus, int dev, int func) {
 	if (!AuVirtioPCIInit(device, bus, dev, func, (uint32_t)VIRTIO_NET_F_MAC, &netDev)) {
 		UARTDebugOut("[aurora]: virtio-net PCI init failed\r\n");
 		return;
+	}
+
+	/* Bind both queues to MSI-X vector 0. Without this the device never
+	 * raises an RX interrupt, so every blocking receive falls back to a
+	 * polling slice. If MSI-X cannot be set up the driver stays poll-only. */
+	net_spi = AuGICAllocateSPI();
+	if (net_spi >= 0 && AuPCIEAllocMSI(device, (size_t)net_spi, bus, dev, func)) {
+		net_msix_vector = 0;
+		GICEnableSPIIRQ((uint32_t)net_spi);
+		GICRegisterSPIHandler((void*)&AuVirtioNetHandler, net_spi);
+		UARTDebugOut("[aurora]: virtio-net MSI-X spi=%d vector=%d\r\n",
+			net_spi, net_msix_vector);
+	} else {
+		net_msix_vector = VIRTIO_MSI_NO_VECTOR;
+		UARTDebugOut("[aurora]: virtio-net MSI-X unavailable, using polling\r\n");
 	}
 
 	AuVirtioNetRxinitialize();

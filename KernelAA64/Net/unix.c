@@ -504,7 +504,7 @@ int AuUnixAccept(AuSocket* sock, sockaddr* addr, socklen_t* addrlen) {
 		while (pcb->acceptq->pointer == 0) {
 			if (UnixTimerExpired(deadline))
 				return -AU_ERR_ETIMEDOUT;
-			AuSocketWaitSlice(&sock->accept_wait, 20);
+			AuSocketWaitSlice(&sock->accept_wait, AU_SOCKET_WAIT_SLICE_MS);
 		}
 	}
 
@@ -612,7 +612,7 @@ static int UnixDgramReceive(AuSocket* sock, msghdr* msg, int flags) {
 			return -AU_ERR_EAGAIN;
 		if (UnixTimerExpired(deadline))
 			return -AU_ERR_ETIMEDOUT;
-		AuSocketWaitSlice(&sock->rx_wait, 20);
+		AuSocketWaitSlice(&sock->rx_wait, AU_SOCKET_WAIT_SLICE_MS);
 	}
 }
 
@@ -657,7 +657,7 @@ static int UnixStreamSend(AuSocket* sock, UnixPCB* pcb, msghdr* msg, int flags) 
 			}
 			if (UnixTimerExpired(deadline))
 				break;
-			AuSocketWaitSlice(&sock->tx_wait, 20);
+			AuSocketWaitSlice(&sock->tx_wait, AU_SOCKET_WAIT_SLICE_MS);
 			continue;
 		}
 		chunk = total - sent;
@@ -703,7 +703,7 @@ static int UnixStreamReceive(AuSocket* sock, UnixPCB* pcb, msghdr* msg, int flag
 			return -AU_ERR_EAGAIN;
 		if (UnixTimerExpired(deadline))
 			return -AU_ERR_ETIMEDOUT;
-		AuSocketWaitSlice(&sock->rx_wait, 20);
+		AuSocketWaitSlice(&sock->rx_wait, AU_SOCKET_WAIT_SLICE_MS);
 	}
 }
 
