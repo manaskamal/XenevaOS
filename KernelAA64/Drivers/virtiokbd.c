@@ -201,6 +201,7 @@ void AuVirtioKbdDown() {
  * @brief AuVirtioKbdInitialize -- initialize the virtio keyboard
  */
 void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
+#if 0
 	index = 0;
 	if (device == 0 || device == 0xFFFFFFFF)
 		return;
@@ -317,4 +318,5 @@ void AuVirtioKbdInitialize(uint64_t device, int bus, int dev, int func) {
 	isb_flush();
 	dsb_ish();
 	AuBuiltinRegister("virtio-kbd", bus, dev, func, AuVirtioKbdRelease, AuVirtioKbdReinit);
+#endif
 }

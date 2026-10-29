@@ -37,25 +37,25 @@
 #include <Fs/vfs.h>
 #include <process.h>
 
-#define CRED_CAP_SETUID 0
-#define CRED_CAP_SETGID 1
-#define CRED_CAP_BYPASS_PERM_CHECK 2
+#define CRED_CAP_SETUID				   0
+#define CRED_CAP_SETGID				   1
+#define CRED_CAP_BYPASS_PERM_CHECK	   2
 #define CRED_CAP_BYPASS_SECURITY_CHECK 3
-#define CRED_CAP_IPC 4
-#define CRED_CAP_SETCAP 5
+#define CRED_CAP_IPC				   4
+#define CRED_CAP_SETCAP				   5
 
 /** verify capability bit position's value **/
-#define CRED_IS_CAPABLE(a,b) ((a >> b) & 0x1)
+#define CRED_IS_CAPABLE(a, b) ((a >> b) & 0x1)
 
 /** set a capability */
-#define CRED_SET_CAP(b)      (1ULL<< b)
+#define CRED_SET_CAP(b) (1ULL << b)
 
 /** set root capabilities **/
-#define CRED_SET_CAP_ROOT(proc)  (proc->creds.caps = UINT8_MAX)
+#define CRED_SET_CAP_ROOT(proc) (proc->creds.caps = UINT8_MAX)
 
-#define CRED_MARK_ROOT(proc) \
-  proc->creds.uid = 0; \
-  proc->creds.gid = 0
+#define CRED_MARK_ROOT(proc)                                                                       \
+	proc->creds.uid = 0;                                                                           \
+	proc->creds.gid = 0
 
 /**
  * @brief AuCredChangeID -- change credential ids
@@ -78,7 +78,6 @@ extern int AuCredAddSGroup(int proc_id, int sgid);
  * @param cap -- capability to add
  */
 extern int AuCredSetCap(int proc_id, int cap);
-
 
 /**
  * AuCredGetCap -- get capabilities of desired process
@@ -108,5 +107,20 @@ extern int AuSetUID(int proc_id, UID_NUM uid);
  * @param uid -- User id
  */
 extern int AuSetGID(int proc_id, GID_NUM gid);
+
+/**
+ * @brief AuCredIsRoot -- check if credential information
+ * is in root
+ * @param c -- Pointer to credential information
+ */
+extern bool AuCredIsRoot(AuProcCredentials* c);
+
+/**
+ * @brief AuCredInGroup -- check the credentials if it lies
+ * in desired groupd
+ * @param c -- Pointer to credential information
+ * @param gid -- Group id to check 
+ */
+extern bool AuCredInGroup(AuProcCredentials* c, GID_NUM gid);
 
 #endif
