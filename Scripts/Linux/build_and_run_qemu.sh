@@ -126,6 +126,7 @@ source "$SCRIPT_DIR/lib/functions.sh"
 TOOLCHAIN=llvm
 SKIP_BUILD=0
 BUILD_USER_APPS=0
+USER_APPS=""
 FORCE_LEGACY_BUILD=0
 INSTALL_DEPS=0
 HEADLESS=0
@@ -479,6 +480,15 @@ while [ $# -gt 0 ]; do
         --gcc) TOOLCHAIN=gcc ;;
         --skip-build) SKIP_BUILD=1 ;;
         --force-user-apps) BUILD_USER_APPS=1 ;;
+        --apps=*|--user-apps=*)
+            BUILD_USER_APPS=1
+            USER_APPS="${1#*=}"
+            ;;
+        --apps|--user-apps)
+            BUILD_USER_APPS=1
+            shift
+            USER_APPS="$1"
+            ;;
 		--bleed) BLEED=1 ;;
 		--debug-alloc) DEBUG_ALLOC=1 ;;
 		--soak) SOAK=1 ;;
@@ -977,7 +987,7 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     echo "[+] Building bootloader + kernel (+ apps if requested) with $TOOLCHAIN..."
-	export STATIC_COMPONENTS BUILD_USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
+	export STATIC_COMPONENTS BUILD_USER_APPS USER_APPS BLEED SOAK DEBUG_ALLOC DIRECT_SCANOUT UNIKERNEL OPENXR NO_NETWORK NO_AUDIO NO_DOOM NO_NETSURF
     pushd "$SCRIPT_DIR" >/dev/null
     if [ "$TOOLCHAIN" == llvm ]; then
         source ./lib/llvm.sh
