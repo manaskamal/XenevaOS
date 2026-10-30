@@ -97,15 +97,17 @@ if [ "${BUILD_USER_APPS:-0}" -eq 1 ]; then
     [ -f ../../Process/Terminal/term.exe ]         && cp -f ../../Process/Terminal/term.exe         ../../Resources/resources/
     [ -f ../../Process/Namdapha/nmdapha.exe ]      && cp -f ../../Process/Namdapha/nmdapha.exe      ../../Resources/resources/
     [ -f ../../Process/XELnch/xelnch.exe ]         && cp -f ../../Process/XELnch/xelnch.exe         ../../Resources/resources/
-    [ -f ../../Process/Calender/calendr.exe ]      && cp -f ../../Process/Calender/calendr.exe      ../../Resources/resources/
-    [ -f ../../Process/Calculator/calc.exe ]       && cp -f ../../Process/Calculator/calc.exe       ../../Resources/resources/
-    [ -f ../../Process/Files/file.exe ]            && cp -f ../../Process/Files/file.exe            ../../Resources/resources/
-    [ -f ../../Process/Control/ctrl.exe ]          && cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
     [ -f ../../Process/XEShell/xesh.exe ]          && cp -f ../../Process/XEShell/xesh.exe          ../../Resources/resources/
-    [ -f ../../Process/btctl/btctl.exe ]           && cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
-    [ -f ../../Process/XENotes/xenotes.exe ]       && cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
-    [ -f ../../Process/Clipd/clipd.exe ]           && cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
-    [ -f ../../Process/dcltest/dcltest.exe ]       && cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
+    if [ -z "${USER_APPS:-}" ]; then
+        [ -f ../../Process/Calender/calendr.exe ]      && cp -f ../../Process/Calender/calendr.exe      ../../Resources/resources/
+        [ -f ../../Process/Calculator/calc.exe ]       && cp -f ../../Process/Calculator/calc.exe       ../../Resources/resources/
+        [ -f ../../Process/Files/file.exe ]            && cp -f ../../Process/Files/file.exe            ../../Resources/resources/
+        [ -f ../../Process/Control/ctrl.exe ]          && cp -f ../../Process/Control/ctrl.exe          ../../Resources/resources/
+        [ -f ../../Process/btctl/btctl.exe ]           && cp -f ../../Process/btctl/btctl.exe           ../../Resources/resources/
+        [ -f ../../Process/XENotes/xenotes.exe ]       && cp -f ../../Process/XENotes/xenotes.exe       ../../Resources/resources/
+        [ -f ../../Process/Clipd/clipd.exe ]           && cp -f ../../Process/Clipd/clipd.exe           ../../Resources/resources/
+        [ -f ../../Process/dcltest/dcltest.exe ]       && cp -f ../../Process/dcltest/dcltest.exe       ../../Resources/resources/
+    fi
     # Generic copy for any app passed via --apps
     for app in "${APPS[@]}"; do
         for exe in "../../Process/$app"/*.exe; do

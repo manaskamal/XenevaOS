@@ -66,8 +66,8 @@ set -e
 #   --clipboard             Force the clipboard port back on.
 #   --no-doom               Drop the Doom addon (doom.exe + doom2.wad) from
 #                           the image.
-#   --no-netsurf            Drop the NetSurf browser (netsurf.exe) from
-#                           the image.
+#   --no-netsurf            (Deprecated) Drop NetSurf browser from the image.
+#                           NetSurf is now automatically excluded when using --apps.
 #   --bt                    Attach Bluetooth on the second serial. The socket
 #                           is /tmp/bt-server-bredr (btproxy), or
 #                           /tmp/xeneva-bt-virt when XENEVA_BT_VIRT=1.
@@ -556,7 +556,10 @@ while [ $# -gt 0 ]; do
         --tui) TUI=1 ;;
         --no-network) NO_NETWORK=1 ;;
         --no-doom) NO_DOOM=1 ;;
-        --no-netsurf) NO_NETSURF=1 ;;
+        --no-netsurf)
+            printf "${STY_YELLOW}[%s]: Warning: --no-netsurf is deprecated. Use --apps to select specific applications (e.g. --apps=Solitaire), which automatically excludes other apps.${STY_RST}\n" "$0"
+            NO_NETSURF=1
+            ;;
         --no-audio) NO_AUDIO=1 ;;
         --no-boot-menu) NO_BOOT_MENU=1 ;;
         --bt) NO_BT=0 ;;
@@ -1140,6 +1143,29 @@ if [ "$FORCE_LEGACY_BUILD" -eq 0 ]; then
         fi
         mcopy -o -s -i initrd2.img "$resource" ::/
     done
+
+    # Filter lncher.cnf so only apps with existing binaries appear in the launcher menu
+    if [ -f Resources/resources/lncher.cnf ]; then
+        tmp_cnf="$(mktemp)"
+        entry=""
+        while IFS= read -r line || [ -n "$line" ]; do
+            entry="${entry}${line}"$'\n'
+            if [[ "$line" =~ (\}|>)[[:space:]]*$ ]]; then
+                app="$(printf '%s' "$entry" | sed -n 's/.*\[App\]\/\([^|>\r\n}]*\).*/\1/p')"
+                if [ -z "$app" ] || { [ -f "Resources/resources/$app" ] && ! pack_excluded "$app"; }; then
+                    printf '%s\n' "$entry" >> "$tmp_cnf"
+                fi
+                entry=""
+            fi
+        done < Resources/resources/lncher.cnf
+        if [ -s "$tmp_cnf" ]; then
+            sed -i -e '/^[[:space:]]*$/d' "$tmp_cnf"
+            sed -i -e '$ { s/}[[:space:]]*$/>/ }' "$tmp_cnf"
+            mcopy -o -i initrd2.img "$tmp_cnf" ::/lncher.cnf
+        fi
+        rm -f "$tmp_cnf"
+    fi
+
     mcopy -o -i initrd2.img Process/Init/init.exe ::/init.exe
 else
     if [ ! -f initrd2.img ]; then
