@@ -63,7 +63,7 @@ void AuICMPHandle(IPv4Header* ipv4, AuVFSNode* nic) {
 
 	AuNetworkDevice* netdev = (AuNetworkDevice*)nic->device;
 	if (!netdev) {
-		UARTDebugOut("[AuNet]: ICMP Handle no network device found \r\n");
+		AU_NET_LOG("[AuNet]: ICMP Handle no network device found \r\n");
 		return;
 	}
 
@@ -354,7 +354,7 @@ int AuICMPFileClose(AuVFSNode* fsys, AuVFSNode* file) {
 
 	kfree(file);
 	current_icmp_sock = NULL;
-	UARTDebugOut("ICMP: Socket Closed \r\n");
+	AU_NET_LOG("ICMP: Socket Closed \r\n");
 	return 0;
 }
 
@@ -374,7 +374,7 @@ int CreateICMPSocket() {
 	int fd;
 
 	if (current_icmp_sock) {
-		UARTDebugOut("ICMP: Already there is a socket listening to ICMP, close that \r\n");
+		AU_NET_LOG("ICMP: Already there is a socket listening to ICMP, close that \r\n");
 		return -AU_ERR_EADDRINUSE;
 	}
 	sock = AuNetCreateSocket();
@@ -397,6 +397,6 @@ int CreateICMPSocket() {
 		return fd;
 	}
 	current_icmp_sock = sock;
-	UARTDebugOut("ICMP Socket created \r\n");
+	AU_NET_LOG("ICMP Socket created \r\n");
 	return fd;
 }

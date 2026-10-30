@@ -49,14 +49,22 @@
 
 static hashmap_t* netadapters;
 static void (*_net_rx_poll)(void);
+static int _net_rx_depth;
 
 void AuNetRegisterRxPoll(void (*fn)(void)) {
 	_net_rx_poll = fn;
 }
 
 void AuNetRxPoll(void) {
-	if (_net_rx_poll)
+	if (_net_rx_poll) {
+		_net_rx_depth++;
 		_net_rx_poll();
+		/* Only the outermost drain flushes: nested calls would send the
+		 * ACK before the ring has been emptied. */
+		_net_rx_depth--;
+	}
+	if (_net_rx_depth == 0)
+		AuTCPFlushDeferredAcks();
 }
 
 /* Global DNS nameserver table (independent of SO_BINDTODEVICE). */
@@ -129,7 +137,7 @@ static size_t AuLoopbackWrite(AuVFSNode* node, AuVFSNode* file, uint64_t* buffer
 	(void)buffer;
 	(void)length;
 	/* IP local delivery must never reach L2 write on lo. */
-	UARTDebugOut("[aurora]: lo write ignored (local path should skip L2)\r\n");
+	AU_NET_LOG("[aurora]: lo write ignored (local path should skip L2)\r\n");
 	return 0;
 }
 
@@ -259,7 +267,7 @@ static void AuNetCreateLoopback(void) {
 	lo->iocontrol = AuLoopbackIOCtl;
 	lo->device = ndev;
 	AuAddNetAdapter(lo, "lo");
-	AuTextOut("[aurora]: loopback lo 127.0.0.1/8 ::1/128\r\n");
+	AU_NET_LOG("[aurora]: loopback lo 127.0.0.1/8 ::1/128\r\n");
 }
 
 /**
@@ -283,7 +291,7 @@ void AuInitialiseNet() {
 	TCPProtocolInstall();
 	AuNetCreateLoopback();
 	AuNetSeedLoopbackRoutes();
-	AuTextOut("[aurora]: net system initialised \r\n");
+	AU_NET_LOG("[aurora]: net system initialised \r\n");
 }
 
 /**
@@ -302,11 +310,11 @@ AuVFSNode* AuAddNetAdapter(AuVFSNode* netfs, char* name) {
 		old->write = netfs->write;
 		old->iocontrol = netfs->iocontrol;
 		old->device = netfs->device;
-		UARTDebugOut("NetAdapter taking over : %x \r\n", name);
+		AU_NET_LOG("NetAdapter taking over : %x \r\n", name);
 		return old;
 	}
 	AuHashmapSet(netadapters, name, netfs);
-	UARTDebugOut("NetAdapter adding : %x \r\n", name);
+	AU_NET_LOG("NetAdapter adding : %x \r\n", name);
 	AuVFSNode* fs = AuVFSFind("/dev");
 	AuDevFSAddFile(fs, "/dev/net", netfs);
 	return netfs;
@@ -681,7 +689,7 @@ AuVFSNode* AuNetworkRoute(uint32_t address) {
 	AuNetAddDefaultRoute4(nic, nic->filename);
 	if (AuRouteLookup4(address, &rr) == 0 && rr.nic)
 		return rr.nic;
-	UARTDebugOut("[aurora]: IPv4 FIB miss, using radio %s\r\n", nic->filename);
+	AU_NET_LOG("[aurora]: IPv4 FIB miss, using radio %s\r\n", nic->filename);
 	return nic;
 }
 
@@ -705,6 +713,6 @@ AuVFSNode* AuNetworkRoute6(const ip6_addr* address) {
 	AuNetAddDefaultRoute6(nic, nic->filename);
 	if (AuRouteLookup6(address, &rr) == 0 && rr.nic)
 		return rr.nic;
-	UARTDebugOut("[aurora]: IPv6 FIB miss, using radio %s\r\n", nic->filename);
+	AU_NET_LOG("[aurora]: IPv6 FIB miss, using radio %s\r\n", nic->filename);
 	return nic;
 }

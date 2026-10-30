@@ -92,11 +92,11 @@ void* AuSocketGet(AuSocket* sock) {
  */
 int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 	if (!sock->binedDev) {
-		//UARTDebugOut("No binded device \r\n");
+		//AU_NET_LOG("No binded device \r\n");
 		return -1;
 	}
 	if (msg->msg_iovlen == 0) {
-		UARTDebugOut("MSG_IOVLen : 0 \r\n");
+		AU_NET_LOG("MSG_IOVLen : 0 \r\n");
 		return 0;
 	}
 	AuNetRxPoll();
@@ -113,13 +113,13 @@ int AuRawSocketReceive(AuSocket* sock, msghdr* msg, int flags) {
 }
 
 int AuRawSocketSend(AuSocket* sock, msghdr* msg, int flags) {
-	UARTDebugOut("Socket sending : %x \r\n", sock->binedDev);
+	AU_NET_LOG("Socket sending : %x \r\n", sock->binedDev);
 	if (!sock->binedDev)
 		return -1;
 	if (msg->msg_iovlen == 0)
 		return 0;
 	AuVFSNode* device = (AuVFSNode*)sock->binedDev;
-	UARTDebugOut("****/////******socket device name : %s \r\n", device->filename);
+	AU_NET_LOG("****/////******socket device name : %s \r\n", device->filename);
 	/* virtio-net's adapter VFS node never populates a write callback (TX
 	 * goes through a different path than the generic VFS write op), so
 	 * this was a null function-pointer call -- crashed the whole boot
@@ -517,7 +517,7 @@ int AuRawSocketClose(AuVFSNode* fs, AuVFSNode* file) {
 		kfree(sock);
 	}
 	kfree(file);
-	UARTDebugOut("Raw Socket Closed \r\n");
+	AU_NET_LOG("Raw Socket Closed \r\n");
 	return 0;
 }
 
@@ -543,7 +543,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		entry->dest = data->dest;
 		entry->gateway = data->gateway;
 		AuRouteTableAdd(entry);
-		UARTDebugOut("[aurora] net route entry added \r\n");
+		AU_NET_LOG("[aurora] net route entry added \r\n");
 		return 0;
 	}
 	case SOCK_ROUTE_TABLE_DELETE: {
@@ -557,7 +557,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		return AuRouteTableGetNumEntry();
 	}
 	case SOCK_ROUTE_TABLE_GETENTRY: {
-		UARTDebugOut("Populating route table \r\n");
+		AU_NET_LOG("Populating route table \r\n");
 		if (!arg)
 			return 1;
 		AuRouteEntryInfo* info = (AuRouteEntryInfo*)arg;
@@ -567,7 +567,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 			return 1;
 		AuRouteEntry* entry = (AuRouteEntry*)info->route_entry;
 		AuRouteTablePopulate(entry, info->index);
-		UARTDebugOut("[aurora]: route table populated \r\n");
+		AU_NET_LOG("[aurora]: route table populated \r\n");
 		return 0;
 	}
 	case SOCK_ADD_DNS_SERVER: {
@@ -601,7 +601,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 				break;
 			}
 		}
-		UARTDebugOut("[aurora]: DNS server idx %d -> %u (global)\r\n",
+		AU_NET_LOG("[aurora]: DNS server idx %d -> %u (global)\r\n",
 					 dnsentry->index,
 					 dnsentry->address);
 		return 0;
@@ -614,10 +614,10 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		uint32_t addr = 0;
 		if (!dnsentry)
 			return 1;
-		UARTDebugOut("[aurora]: Getting dns entry of index -> %d \r\n", dnsentry->index);
+		AU_NET_LOG("[aurora]: Getting dns entry of index -> %d \r\n", dnsentry->index);
 		if (AuDnsGetServer4(dnsentry->index, &addr) == 0 && addr != 0) {
 			dnsentry->address = addr;
-			UARTDebugOut("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
+			AU_NET_LOG("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
 			return 0;
 		}
 		/* Fall back to bound NIC slots if global empty at this index. */
@@ -650,7 +650,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		 * (1.1.1.1) so dig reports the server it actually uses.
 		 */
 		dnsentry->address = addr;
-		UARTDebugOut("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
+		AU_NET_LOG("[aurora]: dns entry address -> %d \r\n", dnsentry->address);
 		return 0;
 	}
 	case SOCK_NF_APPEND: {
@@ -662,7 +662,7 @@ int SocketIOControl(AuVFSNode* file, int code, void* arg) {
 		rule.in_dev[AU_NF_IFNAMSIZ - 1] = '\0';
 		rule.out_dev[AU_NF_IFNAMSIZ - 1] = '\0';
 		rc = AuNetfilterAppend(&rule);
-		UARTDebugOut("[aurora]: nf append hook=%d proto=%d dport=%d target=%d in=%s rc=%d count=%d\r\n",
+		AU_NET_LOG("[aurora]: nf append hook=%d proto=%d dport=%d target=%d in=%s rc=%d count=%d\r\n",
 					 rule.hook, rule.proto, rule.dport, rule.target, rule.in_dev, rc,
 					 AuNetfilterGetNum());
 		return rc == 0 ? 0 : 1;
@@ -735,7 +735,7 @@ int AuCreateRawSocket(int type, int protocol) {
 		return fd;
 	}
 	list_add(raw_socket_list, sock);
-	UARTDebugOut("*****///Raw Socket created %x\r\n", sock);
+	AU_NET_LOG("*****///Raw Socket created %x\r\n", sock);
 	return fd;
 }
 

@@ -49,7 +49,7 @@
 /* Per-socket creation messages sit on the socket() hot path and flood the
  * UART during benchmarks. Define NET_DEBUG to re-enable them. */
 #ifdef NET_DEBUG
-#define NET_SOCKET_DEBUG(...) UARTDebugOut(__VA_ARGS__)
+#define NET_SOCKET_DEBUG(...) AU_NET_LOG(__VA_ARGS__)
 #else
 #define NET_SOCKET_DEBUG(...) do { } while (0)
 #endif
@@ -69,12 +69,12 @@ uint16_t IPv4CalculateChecksum(IPv4Header* p) {
 }
 
 void ip_ntoa(const uint32_t src) {
-	UARTDebugOut("%d.%d.%d.",
+	AU_NET_LOG("%d.%d.%d.",
 				 ((src & 0xFF000000) >> 24),
 				 ((src & 0xFF0000) >> 16),
 				 ((src & 0xFF00) >> 8),
 				 ((src & 0xFF)));
-	UARTDebugOut("%d \r\n", (src & 0xFF));
+	AU_NET_LOG("%d \r\n", (src & 0xFF));
 }
 
 /*

@@ -50,6 +50,8 @@ extern int rand();
 
 list_t* tcpSocketList;
 static int _tcp_port_ = 49152;
+/* Sockets whose ACK is held until the current virtio RX drain completes. */
+static TCPControlBlock* tcp_ack_head;
 
 #if defined(ARCH_X64) || defined(ARCH_ARM64)
 #pragma pack(push, 1)
@@ -123,8 +125,7 @@ static int TCPHdrBytes(TCPHeader* tcp) {
 	return ((ntohs(tcp->dataOffsetFlags) >> 12) & 0xF) * 4;
 }
 
-static uint16_t TCPWindowOf(AuSocket* sock) {
-	TCPControlBlock* pcb = TCPGetPCB(sock);
+static size_t TCPRxFree(TCPControlBlock* pcb) {
 	size_t used;
 
 	if (!pcb || !pcb->rxbuf)
@@ -132,11 +133,25 @@ static uint16_t TCPWindowOf(AuSocket* sock) {
 	used = AuCircBufSize((CircBuffer*)pcb->rxbuf);
 	if (used >= TCP_RX_BUF_SZ)
 		return 0;
-	/* TCP window is a 16-bit field (RFC 9293). A 64 KiB buffer must not
-	 * advertise 65536, which truncates to zero. */
-	if ((TCP_RX_BUF_SZ - used) > 65535)
+	return TCP_RX_BUF_SZ - used;
+}
+
+/* Return the value for the 16-bit window field. Before the handshake has
+ * negotiated RFC 7323 scaling the field is the literal byte count; after it,
+ * the field is the free space shifted by our advertised scale. */
+static uint16_t TCPWindowOf(AuSocket* sock, int syn) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+	size_t free;
+
+	if (!pcb || !pcb->rxbuf)
+		return TCP_DEFAULT_WIN_SZ;
+	free = TCPRxFree(pcb);
+	if (!syn && pcb->ws_enabled)
+		free >>= pcb->rcv_wscale;
+	/* A 16-bit field must never advertise 65536: that truncates to zero. */
+	if (free > 65535)
 		return 65535;
-	return (uint16_t)(TCP_RX_BUF_SZ - used);
+	return (uint16_t)free;
 }
 
 /* Pick the largest segment this path can carry. Loopback reinjects at IP and
@@ -190,6 +205,43 @@ static uint16_t TCPParseMSS(const TCPHeader* tcp, int doff) {
 			uint16_t mss = (uint16_t)(((uint16_t)opt[i + 2] << 8) |
 				opt[i + 3]);
 			return mss < TCP_MSS_MIN ? TCP_MSS_MIN : mss;
+		}
+		i += olen;
+	}
+	return 0;
+}
+
+/* Parse the RFC 7323 window-scale option from a SYN or SYN-ACK. Returns 1
+ * when present (shift 0 is valid) and stores the shift in *out. */
+static int TCPParseWS(const TCPHeader* tcp, int doff, uint8_t* out) {
+	const uint8_t* opt;
+	int len;
+	int i = 0;
+
+	if (!tcp || !out || doff <= (int)sizeof(TCPHeader))
+		return 0;
+	opt = (const uint8_t*)tcp + sizeof(TCPHeader);
+	len = doff - (int)sizeof(TCPHeader);
+	while (i < len) {
+		uint8_t kind = opt[i];
+		uint8_t olen;
+
+		if (kind == TCP_OPTION_END)
+			break;
+		if (kind == TCP_OPTION_NOP) {
+			i++;
+			continue;
+		}
+		if (i + 1 >= len)
+			break;
+		olen = opt[i + 1];
+		if (olen < 2 || i + olen > len)
+			break;
+		if (kind == TCP_OPTION_WS && olen == TCP_OPTION_WS_LEN) {
+			uint8_t shift = opt[i + 2];
+
+			*out = shift > 14 ? 14 : shift;
+			return 1;
 		}
 		i += olen;
 	}
@@ -331,10 +383,10 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 
 	seq = pcb->snd_nxt;
 	syn = (flags & TCP_FLAGS_SYN) != 0;
-	/* SYN and SYN-ACK carry a 4-byte MSS option, so their data offset is 6
-	 * instead of 5. The checksum must cover the option bytes too. */
-	tcpHdrLen = (uint16_t)(sizeof(TCPHeader) +
-		(syn ? TCP_OPTION_MSS_LEN : 0));
+	/* SYN and SYN-ACK carry an MSS option and, when offered, an RFC 7323
+	 * window-scale option padded with one NOP: 8 bytes total. The checksum
+	 * must cover the option bytes too. */
+	tcpHdrLen = (uint16_t)(sizeof(TCPHeader) + (syn ? 8 : 0));
 	tcpLen = (uint16_t)(tcpHdrLen + payloadLen);
 
 	if (pcb->is_ipv6) {
@@ -362,7 +414,7 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 		tcp->ackNum = htonl(pcb->rcv_nxt);
 		tcp->dataOffsetFlags = htons(flags |
 			(uint16_t)((tcpHdrLen / 4) << 12));
-		tcp->window = htons(TCPWindowOf(sock));
+		tcp->window = htons(TCPWindowOf(sock, syn));
 		tcp->checksum = 0;
 		tcp->urgentPointer = 0;
 		if (syn) {
@@ -372,6 +424,17 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 			opt[1] = TCP_OPTION_MSS_LEN;
 			opt[2] = (uint8_t)(pcb->rcv_mss >> 8);
 			opt[3] = (uint8_t)(pcb->rcv_mss & 0xFF);
+			if (pcb->ws_offer) {
+				opt[4] = TCP_OPTION_WS;
+				opt[5] = TCP_OPTION_WS_LEN;
+				opt[6] = pcb->rcv_wscale;
+				opt[7] = TCP_OPTION_NOP;
+			} else {
+				opt[4] = TCP_OPTION_END;
+				opt[5] = TCP_OPTION_END;
+				opt[6] = TCP_OPTION_END;
+				opt[7] = TCP_OPTION_END;
+			}
 		}
 		if (payload && payloadLen)
 			memcpy((uint8_t*)tcp + tcpHdrLen, (void*)payload, payloadLen);
@@ -421,7 +484,7 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 		tcp->ackNum = htonl(pcb->rcv_nxt);
 		tcp->dataOffsetFlags = htons(flags |
 			(uint16_t)((tcpHdrLen / 4) << 12));
-		tcp->window = htons(TCPWindowOf(sock));
+		tcp->window = htons(TCPWindowOf(sock, syn));
 		tcp->checksum = 0;
 		tcp->urgentPointer = 0;
 		if (syn) {
@@ -431,6 +494,17 @@ static int TCPSendSegment(AuSocket* sock, uint16_t flags, const void* payload, s
 			opt[1] = TCP_OPTION_MSS_LEN;
 			opt[2] = (uint8_t)(pcb->rcv_mss >> 8);
 			opt[3] = (uint8_t)(pcb->rcv_mss & 0xFF);
+			if (pcb->ws_offer) {
+				opt[4] = TCP_OPTION_WS;
+				opt[5] = TCP_OPTION_WS_LEN;
+				opt[6] = pcb->rcv_wscale;
+				opt[7] = TCP_OPTION_NOP;
+			} else {
+				opt[4] = TCP_OPTION_END;
+				opt[5] = TCP_OPTION_END;
+				opt[6] = TCP_OPTION_END;
+				opt[7] = TCP_OPTION_END;
+			}
 		}
 		if (payload && payloadLen)
 			memcpy((uint8_t*)tcp + tcpHdrLen, (void*)payload, payloadLen);
@@ -525,9 +599,13 @@ static void TCPSendReset(AuVFSNode* nic, IPv4Header* ip, TCPHeader* tcp, size_t 
 	kfree(ipv4);
 }
 
+static void TCPUnlinkDeferred(TCPControlBlock* pcb);
+
 static void TCPFreePCB(TCPControlBlock* pcb) {
 	if (!pcb)
 		return;
+	if (pcb->ack_deferred)
+		TCPUnlinkDeferred(pcb);
 	if (pcb->rxbuf) {
 		AuCircBufFree((CircBuffer*)pcb->rxbuf);
 		pcb->rxbuf = NULL;
@@ -555,6 +633,7 @@ static TCPControlBlock* TCPAllocPCB(void) {
 	pcb->rcv_mss = TCP_MSS_IPV4;
 	pcb->snd_wnd = TCP_DEFAULT_WIN_SZ;
 	pcb->rcv_wnd = 65535;
+	pcb->rcv_wscale = TCP_RCV_WSCALE;
 	pcb->rxmem = (uint8_t*)kmalloc(TCP_RX_BUF_SZ);
 	if (!pcb->rxmem) {
 		kfree(pcb);
@@ -612,6 +691,7 @@ static AuSocket* TCPAllocSocket(void) {
 	sock->getpeername = AuTCPGetPeerName;
 	sock->poll = AuTCPPoll;
 	sock->proto = pcb;
+	pcb->owner = sock;
 	sock->so_type = SOCK_STREAM;
 	sock->family = AF_INET;
 	sock->sockState = SOCK_STATE_CLOSED;
@@ -693,7 +773,53 @@ static int TCPWriteRx(TCPControlBlock* pcb, const uint8_t* data, size_t len) {
 }
 
 static int TCPSendAck(AuSocket* sock) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+
+	/* Every ACK carries the current receive window, so a pending delayed
+	 * ACK is satisfied by this segment. */
+	if (pcb)
+		pcb->ack_pending = 0;
 	return TCPSendSegment(sock, TCP_FLAGS_ACK, NULL, 0);
+}
+
+static void TCPUnlinkDeferred(TCPControlBlock* pcb) {
+	TCPControlBlock** pp = &tcp_ack_head;
+
+	while (*pp) {
+		if (*pp == pcb) {
+			*pp = pcb->ack_next;
+			break;
+		}
+		pp = &(*pp)->ack_next;
+	}
+	pcb->ack_deferred = 0;
+	pcb->ack_next = NULL;
+}
+
+/* Hold the ACK until AuNetRxPoll finishes draining the ring. A bulk
+ * receive then produces one ACK per drain instead of one per two
+ * segments, which is what Linux does and what keeps the TX path out of
+ * the per-packet budget. */
+static void TCPDeferAck(AuSocket* sock) {
+	TCPControlBlock* pcb = TCPGetPCB(sock);
+
+	if (!pcb || pcb->ack_deferred)
+		return;
+	pcb->ack_deferred = 1;
+	pcb->ack_next = tcp_ack_head;
+	tcp_ack_head = pcb;
+}
+
+void AuTCPFlushDeferredAcks(void) {
+	TCPControlBlock* pcb;
+
+	while ((pcb = tcp_ack_head)) {
+		tcp_ack_head = pcb->ack_next;
+		pcb->ack_next = NULL;
+		pcb->ack_deferred = 0;
+		if (pcb->owner && pcb->ack_pending)
+			TCPSendAck(pcb->owner);
+	}
 }
 
 int AuTCPAcknowledge(AuVFSNode* nic, AuSocket* sock, IPv4Header* ippack, size_t payloadLen) {
@@ -780,7 +906,7 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 
 	for (;;) {
 		if (TCPRxUsed(pcb)) {
-			uint16_t before = TCPWindowOf(sock);
+			size_t before = TCPRxFree(pcb);
 
 			for (i = 0; i < msg->msg_iovlen && got < want; i++) {
 				size_t len = msg->msg_iov[i].iov_len;
@@ -799,10 +925,14 @@ int AuTCPReceive(AuSocket* sock, msghdr* msg, int flags) {
 			if (got > 0 && !(flags & MSG_PEEK) &&
 				(pcb->state == TCP_STATE_ESTABLISHED ||
 					pcb->state == TCP_STATE_CLOSE_WAIT)) {
-				uint16_t after = TCPWindowOf(sock);
-				uint32_t reopen = (uint32_t)pcb->rcv_mss * 2;
+				size_t after = TCPRxFree(pcb);
+				size_t reopen = (size_t)pcb->rcv_mss * 2;
 
-				if ((uint32_t)before < reopen && after > before)
+				/* Flush a delayed ACK as soon as the reader drains
+				 * data, and still send a window update if the buffer
+				 * had been nearly full. */
+				if (pcb->ack_pending ||
+					(before < reopen && after > before))
 					TCPSendAck(sock);
 			}
 			if (got == 0)
@@ -1130,6 +1260,11 @@ int AuTCPConnect(AuSocket* sock, sockaddr* addr, socklen_t addrlen) {
 	pcb->rcv_nxt = 0;
 	pcb->syn_tries = 0;
 	pcb->fin_recvd = 0;
+	/* Offer RFC 7323 scaling in our SYN. The connection only enables it
+	 * after the peer's SYN-ACK carries the option too. */
+	pcb->ws_offer = 1;
+	pcb->ws_enabled = 0;
+	pcb->snd_wscale = 0;
 	sock->ipv4Iden = (uint16_t)rand();
 	sock->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
 	sock->so_error = 0;
@@ -1544,6 +1679,15 @@ static void TCPHandleListenSyn(AuSocket* listener, IPv4Header* pack,
 	pcb->rcv_mss = TCPPathMSS(nic, 0, pack->srcAddress, NULL);
 	pcb->mss = pcb->rcv_mss;
 	TCPApplyPeerMSS(pcb, peer_mss);
+	{
+		uint8_t peer_ws;
+
+		if (TCPParseWS(tcp, TCPHdrBytes(tcp), &peer_ws)) {
+			pcb->ws_offer = 1;
+			pcb->ws_enabled = 1;
+			pcb->snd_wscale = peer_ws;
+		}
+	}
 	pcb->irs = seq;
 	pcb->rcv_nxt = seq + 1;
 	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
@@ -1551,6 +1695,7 @@ static void TCPHandleListenSyn(AuSocket* listener, IPv4Header* pack,
 		pcb->iss = 1;
 	pcb->snd_una = pcb->iss;
 	pcb->snd_nxt = pcb->iss;
+	/* The window in the SYN itself is never scaled (RFC 7323). */
 	pcb->snd_wnd = ntohs(tcp->window);
 	pcb->state = TCP_STATE_SYN_RECEIVED;
 	child->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
@@ -1565,6 +1710,7 @@ static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tc
 	uint32_t ack;
 	int wrote;
 	int needAck = 0;
+	int deferAck = 0;
 	int dataReady = (payloadLen == 0);
 
 	(void)pack;
@@ -1576,7 +1722,7 @@ static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tc
 	if (flags & TCP_FLAGS_ACK) {
 		if ((int32_t)(ack - pcb->snd_una) > 0 && (int32_t)(pcb->snd_nxt - ack) >= 0)
 			pcb->snd_una = ack;
-		pcb->snd_wnd = ntohs(tcp->window);
+		pcb->snd_wnd = (uint32_t)ntohs(tcp->window) << pcb->snd_wscale;
 		AuSocketWakeTx(sock);
 
 		if (pcb->state == TCP_STATE_SYN_RECEIVED && ack == pcb->snd_nxt) {
@@ -1603,14 +1749,24 @@ static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tc
 		}
 		/* A short accept would ACK bytes the buffer did not keep. Refuse
 		 * the segment and advertise the space that is actually free. */
-		if ((size_t)TCPWindowOf(sock) < payloadLen) {
+		if (TCPRxFree(pcb) < payloadLen) {
 			needAck = 1;
 		} else {
 			wrote = TCPWriteRx(pcb, payload, payloadLen);
 			if (wrote > 0) {
 				pcb->rcv_nxt += (uint32_t)wrote;
-				needAck = 1;
 				dataReady = ((size_t)wrote == payloadLen);
+				pcb->ack_pending++;
+				/* Delayed ACK: hold the ACK until the current RX drain
+				 * ends, then send one per drain. A drain usually covers a
+				 * whole slirp burst, so this matches a NAPI batch and
+				 * avoids a TX frame per two segments. Genuinely short
+				 * segments still ACK immediately so an interactive peer
+				 * never waits for a second segment. */
+				if (payloadLen < pcb->rcv_mss / 2)
+					needAck = 1;
+				else if (pcb->ack_pending >= 2)
+					deferAck = 1;
 			}
 		}
 	}
@@ -1630,6 +1786,8 @@ static void TCPHandleEstablished(AuSocket* sock, IPv4Header* pack, TCPHeader* tc
 
 	if (needAck)
 		TCPSendAck(sock);
+	else if (deferAck)
+		TCPDeferAck(sock);
 	if (payloadLen || (flags & TCP_FLAGS_FIN))
 		AuSocketWakeRx(sock);
 }
@@ -1711,6 +1869,15 @@ void TCPHandlePacket(IPv4Header* pack, AuVFSNode* nic) {
 			pcb->irs = ntohl(tcp->sequenceNum);
 			pcb->rcv_nxt = pcb->irs + 1;
 			pcb->snd_una = ack;
+			{
+				uint8_t peer_ws;
+
+				if (TCPParseWS(tcp, TCPHdrBytes(tcp), &peer_ws)) {
+					pcb->snd_wscale = peer_ws;
+					pcb->ws_enabled = 1;
+				}
+			}
+			/* SYN-ACK window is unscaled; later ACKs are shifted. */
 			pcb->snd_wnd = ntohs(tcp->window);
 			TCPApplyPeerMSS(pcb, peer_mss);
 			if (!pcb->nic)
@@ -1771,6 +1938,15 @@ static void TCPHandleListenSyn6(AuSocket* listener, IPv6Header* pack,
 	pcb->rcv_mss = TCPPathMSS(nic, 1, 0, &pack->srcIP);
 	pcb->mss = pcb->rcv_mss;
 	TCPApplyPeerMSS(pcb, peer_mss);
+	{
+		uint8_t peer_ws;
+
+		if (TCPParseWS(tcp, TCPHdrBytes(tcp), &peer_ws)) {
+			pcb->ws_offer = 1;
+			pcb->ws_enabled = 1;
+			pcb->snd_wscale = peer_ws;
+		}
+	}
 	pcb->irs = seq;
 	pcb->rcv_nxt = seq + 1;
 	pcb->iss = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
@@ -1778,6 +1954,7 @@ static void TCPHandleListenSyn6(AuSocket* listener, IPv6Header* pack,
 		pcb->iss = 1;
 	pcb->snd_una = pcb->iss;
 	pcb->snd_nxt = pcb->iss;
+	/* The window in the SYN itself is never scaled (RFC 7323). */
 	pcb->snd_wnd = ntohs(tcp->window);
 	pcb->state = TCP_STATE_SYN_RECEIVED;
 	child->sockState = SOCK_STATE_WAITING_FOR_CONNECTION;
@@ -1846,6 +2023,15 @@ void TCPHandlePacket6(IPv6Header* pack, AuVFSNode* nic) {
 			pcb->irs = ntohl(tcp->sequenceNum);
 			pcb->rcv_nxt = pcb->irs + 1;
 			pcb->snd_una = ack;
+			{
+				uint8_t peer_ws;
+
+				if (TCPParseWS(tcp, TCPHdrBytes(tcp), &peer_ws)) {
+					pcb->snd_wscale = peer_ws;
+					pcb->ws_enabled = 1;
+				}
+			}
+			/* SYN-ACK window is unscaled; later ACKs are shifted. */
 			pcb->snd_wnd = ntohs(tcp->window);
 			TCPApplyPeerMSS(pcb, peer_mss);
 			if (!pcb->nic)
@@ -1931,5 +2117,5 @@ list_t* TCPGetSocketList() {
 
 void TCPProtocolInstall() {
 	tcpSocketList = initialize_list();
-	UARTDebugOut("[aurora]: TCP protocol installed\r\n");
+	AU_NET_LOG("[aurora]: TCP protocol installed\r\n");
 }

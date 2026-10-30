@@ -35,6 +35,18 @@
 #include <Fs/vfs.h>
 #include <Net/ipv6.h>
 
+/* Network logging is synchronous UART output and sits on the packet path.
+ * It is compiled out until the deferred logger is in place; build with
+ * -DAU_NET_LOG_ENABLE=1 to restore the old messages. */
+#ifndef AU_NET_LOG_ENABLE
+#define AU_NET_LOG_ENABLE 0
+#endif
+#if AU_NET_LOG_ENABLE
+#define AU_NET_LOG(...) UARTDebugOut(__VA_ARGS__)
+#else
+#define AU_NET_LOG(...) do { } while (0)
+#endif
+
 #define NETDEV_TYPE_ETHERNET 1
 #define NETDEV_TYPE_802_11 2
 #define NETDEV_TYPE_BLUETOOTH 3
