@@ -22,6 +22,10 @@ FAT = REPO / "fat.img"
 INITRD = REPO / "initrd2.img"
 NETSOCK = REPO / "Process" / "netsystest" / "netsock.exe"
 SHELL_CNF = REPO / "Resources" / "resources" / "shell.cnf"
+# init.exe built with -D__XENEVA_TERM__. Only that binary reads /shell.cnf.
+# A desktop init starts the compositor and ignores the injected command.
+TERM_INIT = BUILD / "init-term.exe"
+_TERM_MARK = b"skipping compositor"
 
 
 def _wait_log(log_path: Path, needle: str, proc, timeout: float = 15.0) -> None:
@@ -45,6 +49,56 @@ def _wait_log(log_path: Path, needle: str, proc, timeout: float = 15.0) -> None:
 
 def _mcopy(src: Path, image: Path, dest: str) -> None:
     subprocess.run(["mcopy", "-o", "-i", str(image), str(src), dest], check=True)
+
+
+def _mcopy_out(image: Path, src: str, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        dest.unlink()
+    subprocess.run(["mcopy", "-i", str(image), src, str(dest)], check=True)
+
+
+def _term_init_stale() -> bool:
+    """True when the cached TERM init is missing or older than its sources."""
+    if not TERM_INIT.exists() or _TERM_MARK not in TERM_INIT.read_bytes():
+        return True
+    init_dir = REPO / "Process" / "Init"
+    sources = list(init_dir.glob("*.cpp")) + list(init_dir.glob("*.s"))
+    if not sources:
+        return True
+    newest = max(path.stat().st_mtime for path in sources)
+    return newest > TERM_INIT.stat().st_mtime
+
+
+def _build_term_init() -> None:
+    """Build a TERM init without leaving the desktop init.exe replaced.
+
+    ``/shell.cnf`` is read only by an init compiled with ``__XENEVA_TERM__``.
+    The desktop image built by a normal ``--force-user-apps`` run does not
+    define that, so netsock never starts. The build writes
+    ``Process/Init/init.exe``; that file is put back afterwards so the next
+    desktop pack stays a compositor image.
+    """
+    init_dir = REPO / "Process" / "Init"
+    init_exe = init_dir / "init.exe"
+    backup = BUILD / "init-desktop.exe"
+    BUILD.mkdir(parents=True, exist_ok=True)
+    if init_exe.exists():
+        shutil.copy2(init_exe, backup)
+    print("netbench: building TERM init so /shell.cnf runs netsock", flush=True)
+    try:
+        subprocess.run(["make", "clean"], cwd=init_dir, check=True)
+        subprocess.run(
+            ["make", "BLEED_FLAGS=-D__XENEVA_TERM__", "llvm"],
+            cwd=init_dir, check=True,
+        )
+        data = init_exe.read_bytes()
+        if _TERM_MARK not in data:
+            raise RuntimeError("built init.exe does not skip the compositor")
+        shutil.copy2(init_exe, TERM_INIT)
+    finally:
+        if backup.exists():
+            shutil.copy2(backup, init_exe)
 
 
 def _build_netsock() -> None:
@@ -75,6 +129,21 @@ class XenevaGuest:
         self.setup_done = False
         self._build = build
         self._injected_reps: int | None = None
+        self._saved_init: Path | None = None
+
+    def _ensure_term_init(self) -> None:
+        """Swap a TERM init into the image when the packed one is a desktop init."""
+        extracted = BUILD / "init-from-image.exe"
+        _mcopy_out(INITRD, "::/init.exe", extracted)
+        if _TERM_MARK in extracted.read_bytes():
+            self._saved_init = None
+            return
+        if _term_init_stale() or self._build:
+            _build_term_init()
+        if not TERM_INIT.exists():
+            raise RuntimeError("TERM init.exe was not produced")
+        self._saved_init = extracted
+        _mcopy(TERM_INIT, INITRD, "::/init.exe")
 
     def setup(self) -> None:
         if not FAT.exists() or not INITRD.exists():
@@ -90,6 +159,7 @@ class XenevaGuest:
 
         BUILD.mkdir(parents=True, exist_ok=True)
         _mcopy(NETSOCK, INITRD, "::/netsock.exe")
+        self._ensure_term_init()
         self.setup_done = True
         self._inject_reps(self.reps)
 
@@ -170,6 +240,7 @@ class XenevaGuest:
                 ]
 
             limit = timeout or self.timeout
+            early_error = None
             with open(log_path, "w", encoding="utf-8") as log:
                 proc = subprocess.Popen(
                     argv, stdout=log, stderr=subprocess.STDOUT,
@@ -190,6 +261,18 @@ class XenevaGuest:
                             finished = True
                             # Let the shell settle and QEMU flush the pcap.
                             time.sleep(0.5)
+                            break
+                        # A desktop init never reads /shell.cnf. Under this
+                        # -nographic machine the compositor then faults and
+                        # the 240s wait would end with no numbers.
+                        if (
+                            "Synchronous Exception" in text
+                            and "skipping compositor" not in text
+                        ):
+                            early_error = (
+                                "guest faulted before netsock; /shell.cnf "
+                                "is only read by a TERM init"
+                            )
                             break
                         time.sleep(0.2)
                 finally:
@@ -235,7 +318,9 @@ class XenevaGuest:
             if not result["runs"] and result["median"] is not None:
                 result["runs"] = [result["median"]]
             if not result["runs"]:
-                if result["timed_out"]:
+                if early_error:
+                    result["error"] = early_error
+                elif result["timed_out"]:
                     result["error"] = f"QEMU timed out after {limit}s with no results"
                 else:
                     result["error"] = "no perf.tcp.host.rep.kibs lines in log"
@@ -256,6 +341,8 @@ class XenevaGuest:
         if not self.setup_done:
             return
         try:
+            if self._saved_init is not None and self._saved_init.exists():
+                _mcopy(self._saved_init, INITRD, "::/init.exe")
             if SHELL_CNF.exists():
                 _mcopy(SHELL_CNF, INITRD, "::/shell.cnf")
             else:
@@ -266,3 +353,4 @@ class XenevaGuest:
         finally:
             self.setup_done = False
             self._injected_reps = None
+            self._saved_init = None
