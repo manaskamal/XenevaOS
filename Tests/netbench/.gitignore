@@ -1,0 +1,5 @@
+# Netbench build products and run artifacts.
+build/
+results/
+__pycache__/
+*.pyc
