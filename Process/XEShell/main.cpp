@@ -1137,9 +1137,26 @@ int XsHostRun(int argc, char** argv, int fdIn, int fdOut, int fdErr) {
  * NOTE : GENERATED USING CLAUDE Sonnet 5.5 (Medium)
  * */
 int XEShellTryScript(char* line) {
+	/* Do not write NULs into the line until we know it is a script.
+	 * XEShellSpawn still needs the original text ("ping 1.1.1.1"). */
+	char first[128];
+	char* p = line;
+	int n = 0;
+	while (*p == ' ')
+		p++;
+	while (*p && *p != ' ' && n < (int)sizeof(first) - 1)
+		first[n++] = *p++;
+	first[n] = '\0';
+	if (n == 0)
+		return 0;
+
+	bool bat = false;
+	if (!XsScriptKind(first, &bat))
+		return 0;
+
 	char* argv[32];
 	int argc = 0;
-	char* p = line;
+	p = line;
 	while (*p && argc < 31) {
 		while (*p == ' ')
 			p++;
@@ -1153,10 +1170,6 @@ int XEShellTryScript(char* line) {
 	}
 	argv[argc] = NULL;
 	if (argc == 0)
-		return 0;
-
-	bool bat = false;
-	if (!XsScriptKind(argv[0], &bat))
 		return 0;
 
 	g_interrupted = 0;
