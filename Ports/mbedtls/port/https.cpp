@@ -998,8 +998,12 @@ static int connect_host(const struct xe_url* u, xe_http_response* out) {
 	return sock;
 }
 
-/* XEClib EINPROGRESS. The kernel returns this from a non-blocking connect. */
+/* XEClib EINPROGRESS. The kernel returns this from a non-blocking connect.
+ * EISCONN means the handshake finished between polls: another socket's
+ * receive drain completed this SYN, so the next connect() no longer sees
+ * SYN_SENT. That is success, not a failed connect. */
 #define XE_CONNECT_PENDING 119
+#define XE_EISCONN 127
 
 /* Start a TCP connection for the overlapped pump. pending is 1 when the
  * SYN is in flight and the caller must connect() again. An older kernel
@@ -1668,8 +1672,18 @@ static int read_body(struct xe_reader* r, int chunked, long content_len, int wan
 				break;
 			if (hex_len(line, &sz) < 0)
 				break;
-			if (sz == 0)
+			if (sz == 0) {
+				/* 0\r\n is not the end of the message. Trailer fields
+				 * follow, then a blank line. The socket is closed after
+				 * this read, but leave the framing consumed. */
+				for (;;) {
+					if (rd_line(r, line, sizeof(line)) < 0)
+						break;
+					if (line[0] == 0)
+						break;
+				}
 				break;
+			}
 			while (sz) {
 				size_t room = (got < cap) ? (cap - got) : 0;
 				size_t ask = sz;
@@ -1913,7 +1927,8 @@ enum {
 	XB_RAW = 0,
 	XB_LINE,
 	XB_DATA,
-	XB_CRLF
+	XB_CRLF,
+	XB_TRAIL
 };
 
 #define XE_MANY_IDLE_MS 20000
@@ -1953,7 +1968,12 @@ struct xe_many {
 	char loc[3072];
 	char* req;
 	char hdr[XE_HDR_RAW];
-	unsigned char pend[2048];
+	/* The header read fills hdr[] in one call, then splits off the body
+	 * bytes that arrived with it. Those bytes must all fit here. A 2048-byte
+	 * cap dropped every stylesheet and image once virtio RX delivered a full
+	 * TLS record in the first read; the document path reads headers a byte
+	 * at a time and was unaffected. */
+	unsigned char pend[XE_HDR_RAW];
 	int pend_len;
 	int pend_pos;
 	char chunk_line[64];
@@ -2193,7 +2213,7 @@ static int job_step_connect(struct xe_many* j) {
 	rc = connect(j->fd, (sockaddr_*)&dest, sizeof(dest));
 	if (rc == -XE_CONNECT_PENDING)
 		return 0;
-	if (rc < 0) {
+	if (rc < 0 && rc != -XE_EISCONN) {
 		job_fail(j, "Connect failed");
 		return 1;
 	}
@@ -2482,8 +2502,12 @@ static int job_body_chunked(struct xe_many* j) {
 				}
 				j->chunk_line_n = 0;
 				if (sz == 0) {
-					job_deliver(j, 1);
-					return 1;
+					/* Park only after the trailer blank line. Leaving
+					 * that CRLF in the stream makes the next keep-alive
+					 * response start with a blank line, so its status
+					 * is rejected and the stylesheet or image is dropped. */
+					j->body_mode = XB_TRAIL;
+					continue;
 				}
 				j->chunk_left = sz;
 				j->body_mode = XB_DATA;
@@ -2554,6 +2578,34 @@ static int job_body_chunked(struct xe_many* j) {
 			if (c == '\n') {
 				j->chunk_line_n = 0;
 				j->body_mode = XB_LINE;
+			}
+			continue;
+		}
+		if (j->body_mode == XB_TRAIL) {
+			unsigned char c;
+			size_t got = 0;
+			int tr = job_take(j, &c, 1, &got);
+			if (tr == 0)
+				return any;
+			if (tr < 0) {
+				job_deliver(j, 0);
+				return 1;
+			}
+			any = 1;
+			job_touch(j);
+			budget--;
+			if (c == '\n') {
+				if (j->chunk_line_n == 0) {
+					job_deliver(j, 1);
+					return 1;
+				}
+				j->chunk_line_n = 0;
+			} else if (c != '\r') {
+				if (j->chunk_line_n + 1 >= (int)sizeof(j->chunk_line)) {
+					job_deliver(j, 0);
+					return 1;
+				}
+				j->chunk_line[j->chunk_line_n++] = (char)c;
 			}
 			continue;
 		}
